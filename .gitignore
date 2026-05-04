@@ -1,0 +1,12 @@
+build
+dist / media
+node_modules
+.DS_Store
+.env
+.next
+.vercel
+playwright-report
+test-results
+
+# Payload default media upload directory
+public/media/
