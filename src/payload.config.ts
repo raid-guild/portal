@@ -11,6 +11,7 @@ import { Comments } from './collections/Comments'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { PointEvents } from './collections/PointEvents'
 import { Profiles } from './collections/Profiles'
 import { ProfileRoles } from './collections/ProfileRoles'
 import { ProfileSkills } from './collections/ProfileSkills'
@@ -78,6 +79,7 @@ export default buildConfig({
     Pages,
     Posts,
     DailyBriefs,
+    PointEvents,
     Projects,
     Profiles,
     ProfileSkills,

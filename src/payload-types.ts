@@ -70,6 +70,7 @@ export interface Config {
     pages: Page;
     posts: Post;
     dailyBriefs: DailyBrief;
+    pointEvents: PointEvent;
     projects: Project;
     profiles: Profile;
     profileSkills: ProfileSkill;
@@ -92,6 +93,7 @@ export interface Config {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
     dailyBriefs: DailyBriefsSelect<false> | DailyBriefsSelect<true>;
+    pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
@@ -818,7 +820,7 @@ export interface Project {
  */
 export interface Profile {
   id: number;
-  user: number | User;
+  user?: (number | null) | User;
   handle: string;
   displayName: string;
   bio: string;
@@ -876,6 +878,26 @@ export interface ProfileRole {
   icon?: (number | null) | Media;
   slug?: string | null;
   slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pointEvents".
+ */
+export interface PointEvent {
+  id: number;
+  recipient?: (number | null) | User;
+  amount: number;
+  reason: string;
+  description?: string | null;
+  source: 'admin' | 'system' | 'quest' | 'bounty' | 'import';
+  status: 'valid' | 'reversed';
+  issuedBy?: (number | null) | User;
+  issuedAt: string;
+  relatedProject?: (number | null) | Project;
+  relatedPost?: (number | null) | Post;
+  relatedDailyBrief?: (number | null) | DailyBrief;
   updatedAt: string;
   createdAt: string;
 }
@@ -1009,6 +1031,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'dailyBriefs';
         value: number | DailyBrief;
+      } | null)
+    | ({
+        relationTo: 'pointEvents';
+        value: number | PointEvent;
       } | null)
     | ({
         relationTo: 'projects';
@@ -1298,6 +1324,25 @@ export interface DailyBriefsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pointEvents_select".
+ */
+export interface PointEventsSelect<T extends boolean = true> {
+  recipient?: T;
+  amount?: T;
+  reason?: T;
+  description?: T;
+  source?: T;
+  status?: T;
+  issuedBy?: T;
+  issuedAt?: T;
+  relatedProject?: T;
+  relatedPost?: T;
+  relatedDailyBrief?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

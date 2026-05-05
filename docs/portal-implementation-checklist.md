@@ -67,6 +67,15 @@
 - [ ] Decide whether scoped API keys are needed beyond authenticated Payload users.
 - [ ] Add audit notes for public/private field exposure.
 
+## Phase 7: Points And Recognition
+
+- [x] Add `pointEvents` ledger collection.
+- [x] Restrict point issuance to admins.
+- [x] Let users read their own point history.
+- [x] Show point totals on authenticated portal surfaces.
+- [ ] Add a narrow service endpoint for future automated awards.
+- [ ] Add admin reversal workflow notes and tests.
+
 ## Deferred
 
 - [ ] Bounty system.

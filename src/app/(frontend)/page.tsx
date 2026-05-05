@@ -14,15 +14,18 @@ export default async function HomePage() {
   const user = await getCurrentUser()
 
   if (user) {
-    const [dailyBrief, profile, recentPosts] = await Promise.all([
+    const [dailyBrief, profile, pointSummary, recentPosts] = await Promise.all([
       getLatestDailyBrief(user),
       getProfileForUser(user.id),
+      getPointSummary(user),
       getRecentPosts(),
     ])
 
     return (
       <PortalDashboard
         dailyBrief={dailyBrief}
+        pointEvents={pointSummary.events}
+        pointsTotal={pointSummary.total}
         profile={profile}
         recentPosts={recentPosts}
         user={user}
@@ -124,4 +127,36 @@ const getLatestDailyBrief = async (user: User) => {
   })
 
   return result.docs[0] || null
+}
+
+const getPointSummary = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'pointEvents',
+    depth: 1,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-issuedAt',
+    user,
+    where: {
+      and: [
+        {
+          recipient: {
+            equals: user.id,
+          },
+        },
+        {
+          status: {
+            equals: 'valid',
+          },
+        },
+      ],
+    },
+  })
+
+  return {
+    events: result.docs.slice(0, 5),
+    total: result.docs.reduce((sum, event) => sum + (event.amount || 0), 0),
+  }
 }

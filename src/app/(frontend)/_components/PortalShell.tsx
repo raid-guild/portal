@@ -2,6 +2,7 @@ import Link from 'next/link'
 import React from 'react'
 import {
   ArrowRight,
+  Award,
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
@@ -10,7 +11,7 @@ import {
   Users,
 } from 'lucide-react'
 
-import type { DailyBrief, Post, Profile, Project, User } from '@/payload-types'
+import type { DailyBrief, PointEvent, Post, Profile, Project, User } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -21,6 +22,8 @@ type PortalHomeProps = {
 
 type DashboardProps = {
   dailyBrief?: DailyBrief | null
+  pointEvents?: PointEvent[]
+  pointsTotal?: number
   profile?: Profile | null
   recentPosts?: Post[]
   user: User
@@ -153,6 +156,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projec
 
 export const PortalDashboard: React.FC<DashboardProps> = ({
   dailyBrief,
+  pointEvents = [],
+  pointsTotal = 0,
   profile,
   recentPosts = [],
   user,
@@ -191,6 +196,43 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           label="Projects"
         />
         <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
+      </section>
+
+      <section className="mt-12 border border-border p-6">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              <h2 className="text-xl font-semibold">Guild Points</h2>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Admin-issued contribution signal for future portal gamification.
+            </p>
+          </div>
+          <p className="text-3xl font-semibold">{pointsTotal}</p>
+        </div>
+        <div className="mt-5 space-y-3">
+          {pointEvents.length ? (
+            pointEvents.map((event) => (
+              <div className="flex items-start justify-between gap-4 text-sm" key={event.id}>
+                <div>
+                  <p className="font-medium">{event.reason}</p>
+                  {event.description ? (
+                    <p className="mt-1 text-muted-foreground">{event.description}</p>
+                  ) : null}
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">+{event.amount}</p>
+                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                    {event.source}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No point events yet.</p>
+          )}
+        </div>
       </section>
 
       <section className="mt-12 border border-border p-6">
