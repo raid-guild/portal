@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
+import type { User } from '@/payload-types'
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
@@ -14,7 +15,7 @@ export default async function HomePage() {
 
   if (user) {
     const [dailyBrief, profile, recentPosts] = await Promise.all([
-      getLatestDailyBrief(),
+      getLatestDailyBrief(user),
       getProfileForUser(user.id),
       getRecentPosts(),
     ])
@@ -95,7 +96,7 @@ const getProfileForUser = async (userID: string | number) => {
   return result.docs[0] || null
 }
 
-const getLatestDailyBrief = async () => {
+const getLatestDailyBrief = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'dailyBriefs',
@@ -105,6 +106,7 @@ const getLatestDailyBrief = async () => {
     overrideAccess: false,
     pagination: false,
     sort: '-briefDate',
+    user,
     where: {
       and: [
         {

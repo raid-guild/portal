@@ -5,6 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import type { User } from '@/payload-types'
 import { PortalDashboard } from '../_components/PortalShell'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   if (!user) redirect('/join')
 
   const [dailyBrief, profile, recentPosts] = await Promise.all([
-    getLatestDailyBrief(),
+    getLatestDailyBrief(user),
     getProfileForUser(user.id),
     getRecentPosts(),
   ])
@@ -71,7 +72,7 @@ const getRecentPosts = async () => {
   return result.docs
 }
 
-const getLatestDailyBrief = async () => {
+const getLatestDailyBrief = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'dailyBriefs',
@@ -81,6 +82,7 @@ const getLatestDailyBrief = async () => {
     overrideAccess: false,
     pagination: false,
     sort: '-briefDate',
+    user,
     where: {
       and: [
         {
