@@ -89,7 +89,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
 
   CREATE TABLE "profiles" (
 	"id" serial PRIMARY KEY NOT NULL,
-	"user_id" integer NOT NULL,
+	"user_id" integer,
 	"handle" varchar NOT NULL,
 	"display_name" varchar NOT NULL,
 	"bio" varchar NOT NULL,
@@ -255,6 +255,18 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "profile_roles" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "users_roles" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "payload_kv" DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_projects_fk";
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_profiles_fk";
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_profile_skills_fk";
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_profile_roles_fk";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_projects_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_profiles_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_profile_skills_id_idx";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_profile_roles_id_idx";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "projects_id";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "profiles_id";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "profile_skills_id";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "profile_roles_id";
   DROP TABLE "projects_links" CASCADE;
   DROP TABLE "projects" CASCADE;
   DROP TABLE "projects_rels" CASCADE;
@@ -268,25 +280,9 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "profile_roles" CASCADE;
   DROP TABLE "users_roles" CASCADE;
   DROP TABLE "payload_kv" CASCADE;
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_projects_fk";
-
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_profiles_fk";
-
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_profile_skills_fk";
-
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_profile_roles_fk";
-
-  DROP INDEX "payload_locked_documents_rels_projects_id_idx";
-  DROP INDEX "payload_locked_documents_rels_profiles_id_idx";
-  DROP INDEX "payload_locked_documents_rels_profile_skills_id_idx";
-  DROP INDEX "payload_locked_documents_rels_profile_roles_id_idx";
   DROP INDEX "redirects_from_idx";
   ALTER TABLE "forms_emails" ALTER COLUMN "subject" SET DEFAULT 'You''''ve received a new message.';
   CREATE INDEX "redirects_from_idx" ON "redirects" USING btree ("from");
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "projects_id";
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "profiles_id";
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "profile_skills_id";
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "profile_roles_id";
   DROP TYPE "public"."enum_projects_project_status";
   DROP TYPE "public"."enum_projects_status";
   DROP TYPE "public"."enum__projects_v_version_project_status";

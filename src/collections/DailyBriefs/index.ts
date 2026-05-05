@@ -15,6 +15,7 @@ import {
   updateDailyBriefs,
 } from '@/access/dailyBriefs'
 import { canEditContent } from '@/access/roles'
+import { validateSafeURL } from '@/utilities/safeURL'
 import { enforceDailyBriefWorkflow } from './hooks/enforceDailyBriefWorkflow'
 
 export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
@@ -47,7 +48,6 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
       },
       index: true,
       required: true,
-      unique: true,
     },
     {
       name: 'summary',
@@ -81,6 +81,7 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
               name: 'url',
               type: 'text',
               required: true,
+              validate: (value) => validateSafeURL(value),
             },
           ],
         },
@@ -132,6 +133,7 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
       name: 'sourceNotes',
       type: 'textarea',
       access: {
+        create: ({ req: { user } }) => canEditContent(user),
         read: ({ req: { user } }) => canEditContent(user),
         update: ({ req: { user } }) => canEditContent(user),
       },
@@ -193,7 +195,7 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
   versions: {
     drafts: {
       autosave: {
-        interval: 100,
+        interval: 800,
       },
     },
     maxPerDoc: 50,

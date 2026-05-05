@@ -59,6 +59,7 @@
 
 ## Phase 6: External API Hardening
 
+- [ ] Add signup abuse controls before public launch: rate limiting, email verification, and/or CAPTCHA.
 - [ ] Decide approved external origins for browser API consumers.
 - [ ] Update CORS configuration intentionally.
 - [ ] Document REST examples for profiles, projects, posts, and media.

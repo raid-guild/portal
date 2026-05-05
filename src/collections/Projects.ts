@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
+import { validateSafeURL } from '@/utilities/safeURL'
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
@@ -67,6 +68,8 @@ export const Projects: CollectionConfig = {
           name: 'url',
           type: 'text',
           required: true,
+          validate: (value) =>
+            validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
         },
       ],
     },

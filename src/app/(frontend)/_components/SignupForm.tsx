@@ -23,6 +23,12 @@ export const SignupForm: React.FC = () => {
     const name = String(formData.get('name') || '').trim()
     const password = String(formData.get('password') || '')
 
+    if (!email || !name || !password.trim()) {
+      setError('Please fill in all required fields.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const createRes = await fetch('/api/users', {
         method: 'POST',

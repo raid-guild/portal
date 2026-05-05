@@ -6,6 +6,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { Profile, ProfileSkill } from '@/payload-types'
+import { toSafeURL } from '@/utilities/safeURL'
 
 export default async function ProjectsPage() {
   const projects = await getProjects()
@@ -36,17 +37,32 @@ export default async function ProjectsPage() {
               <ContributorList contributors={project.contributors} />
               {project.links?.length ? (
                 <div className="mt-5 flex flex-wrap gap-3">
-                  {project.links.map((link) => (
-                    <Link
-                      className="text-sm font-medium underline"
-                      href={link.url}
-                      key={`${project.id}-${link.url}`}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                  {project.links.map((link) => {
+                    const safeURL = toSafeURL(link.url, {
+                      allowRelative: false,
+                      protocols: ['http:', 'https:'],
+                    })
+
+                    if (!safeURL) {
+                      return (
+                        <span className="text-sm font-medium" key={`${project.id}-${link.url}`}>
+                          {link.label}
+                        </span>
+                      )
+                    }
+
+                    return (
+                      <Link
+                        className="text-sm font-medium underline"
+                        href={safeURL}
+                        key={`${project.id}-${link.url}`}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {link.label}
+                      </Link>
+                    )
+                  })}
                 </div>
               ) : null}
             </article>
@@ -66,7 +82,9 @@ export const metadata: Metadata = {
 }
 
 const RelationshipPills: React.FC<{ items?: (number | ProfileSkill)[] | null }> = ({ items }) => {
-  const docs = items?.filter((item): item is ProfileSkill => typeof item === 'object')
+  const docs = items?.filter(
+    (item): item is ProfileSkill => item !== null && typeof item === 'object',
+  )
 
   if (!docs?.length) return null
 
@@ -84,7 +102,9 @@ const RelationshipPills: React.FC<{ items?: (number | ProfileSkill)[] | null }> 
 const ContributorList: React.FC<{ contributors?: (number | Profile)[] | null }> = ({
   contributors,
 }) => {
-  const docs = contributors?.filter((item): item is Profile => typeof item === 'object')
+  const docs = contributors?.filter(
+    (item): item is Profile => item !== null && typeof item === 'object',
+  )
 
   if (!docs?.length) return null
 

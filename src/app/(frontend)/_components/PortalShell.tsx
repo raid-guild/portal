@@ -12,6 +12,7 @@ import {
 
 import type { DailyBrief, Post, Profile, Project, User } from '@/payload-types'
 import { Button } from '@/components/ui/button'
+import { toSafeURL } from '@/utilities/safeURL'
 
 type PortalHomeProps = {
   posts?: Post[]
@@ -140,7 +141,9 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projec
               </Link>
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">Seeded project examples are coming next.</p>
+            <p className="text-sm text-muted-foreground">
+              Seeded project examples are coming next.
+            </p>
           )}
         </div>
       </section>
@@ -219,15 +222,30 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                     <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.body}</p>
                     {section.links?.length ? (
                       <div className="mt-3 space-y-2">
-                        {section.links.map((link) => (
-                          <Link
-                            className="block text-sm font-medium underline"
-                            href={link.url}
-                            key={link.id || link.url}
-                          >
-                            {link.label}
-                          </Link>
-                        ))}
+                        {section.links.map((link) => {
+                          const safeURL = toSafeURL(link.url)
+
+                          if (!safeURL) {
+                            return (
+                              <span
+                                className="block text-sm font-medium text-muted-foreground"
+                                key={link.id || link.url}
+                              >
+                                {link.label}
+                              </span>
+                            )
+                          }
+
+                          return (
+                            <Link
+                              className="block text-sm font-medium underline"
+                              href={safeURL}
+                              key={link.id || link.url}
+                            >
+                              {link.label}
+                            </Link>
+                          )
+                        })}
                       </div>
                     ) : null}
                   </div>
@@ -262,7 +280,11 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           <div className="mt-4 space-y-4">
             {recentPosts.length ? (
               recentPosts.map((post) => (
-                <Link className="block text-sm hover:underline" href={`/posts/${post.slug}`} key={post.id}>
+                <Link
+                  className="block text-sm hover:underline"
+                  href={`/posts/${post.slug}`}
+                  key={post.id}
+                >
                   {post.title}
                 </Link>
               ))

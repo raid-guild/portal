@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 
 import type { User } from '@/payload-types'
-import { getClientSideURL } from './getURL'
+import { getServerSideURL } from './getURL'
 
 export const getCurrentUser = async (): Promise<User | null> => {
   const cookieStore = await cookies()
@@ -10,7 +10,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
   if (!token) return null
 
   try {
-    const meUserReq = await fetch(`${getClientSideURL()}/api/users/me`, {
+    const meUserReq = await fetch(`${getServerSideURL()}/api/users/me`, {
       headers: {
         Authorization: `JWT ${token}`,
       },

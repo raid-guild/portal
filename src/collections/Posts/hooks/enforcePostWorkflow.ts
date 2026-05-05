@@ -12,11 +12,9 @@ export const enforcePostWorkflow: CollectionBeforeChangeHook = ({ data, operatio
 
   if (operation === 'create') {
     nextData._status = 'draft'
-
-    if (!nextData.authors?.length) {
-      nextData.authors = [req.user.id]
-    }
   }
+
+  nextData.authors = [req.user.id]
 
   if (nextData._status === 'published') {
     throw new Error('Only editors and admins can publish posts.')

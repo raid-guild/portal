@@ -42,10 +42,22 @@ const mimeTypes: Record<string, string> = {
 }
 
 async function fetchFileByURL(url: string): Promise<File> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+
   const res = await fetch(url, {
     credentials: 'include',
     method: 'GET',
+    signal: controller.signal,
   })
+    .catch((error) => {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Timed out fetching file from ${url}`)
+      }
+
+      throw error
+    })
+    .finally(() => clearTimeout(timeout))
 
   if (!res.ok) {
     throw new Error(`Failed to fetch file from ${url}, status: ${res.status}`)
@@ -390,8 +402,8 @@ export const seed = async ({
       collection: 'dailyBriefs',
       data: JSON.parse(
         JSON.stringify(dailyBrief)
-          .replace(/"\{\{POST_1\}\}"/g, String(post1Doc.id))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+          .replace(/"\{\{POST_1\}\}"/g, JSON.stringify(post1Doc.id))
+          .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
       ),
     })
 

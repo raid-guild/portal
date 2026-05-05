@@ -10,7 +10,7 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
-  const [user, posts, projects] = await Promise.all([getCurrentUser(), getRecentPosts(), getProjects()])
+  const user = await getCurrentUser()
 
   if (user) {
     const [dailyBrief, profile, recentPosts] = await Promise.all([
@@ -28,6 +28,8 @@ export default async function HomePage() {
       />
     )
   }
+
+  const [posts, projects] = await Promise.all([getRecentPosts(), getProjects()])
 
   return <PortalPublicHome posts={posts} projects={projects} />
 }

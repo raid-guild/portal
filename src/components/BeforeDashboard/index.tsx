@@ -13,13 +13,13 @@ const BeforeDashboard: React.FC = () => {
         <h4>RaidGuild Portal dashboard</h4>
       </Banner>
       <p>
-        Use the seed action to load the portal demo content: landing page, posts, projects,
-        profile skills, and RaidGuild roles.
+        Use the seed action to load the portal demo content: landing page, posts, projects, profile
+        skills, and RaidGuild roles.
       </p>
       <p>
         <SeedButton />
         {' then '}
-        <a href="/" target="_blank">
+        <a href="/" rel="noopener noreferrer" target="_blank">
           visit the portal
         </a>
         {' to review the results.'}

@@ -17,13 +17,15 @@ export const authRoleOptions = AUTH_ROLES.map((role) => ({
 export const getUserRoles = (user: UserWithRoles | null | undefined): AuthRole[] => {
   if (!user) return []
 
-  if (Array.isArray(user.roles) && user.roles.length > 0) {
+  if (Array.isArray(user.roles)) {
     return user.roles
   }
 
   // Existing installations can have users created before auth roles existed.
-  // Treat those legacy users as admins until their roles are explicitly saved.
-  return ['admin']
+  // Treat only truly legacy users as admins until their roles are explicitly saved.
+  if (user.roles == null) return ['admin']
+
+  return []
 }
 
 export const hasRole = (
@@ -53,6 +55,7 @@ export const adminsFieldAccess: FieldAccess = ({ req: { user } }) => isAdmin(use
 export const ownUserOrAdmin: Access = ({ req: { user } }: AccessArgs) => {
   if (!user) return false
   if (isAdmin(user)) return true
+  if (!user.id) return false
 
   return {
     id: {

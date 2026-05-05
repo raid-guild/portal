@@ -115,7 +115,7 @@ export async function up({ db, payload, req }: MigrateUpArgs): Promise<void> {
   CREATE INDEX "daily_briefs_sections_links_parent_id_idx" ON "daily_briefs_sections_links" USING btree ("_parent_id");
   CREATE INDEX "daily_briefs_sections_order_idx" ON "daily_briefs_sections" USING btree ("_order");
   CREATE INDEX "daily_briefs_sections_parent_id_idx" ON "daily_briefs_sections" USING btree ("_parent_id");
-  CREATE UNIQUE INDEX "daily_briefs_brief_date_idx" ON "daily_briefs" USING btree ("brief_date");
+  CREATE INDEX "daily_briefs_brief_date_idx" ON "daily_briefs" USING btree ("brief_date");
   CREATE INDEX "daily_briefs_updated_at_idx" ON "daily_briefs" USING btree ("updated_at");
   CREATE INDEX "daily_briefs_created_at_idx" ON "daily_briefs" USING btree ("created_at");
   CREATE INDEX "daily_briefs__status_idx" ON "daily_briefs" USING btree ("_status");
@@ -160,6 +160,9 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   ALTER TABLE "_daily_briefs_v_version_sections" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "_daily_briefs_v" DISABLE ROW LEVEL SECURITY;
   ALTER TABLE "_daily_briefs_v_rels" DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT IF EXISTS "payload_locked_documents_rels_daily_briefs_fk";
+  DROP INDEX IF EXISTS "payload_locked_documents_rels_daily_briefs_id_idx";
+  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN IF EXISTS "daily_briefs_id";
   DROP TABLE "daily_briefs_sections_links" CASCADE;
   DROP TABLE "daily_briefs_sections" CASCADE;
   DROP TABLE "daily_briefs" CASCADE;
@@ -168,10 +171,6 @@ export async function down({ db, payload, req }: MigrateDownArgs): Promise<void>
   DROP TABLE "_daily_briefs_v_version_sections" CASCADE;
   DROP TABLE "_daily_briefs_v" CASCADE;
   DROP TABLE "_daily_briefs_v_rels" CASCADE;
-  ALTER TABLE "payload_locked_documents_rels" DROP CONSTRAINT "payload_locked_documents_rels_daily_briefs_fk";
-
-  DROP INDEX "payload_locked_documents_rels_daily_briefs_id_idx";
-  ALTER TABLE "payload_locked_documents_rels" DROP COLUMN "daily_briefs_id";
   DROP TYPE "public"."enum_daily_briefs_visibility";
   DROP TYPE "public"."enum_daily_briefs_status";
   DROP TYPE "public"."enum__daily_briefs_v_version_visibility";

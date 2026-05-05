@@ -2,7 +2,7 @@ import React from 'react'
 
 const AdminIcon: React.FC = () => {
   return (
-    /* eslint-disable @next/next/no-img-element */
+    /* eslint-disable-next-line @next/next/no-img-element */
     <img
       alt="RaidGuild Cohort"
       height={34}

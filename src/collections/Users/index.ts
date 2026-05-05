@@ -1,15 +1,14 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticated } from '../../access/authenticated'
 import { adminsFieldAccess, authRoleOptions, isAdmin, ownUserOrAdmin } from '@/access/roles'
 import { anyone } from '@/access/anyone'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: authenticated,
+    admin: ({ req: { user } }) => isAdmin(user),
     create: anyone,
-    delete: authenticated,
+    delete: ({ req: { user } }) => isAdmin(user),
     read: ownUserOrAdmin,
     update: ownUserOrAdmin,
   },
