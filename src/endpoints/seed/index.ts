@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
+import { dailyBrief } from './daily-brief'
 import { home } from './home'
 import { image1 } from './image-1'
 import { image2 } from './image-2'
@@ -14,15 +15,22 @@ import { post1 } from './post-1'
 import { post2 } from './post-2'
 import { post3 } from './post-3'
 import { post4 } from './post-4'
+import { profileRoles } from './profile-roles'
+import { profileSkills } from './profile-skills'
 
 const collections: CollectionSlug[] = [
   'categories',
+  'dailyBriefs',
+  'projects',
+  'profiles',
+  'profileSkills',
+  'profileRoles',
   'media',
   'pages',
   'posts',
   'forms',
   'form-submissions',
-  'search'
+  'search',
 ]
 const globals: GlobalSlug[] = ['header', 'footer']
 
@@ -34,10 +42,22 @@ const mimeTypes: Record<string, string> = {
 }
 
 async function fetchFileByURL(url: string): Promise<File> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 15000)
+
   const res = await fetch(url, {
     credentials: 'include',
     method: 'GET',
+    signal: controller.signal,
   })
+    .catch((error) => {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error(`Timed out fetching file from ${url}`)
+      }
+
+      throw error
+    })
+    .finally(() => clearTimeout(timeout))
 
   if (!res.ok) {
     throw new Error(`Failed to fetch file from ${url}, status: ${res.status}`)
@@ -99,9 +119,9 @@ export const seed = async ({
       collection: 'search',
       where: {
         id: {
-          exists: true
-        }
-      }
+          exists: true,
+        },
+      },
     })
 
     // clear the database
@@ -109,20 +129,20 @@ export const seed = async ({
       await payload.updateGlobal({
         slug: global,
         data: {
-          navItems: []
-        }
+          navItems: [],
+        },
       })
     }
 
     // Then clear other collections
-    for (const collection of collections.filter(c => c !== 'search')) {
+    for (const collection of collections.filter((c) => c !== 'search')) {
       await payload.delete({
         collection: collection,
         where: {
           id: {
-            exists: true
-          }
-        }
+            exists: true,
+          },
+        },
       })
     }
 
@@ -132,9 +152,9 @@ export const seed = async ({
       collection: 'users',
       where: {
         email: {
-          equals: 'demo-author@payloadcms.com'
-        }
-      }
+          equals: 'demo-author@payloadcms.com',
+        },
+      },
     })
 
     const demoAuthor = await payload.create({
@@ -142,27 +162,42 @@ export const seed = async ({
       data: {
         name: 'Demo Author',
         email: 'demo-author@payloadcms.com',
-        password: 'password'
-      }
+        password: 'password',
+      },
     })
 
     let demoAuthorID: number | string = demoAuthor.id
+
+    payload.logger.info(`- Seeding profile skills and roles...`)
+
+    await Promise.all([
+      ...profileSkills.map((skill) =>
+        payload.create({
+          collection: 'profileSkills',
+          data: skill,
+        }),
+      ),
+      ...profileRoles.map((role) =>
+        payload.create({
+          collection: 'profileRoles',
+          data: role,
+        }),
+      ),
+    ])
 
     payload.logger.info(`- Seeding media...`)
 
     // Load all files first
     const [image1File, image2File, image3File, hero1File, vendureFile] = useLocalSeedMedia
       ? await Promise.all([
-          loadSeedFile('image-post1.webp'),
+          loadSeedFile('raidguild-cohort-hero.webp'),
           loadSeedFile('image-post2.webp'),
           loadSeedFile('image-post3.webp'),
           loadSeedFile('image-hero1.webp'),
           loadSeedFile('image-post3.webp', 'image-post4.webp'),
         ])
       : await Promise.all([
-          fetchFileByURL(
-            'https://res.cloudinary.com/hczpmiapo/image/upload/v1732740471/Static%20assets/graphics/payload%203/payload-cover_ygdcoq.png',
-          ),
+          loadSeedFile('raidguild-cohort-hero.webp'),
           fetchFileByURL(
             'https://res.cloudinary.com/hczpmiapo/image/upload/v1732740471/Static%20assets/graphics/payload%203/payload-2-cover_ortrhb.png',
           ),
@@ -184,28 +219,28 @@ export const seed = async ({
       payload.create({
         collection: 'media',
         data: image1,
-        file: image1File
+        file: image1File,
       }),
       payload.create({
         collection: 'media',
         data: image2,
-        file: image2File
+        file: image2File,
       }),
       payload.create({
         collection: 'media',
         data: image3,
-        file: image3File
+        file: image3File,
       }),
       payload.create({
         collection: 'media',
         data: image2,
-        file: hero1File
+        file: hero1File,
       }),
       payload.create({
         collection: 'media',
         data: image4,
-        file: vendureFile
-      })
+        file: vendureFile,
+      }),
     ])
 
     let image1ID: number | string = image1Doc.id
@@ -229,42 +264,42 @@ export const seed = async ({
       payload.create({
         collection: 'categories',
         data: {
-          title: 'Technology'
-        }
+          title: 'Technology',
+        },
       }),
       payload.create({
         collection: 'categories',
         data: {
-          title: 'News'
-        }
+          title: 'News',
+        },
       }),
       payload.create({
         collection: 'categories',
         data: {
-          title: 'Finance'
-        }
-      })
+          title: 'Finance',
+        },
+      }),
     ])
 
     await Promise.all([
       payload.create({
         collection: 'categories',
         data: {
-          title: 'Design'
-        }
+          title: 'Design',
+        },
       }),
       payload.create({
         collection: 'categories',
         data: {
-          title: 'Software'
-        }
+          title: 'Software',
+        },
       }),
       payload.create({
         collection: 'categories',
         data: {
-          title: 'Engineering'
-        }
-      })
+          title: 'Engineering',
+        },
+      }),
     ])
 
     // Create posts
@@ -278,8 +313,8 @@ export const seed = async ({
         JSON.stringify({ ...post1, categories: [technologyCategory.id] })
           .replace(/"\{\{IMAGE_1\}\}"/g, String(image1ID))
           .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID))
-      )
+          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      ),
     })
 
     const post2Doc = await payload.create({
@@ -288,8 +323,8 @@ export const seed = async ({
         JSON.stringify({ ...post2, categories: [newsCategory.id] })
           .replace(/"\{\{IMAGE_1\}\}"/g, String(image2ID))
           .replace(/"\{\{IMAGE_2\}\}"/g, String(image3ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID))
-      )
+          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      ),
     })
 
     const post3Doc = await payload.create({
@@ -298,8 +333,8 @@ export const seed = async ({
         JSON.stringify({ ...post3, categories: [financeCategory.id] })
           .replace(/"\{\{IMAGE_1\}\}"/g, String(image3ID))
           .replace(/"\{\{IMAGE_2\}\}"/g, String(image1ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID))
-      )
+          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      ),
     })
 
     const post4Doc = await payload.create({
@@ -308,8 +343,8 @@ export const seed = async ({
         JSON.stringify({ ...post4, categories: [technologyCategory.id] })
           .replace(/"\{\{IMAGE_1\}\}"/g, String(image4ID))
           .replace(/"\{\{IMAGE_2\}\}"/g, String(image3ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID))
-      )
+          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
+      ),
     })
 
     // Clear any existing search documents
@@ -317,9 +352,9 @@ export const seed = async ({
       collection: 'search',
       where: {
         id: {
-          exists: true
-        }
-      }
+          exists: true,
+        },
+      },
     })
     // Update related posts in order.
     // This is non-critical seed data, so do not fail the entire seed if it errors.
@@ -329,37 +364,49 @@ export const seed = async ({
         id: post1Doc.id,
         collection: 'posts',
         data: {
-          relatedPosts: [post2Doc.id, post3Doc.id, post4Doc.id]
-        }
+          relatedPosts: [post2Doc.id, post3Doc.id, post4Doc.id],
+        },
       })
 
       await payload.update({
         id: post2Doc.id,
         collection: 'posts',
         data: {
-          relatedPosts: [post1Doc.id, post3Doc.id, post4Doc.id]
-        }
+          relatedPosts: [post1Doc.id, post3Doc.id, post4Doc.id],
+        },
       })
 
       await payload.update({
         id: post3Doc.id,
         collection: 'posts',
         data: {
-          relatedPosts: [post1Doc.id, post2Doc.id, post4Doc.id]
-        }
+          relatedPosts: [post1Doc.id, post2Doc.id, post4Doc.id],
+        },
       })
 
       await payload.update({
         id: post4Doc.id,
         collection: 'posts',
         data: {
-          relatedPosts: [post1Doc.id, post2Doc.id, post3Doc.id]
-        }
+          relatedPosts: [post1Doc.id, post2Doc.id, post3Doc.id],
+        },
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown related posts seed error'
       payload.logger.error(`Related posts seed step failed, continuing: ${message}`)
     }
+
+    payload.logger.info(`- Seeding daily brief...`)
+
+    await payload.create({
+      collection: 'dailyBriefs',
+      data: JSON.parse(
+        JSON.stringify(dailyBrief)
+          .replace(/"\{\{POST_1\}\}"/g, JSON.stringify(post1Doc.id))
+          .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
+      ),
+    })
+
     // Create home page
     payload.logger.info(`- Seeding home page...`)
 
@@ -368,8 +415,8 @@ export const seed = async ({
       data: JSON.parse(
         JSON.stringify(home)
           .replace(/"\{\{IMAGE_1\}\}"/g, String(imageHomeID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID))
-      )
+          .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID)),
+      ),
     })
 
     // Create contact form
@@ -377,7 +424,7 @@ export const seed = async ({
 
     const contactForm = await payload.create({
       collection: 'forms',
-      data: JSON.parse(JSON.stringify(contactFormData))
+      data: JSON.parse(JSON.stringify(contactFormData)),
     })
 
     let contactFormID: number | string = contactForm.id
@@ -392,8 +439,11 @@ export const seed = async ({
     const contactPage = await payload.create({
       collection: 'pages',
       data: JSON.parse(
-        JSON.stringify(contactPageData).replace(/"\{\{CONTACT_FORM_ID\}\}"/g, String(contactFormID))
-      )
+        JSON.stringify(contactPageData).replace(
+          /"\{\{CONTACT_FORM_ID\}\}"/g,
+          String(contactFormID),
+        ),
+      ),
     })
 
     // Update header
@@ -407,8 +457,8 @@ export const seed = async ({
             link: {
               type: 'custom',
               label: 'Posts',
-              url: '/posts'
-            }
+              url: '/posts',
+            },
           },
           {
             link: {
@@ -416,12 +466,12 @@ export const seed = async ({
               label: 'Contact',
               reference: {
                 relationTo: 'pages',
-                value: contactPage.id
-              }
-            }
-          }
-        ]
-      }
+                value: contactPage.id,
+              },
+            },
+          },
+        ],
+      },
     })
 
     // Update footer
@@ -435,27 +485,27 @@ export const seed = async ({
             link: {
               type: 'custom',
               label: 'Admin',
-              url: '/admin'
-            }
+              url: '/admin',
+            },
           },
           {
             link: {
               type: 'custom',
               label: 'Source Code',
               newTab: true,
-              url: 'https://github.com/payloadcms/payload/tree/main/templates/website'
-            }
+              url: 'https://github.com/payloadcms/payload/tree/main/templates/website',
+            },
           },
           {
             link: {
               type: 'custom',
               label: 'Payload',
               newTab: true,
-              url: 'https://payloadcms.com/'
-            }
-          }
-        ]
-      }
+              url: 'https://payloadcms.com/',
+            },
+          },
+        ],
+      },
     })
 
     payload.logger.info(' Database seeded successfully!')
@@ -473,4 +523,3 @@ export const seed = async ({
     }
   }
 }
-

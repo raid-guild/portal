@@ -9,15 +9,6 @@
     }
   }
 
-  &__instructions {
-    list-style: decimal;
-    margin-bottom: base(0.5);
-
-    & li {
-      width: 100%;
-    }
-  }
-
   & a:hover {
     opacity: 0.85;
   }

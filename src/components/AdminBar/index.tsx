@@ -29,7 +29,17 @@ const collectionLabels = {
   },
 }
 
-const Title: React.FC = () => <span>Dashboard</span>
+const Title: React.FC = () => (
+  /* eslint-disable @next/next/no-img-element */
+  <img
+    alt="RaidGuild Cohort"
+    className="h-8 w-8"
+    height={112}
+    loading="lazy"
+    src="/assets/symbol-white.svg"
+    width={112}
+  />
+)
 
 export const AdminBar: React.FC<{
   adminBarProps?: PayloadAdminBarProps
