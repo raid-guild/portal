@@ -5,7 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Profile, ProfileRole, ProfileSkill } from '@/payload-types'
+import type { Profile, ProfileRole, ProfileSkill, User } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
@@ -16,8 +16,9 @@ export default async function MePage() {
 
   if (!user) redirect('/join')
 
-  const [profile, skills, roles] = await Promise.all([
+  const [profile, pointsTotal, skills, roles] = await Promise.all([
     getProfileForUser(user.id),
+    getPointsTotal(user),
     getProfileSkills(),
     getProfileRoles(),
   ])
@@ -41,6 +42,7 @@ export default async function MePage() {
           <p className="mt-2 text-muted-foreground">
             {profile ? 'Profile connected' : 'Profile not started'}
           </p>
+          <p className="mt-3 text-2xl font-semibold">{pointsTotal} points</p>
         </div>
       </section>
 
@@ -180,4 +182,32 @@ const getProfileRoles = async () => {
   })
 
   return result.docs
+}
+
+const getPointsTotal = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'pointEvents',
+    depth: 0,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      and: [
+        {
+          recipient: {
+            equals: user.id,
+          },
+        },
+        {
+          status: {
+            equals: 'valid',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs.reduce((sum, event) => sum + (event.amount || 0), 0)
 }

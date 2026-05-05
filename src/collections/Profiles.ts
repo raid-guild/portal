@@ -28,8 +28,8 @@ export const Profiles: CollectionConfig = {
       },
       hasMany: false,
       relationTo: 'users',
-      required: true,
       unique: true,
+      validate: (value) => (value ? true : 'User is required'),
     },
     {
       name: 'handle',
