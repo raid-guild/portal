@@ -1,88 +1,31 @@
 import type { Page } from '@/payload-types'
 
+import { headingNode, lexicalRoot, lineBreakNode, paragraphNode, text } from './lexical'
+
 // Used for pre-seeded content so that the homepage is not empty
-// @ts-expect-error
+// @ts-expect-error static fallback intentionally omits database-managed fields
 export const homeStatic: Page = {
   slug: 'home',
   _status: 'published',
   hero: {
     type: 'lowImpact',
-    richText: {
-      root: {
-        type: 'root',
-        children: [
-          {
-            type: 'heading',
-            children: [
-              {
-                type: 'text',
-                detail: 0,
-                format: 0,
-                mode: 'normal',
-                style: '',
-                text: 'Payload Website Template',
-                version: 1,
-              },
-            ],
-            direction: 'ltr',
-            format: '',
-            indent: 0,
-            tag: 'h1',
-            version: 1,
-          },
-          {
-            type: 'paragraph',
-            children: [
-              {
-                type: 'link',
-                children: [
-                  {
-                    type: 'text',
-                    detail: 0,
-                    format: 0,
-                    mode: 'normal',
-                    style: '',
-                    text: 'Visit the admin dashboard',
-                    version: 1,
-                  },
-                ],
-                direction: 'ltr',
-                fields: {
-                  linkType: 'custom',
-                  newTab: false,
-                  url: '/admin',
-                },
-                format: '',
-                indent: 0,
-                version: 2,
-              },
-              {
-                type: 'text',
-                detail: 0,
-                format: 0,
-                mode: 'normal',
-                style: '',
-                text: ' to make your account and seed content for your website.',
-                version: 1,
-              },
-            ],
-            direction: 'ltr',
-            format: '',
-            indent: 0,
-            textFormat: 0,
-            version: 1,
-          },
-        ],
-        direction: 'ltr',
-        format: '',
-        indent: 0,
-        version: 1,
-      },
-    },
+    richText: lexicalRoot([
+      headingNode('h1', [
+        text('FORGE YOUR PATH.'),
+        lineBreakNode(),
+        text('EARN YOUR SEAT.'),
+      ]),
+      paragraphNode(
+        "RaidGuild's monthly cohort is a 4-week proving ground where you embark on real projects, train with battle-tested builders, and claim your place in the premier design and dev collective of the decentralized realm.",
+      ),
+      paragraphNode('Cohorts launch on the first Monday of each month. Limited seats.'),
+      paragraphNode('Pledge now, or venture forth for the full tale.'),
+    ]),
   },
   meta: {
-    description: 'An open-source website built with Payload and Next.js.',
-    title: 'Payload Website Template',
+    description:
+      "RaidGuild's monthly cohort is a 4-week proving ground for builders entering the decentralized realm.",
+    title: 'Forge Your Path. Earn Your Seat.',
   },
   title: 'Home',
 }

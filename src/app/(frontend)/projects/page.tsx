@@ -1,0 +1,118 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import React from 'react'
+
+import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+
+import type { Profile, ProfileSkill } from '@/payload-types'
+
+export default async function ProjectsPage() {
+  const projects = await getProjects()
+
+  return (
+    <main className="container pb-24 pt-12">
+      <section>
+        <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+          Projects
+        </p>
+        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Project showcase</h1>
+        <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+          A lightweight showcase for project details, links, contributors, and skills. This is not a
+          project management tool.
+        </p>
+      </section>
+
+      <section className="mt-10 grid gap-4 md:grid-cols-2">
+        {projects.length ? (
+          projects.map((project) => (
+            <article className="border border-border p-6" key={project.id}>
+              <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                {project.projectStatus || 'Project'}
+              </p>
+              <h2 className="mt-2 text-2xl font-semibold">{project.title}</h2>
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">{project.summary}</p>
+              <RelationshipPills items={project.profileSkills} />
+              <ContributorList contributors={project.contributors} />
+              {project.links?.length ? (
+                <div className="mt-5 flex flex-wrap gap-3">
+                  {project.links.map((link) => (
+                    <Link
+                      className="text-sm font-medium underline"
+                      href={link.url}
+                      key={`${project.id}-${link.url}`}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </article>
+          ))
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No public projects yet. Add projects in Payload Admin to populate this showcase.
+          </p>
+        )}
+      </section>
+    </main>
+  )
+}
+
+export const metadata: Metadata = {
+  title: 'Projects',
+}
+
+const RelationshipPills: React.FC<{ items?: (number | ProfileSkill)[] | null }> = ({ items }) => {
+  const docs = items?.filter((item): item is ProfileSkill => typeof item === 'object')
+
+  if (!docs?.length) return null
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {docs.map((item) => (
+        <span className="border border-border px-2 py-1 text-xs" key={item.id}>
+          {item.title}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+const ContributorList: React.FC<{ contributors?: (number | Profile)[] | null }> = ({
+  contributors,
+}) => {
+  const docs = contributors?.filter((item): item is Profile => typeof item === 'object')
+
+  if (!docs?.length) return null
+
+  return (
+    <div className="mt-5 text-sm">
+      <p className="font-medium">Contributors</p>
+      <p className="mt-2 text-muted-foreground">
+        {docs.map((profile) => profile.displayName).join(', ')}
+      </p>
+    </div>
+  )
+}
+
+const getProjects = async () => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'projects',
+    depth: 2,
+    draft: false,
+    limit: 60,
+    overrideAccess: false,
+    sort: '-publishedAt',
+    where: {
+      _status: {
+        equals: 'published',
+      },
+    },
+  })
+
+  return result.docs
+}

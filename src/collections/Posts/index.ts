@@ -9,12 +9,13 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
+import { createPosts, deletePosts, updatePosts } from '@/access/posts'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
+import { enforcePostWorkflow } from './hooks/enforcePostWorkflow'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidatePost } from './hooks/revalidatePost'
 
@@ -31,10 +32,10 @@ import { getServerSideURL } from '@/utilities/getURL'
 export const Posts: CollectionConfig<'posts'> = {
   slug: 'posts',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: createPosts,
+    delete: deletePosts,
     read: authenticatedOrPublished,
-    update: authenticated,
+    update: updatePosts,
   },
   // This config controls what's populated by default when a post is referenced
   // https://payloadcms.com/docs/queries/select#defaultpopulate-collection-config-property
@@ -219,6 +220,7 @@ export const Posts: CollectionConfig<'posts'> = {
   hooks: {
     afterChange: [revalidatePost],
     afterRead: [populateAuthors],
+    beforeChange: [enforcePostWorkflow],
   },
   versions: {
     drafts: {

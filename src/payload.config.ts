@@ -8,8 +8,13 @@ import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
+import { DailyBriefs } from './collections/DailyBriefs'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
+import { Profiles } from './collections/Profiles'
+import { ProfileRoles } from './collections/ProfileRoles'
+import { ProfileSkills } from './collections/ProfileSkills'
+import { Projects } from './collections/Projects'
 import { Posts } from './collections/Posts'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
@@ -30,6 +35,10 @@ export default buildConfig({
       // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below and the import `BeforeDashboard` statement on line 15.
       beforeDashboard: ['@/components/BeforeDashboard'],
+      graphics: {
+        Icon: '@/components/AdminGraphics/AdminIcon',
+        Logo: '@/components/AdminGraphics/AdminLogo',
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
@@ -65,7 +74,19 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URI || '',
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users, Comments],
+  collections: [
+    Pages,
+    Posts,
+    DailyBriefs,
+    Projects,
+    Profiles,
+    ProfileSkills,
+    ProfileRoles,
+    Media,
+    Categories,
+    Users,
+    Comments,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer],
   plugins: [
@@ -77,9 +98,9 @@ export default buildConfig({
       path: '/health',
       method: 'get',
       handler: async (req) => {
-        return new Response('OK', { status: 200 });
-      }
-    }
+        return new Response('OK', { status: 200 })
+      },
+    },
   ],
   secret: process.env.PAYLOAD_SECRET,
   sharp,

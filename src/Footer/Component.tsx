@@ -8,6 +8,21 @@ import { ThemeSelector } from '@/providers/Theme/ThemeSelector'
 import { CMSLink } from '@/components/Link'
 import { Logo } from '@/components/Logo/Logo'
 
+const socialLinks = [
+  {
+    label: 'GitHub',
+    url: 'https://github.com/raid-guild/',
+  },
+  {
+    label: 'X',
+    url: 'https://x.com/RaidGuild',
+  },
+  {
+    label: 'Discord',
+    url: 'https://discord.gg/K7qFnBT9Ba',
+  },
+]
+
 export async function Footer() {
   const footer: Footer = await getCachedGlobal('footer', 1)()
 
@@ -22,10 +37,23 @@ export async function Footer() {
 
         <div className="flex flex-col-reverse items-start md:flex-row gap-4 md:items-center">
           <ThemeSelector />
-          <nav className="flex flex-col md:flex-row gap-4">
+          <nav className="flex flex-col md:flex-row gap-4" aria-label="Footer navigation">
             {navItems.map(({ link }, i) => {
               return <CMSLink className="text-white" key={i} {...link} />
             })}
+          </nav>
+          <nav className="flex gap-4" aria-label="RaidGuild social links">
+            {socialLinks.map((link) => (
+              <a
+                className="text-white transition-colors hover:text-primary"
+                href={link.url}
+                key={link.label}
+                rel="noreferrer"
+                target="_blank"
+              >
+                {link.label}
+              </a>
+            ))}
           </nav>
         </div>
       </div>

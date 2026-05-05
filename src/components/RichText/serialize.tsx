@@ -151,6 +151,9 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
                 </Tag>
               )
             }
+            case 'horizontalrule': {
+              return <hr className="col-start-2 my-8 border-border" key={index} />
+            }
             case 'list': {
               const Tag = node?.tag
               return (

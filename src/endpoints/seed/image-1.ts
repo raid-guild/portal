@@ -1,7 +1,7 @@
 import type { Media } from '@/payload-types'
 
 export const image1: Omit<Media, 'createdAt' | 'id' | 'updatedAt'> = {
-  alt: 'Shirts',
+  alt: 'Floating tower in the RaidGuild cohort realm',
   caption: {
     root: {
       type: 'root',
@@ -15,31 +15,8 @@ export const image1: Omit<Media, 'createdAt' | 'id' | 'updatedAt'> = {
               format: 0,
               mode: 'normal',
               style: '',
-              text: 'Graphic by ',
+              text: 'RaidGuild cohort hero artwork.',
               version: 1,
-            },
-            {
-              type: 'link',
-              children: [
-                {
-                  type: 'text',
-                  detail: 0,
-                  format: 0,
-                  mode: 'normal',
-                  style: '',
-                  text: 'Payload',
-                  version: 1,
-                },
-              ],
-              direction: 'ltr',
-              fields: {
-                linkType: 'custom',
-                newTab: true,
-                url: 'https://payloadcms.com/use-cases/headless-cms',
-              },
-              format: '',
-              indent: 0,
-              version: 2,
             },
           ],
           direction: 'ltr',
