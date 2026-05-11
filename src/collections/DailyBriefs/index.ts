@@ -55,6 +55,21 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
       required: true,
     },
     {
+      name: 'statusLabel',
+      type: 'text',
+      admin: {
+        description: 'Short current-state label for the brief top strip, for example Active Now.',
+      },
+    },
+    {
+      name: 'focusLabel',
+      type: 'text',
+      admin: {
+        description:
+          'Short focus label for the brief top strip, for example Week 3 - Agent Workflows.',
+      },
+    },
+    {
       name: 'sections',
       type: 'array',
       fields: [
@@ -105,6 +120,59 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
           ]
         },
       }),
+    },
+    {
+      name: 'nextEvent',
+      type: 'relationship',
+      relationTo: 'events',
+    },
+    {
+      name: 'activityItems',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'activityItems',
+    },
+    {
+      name: 'threads',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'threads',
+    },
+    {
+      name: 'engagementActions',
+      type: 'array',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+        },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value) => validateSafeURL(value),
+        },
+        {
+          name: 'style',
+          type: 'select',
+          defaultValue: 'secondary',
+          options: [
+            {
+              label: 'Primary',
+              value: 'primary',
+            },
+            {
+              label: 'Secondary',
+              value: 'secondary',
+            },
+          ],
+        },
+      ],
     },
     {
       name: 'visibility',

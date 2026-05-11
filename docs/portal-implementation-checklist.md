@@ -57,6 +57,18 @@
 - [ ] Decide whether projects use drafts/publishing.
 - [ ] Add API examples for reading projects and contributors.
 
+## Phase 5A: Cohort Spike MVP Primitives
+
+- [x] Add `activityItems` collection for dated, factual community signals.
+- [x] Add `threads` collection for persistent lines of work or thought.
+- [x] Add `events` collection for sessions, join links, calendar links, and Discord event links.
+- [x] Relate `dailyBriefs` to activity items, threads, and the next event.
+- [x] Relate `projects` to activity items, threads, and relevant events.
+- [ ] Render next-session and calendar CTAs on the Update Brief view.
+- [ ] Render project-related events on project spike pages when present.
+- [x] Seed session-grounded activity, thread, and event records.
+- [ ] Add e2e coverage for brief, project spike, thread, activity, and event visibility.
+
 ## Phase 6: External API Hardening
 
 - [ ] Add signup abuse controls before public launch: rate limiting, email verification, and/or CAPTCHA.
