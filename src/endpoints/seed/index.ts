@@ -754,6 +754,13 @@ export const seed = async ({
           {
             link: {
               type: 'custom',
+              label: 'Sessions',
+              url: '/events',
+            },
+          },
+          {
+            link: {
+              type: 'custom',
               label: 'Posts',
               url: '/posts',
             },

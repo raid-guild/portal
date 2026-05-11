@@ -1,0 +1,305 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import React, { cache } from 'react'
+
+import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+
+import type { ActivityItem, Event, Profile, Project, ProfileSkill, Thread } from '@/payload-types'
+import { toSafeURL } from '@/utilities/safeURL'
+
+export const dynamic = 'force-dynamic'
+
+type Args = {
+  params: Promise<{
+    slug?: string
+  }>
+}
+
+const formatDateTime = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(date))
+}
+
+const formatDate = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(date))
+}
+
+const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
+  items?.filter((item): item is T => item !== null && typeof item === 'object') || []
+
+export default async function ProjectPage({ params: paramsPromise }: Args) {
+  const { slug = '' } = await paramsPromise
+  const project = await queryProjectBySlug({ slug })
+
+  if (!project) notFound()
+
+  const activityItems = relationDocs<ActivityItem>(project.activityItems)
+  const threads = relationDocs<Thread>(project.threads)
+  const events = relationDocs<Event>(project.events)
+  const contributors = relationDocs<Profile>(project.contributors)
+  const skills = relationDocs<ProfileSkill>(project.profileSkills)
+
+  return (
+    <main className="container pb-24 pt-12">
+      <section className="grid gap-8 border-b border-border pb-10 lg:grid-cols-[1fr_18rem]">
+        <div>
+          <Link className="text-sm font-medium text-muted-foreground hover:underline" href="/projects">
+            Projects
+          </Link>
+          <p className="mt-6 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+            {project.projectStatus || 'Project spike'}
+          </p>
+          <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
+            {project.title}
+          </h1>
+          <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
+            {project.summary}
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {skills.map((skill) => (
+              <span className="border border-border px-2 py-1 text-xs" key={skill.id}>
+                {skill.title}
+              </span>
+            ))}
+          </div>
+        </div>
+        <aside className="border border-border p-5 text-sm">
+          <p className="font-semibold">Project state</p>
+          <p className="mt-2 text-muted-foreground">
+            Last active: {formatDate(project.lastActiveAt || project.updatedAt) || 'Recently'}
+          </p>
+          {contributors.length ? (
+            <div className="mt-5">
+              <p className="font-medium">People</p>
+              <p className="mt-2 text-muted-foreground">
+                {contributors.map((profile) => profile.displayName).join(', ')}
+              </p>
+            </div>
+          ) : null}
+          <ActionLink action={project.primaryCTA} className="mt-5 block" />
+        </aside>
+      </section>
+
+      {project.currentState?.length ? (
+        <section className="mt-10 border border-border p-6">
+          <h2 className="text-2xl font-semibold">What is happening</h2>
+          <ul className="mt-5 space-y-3 text-sm leading-6 text-muted-foreground">
+            {project.currentState.map((item) => (
+              <li key={item.id || item.body}>{item.body}</li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-[1fr_22rem]">
+        <div className="space-y-6">
+          <Section title="Activity">
+            {activityItems.length ? (
+              <div className="space-y-3">
+                {activityItems.map((item) => (
+                  <article className="border border-border p-4" key={item.id}>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                        {item.activityType}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(item.happenedAt)}
+                      </p>
+                    </div>
+                    <h3 className="mt-2 font-semibold">{item.title}</h3>
+                    {item.body ? (
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                    ) : null}
+                    {item.sourceLabel ? (
+                      <p className="mt-3 text-xs text-muted-foreground">{item.sourceLabel}</p>
+                    ) : null}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No activity has been linked yet.</p>
+            )}
+          </Section>
+
+          <Section title="Threads">
+            {threads.length ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {threads.map((thread) => (
+                  <article className="border border-border p-4" key={thread.id}>
+                    <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                      {thread.threadStatus}
+                    </p>
+                    <h3 className="mt-2 font-semibold">{thread.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                      {thread.summary}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No active threads have been linked yet.</p>
+            )}
+          </Section>
+        </div>
+
+        <div className="space-y-6">
+          <Section title="Next Sessions">
+            {events.length ? (
+              <div className="space-y-3">
+                {events.map((event) => (
+                  <article className="border border-border p-4" key={event.id}>
+                    <h3 className="font-semibold">{event.title}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      {formatDateTime(event.startsAt)}
+                    </p>
+                    {event.locationLabel ? (
+                      <p className="mt-1 text-sm text-muted-foreground">{event.locationLabel}</p>
+                    ) : null}
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <SafeLink href={event.joinURL} label="Join" />
+                      <SafeLink href={event.calendarURL} label="Add to Calendar" />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No project sessions have been linked yet.</p>
+            )}
+          </Section>
+
+          <Section title="Ways to Contribute">
+            {project.contributionActions?.length ? (
+              <div className="space-y-3">
+                {project.contributionActions.map((action) => (
+                  <article className="border border-border p-4" key={action.id || action.title}>
+                    <h3 className="font-semibold">{action.title}</h3>
+                    {action.description ? (
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {action.description}
+                      </p>
+                    ) : null}
+                    <SafeLink className="mt-3 inline-block" href={action.url} label="Open" />
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No contribution paths are listed yet.</p>
+            )}
+          </Section>
+
+          <Section title="Resources">
+            {project.resources?.length || project.links?.length ? (
+              <div className="space-y-2 text-sm">
+                {project.resources?.map((resource) => (
+                  <SafeLink
+                    className="block"
+                    href={resource.url}
+                    key={resource.id || resource.url}
+                    label={resource.label}
+                  />
+                ))}
+                {project.links?.map((link) => (
+                  <SafeLink className="block" href={link.url} key={link.id || link.url} label={link.label} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No resources have been linked yet.</p>
+            )}
+          </Section>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
+  const { slug = '' } = await paramsPromise
+  const project = await queryProjectBySlug({ slug })
+
+  return {
+    description: project?.summary,
+    title: project?.title || 'Project',
+  }
+}
+
+const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (
+  <section className="border border-border p-6">
+    <h2 className="text-xl font-semibold">{title}</h2>
+    <div className="mt-5">{children}</div>
+  </section>
+)
+
+const SafeLink: React.FC<{ className?: string; href?: string | null; label: string }> = ({
+  className,
+  href,
+  label,
+}) => {
+  const safeURL = toSafeURL(href)
+
+  if (!safeURL) {
+    return <span className={className}>{label}</span>
+  }
+
+  const isExternal = safeURL.startsWith('http')
+
+  return (
+    <Link
+      className={`text-sm font-medium underline ${className || ''}`}
+      href={safeURL}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
+      target={isExternal ? '_blank' : undefined}
+    >
+      {label}
+    </Link>
+  )
+}
+
+const ActionLink: React.FC<{
+  action?: Project['primaryCTA']
+  className?: string
+}> = ({ action, className }) => {
+  if (!action?.label || !action.url) return null
+
+  return <SafeLink className={className} href={action.url} label={action.label} />
+}
+
+const queryProjectBySlug = cache(async ({ slug }: { slug: string }) => {
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'projects',
+    depth: 2,
+    draft: false,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    where: {
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs[0] || null
+})
