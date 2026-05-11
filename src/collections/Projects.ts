@@ -46,12 +46,61 @@ export const Projects: CollectionConfig = {
           value: 'active',
         },
         {
+          label: 'Building',
+          value: 'building',
+        },
+        {
           label: 'Archived',
           value: 'archived',
         },
         {
           label: 'Exploratory',
           value: 'exploratory',
+        },
+        {
+          label: 'Exploring',
+          value: 'exploring',
+        },
+        {
+          label: 'Shipping',
+          value: 'shipping',
+        },
+      ],
+    },
+    {
+      name: 'currentState',
+      type: 'array',
+      fields: [
+        {
+          name: 'body',
+          type: 'textarea',
+          required: true,
+        },
+      ],
+    },
+    {
+      name: 'lastActiveAt',
+      type: 'date',
+      admin: {
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        position: 'sidebar',
+      },
+      index: true,
+    },
+    {
+      name: 'primaryCTA',
+      type: 'group',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+        },
+        {
+          name: 'url',
+          type: 'text',
+          validate: (value) => validateSafeURL(value),
         },
       ],
     },
@@ -89,6 +138,94 @@ export const Projects: CollectionConfig = {
       type: 'relationship',
       hasMany: true,
       relationTo: 'profileSkills',
+    },
+    {
+      name: 'activityItems',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'activityItems',
+    },
+    {
+      name: 'threads',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'threads',
+    },
+    {
+      name: 'events',
+      type: 'relationship',
+      hasMany: true,
+      relationTo: 'events',
+    },
+    {
+      name: 'resources',
+      type: 'array',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value) =>
+            validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+        },
+        {
+          name: 'resourceType',
+          type: 'select',
+          defaultValue: 'link',
+          options: [
+            {
+              label: 'Link',
+              value: 'link',
+            },
+            {
+              label: 'Repository',
+              value: 'repo',
+            },
+            {
+              label: 'Design',
+              value: 'design',
+            },
+            {
+              label: 'Document',
+              value: 'doc',
+            },
+            {
+              label: 'Calendar',
+              value: 'calendar',
+            },
+            {
+              label: 'Discord',
+              value: 'discord',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'contributionActions',
+      type: 'array',
+      fields: [
+        {
+          name: 'title',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'description',
+          type: 'textarea',
+        },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value) => validateSafeURL(value),
+        },
+      ],
     },
     {
       name: 'publishedAt',

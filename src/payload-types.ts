@@ -69,9 +69,12 @@ export interface Config {
   collections: {
     pages: Page;
     posts: Post;
+    activityItems: ActivityItem;
     dailyBriefs: DailyBrief;
+    events: Event;
     pointEvents: PointEvent;
     projects: Project;
+    threads: Thread;
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
@@ -92,9 +95,12 @@ export interface Config {
   collectionsSelect: {
     pages: PagesSelect<false> | PagesSelect<true>;
     posts: PostsSelect<false> | PostsSelect<true>;
+    activityItems: ActivityItemsSelect<false> | ActivityItemsSelect<true>;
     dailyBriefs: DailyBriefsSelect<false> | DailyBriefsSelect<true>;
+    events: EventsSelect<false> | EventsSelect<true>;
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    threads: ThreadsSelect<false> | ThreadsSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
@@ -722,52 +728,21 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "dailyBriefs".
+ * via the `definition` "activityItems".
  */
-export interface DailyBrief {
+export interface ActivityItem {
   id: number;
   title: string;
-  briefDate: string;
-  summary: string;
-  sections: {
-    heading: string;
-    body: string;
-    links?:
-      | {
-          label: string;
-          url: string;
-          id?: string | null;
-        }[]
-      | null;
-    id?: string | null;
-  }[];
-  /**
-   * Optional long-form narrative version of the brief.
-   */
-  content?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  visibility: 'authenticated' | 'public' | 'admin';
-  /**
-   * Internal notes, source references, or generation context.
-   */
-  sourceNotes?: string | null;
-  relatedPosts?: (number | Post)[] | null;
-  relatedProjects?: (number | Project)[] | null;
+  body?: string | null;
+  activityType: 'discussion' | 'decision' | 'project' | 'insight' | 'blocker' | 'event' | 'contribution';
+  happenedAt: string;
+  sourceLabel?: string | null;
+  sourceURL?: string | null;
+  relatedProject?: (number | null) | Project;
+  relatedThread?: (number | null) | Thread;
+  relatedEvent?: (number | null) | Event;
   relatedProfiles?: (number | Profile)[] | null;
-  authors?: (number | User)[] | null;
+  visibility: 'authenticated' | 'public' | 'admin';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -796,7 +771,18 @@ export interface Project {
     };
     [k: string]: unknown;
   } | null;
-  projectStatus?: ('active' | 'archived' | 'exploratory') | null;
+  projectStatus?: ('active' | 'building' | 'archived' | 'exploratory' | 'exploring' | 'shipping') | null;
+  currentState?:
+    | {
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  lastActiveAt?: string | null;
+  primaryCTA?: {
+    label?: string | null;
+    url?: string | null;
+  };
   links?:
     | {
         label: string;
@@ -807,6 +793,25 @@ export interface Project {
   coverImage?: (number | null) | Media;
   contributors?: (number | Profile)[] | null;
   profileSkills?: (number | ProfileSkill)[] | null;
+  activityItems?: (number | ActivityItem)[] | null;
+  threads?: (number | Thread)[] | null;
+  events?: (number | Event)[] | null;
+  resources?:
+    | {
+        label: string;
+        url: string;
+        resourceType?: ('link' | 'repo' | 'design' | 'doc' | 'calendar' | 'discord') | null;
+        id?: string | null;
+      }[]
+    | null;
+  contributionActions?:
+    | {
+        title: string;
+        description?: string | null;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
   publishedAt?: string | null;
   slug?: string | null;
   slugLock?: boolean | null;
@@ -880,6 +885,129 @@ export interface ProfileRole {
   slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threads".
+ */
+export interface Thread {
+  id: number;
+  title: string;
+  summary: string;
+  threadStatus: 'active' | 'paused' | 'resolved' | 'archived';
+  lastActiveAt?: string | null;
+  participants?: (number | Profile)[] | null;
+  relatedProjects?: (number | Project)[] | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  summary?: string | null;
+  startsAt: string;
+  endsAt?: string | null;
+  locationLabel?: string | null;
+  joinURL?: string | null;
+  calendarURL?: string | null;
+  discordEventURL?: string | null;
+  relatedProjects?: (number | Project)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dailyBriefs".
+ */
+export interface DailyBrief {
+  id: number;
+  title: string;
+  briefDate: string;
+  summary: string;
+  /**
+   * Short current-state label for the brief top strip, for example Active Now.
+   */
+  statusLabel?: string | null;
+  /**
+   * Short focus label for the brief top strip, for example Week 3 - Agent Workflows.
+   */
+  focusLabel?: string | null;
+  sections: {
+    heading: string;
+    body: string;
+    links?:
+      | {
+          label: string;
+          url: string;
+          id?: string | null;
+        }[]
+      | null;
+    id?: string | null;
+  }[];
+  /**
+   * Optional long-form narrative version of the brief.
+   */
+  content?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  nextEvent?: (number | null) | Event;
+  activityItems?: (number | ActivityItem)[] | null;
+  threads?: (number | Thread)[] | null;
+  engagementActions?:
+    | {
+        label: string;
+        description?: string | null;
+        url: string;
+        style?: ('primary' | 'secondary') | null;
+        id?: string | null;
+      }[]
+    | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  /**
+   * Internal notes, source references, or generation context.
+   */
+  sourceNotes?: string | null;
+  relatedPosts?: (number | Post)[] | null;
+  relatedProjects?: (number | Project)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  authors?: (number | User)[] | null;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1029,8 +1157,16 @@ export interface PayloadLockedDocument {
         value: number | Post;
       } | null)
     | ({
+        relationTo: 'activityItems';
+        value: number | ActivityItem;
+      } | null)
+    | ({
         relationTo: 'dailyBriefs';
         value: number | DailyBrief;
+      } | null)
+    | ({
+        relationTo: 'events';
+        value: number | Event;
       } | null)
     | ({
         relationTo: 'pointEvents';
@@ -1039,6 +1175,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'projects';
         value: number | Project;
+      } | null)
+    | ({
+        relationTo: 'threads';
+        value: number | Thread;
       } | null)
     | ({
         relationTo: 'profiles';
@@ -1293,12 +1433,35 @@ export interface PostsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activityItems_select".
+ */
+export interface ActivityItemsSelect<T extends boolean = true> {
+  title?: T;
+  body?: T;
+  activityType?: T;
+  happenedAt?: T;
+  sourceLabel?: T;
+  sourceURL?: T;
+  relatedProject?: T;
+  relatedThread?: T;
+  relatedEvent?: T;
+  relatedProfiles?: T;
+  visibility?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "dailyBriefs_select".
  */
 export interface DailyBriefsSelect<T extends boolean = true> {
   title?: T;
   briefDate?: T;
   summary?: T;
+  statusLabel?: T;
+  focusLabel?: T;
   sections?:
     | T
     | {
@@ -1314,12 +1477,46 @@ export interface DailyBriefsSelect<T extends boolean = true> {
         id?: T;
       };
   content?: T;
+  nextEvent?: T;
+  activityItems?: T;
+  threads?: T;
+  engagementActions?:
+    | T
+    | {
+        label?: T;
+        description?: T;
+        url?: T;
+        style?: T;
+        id?: T;
+      };
   visibility?: T;
   sourceNotes?: T;
   relatedPosts?: T;
   relatedProjects?: T;
   relatedProfiles?: T;
   authors?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events_select".
+ */
+export interface EventsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  startsAt?: T;
+  endsAt?: T;
+  locationLabel?: T;
+  joinURL?: T;
+  calendarURL?: T;
+  discordEventURL?: T;
+  relatedProjects?: T;
+  relatedThreads?: T;
+  relatedProfiles?: T;
+  visibility?: T;
   publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
@@ -1353,6 +1550,19 @@ export interface ProjectsSelect<T extends boolean = true> {
   summary?: T;
   description?: T;
   projectStatus?: T;
+  currentState?:
+    | T
+    | {
+        body?: T;
+        id?: T;
+      };
+  lastActiveAt?: T;
+  primaryCTA?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+      };
   links?:
     | T
     | {
@@ -1363,6 +1573,51 @@ export interface ProjectsSelect<T extends boolean = true> {
   coverImage?: T;
   contributors?: T;
   profileSkills?: T;
+  activityItems?: T;
+  threads?: T;
+  events?: T;
+  resources?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        resourceType?: T;
+        id?: T;
+      };
+  contributionActions?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        url?: T;
+        id?: T;
+      };
+  publishedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threads_select".
+ */
+export interface ThreadsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  threadStatus?: T;
+  lastActiveAt?: T;
+  participants?: T;
+  relatedProjects?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  visibility?: T;
   publishedAt?: T;
   slug?: T;
   slugLock?: T;

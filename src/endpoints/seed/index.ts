@@ -19,12 +19,15 @@ import { profileRoles } from './profile-roles'
 import { profileSkills } from './profile-skills'
 
 const collections: CollectionSlug[] = [
+  'activityItems',
   'categories',
   'dailyBriefs',
+  'events',
   'projects',
   'profiles',
   'profileSkills',
   'profileRoles',
+  'threads',
   'media',
   'pages',
   'posts',
@@ -40,6 +43,8 @@ const mimeTypes: Record<string, string> = {
   '.png': 'image/png',
   '.webp': 'image/webp',
 }
+
+const isDefined = <T>(value: T | null | undefined): value is T => value != null
 
 async function fetchFileByURL(url: string): Promise<File> {
   const controller = new AbortController()
@@ -170,20 +175,23 @@ export const seed = async ({
 
     payload.logger.info(`- Seeding profile skills and roles...`)
 
-    await Promise.all([
-      ...profileSkills.map((skill) =>
+    const createdProfileSkills = await Promise.all(
+      profileSkills.map((skill) =>
         payload.create({
           collection: 'profileSkills',
           data: skill,
         }),
       ),
-      ...profileRoles.map((role) =>
+    )
+
+    const createdProfileRoles = await Promise.all(
+      profileRoles.map((role) =>
         payload.create({
           collection: 'profileRoles',
           data: role,
         }),
       ),
-    ])
+    )
 
     payload.logger.info(`- Seeding media...`)
 
@@ -396,15 +404,305 @@ export const seed = async ({
       payload.logger.error(`Related posts seed step failed, continuing: ${message}`)
     }
 
+    payload.logger.info(`- Seeding cohort spike primitives...`)
+
+    const frontendSkill = createdProfileSkills.find((skill) => skill.slug === 'frontend-dev')
+    const projectManagerSkill = createdProfileSkills.find((skill) => skill.slug === 'project-manager')
+    const communitySkill = createdProfileSkills.find((skill) => skill.slug === 'community')
+    const warriorRole = createdProfileRoles.find((role) => role.slug === 'warrior')
+    const monkRole = createdProfileRoles.find((role) => role.slug === 'monk')
+
+    const demoProfile = await payload.create({
+      collection: 'profiles',
+      data: {
+        user: demoAuthor.id,
+        handle: 'duckanbro',
+        displayName: 'duckanbro',
+        bio: 'Cohort contributor helping turn meeting context into a visible project spike portal.',
+        profileSkills: [frontendSkill?.id, projectManagerSkill?.id, communitySkill?.id].filter(
+          isDefined,
+        ),
+        profileRoles: [warriorRole?.id, monkRole?.id].filter(isDefined),
+        status: 'active',
+        visibility: 'public',
+      },
+    })
+
+    const cohortProject = await payload.create({
+      collection: 'projects',
+      data: {
+        title: 'Cohort Project Spike Portal',
+        summary:
+          'A lightweight portal that surfaces active project spikes, recent activity, threads, events, and ways to contribute.',
+        projectStatus: 'building',
+        currentState: [
+          {
+            body: 'Base primitives are being scaffolded around briefs, projects, activity, threads, and events.',
+          },
+          {
+            body: 'The group aligned on surfacing project state without turning the portal into project management software.',
+          },
+          {
+            body: 'Next useful step is rendering real seeded activity and next-session CTAs in the app.',
+          },
+        ],
+        lastActiveAt: '2026-05-11T17:34:47.664Z',
+        primaryCTA: {
+          label: 'Join Project',
+          url: '/projects/cohort-project-spike-portal',
+        },
+        contributors: [demoProfile.id],
+        profileSkills: [frontendSkill?.id, projectManagerSkill?.id, communitySkill?.id].filter(
+          isDefined,
+        ),
+        resources: [
+          {
+            label: 'Implementation spec',
+            url: 'https://github.com/raidguild/payload-3-boilerplate',
+            resourceType: 'doc',
+          },
+          {
+            label: 'Contributor guidelines',
+            url: 'https://github.com/raidguild/payload-3-boilerplate',
+            resourceType: 'doc',
+          },
+        ],
+        contributionActions: [
+          {
+            title: 'Render the Update Brief',
+            description: 'Show recent activity, active threads, and next-session CTAs from Payload.',
+            url: '/',
+          },
+          {
+            title: 'Build the Project Detail Page',
+            description: 'Surface current state, related events, threads, resources, and actions.',
+            url: '/projects/cohort-project-spike-portal',
+          },
+          {
+            title: 'Add Session-Grounded Seeds',
+            description: 'Keep seed data tied to real cohort discussion instead of placeholder copy.',
+            url: '/admin/collections/activityItems',
+          },
+        ],
+        _status: 'published',
+        publishedAt: '2026-05-11T17:34:47.664Z',
+      },
+    })
+
+    const [projectObjectThread, calendarThread, ownershipThread, onboardingThread] =
+      await Promise.all([
+        payload.create({
+          collection: 'threads',
+          data: {
+            title: 'Defining the project spike object',
+            summary:
+              'Clarifying what a project is in the portal: a live collaboration surface, not a task board.',
+            threadStatus: 'active',
+            lastActiveAt: '2026-05-11T17:34:47.664Z',
+            participants: [demoProfile.id],
+            relatedProjects: [cohortProject.id],
+            visibility: 'public',
+            _status: 'published',
+            publishedAt: '2026-05-11T17:34:47.664Z',
+          },
+        }),
+        payload.create({
+          collection: 'threads',
+          data: {
+            title: 'Calendar and session coordination',
+            summary:
+              'Making the next live moment visible and easy to add to personal calendars.',
+            threadStatus: 'active',
+            lastActiveAt: '2026-05-11T17:34:47.664Z',
+            participants: [demoProfile.id],
+            relatedProjects: [cohortProject.id],
+            visibility: 'public',
+            _status: 'published',
+            publishedAt: '2026-05-11T17:34:47.664Z',
+          },
+        }),
+        payload.create({
+          collection: 'threads',
+          data: {
+            title: 'Contribution ownership and repo workstreams',
+            summary:
+              'Reducing duplicated work by defining ownership, issue structure, and shared repo boundaries.',
+            threadStatus: 'active',
+            lastActiveAt: '2026-05-11T17:34:47.664Z',
+            participants: [demoProfile.id],
+            relatedProjects: [cohortProject.id],
+            visibility: 'authenticated',
+            _status: 'published',
+            publishedAt: '2026-05-11T17:34:47.664Z',
+          },
+        }),
+        payload.create({
+          collection: 'threads',
+          data: {
+            title: 'Improving onboarding flow',
+            summary:
+              'Creating a clearer entry path beyond Discord so new contributors know what is live and where to start.',
+            threadStatus: 'active',
+            lastActiveAt: '2026-05-11T17:34:47.664Z',
+            participants: [demoProfile.id],
+            relatedProjects: [cohortProject.id],
+            visibility: 'public',
+            _status: 'published',
+            publishedAt: '2026-05-11T17:34:47.664Z',
+          },
+        }),
+      ])
+
+    const nextCohortEvent = await payload.create({
+      collection: 'events',
+      data: {
+        title: 'Cohort Project Spike Sync',
+        summary:
+          'Follow-up sync to review scaffolding, work ownership, and the first rendered brief/project surfaces.',
+        startsAt: '2026-05-13T17:00:00.000Z',
+        endsAt: '2026-05-13T18:00:00.000Z',
+        locationLabel: 'Discord #cohort-voice',
+        joinURL: 'https://discord.com',
+        calendarURL: 'https://calendar.google.com',
+        discordEventURL: 'https://discord.com',
+        relatedProjects: [cohortProject.id],
+        relatedThreads: [projectObjectThread.id, calendarThread.id, ownershipThread.id],
+        relatedProfiles: [demoProfile.id],
+        visibility: 'public',
+        _status: 'published',
+        publishedAt: '2026-05-11T17:34:47.664Z',
+      },
+    })
+
+    const activityItems = await Promise.all([
+      payload.create({
+        collection: 'activityItems',
+        data: {
+          title: 'Group narrowed the portal around project spikes instead of broad PM tooling.',
+          body: 'The MVP should surface active work, state, events, and contribution paths without becoming a task manager.',
+          activityType: 'decision',
+          happenedAt: '2026-05-11T17:00:00.000Z',
+          sourceLabel: 'Cohort Voice session',
+          relatedProject: cohortProject.id,
+          relatedThread: projectObjectThread.id,
+          relatedEvent: nextCohortEvent.id,
+          relatedProfiles: [demoProfile.id],
+          visibility: 'public',
+          _status: 'published',
+          publishedAt: '2026-05-11T17:34:47.664Z',
+        },
+      }),
+      payload.create({
+        collection: 'activityItems',
+        data: {
+          title: 'Calendar-first participation was called out as a core need.',
+          body: 'Events should make it easy for people to add session data to their own calendars instead of relying on portal visits alone.',
+          activityType: 'insight',
+          happenedAt: '2026-05-11T17:12:00.000Z',
+          sourceLabel: 'Cohort Voice session',
+          relatedProject: cohortProject.id,
+          relatedThread: calendarThread.id,
+          relatedEvent: nextCohortEvent.id,
+          relatedProfiles: [demoProfile.id],
+          visibility: 'public',
+          _status: 'published',
+          publishedAt: '2026-05-11T17:34:47.664Z',
+        },
+      }),
+      payload.create({
+        collection: 'activityItems',
+        data: {
+          title: 'Need for a clear owner and issue structure surfaced as a blocker.',
+          body: 'Contributors want to help, but the shared repo needs clearer workstreams to avoid duplicate or conflicting implementation.',
+          activityType: 'blocker',
+          happenedAt: '2026-05-11T17:20:00.000Z',
+          sourceLabel: 'Cohort Voice session',
+          relatedProject: cohortProject.id,
+          relatedThread: ownershipThread.id,
+          relatedProfiles: [demoProfile.id],
+          visibility: 'authenticated',
+          _status: 'published',
+          publishedAt: '2026-05-11T17:34:47.664Z',
+        },
+      }),
+      payload.create({
+        collection: 'activityItems',
+        data: {
+          title: 'Portal positioned as a pre-Discord discovery surface.',
+          body: 'The group identified Discord as too overwhelming for first touch, so the portal should show what is live and how to join.',
+          activityType: 'insight',
+          happenedAt: '2026-05-11T17:28:00.000Z',
+          sourceLabel: 'Cohort Voice session',
+          relatedProject: cohortProject.id,
+          relatedThread: onboardingThread.id,
+          relatedProfiles: [demoProfile.id],
+          visibility: 'public',
+          _status: 'published',
+          publishedAt: '2026-05-11T17:34:47.664Z',
+        },
+      }),
+    ])
+
+    await payload.update({
+      id: cohortProject.id,
+      collection: 'projects',
+      data: {
+        activityItems: activityItems.map((item) => item.id),
+        threads: [
+          projectObjectThread.id,
+          calendarThread.id,
+          ownershipThread.id,
+          onboardingThread.id,
+        ],
+        events: [nextCohortEvent.id],
+      },
+    })
+
     payload.logger.info(`- Seeding daily brief...`)
+
+    const seededDailyBrief = JSON.parse(
+      JSON.stringify(dailyBrief)
+        .replace(/"\{\{POST_1\}\}"/g, JSON.stringify(post1Doc.id))
+        .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
+    )
 
     await payload.create({
       collection: 'dailyBriefs',
-      data: JSON.parse(
-        JSON.stringify(dailyBrief)
-          .replace(/"\{\{POST_1\}\}"/g, JSON.stringify(post1Doc.id))
-          .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
-      ),
+      data: {
+        ...seededDailyBrief,
+        statusLabel: 'Active Now',
+        focusLabel: 'Project Spike Portal',
+        nextEvent: nextCohortEvent.id,
+        activityItems: activityItems.map((item) => item.id),
+        threads: [
+          projectObjectThread.id,
+          calendarThread.id,
+          ownershipThread.id,
+          onboardingThread.id,
+        ],
+        engagementActions: [
+          {
+            label: 'Join next session',
+            description: 'Jump into the next cohort voice sync.',
+            url: nextCohortEvent.joinURL,
+            style: 'primary',
+          },
+          {
+            label: 'Add to calendar',
+            description: 'Put the next sync on your own calendar.',
+            url: nextCohortEvent.calendarURL,
+            style: 'secondary',
+          },
+          {
+            label: 'View project spike',
+            description: 'See the current project state and ways to contribute.',
+            url: '/projects/cohort-project-spike-portal',
+            style: 'secondary',
+          },
+        ],
+        relatedProjects: [cohortProject.id],
+        relatedProfiles: [demoProfile.id],
+      },
     })
 
     // Create home page

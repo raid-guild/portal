@@ -17,4 +17,6 @@ updates easier to discover and connect.
 ## Notes
 
 - [Portal direction](./portal-direction.md)
+- [Contributor guidelines](./contributor-guidelines.md)
+- [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)

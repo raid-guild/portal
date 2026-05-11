@@ -6,9 +6,11 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
+import { ActivityItems } from './collections/ActivityItems'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
 import { DailyBriefs } from './collections/DailyBriefs'
+import { Events } from './collections/Events'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { PointEvents } from './collections/PointEvents'
@@ -17,6 +19,7 @@ import { ProfileRoles } from './collections/ProfileRoles'
 import { ProfileSkills } from './collections/ProfileSkills'
 import { Projects } from './collections/Projects'
 import { Posts } from './collections/Posts'
+import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
@@ -78,9 +81,12 @@ export default buildConfig({
   collections: [
     Pages,
     Posts,
+    ActivityItems,
     DailyBriefs,
+    Events,
     PointEvents,
     Projects,
+    Threads,
     Profiles,
     ProfileSkills,
     ProfileRoles,
