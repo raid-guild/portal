@@ -8,6 +8,8 @@ import { getPayload } from 'payload'
 import type { Profile, ProfileSkill } from '@/payload-types'
 import { toSafeURL } from '@/utilities/safeURL'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProjectsPage() {
   const projects = await getProjects()
 
@@ -15,12 +17,12 @@ export default async function ProjectsPage() {
     <main className="container pb-24 pt-12">
       <section>
         <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-          Projects
+          Project Spikes
         </p>
-        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Project showcase</h1>
+        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Active project spikes</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          A lightweight showcase for project details, links, contributors, and skills. This is not a
-          project management tool.
+          Live collaboration surfaces that show what is being built, who is involved, and how to
+          jump in. This is not a project management tool.
         </p>
       </section>
 
@@ -33,8 +35,18 @@ export default async function ProjectsPage() {
               </p>
               <h2 className="mt-2 text-2xl font-semibold">{project.title}</h2>
               <p className="mt-4 text-sm leading-6 text-muted-foreground">{project.summary}</p>
+              {project.currentState?.[0]?.body ? (
+                <p className="mt-4 border-l border-border pl-4 text-sm leading-6 text-muted-foreground">
+                  {project.currentState[0].body}
+                </p>
+              ) : null}
               <RelationshipPills items={project.profileSkills} />
               <ContributorList contributors={project.contributors} />
+              {project.slug ? (
+                <Link className="mt-5 inline-block text-sm font-medium underline" href={`/projects/${project.slug}`}>
+                  View project
+                </Link>
+              ) : null}
               {project.links?.length ? (
                 <div className="mt-5 flex flex-wrap gap-3">
                   {project.links.map((link) => {

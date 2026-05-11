@@ -11,7 +11,17 @@ import {
   Users,
 } from 'lucide-react'
 
-import type { DailyBrief, PointEvent, Post, Profile, Project, User } from '@/payload-types'
+import type {
+  ActivityItem,
+  DailyBrief,
+  Event,
+  PointEvent,
+  Post,
+  Profile,
+  Project,
+  Thread,
+  User,
+} from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -38,6 +48,18 @@ const formatDate = (date?: string | null) => {
     year: 'numeric',
   }).format(new Date(date))
 }
+
+const formatDateTime = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  }).format(new Date(date))
+}
+
+const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
+  items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projects = [] }) => {
   return (
@@ -163,6 +185,10 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   user,
 }) => {
   const hasProfile = Boolean(profile)
+  const briefActivityItems = dailyBrief ? relationDocs<ActivityItem>(dailyBrief.activityItems) : []
+  const briefThreads = dailyBrief ? relationDocs<Thread>(dailyBrief.threads) : []
+  const nextEvent =
+    dailyBrief?.nextEvent && typeof dailyBrief.nextEvent === 'object' ? dailyBrief.nextEvent : null
 
   return (
     <main className="container pb-24 pt-12">
@@ -235,68 +261,136 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="mt-12 border border-border p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+      <section className="mt-12 border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Daily Brief</h2>
+              <p className="font-semibold">RaidGuild Cohort</p>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Latest authenticated signal for contributors and members.
-            </p>
+            {dailyBrief?.statusLabel ? (
+              <span className="border border-border px-2 py-1 text-xs uppercase tracking-normal">
+                {dailyBrief.statusLabel}
+              </span>
+            ) : null}
+            {dailyBrief?.focusLabel ? (
+              <span className="text-sm text-muted-foreground">{dailyBrief.focusLabel}</span>
+            ) : null}
+            {dailyBrief?.updatedAt ? (
+              <span className="text-sm text-muted-foreground">
+                Updated {formatDate(dailyBrief.updatedAt)}
+              </span>
+            ) : null}
           </div>
-          {dailyBrief?.briefDate ? (
-            <p className="text-sm text-muted-foreground">{formatDate(dailyBrief.briefDate)}</p>
+          {nextEvent ? (
+            <div className="flex flex-wrap gap-3">
+              <SafeAction href={nextEvent.joinURL} label="Join next session" />
+              <SafeAction href={nextEvent.calendarURL} label="Add to calendar" variant="outline" />
+            </div>
           ) : null}
         </div>
         {dailyBrief ? (
-          <div className="mt-6">
-            <h3 className="text-2xl font-semibold">{dailyBrief.title}</h3>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
-              {dailyBrief.summary}
-            </p>
-            {dailyBrief.sections?.length ? (
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                {dailyBrief.sections.map((section) => (
-                  <div className="border border-border p-4" key={section.id || section.heading}>
-                    <p className="font-medium">{section.heading}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{section.body}</p>
-                    {section.links?.length ? (
-                      <div className="mt-3 space-y-2">
-                        {section.links.map((link) => {
-                          const safeURL = toSafeURL(link.url)
+          <div className="p-6">
+            <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+                  What is happening
+                </p>
+                <h2 className="mt-2 text-3xl font-semibold">{dailyBrief.title}</h2>
+                <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
+                  {dailyBrief.summary}
+                </p>
+                {dailyBrief.sections?.length ? (
+                  <ul className="mt-5 space-y-3 text-sm leading-6 text-muted-foreground">
+                    {dailyBrief.sections.slice(0, 4).map((section) => (
+                      <li key={section.id || section.heading}>
+                        <span className="font-medium text-foreground">{section.heading}:</span>{' '}
+                        {section.body}
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+              {nextEvent ? (
+                <div className="border border-border p-4 text-sm">
+                  <p className="font-semibold">Next session</p>
+                  <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
+                  <p className="mt-1 text-muted-foreground">{formatDateTime(nextEvent.startsAt)}</p>
+                  {nextEvent.locationLabel ? (
+                    <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
 
-                          if (!safeURL) {
-                            return (
-                              <span
-                                className="block text-sm font-medium text-muted-foreground"
-                                key={link.id || link.url}
-                              >
-                                {link.label}
-                              </span>
-                            )
-                          }
-
-                          return (
-                            <Link
-                              className="block text-sm font-medium underline"
-                              href={safeURL}
-                              key={link.id || link.url}
-                            >
-                              {link.label}
-                            </Link>
-                          )
-                        })}
-                      </div>
-                    ) : null}
+            <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
+              <BriefPanel title="Recent Activity">
+                {briefActivityItems.length ? (
+                  <div className="space-y-3">
+                    {briefActivityItems.slice(0, 6).map((item) => (
+                      <article className="border border-border p-4" key={item.id}>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                            {item.activityType}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {formatDateTime(item.happenedAt)}
+                          </p>
+                        </div>
+                        <h3 className="mt-2 font-medium">{item.title}</h3>
+                        {item.body ? (
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                        ) : null}
+                      </article>
+                    ))}
                   </div>
-                ))}
+                ) : (
+                  <p className="text-sm text-muted-foreground">No recent activity has been linked.</p>
+                )}
+              </BriefPanel>
+
+              <BriefPanel title="Active Threads">
+                {briefThreads.length ? (
+                  <div className="space-y-3">
+                    {briefThreads.slice(0, 6).map((thread) => (
+                      <article className="border border-border p-4" key={thread.id}>
+                        <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                          {thread.threadStatus}
+                        </p>
+                        <h3 className="mt-2 font-medium">{thread.title}</h3>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {thread.summary}
+                        </p>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No active threads have been linked.</p>
+                )}
+              </BriefPanel>
+            </div>
+
+            {dailyBrief.engagementActions?.length ? (
+              <div className="mt-8">
+                <h2 className="text-xl font-semibold">Ways to Engage</h2>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {dailyBrief.engagementActions.map((action) => (
+                    <article className="border border-border p-4" key={action.id || action.label}>
+                      <h3 className="font-medium">{action.label}</h3>
+                      {action.description ? (
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {action.description}
+                        </p>
+                      ) : null}
+                      <SafeTextLink className="mt-3 inline-block" href={action.url} label="Open" />
+                    </article>
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>
         ) : (
-          <p className="mt-6 text-sm text-muted-foreground">
+          <p className="p-6 text-sm text-muted-foreground">
             No daily brief has been published yet.
           </p>
         )}
@@ -356,3 +450,53 @@ const DashboardLink: React.FC<{ href: string; icon: React.ReactNode; label: stri
     <ArrowRight className="h-4 w-4" />
   </Link>
 )
+
+const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (
+  <section>
+    <h2 className="text-xl font-semibold">{title}</h2>
+    <div className="mt-4">{children}</div>
+  </section>
+)
+
+const SafeTextLink: React.FC<{ className?: string; href?: string | null; label: string }> = ({
+  className,
+  href,
+  label,
+}) => {
+  const safeURL = toSafeURL(href)
+
+  if (!safeURL) return <span className={className}>{label}</span>
+
+  const isExternal = safeURL.startsWith('http')
+
+  return (
+    <Link
+      className={`text-sm font-medium underline ${className || ''}`}
+      href={safeURL}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
+      target={isExternal ? '_blank' : undefined}
+    >
+      {label}
+    </Link>
+  )
+}
+
+const SafeAction: React.FC<{
+  href?: string | null
+  label: string
+  variant?: 'default' | 'outline'
+}> = ({ href, label, variant = 'default' }) => {
+  const safeURL = toSafeURL(href)
+
+  if (!safeURL) return null
+
+  const isExternal = safeURL.startsWith('http')
+
+  return (
+    <Button asChild size="sm" variant={variant}>
+      <Link href={safeURL} rel={isExternal ? 'noopener noreferrer' : undefined} target={isExternal ? '_blank' : undefined}>
+        {label}
+      </Link>
+    </Button>
+  )
+}

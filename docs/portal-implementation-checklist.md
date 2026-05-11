@@ -64,10 +64,24 @@
 - [x] Add `events` collection for sessions, join links, calendar links, and Discord event links.
 - [x] Relate `dailyBriefs` to activity items, threads, and the next event.
 - [x] Relate `projects` to activity items, threads, and relevant events.
-- [ ] Render next-session and calendar CTAs on the Update Brief view.
-- [ ] Render project-related events on project spike pages when present.
+- [x] Render next-session and calendar CTAs on the Update Brief view.
+- [x] Render project-related events on project spike pages when present.
+- [x] Create `/events` as a Sessions page with join and add-to-calendar links.
 - [x] Seed session-grounded activity, thread, and event records.
-- [ ] Add e2e coverage for brief, project spike, thread, activity, and event visibility.
+- [x] Add e2e coverage for brief, project spike, thread, activity, and event visibility.
+
+## Phase 5B: Portal Agent Skill
+
+- [ ] Create a `portal-memory-publisher` skill for converting community memory into CMS updates.
+- [ ] Define the skill's source inputs: Discord summaries, meeting digests, project updates, event notes, and repo activity.
+- [ ] Encode the portal primitives in the skill: briefs, projects, threads, activity items, events, and profiles.
+- [ ] Add rules for when to create vs update records, especially updating existing threads before creating new ones.
+- [ ] Add confidence rules: draft low-confidence records, publish only high-confidence factual updates when policy allows.
+- [ ] Add source-grounding rules so activity items stay dated, factual, and traceable to real community memory.
+- [ ] Add guardrails against PM-tool drift: no tasks, assignees, sprint boards, or invented project state.
+- [ ] Document the review workflow for agent-proposed CMS updates before publication.
+- [ ] Add examples mapping one meeting digest into activity items, threads, event updates, and a daily brief.
+- [ ] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
 
 ## Phase 6: External API Hardening
 

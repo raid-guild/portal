@@ -173,14 +173,64 @@ async function verifySeededPosts(page: Page) {
   }
 }
 
+async function verifySeededProjectSpike(page: Page) {
+  await page.goto('/projects')
+  await expect(page.getByRole('heading', { name: 'Active project spikes' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Cohort Project Spike Portal' })).toBeVisible()
+  await page.getByRole('link', { name: 'View project' }).click()
+
+  await expect(page).toHaveURL(/\/projects\/cohort-project-spike-portal/)
+  await expect(page.getByRole('heading', { name: 'Cohort Project Spike Portal' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'What is happening' })).toBeVisible()
+  await expect(page.getByText('Defining the project spike object')).toBeVisible()
+  await expect(page.getByText('Calendar and session coordination')).toBeVisible()
+  await expect(
+    page.getByText('Group narrowed the portal around project spikes instead of broad PM tooling.'),
+  ).toBeVisible()
+  await expect(page.getByText('Cohort Project Spike Sync')).toBeVisible()
+  await expect(page.getByText('Discord #cohort-voice')).toBeVisible()
+  await expect(page.getByText('Render the Update Brief')).toBeVisible()
+}
+
+async function verifySeededSessions(page: Page) {
+  await page.goto('/events')
+  await expect(page.getByRole('heading', { name: 'Cohort sessions' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Upcoming' })).toBeVisible()
+  await expect(page.getByText('Cohort Project Spike Sync')).toBeVisible()
+  await expect(page.getByText('Discord #cohort-voice')).toBeVisible()
+  await expect(page.getByText('Cohort Project Spike Portal')).toBeVisible()
+  await expect(page.getByText('Defining the project spike object')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible()
+}
+
+async function verifyDashboardBrief(page: Page) {
+  await page.goto('/')
+  await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
+  await expect(page.getByText('Active Now')).toBeVisible()
+  await expect(page.getByText('Project Spike Portal')).toBeVisible()
+  await expect(page.getByText('Cohort Project Spike Sync')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Join next session' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Active Threads' })).toBeVisible()
+  await expect(page.getByText('Defining the project spike object')).toBeVisible()
+  await expect(
+    page.getByText('Group narrowed the portal around project spikes instead of broad PM tooling.'),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
+  await verifyDashboardBrief(page)
 
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
   await verifySeededPosts(publicPage)
+  await verifySeededProjectSpike(publicPage)
+  await verifySeededSessions(publicPage)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
 
