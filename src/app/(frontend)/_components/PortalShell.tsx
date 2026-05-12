@@ -29,6 +29,7 @@ import { toSafeURL } from '@/utilities/safeURL'
 type PortalHomeProps = {
   posts?: Post[]
   projects?: Project[]
+  upcomingEvents?: Event[]
 }
 
 type DashboardProps = {
@@ -64,42 +65,101 @@ const formatDateTime = (date?: string | null) => {
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
-export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projects = [] }) => {
+export const PortalPublicHome: React.FC<PortalHomeProps> = ({
+  posts = [],
+  projects = [],
+  upcomingEvents = [],
+}) => {
+  const nextEvent = upcomingEvents[0]
+
   return (
     <main className="pb-24">
       <section className="container py-16 md:py-24">
-        <div className="grid gap-10 lg:grid-cols-[1fr_22rem] lg:items-end">
+        <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div className="max-w-3xl">
             <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
               RaidGuild Portal
             </p>
             <h1 className="mb-6 text-4xl font-semibold leading-tight md:text-6xl">
-              Discover the builders, projects, and stories moving through the Guild.
+              See what is active in the Guild right now.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              A lightweight home for profiles, public updates, project visibility, and the first
-              steps toward joining RaidGuild.
+              Public sessions, active project spikes, and recent updates give you a quick read on
+              where to jump in before creating an account.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link href="/join">
-                  Join the Portal <ArrowRight className="ml-2 h-4 w-4" />
+                  Join RaidGuild <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/posts">Read updates</Link>
+                <Link href="/events">View sessions</Link>
               </Button>
             </div>
           </div>
-          <div className="border-l border-border pl-6">
-            <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-              Portal focus
+          <div className="border border-border p-5">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5" />
+              <h2 className="font-semibold">Next public session</h2>
+            </div>
+            {nextEvent ? (
+              <div className="mt-4">
+                <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                  {formatDateTime(nextEvent.startsAt)}
+                </p>
+                <h2 className="mt-2 text-xl font-semibold">{nextEvent.title}</h2>
+                {nextEvent.locationLabel ? (
+                  <p className="mt-2 text-sm text-muted-foreground">{nextEvent.locationLabel}</p>
+                ) : null}
+                <div className="mt-5 flex flex-wrap gap-3">
+                  <SafeTextLink href={nextEvent.joinURL} label="Join" />
+                  <SafeTextLink href={nextEvent.calendarURL} label="Add to calendar" />
+                </div>
+              </div>
+            ) : (
+              <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                No public sessions are scheduled yet. Join to get access to member coordination.
+              </p>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-card/40 py-12">
+        <div className="container grid gap-8 lg:grid-cols-[18rem_1fr]">
+          <div>
+            <h2 className="text-2xl font-semibold">Upcoming Sessions</h2>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Live sessions are the easiest way to understand what is moving and where contributors
+              are needed.
             </p>
-            <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
-              <li>Profiles that make member skills and roles visible.</li>
-              <li>Project pages that show what is being built and who contributed.</li>
-              <li>Publishing surfaces for cohort updates, sessions, and public notes.</li>
-            </ul>
+            <Button asChild className="mt-5" variant="outline">
+              <Link href="/events">View sessions</Link>
+            </Button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {upcomingEvents.length ? (
+              upcomingEvents.slice(0, 3).map((event) => (
+                <article className="border border-border bg-background p-5" key={event.id}>
+                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                    {formatDateTime(event.startsAt)}
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold">{event.title}</h3>
+                  {event.summary ? (
+                    <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                      {event.summary}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <SafeTextLink href={event.joinURL} label="Join" />
+                    <SafeTextLink href={event.calendarURL} label="Add to calendar" />
+                  </div>
+                </article>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">No public sessions are scheduled yet.</p>
+            )}
           </div>
         </div>
       </section>
@@ -156,7 +216,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projec
             projects.map((project) => (
               <Link
                 className="block border border-border p-5 transition-colors hover:bg-card"
-                href="/projects"
+                href={`/projects/${project.slug}`}
                 key={project.id}
               >
                 <p className="text-xs uppercase tracking-normal text-muted-foreground">
@@ -173,6 +233,26 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projec
               Seeded project examples are coming next.
             </p>
           )}
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-card/40 py-12">
+        <div className="container grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div>
+            <h2 className="text-2xl font-semibold">Ready to participate?</h2>
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
+              Create an account to build a profile, follow project work, and get routed toward the
+              right sessions and contribution paths.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href="/join">Join the portal</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/projects">Explore projects</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </main>

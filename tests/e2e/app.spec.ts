@@ -174,6 +174,22 @@ async function verifySeededPosts(page: Page) {
   }
 }
 
+async function verifyPublicHome(page: Page) {
+  await page.goto('/')
+  await expect(
+    page.getByRole('heading', { name: 'See what is active in the Guild right now.' }),
+  ).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Join RaidGuild' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Next public session' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Upcoming Sessions' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Sync' }).first(),
+  ).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
+}
+
 async function verifySeededProjectSpike(page: Page) {
   await page.goto('/projects')
   await expect(page.getByRole('heading', { name: 'Active project spikes' })).toBeVisible()
@@ -253,6 +269,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
+  await verifyPublicHome(publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)

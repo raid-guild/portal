@@ -38,9 +38,13 @@ export default async function HomePage() {
     )
   }
 
-  const [posts, projects] = await Promise.all([getRecentPosts(), getProjects()])
+  const [posts, projects, upcomingEvents] = await Promise.all([
+    getRecentPosts(),
+    getProjects(),
+    getPublicUpcomingEvents(),
+  ])
 
-  return <PortalPublicHome posts={posts} projects={projects} />
+  return <PortalPublicHome posts={posts} projects={projects} upcomingEvents={upcomingEvents} />
 }
 
 export const metadata: Metadata = {
@@ -80,6 +84,40 @@ const getProjects = async () => {
       _status: {
         equals: 'published',
       },
+    },
+  })
+
+  return result.docs
+}
+
+const getPublicUpcomingEvents = async () => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'events',
+    depth: 1,
+    draft: false,
+    limit: 3,
+    overrideAccess: false,
+    pagination: false,
+    sort: 'startsAt',
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          startsAt: {
+            greater_than_equal: new Date().toISOString(),
+          },
+        },
+        {
+          visibility: {
+            equals: 'public',
+          },
+        },
+      ],
     },
   })
 
