@@ -149,8 +149,7 @@ export const seedPortalContent = async ({
         ]),
         authors: req.user ? [req.user.id] : undefined,
         meta: {
-          description:
-            'A portal update for validating public post, comment, and moderation flows.',
+          description: 'A portal update for validating public post, comment, and moderation flows.',
         },
         _status: 'published',
         publishedAt,
@@ -199,7 +198,8 @@ export const seedPortalContent = async ({
         contributionActions: [
           {
             title: 'Render the Update Brief',
-            description: 'Show recent activity, active threads, and next-session CTAs from Payload.',
+            description:
+              'Show recent activity, active threads, and next-session CTAs from Payload.',
             url: '/',
           },
           {
@@ -209,7 +209,8 @@ export const seedPortalContent = async ({
           },
           {
             title: 'Add Session-Grounded Seeds',
-            description: 'Keep seed data tied to real cohort discussion instead of placeholder copy.',
+            description:
+              'Keep seed data tied to real cohort discussion instead of placeholder copy.',
             url: '/admin/collections/activityItems',
           },
         ],
@@ -244,8 +245,7 @@ export const seedPortalContent = async ({
           data: {
             title: 'Calendar and session coordination',
             slug: 'calendar-and-session-coordination',
-            summary:
-              'Making the next live moment visible and easy to add to personal calendars.',
+            summary: 'Making the next live moment visible and easy to add to personal calendars.',
             threadStatus: 'active',
             lastActiveAt: sessionEndedAt,
             relatedProjects: [cohortProject.id],
@@ -443,6 +443,67 @@ export const seedPortalContent = async ({
         ],
         relatedProjects: [cohortProject.id],
         relatedPosts: [portalUpdatePost.id],
+      },
+    })
+
+    await upsert({
+      collection: 'dailyBriefs',
+      match: { title: 'Weekly Brief: Project Spike Momentum' },
+      payload,
+      data: {
+        title: 'Weekly Brief: Project Spike Momentum',
+        briefDate: '2026-05-11T12:00:00.000Z',
+        briefType: 'weekly',
+        summary:
+          'This week the cohort narrowed the portal around live project spikes, public sessions, and clear ways to join active work.',
+        statusLabel: 'Weekly',
+        focusLabel: 'Project Spike Portal',
+        sections: [
+          {
+            heading: 'Project spikes over project management',
+            body: 'The group aligned on surfacing project state, threads, activity, and contribution paths without building a heavy task system.',
+          },
+          {
+            heading: 'Calendar is the public pull',
+            body: 'Upcoming sessions need to be visible and easy to add to a personal calendar so participation does not depend on Discord discovery.',
+          },
+          {
+            heading: 'Join after seeing signal',
+            body: 'The public page should show real activity first, then route people into the portal when they are ready to participate.',
+          },
+        ],
+        content: lexicalRoot([
+          headingNode('h2', [text('Project spike momentum')]),
+          paragraphNode(
+            'The weekly brief is the public version of the cohort snapshot. It should be useful on its own while pointing people toward joining for daily context and contribution paths.',
+          ),
+        ]),
+        mediaType: 'remotion-scene',
+        nextEvent: nextCohortEvent.id,
+        activityItems: activityItems.map((item) => item.id),
+        threads: [projectObjectThread.id, calendarThread.id, onboardingThread.id],
+        engagementActions: [
+          {
+            label: 'Join RaidGuild',
+            description: 'Create an account to follow daily briefs and contribution paths.',
+            url: '/join',
+            style: 'primary',
+          },
+          {
+            label: 'View sessions',
+            description: 'See upcoming public sessions and calendar links.',
+            url: '/events',
+            style: 'secondary',
+          },
+        ],
+        visibility: 'public',
+        sourceNotes:
+          'Public weekly starter brief assembled from the cohort project spike planning session.',
+        authors: req.user ? [req.user.id] : undefined,
+        relatedProjects: [cohortProject.id],
+        relatedPosts: [portalUpdatePost.id],
+        _status: 'published',
+        publishedAt,
       },
     })
 

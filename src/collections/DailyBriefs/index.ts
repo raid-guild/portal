@@ -27,7 +27,7 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
     update: updateDailyBriefs,
   },
   admin: {
-    defaultColumns: ['title', 'briefDate', 'visibility', '_status', 'updatedAt'],
+    defaultColumns: ['title', 'briefType', 'briefDate', 'visibility', '_status', 'updatedAt'],
     group: 'Portal',
     useAsTitle: 'title',
   },
@@ -47,6 +47,26 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
         position: 'sidebar',
       },
       index: true,
+      required: true,
+    },
+    {
+      name: 'briefType',
+      type: 'select',
+      admin: {
+        description: 'Daily briefs are for authenticated members. Weekly briefs can be public.',
+        position: 'sidebar',
+      },
+      defaultValue: 'daily',
+      options: [
+        {
+          label: 'Daily',
+          value: 'daily',
+        },
+        {
+          label: 'Weekly',
+          value: 'weekly',
+        },
+      ],
       required: true,
     },
     {
@@ -120,6 +140,41 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
           ]
         },
       }),
+    },
+    {
+      name: 'mediaFile',
+      type: 'upload',
+      admin: {
+        description:
+          'Optional generated media for the brief, such as a Remotion scene export with audio.',
+      },
+      relationTo: 'media',
+    },
+    {
+      name: 'mediaType',
+      type: 'select',
+      admin: {
+        description: 'Helps the frontend decide how to present the attached media.',
+      },
+      defaultValue: 'video',
+      options: [
+        {
+          label: 'Video',
+          value: 'video',
+        },
+        {
+          label: 'Audio',
+          value: 'audio',
+        },
+        {
+          label: 'Remotion Scene',
+          value: 'remotion-scene',
+        },
+        {
+          label: 'Other',
+          value: 'other',
+        },
+      ],
     },
     {
       name: 'nextEvent',

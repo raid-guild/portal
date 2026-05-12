@@ -30,6 +30,7 @@ type PortalHomeProps = {
   posts?: Post[]
   projects?: Project[]
   upcomingEvents?: Event[]
+  weeklyBrief?: DailyBrief | null
 }
 
 type DashboardProps = {
@@ -69,8 +70,13 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   posts = [],
   projects = [],
   upcomingEvents = [],
+  weeklyBrief,
 }) => {
   const nextEvent = upcomingEvents[0]
+  const weeklyBriefMedia =
+    weeklyBrief?.mediaFile && typeof weeklyBrief.mediaFile === 'object'
+      ? weeklyBrief.mediaFile
+      : null
 
   return (
     <main className="pb-24">
@@ -125,6 +131,58 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           </div>
         </div>
       </section>
+
+      {weeklyBrief ? (
+        <section className="container py-12">
+          <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+                Weekly Brief
+              </p>
+              <h2 className="mt-2 text-3xl font-semibold">{weeklyBrief.title}</h2>
+              <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
+                {weeklyBrief.summary}
+              </p>
+              {weeklyBrief.sections?.length ? (
+                <ul className="mt-5 space-y-3 text-sm leading-6 text-muted-foreground">
+                  {weeklyBrief.sections.slice(0, 3).map((section) => (
+                    <li key={section.id || section.heading}>
+                      <span className="font-medium text-foreground">{section.heading}:</span>{' '}
+                      {section.body}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <Button asChild className="mt-6">
+                <Link href="/join">Join for daily briefs</Link>
+              </Button>
+            </div>
+            <aside className="border border-border p-5">
+              <p className="font-semibold">Brief media</p>
+              {weeklyBriefMedia?.url ? (
+                <div className="mt-4">
+                  {weeklyBrief.mediaType === 'audio' ? (
+                    <audio className="w-full" controls src={weeklyBriefMedia.url} />
+                  ) : (
+                    <video
+                      className="aspect-video w-full bg-card"
+                      controls
+                      src={weeklyBriefMedia.url}
+                    />
+                  )}
+                  <p className="mt-3 text-xs uppercase tracking-normal text-muted-foreground">
+                    {weeklyBrief.mediaType || 'media'}
+                  </p>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                  The weekly media export will appear here when it is attached.
+                </p>
+              )}
+            </aside>
+          </div>
+        </section>
+      ) : null}
 
       <section className="border-y border-border bg-card/40 py-12">
         <div className="container grid gap-8 lg:grid-cols-[18rem_1fr]">

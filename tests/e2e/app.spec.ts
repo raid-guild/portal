@@ -183,6 +183,13 @@ async function verifyPublicHome(page: Page) {
   await expect(page.getByRole('heading', { name: 'Next public session' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Upcoming Sessions' })).toBeVisible()
   await expect(
+    page.getByRole('heading', { name: 'Weekly Brief: Project Spike Momentum' }),
+  ).toBeVisible()
+  await expect(
+    page.getByText('The weekly media export will appear here when it is attached.'),
+  ).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Join for daily briefs' })).toBeVisible()
+  await expect(
     page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Sync' }).first(),
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()

@@ -944,6 +944,10 @@ export interface DailyBrief {
   id: number;
   title: string;
   briefDate: string;
+  /**
+   * Daily briefs are for authenticated members. Weekly briefs can be public.
+   */
+  briefType: 'daily' | 'weekly';
   summary: string;
   /**
    * Short current-state label for the brief top strip, for example Active Now.
@@ -983,6 +987,14 @@ export interface DailyBrief {
     };
     [k: string]: unknown;
   } | null;
+  /**
+   * Optional generated media for the brief, such as a Remotion scene export with audio.
+   */
+  mediaFile?: (number | null) | Media;
+  /**
+   * Helps the frontend decide how to present the attached media.
+   */
+  mediaType?: ('video' | 'audio' | 'remotion-scene' | 'other') | null;
   nextEvent?: (number | null) | Event;
   activityItems?: (number | ActivityItem)[] | null;
   threads?: (number | Thread)[] | null;
@@ -1459,6 +1471,7 @@ export interface ActivityItemsSelect<T extends boolean = true> {
 export interface DailyBriefsSelect<T extends boolean = true> {
   title?: T;
   briefDate?: T;
+  briefType?: T;
   summary?: T;
   statusLabel?: T;
   focusLabel?: T;
@@ -1477,6 +1490,8 @@ export interface DailyBriefsSelect<T extends boolean = true> {
         id?: T;
       };
   content?: T;
+  mediaFile?: T;
+  mediaType?: T;
   nextEvent?: T;
   activityItems?: T;
   threads?: T;

@@ -99,6 +99,11 @@ const getLatestDailyBrief = async (user: User) => {
           },
         },
         {
+          briefType: {
+            equals: 'daily',
+          },
+        },
+        {
           visibility: {
             not_equals: 'admin',
           },

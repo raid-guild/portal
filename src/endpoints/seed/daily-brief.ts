@@ -7,6 +7,7 @@ const authorPlaceholder = '{{AUTHOR}}' as unknown as number
 export const dailyBrief: Omit<DailyBrief, 'createdAt' | 'id' | 'updatedAt'> = {
   title: 'Daily Brief: Portal Signal',
   briefDate: '2026-05-05T12:00:00.000Z',
+  briefType: 'daily',
   summary:
     'Today the Portal is focused on turning scattered context into discoverable profiles, project records, and a lightweight dashboard for contributors.',
   sections: [
