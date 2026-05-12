@@ -55,6 +55,73 @@ This file defines the working rules for automated agents in this repository.
 - Update `README.md` when setup, test commands, version info, or important workflow expectations change.
 - When changing Payload versions, update the README version entry immediately.
 - Keep command examples aligned with the actual recommended workflow, especially `pnpm` usage and e2e commands.
+- Keep `docs/contributor-guidelines.md`, `docs/cohort-spike-mvp-spec.md`, and `docs/portal-implementation-checklist.md` aligned when changing portal primitives, routes, seed behavior, or agent workflows.
+
+## Portal Product Rules
+
+The current product direction is a cohort project spike portal.
+
+The portal should make real community activity visible and help people find a useful next step. It should not become a project management system, Discord replacement, course platform, handbook dump, or generic AI content feed.
+
+Use these core primitives consistently:
+
+- `Brief`: current snapshot of what is happening overall.
+- `Project`: focused collaboration surface for something being built.
+- `Thread`: persistent line of thought or work that evolves over time.
+- `Activity Item`: factual signal that something happened.
+- `Event`: scheduled session or calendar anchor.
+- `Profile`: person or contributor identity.
+
+Before adding a field, collection, page, or automation, identify which primitive it belongs to. Keep each primitive focused. Do not make `projects` carry unrelated behavior such as task boards, assignments, sprint state, or issue tracking.
+
+## Portal Content Rules
+
+- Surface real, recent, human activity.
+- Prefer dated, source-grounded activity over broad summaries.
+- Keep activity items short, factual, and traceable to meetings, Discord summaries, repo activity, or project updates.
+- Prefer updating existing threads over creating new threads.
+- Create projects only when there is a concrete collaboration surface with state, people, links, or a next action.
+- Events/sessions must make it easy to join or add to a personal calendar.
+- Avoid marketing language, generic AI filler, invented urgency, invented participants, and inferred commitments.
+
+## Feature Module Rules
+
+Treat new product areas as feature modules unless they clearly belong to a core primitive.
+
+Examples:
+
+- bounty board
+- project phases
+- resource library
+- calendar subscription
+- agent template registry
+- contribution points automation
+
+Add a new collection only when the feature needs its own lifecycle, permissions, reusable records, filtering/search/admin management, publishing/review, relationships from multiple primitives, or future API consumption.
+
+If a feature is only a label, link, CTA, or short list, start with an existing primitive field or derived UI instead of a new collection.
+
+## Agent Skill Rules
+
+The repo-owned portal skill lives at:
+
+- `.agents/skills/portal-memory-publisher/SKILL.md`
+
+The app serves that skill from:
+
+- `/api/portal/skills/portal-memory-publisher`
+
+Use this skill when converting Discord summaries, meeting digests, community memory, project updates, event notes, or repo activity into portal CMS update proposals.
+
+Default agent behavior should be review-first:
+
+- propose creates/updates before writing to Payload
+- draft low-confidence records
+- publish only when facts are clear and policy allows
+- preserve source labels, timestamps, and uncertainty
+- avoid PM-tool drift
+
+Do not let an agent silently publish invented content or silently change production seed behavior.
 
 ## Change Safety Rules
 

@@ -72,16 +72,17 @@
 
 ## Phase 5B: Portal Agent Skill
 
-- [ ] Create a `portal-memory-publisher` skill for converting community memory into CMS updates.
-- [ ] Define the skill's source inputs: Discord summaries, meeting digests, project updates, event notes, and repo activity.
-- [ ] Encode the portal primitives in the skill: briefs, projects, threads, activity items, events, and profiles.
-- [ ] Add rules for when to create vs update records, especially updating existing threads before creating new ones.
-- [ ] Add confidence rules: draft low-confidence records, publish only high-confidence factual updates when policy allows.
-- [ ] Add source-grounding rules so activity items stay dated, factual, and traceable to real community memory.
-- [ ] Add guardrails against PM-tool drift: no tasks, assignees, sprint boards, or invented project state.
-- [ ] Document the review workflow for agent-proposed CMS updates before publication.
-- [ ] Add examples mapping one meeting digest into activity items, threads, event updates, and a daily brief.
-- [ ] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
+- [x] Create a `portal-memory-publisher` skill for converting community memory into CMS updates.
+- [x] Define the skill's source inputs: Discord summaries, meeting digests, project updates, event notes, and repo activity.
+- [x] Encode the portal primitives in the skill: briefs, projects, threads, activity items, events, and profiles.
+- [x] Add rules for when to create vs update records, especially updating existing threads before creating new ones.
+- [x] Add confidence rules: draft low-confidence records, publish only high-confidence factual updates when policy allows.
+- [x] Add source-grounding rules so activity items stay dated, factual, and traceable to real community memory.
+- [x] Add guardrails against PM-tool drift: no tasks, assignees, sprint boards, or invented project state.
+- [x] Document the review workflow for agent-proposed CMS updates before publication.
+- [x] Add examples mapping one meeting digest into activity items, threads, event updates, and a daily brief.
+- [x] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
+- [x] Serve the skill from the API at `/api/portal/skills/portal-memory-publisher`.
 
 ## Phase 6: External API Hardening
 

@@ -2,6 +2,7 @@
 import { postgresAdapter } from '@payloadcms/db-postgres'
 
 import sharp from 'sharp' // sharp-import
+import { readFile } from 'fs/promises'
 import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
@@ -29,6 +30,11 @@ import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+const rootDir = path.resolve(dirname, '..')
+const portalMemoryPublisherSkillDir = path.resolve(
+  rootDir,
+  '.agents/skills/portal-memory-publisher',
+)
 
 export default buildConfig({
   admin: {
@@ -107,6 +113,33 @@ export default buildConfig({
       method: 'get',
       handler: async (req) => {
         return new Response('OK', { status: 200 })
+      },
+    },
+    {
+      path: '/portal/skills/portal-memory-publisher',
+      method: 'get',
+      handler: async () => {
+        const [skill, modelReference, exampleMapping] = await Promise.all([
+          readFile(path.join(portalMemoryPublisherSkillDir, 'SKILL.md'), 'utf8'),
+          readFile(
+            path.join(portalMemoryPublisherSkillDir, 'references/portal-cms-model.md'),
+            'utf8',
+          ),
+          readFile(
+            path.join(portalMemoryPublisherSkillDir, 'references/example-digest-mapping.md'),
+            'utf8',
+          ),
+        ])
+
+        return Response.json({
+          name: 'portal-memory-publisher',
+          version: '1',
+          files: {
+            'SKILL.md': skill,
+            'references/portal-cms-model.md': modelReference,
+            'references/example-digest-mapping.md': exampleMapping,
+          },
+        })
       },
     },
   ],
