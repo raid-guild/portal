@@ -203,6 +203,19 @@ async function verifySeededSessions(page: Page) {
   await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible()
 }
 
+async function verifyPortalSkillEndpoint(page: Page) {
+  const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
+
+  expect(response.ok()).toBeTruthy()
+
+  const body = await response.json()
+
+  expect(body.name).toBe('portal-memory-publisher')
+  expect(body.files['SKILL.md']).toContain('Portal Memory Publisher')
+  expect(body.files['references/portal-cms-model.md']).toContain('activityItems')
+  expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
+}
+
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -231,6 +244,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
+  await verifyPortalSkillEndpoint(publicPage)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
 
