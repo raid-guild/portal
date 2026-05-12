@@ -7,14 +7,8 @@ import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
 import { dailyBrief } from './daily-brief'
 import { home } from './home'
-import { image1 } from './image-1'
 import { image2 } from './image-2'
-import { image3 } from './image-3'
-import { image4 } from './image-4'
-import { post1 } from './post-1'
-import { post2 } from './post-2'
-import { post3 } from './post-3'
-import { post4 } from './post-4'
+import { headingNode, lexicalRoot, paragraphNode, text } from './lexical'
 import { profileRoles } from './profile-roles'
 import { profileSkills } from './profile-skills'
 
@@ -196,39 +190,22 @@ export const seed = async ({
     payload.logger.info(`- Seeding media...`)
 
     // Load all files first
-    const [image1File, image2File, image3File, hero1File, vendureFile] = useLocalSeedMedia
+    const [imageHomeFile, image2File] = useLocalSeedMedia
       ? await Promise.all([
           loadSeedFile('raidguild-cohort-hero.webp'),
           loadSeedFile('image-post2.webp'),
-          loadSeedFile('image-post3.webp'),
-          loadSeedFile('image-hero1.webp'),
-          loadSeedFile('image-post3.webp', 'image-post4.webp'),
         ])
       : await Promise.all([
           loadSeedFile('raidguild-cohort-hero.webp'),
           fetchFileByURL(
             'https://res.cloudinary.com/hczpmiapo/image/upload/v1732740471/Static%20assets/graphics/payload%203/payload-2-cover_ortrhb.png',
           ),
-          fetchFileByURL(
-            'https://res.cloudinary.com/hczpmiapo/image/upload/v1732743964/Medusa-2.0-official-release-deploy-on-railway-cover_a7knvp.png',
-          ),
-          fetchFileByURL(
-            'https://raw.githubusercontent.com/payloadcms/payload/refs/heads/main/templates/website/src/endpoints/seed/image-hero1.webp',
-          ),
-          fetchFileByURL(
-            'https://res-1.cloudinary.com/hczpmiapo/image/upload/q_auto/v1/ghost-blog-images/vendure-cover.png',
-          ),
         ])
 
     payload.logger.info(`- Creating media documents...`)
 
     // Create media documents
-    const [image1Doc, image2Doc, image3Doc, imageHomeDoc, image4Doc] = await Promise.all([
-      payload.create({
-        collection: 'media',
-        data: image1,
-        file: image1File,
-      }),
+    const [image2Doc, imageHomeDoc] = await Promise.all([
       payload.create({
         collection: 'media',
         data: image2,
@@ -236,39 +213,23 @@ export const seed = async ({
       }),
       payload.create({
         collection: 'media',
-        data: image3,
-        file: image3File,
-      }),
-      payload.create({
-        collection: 'media',
         data: image2,
-        file: hero1File,
-      }),
-      payload.create({
-        collection: 'media',
-        data: image4,
-        file: vendureFile,
+        file: imageHomeFile,
       }),
     ])
 
-    let image1ID: number | string = image1Doc.id
     let image2ID: number | string = image2Doc.id
-    let image3ID: number | string = image3Doc.id
-    let image4ID: number | string = image4Doc.id
     let imageHomeID: number | string = imageHomeDoc.id
 
     if (payload.db.defaultIDType === 'text') {
-      image1ID = `"${image1Doc.id}"`
       image2ID = `"${image2Doc.id}"`
-      image3ID = `"${image3Doc.id}"`
-      image4ID = `"${image4Doc.id}"`
       imageHomeID = `"${imageHomeDoc.id}"`
       demoAuthorID = `"${demoAuthorID}"`
     }
 
     // Create categories
     payload.logger.info(`- Seeding categories...`)
-    const [technologyCategory, newsCategory, financeCategory] = await Promise.all([
+    await Promise.all([
       payload.create({
         collection: 'categories',
         data: {
@@ -310,49 +271,27 @@ export const seed = async ({
       }),
     ])
 
-    // Create posts
-    payload.logger.info(`- Seeding posts...`)
+    payload.logger.info(`- Seeding portal update post...`)
 
-    // Create posts without related posts first.
-    // Keep this sequential to avoid race conditions in search sync hooks.
-    const post1Doc = await payload.create({
+    const portalUpdatePost = await payload.create({
       collection: 'posts',
-      data: JSON.parse(
-        JSON.stringify({ ...post1, categories: [technologyCategory.id] })
-          .replace(/"\{\{IMAGE_1\}\}"/g, String(image1ID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image2ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
-      ),
-    })
-
-    const post2Doc = await payload.create({
-      collection: 'posts',
-      data: JSON.parse(
-        JSON.stringify({ ...post2, categories: [newsCategory.id] })
-          .replace(/"\{\{IMAGE_1\}\}"/g, String(image2ID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image3ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
-      ),
-    })
-
-    const post3Doc = await payload.create({
-      collection: 'posts',
-      data: JSON.parse(
-        JSON.stringify({ ...post3, categories: [financeCategory.id] })
-          .replace(/"\{\{IMAGE_1\}\}"/g, String(image3ID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image1ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
-      ),
-    })
-
-    const post4Doc = await payload.create({
-      collection: 'posts',
-      data: JSON.parse(
-        JSON.stringify({ ...post4, categories: [technologyCategory.id] })
-          .replace(/"\{\{IMAGE_1\}\}"/g, String(image4ID))
-          .replace(/"\{\{IMAGE_2\}\}"/g, String(image3ID))
-          .replace(/"\{\{AUTHOR\}\}"/g, String(demoAuthorID)),
-      ),
+      data: {
+        title: 'Cohort Project Spike Portal Update',
+        slug: 'cohort-project-spike-portal-update',
+        content: lexicalRoot([
+          headingNode('h2', [text('Cohort project spike portal update')]),
+          paragraphNode(
+            'The portal seed now focuses on live cohort primitives: projects, threads, sessions, activity, and a brief that shows what is happening.',
+          ),
+        ]),
+        authors: [demoAuthor.id],
+        meta: {
+          description:
+            'A seeded portal update for validating public post, comment, and moderation flows.',
+        },
+        _status: 'published',
+        publishedAt: '2026-05-11T17:34:47.664Z',
+      },
     })
 
     // Clear any existing search documents
@@ -364,45 +303,6 @@ export const seed = async ({
         },
       },
     })
-    // Update related posts in order.
-    // This is non-critical seed data, so do not fail the entire seed if it errors.
-    payload.logger.info(`- Updating related posts...`)
-    try {
-      await payload.update({
-        id: post1Doc.id,
-        collection: 'posts',
-        data: {
-          relatedPosts: [post2Doc.id, post3Doc.id, post4Doc.id],
-        },
-      })
-
-      await payload.update({
-        id: post2Doc.id,
-        collection: 'posts',
-        data: {
-          relatedPosts: [post1Doc.id, post3Doc.id, post4Doc.id],
-        },
-      })
-
-      await payload.update({
-        id: post3Doc.id,
-        collection: 'posts',
-        data: {
-          relatedPosts: [post1Doc.id, post2Doc.id, post4Doc.id],
-        },
-      })
-
-      await payload.update({
-        id: post4Doc.id,
-        collection: 'posts',
-        data: {
-          relatedPosts: [post1Doc.id, post2Doc.id, post3Doc.id],
-        },
-      })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown related posts seed error'
-      payload.logger.error(`Related posts seed step failed, continuing: ${message}`)
-    }
 
     payload.logger.info(`- Seeding cohort spike primitives...`)
 
@@ -662,7 +562,6 @@ export const seed = async ({
 
     const seededDailyBrief = JSON.parse(
       JSON.stringify(dailyBrief)
-        .replace(/"\{\{POST_1\}\}"/g, JSON.stringify(post1Doc.id))
         .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
     )
 
@@ -701,6 +600,7 @@ export const seed = async ({
           },
         ],
         relatedProjects: [cohortProject.id],
+        relatedPosts: [portalUpdatePost.id],
         relatedProfiles: [demoProfile.id],
       },
     })

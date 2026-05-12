@@ -7,11 +7,18 @@ import './index.scss'
 
 const SuccessMessage: React.FC = () => (
   <div>
-    Database seeded! You can now{' '}
+    Portal starter content upserted. You can now{' '}
     <a target="_blank" href="/">
       visit your website
     </a>
   </div>
+)
+
+const SeedWarning: React.FC = () => (
+  <p className="seedWarning">
+    This safely creates or updates the portal starter records without clearing existing CMS content.
+    Existing records with the same starter slugs or titles will be updated.
+  </p>
 )
 
 export const SeedButton: React.FC = () => {
@@ -36,6 +43,12 @@ export const SeedButton: React.FC = () => {
         return
       }
 
+      const confirmed = window.confirm(
+        'This will create or update portal starter records without clearing existing CMS content. Continue?',
+      )
+
+      if (!confirmed) return
+
       setLoading(true)
 
       try {
@@ -59,7 +72,7 @@ export const SeedButton: React.FC = () => {
             }
           }),
           {
-            loading: 'Seeding with data....',
+            loading: 'Upserting portal starter content...',
             success: <SuccessMessage />,
             error: 'An error occurred while seeding.',
           },
@@ -78,8 +91,9 @@ export const SeedButton: React.FC = () => {
 
   return (
     <Fragment>
+      <SeedWarning />
       <button className="seedButton" onClick={handleClick}>
-        Seed your database
+        Upsert portal starter content
       </button>
       {message}
     </Fragment>

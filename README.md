@@ -79,10 +79,15 @@ or
 
 ### End-to-End Testing
 
-The Playwright suite boots a fresh PostgreSQL container, builds the app from scratch, creates the first admin user through the onboarding UI, seeds the demo content, submits a public comment, approves it in the admin UI, and verifies it appears on the public post page.
+The Playwright suite boots a fresh PostgreSQL container, builds the app from scratch, creates the first admin user through the onboarding UI, upserts the portal starter content, submits a public comment, approves it in the admin UI, and verifies it appears on the public post page.
 
 Before the first run, make sure Docker Desktop is running. The suite starts a fresh PostgreSQL container automatically.
-For test determinism, the e2e harness uses bundled local seed images only during the test run. Normal seeding continues to use the hosted seed images.
+
+### Portal Starter Content
+
+The admin dashboard seed action is non-destructive. It upserts the portal starter records by stable slugs or titles and does not clear existing CMS content. It may update existing starter records with the same identifiers.
+
+The older full reset seed remains in code for local reset workflows only; do not wire it to hosted production without an explicit database reset intent.
 
 1. Install everything required for e2e: `corepack pnpm e2e:install`
 2. Run the suite headlessly: `corepack pnpm test:e2e`

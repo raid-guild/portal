@@ -10,3 +10,11 @@
     opacity: 0.85;
   }
 }
+
+.seedWarning {
+  color: var(--theme-elevation-600);
+  font-size: 13px;
+  line-height: 1.45;
+  margin: 0 0 12px;
+  max-width: 42rem;
+}

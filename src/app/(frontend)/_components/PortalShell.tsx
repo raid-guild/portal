@@ -3,6 +3,7 @@ import React from 'react'
 import {
   ArrowRight,
   Award,
+  CalendarDays,
   ClipboardList,
   FolderKanban,
   LayoutDashboard,
@@ -32,9 +33,11 @@ type PortalHomeProps = {
 
 type DashboardProps = {
   dailyBrief?: DailyBrief | null
+  upcomingEvents?: Event[]
   pointEvents?: PointEvent[]
   pointsTotal?: number
   profile?: Profile | null
+  recentProjects?: Project[]
   recentPosts?: Post[]
   user: User
 }
@@ -178,9 +181,11 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({ posts = [], projec
 
 export const PortalDashboard: React.FC<DashboardProps> = ({
   dailyBrief,
+  upcomingEvents = [],
   pointEvents = [],
   pointsTotal = 0,
   profile,
+  recentProjects = [],
   recentPosts = [],
   user,
 }) => {
@@ -220,6 +225,11 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           href="/projects"
           icon={<FolderKanban className="h-5 w-5" />}
           label="Projects"
+        />
+        <DashboardLink
+          href="/events"
+          icon={<CalendarDays className="h-5 w-5" />}
+          label="Sessions"
         />
         <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
       </section>
@@ -339,13 +349,17 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                         </div>
                         <h3 className="mt-2 font-medium">{item.title}</h3>
                         {item.body ? (
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
+                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                            {item.body}
+                          </p>
                         ) : null}
                       </article>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No recent activity has been linked.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No recent activity has been linked.
+                  </p>
                 )}
               </BriefPanel>
 
@@ -365,7 +379,9 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No active threads have been linked.</p>
+                  <p className="text-sm text-muted-foreground">
+                    No active threads have been linked.
+                  </p>
                 )}
               </BriefPanel>
             </div>
@@ -394,6 +410,75 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             No daily brief has been published yet.
           </p>
         )}
+      </section>
+
+      <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
+        <DashboardPanel
+          action={
+            <Link className="text-sm font-medium underline" href="/events">
+              View sessions
+            </Link>
+          }
+          title="Next Upcoming Sessions"
+        >
+          {upcomingEvents.length ? (
+            <div className="space-y-4">
+              {upcomingEvents.slice(0, 3).map((event) => (
+                <article className="border border-border p-4" key={event.id}>
+                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                    {formatDateTime(event.startsAt)}
+                  </p>
+                  <h3 className="mt-2 font-semibold">{event.title}</h3>
+                  {event.locationLabel ? (
+                    <p className="mt-2 text-sm text-muted-foreground">{event.locationLabel}</p>
+                  ) : null}
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <SafeTextLink href={event.joinURL} label="Join" />
+                    <SafeTextLink href={event.calendarURL} label="Add to calendar" />
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No upcoming sessions are published yet.</p>
+          )}
+        </DashboardPanel>
+
+        <DashboardPanel
+          action={
+            <Link className="text-sm font-medium underline" href="/projects">
+              View projects
+            </Link>
+          }
+          title="Recently Active Projects"
+        >
+          {recentProjects.length ? (
+            <div className="space-y-4">
+              {recentProjects.slice(0, 3).map((project) => (
+                <Link
+                  className="block border border-border p-4 transition-colors hover:bg-card"
+                  href={`/projects/${project.slug}`}
+                  key={project.id}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                      {project.projectStatus || 'Project'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDate(project.lastActiveAt || project.updatedAt) || 'Recently active'}
+                    </p>
+                  </div>
+                  <h3 className="mt-2 font-semibold">{project.title}</h3>
+                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    {project.summary}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No active projects are published yet.</p>
+          )}
+        </DashboardPanel>
       </section>
 
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
@@ -451,9 +536,26 @@ const DashboardLink: React.FC<{ href: string; icon: React.ReactNode; label: stri
   </Link>
 )
 
-const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (
+const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
+  children,
+  title,
+}) => (
   <section>
     <h2 className="text-xl font-semibold">{title}</h2>
+    <div className="mt-4">{children}</div>
+  </section>
+)
+
+const DashboardPanel: React.FC<{
+  action?: React.ReactNode
+  children: React.ReactNode
+  title: string
+}> = ({ action, children, title }) => (
+  <section className="border border-border p-6">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <h2 className="text-xl font-semibold">{title}</h2>
+      {action}
+    </div>
     <div className="mt-4">{children}</div>
   </section>
 )
@@ -494,7 +596,11 @@ const SafeAction: React.FC<{
 
   return (
     <Button asChild size="sm" variant={variant}>
-      <Link href={safeURL} rel={isExternal ? 'noopener noreferrer' : undefined} target={isExternal ? '_blank' : undefined}>
+      <Link
+        href={safeURL}
+        rel={isExternal ? 'noopener noreferrer' : undefined}
+        target={isExternal ? '_blank' : undefined}
+      >
         {label}
       </Link>
     </Button>
