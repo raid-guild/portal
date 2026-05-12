@@ -38,13 +38,21 @@ export default async function HomePage() {
     )
   }
 
-  const [posts, projects, upcomingEvents] = await Promise.all([
+  const [posts, projects, upcomingEvents, weeklyBrief] = await Promise.all([
     getRecentPosts(),
     getProjects(),
     getPublicUpcomingEvents(),
+    getLatestWeeklyBrief(),
   ])
 
-  return <PortalPublicHome posts={posts} projects={projects} upcomingEvents={upcomingEvents} />
+  return (
+    <PortalPublicHome
+      posts={posts}
+      projects={projects}
+      upcomingEvents={upcomingEvents}
+      weeklyBrief={weeklyBrief}
+    />
+  )
 }
 
 export const metadata: Metadata = {
@@ -124,6 +132,40 @@ const getPublicUpcomingEvents = async () => {
   return result.docs
 }
 
+const getLatestWeeklyBrief = async () => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'dailyBriefs',
+    depth: 1,
+    draft: false,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-briefDate',
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          briefType: {
+            equals: 'weekly',
+          },
+        },
+        {
+          visibility: {
+            equals: 'public',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs[0] || null
+}
+
 const getProfileForUser = async (userID: string | number) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
@@ -158,6 +200,11 @@ const getLatestDailyBrief = async (user: User) => {
         {
           _status: {
             equals: 'published',
+          },
+        },
+        {
+          briefType: {
+            equals: 'daily',
           },
         },
         {

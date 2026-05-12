@@ -6,7 +6,31 @@ export const createDailyBriefs: Access = ({ req: { user } }) => canContributeCon
 
 export const deleteDailyBriefs: Access = ({ req: { user } }) => canEditContent(user)
 
-export const readDailyBriefs: Access = ({ req: { user } }) => Boolean(user)
+export const readDailyBriefs: Access = ({ req: { user } }) => {
+  if (user) return true
+
+  const publicWeeklyBriefs: Where = {
+    and: [
+      {
+        _status: {
+          equals: 'published',
+        },
+      },
+      {
+        briefType: {
+          equals: 'weekly',
+        },
+      },
+      {
+        visibility: {
+          equals: 'public',
+        },
+      },
+    ],
+  }
+
+  return publicWeeklyBriefs
+}
 
 export const updateDailyBriefs: Access = ({ req: { user } }) => {
   if (!user) return false
