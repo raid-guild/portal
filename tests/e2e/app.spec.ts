@@ -1,12 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import {
-  adminEmail,
-  adminPassword,
-  commentText,
-  seededPosts,
-  targetPost,
-} from './env'
+import { adminEmail, adminPassword, commentText, seededPosts, targetPost } from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
 
@@ -45,7 +39,10 @@ async function fillVisiblePasswordFields(page: Page, value: string) {
 }
 
 async function expectSeedButton(page: Page, timeout = 15000) {
-  await expect(page.getByRole('button', { name: /seed your database/i })).toBeVisible({ timeout })
+  await expect(page.getByText(/without clearing existing CMS content/i)).toBeVisible({ timeout })
+  await expect(page.getByRole('button', { name: /upsert portal starter content/i })).toBeVisible({
+    timeout,
+  })
 }
 
 async function createFirstAdmin(page: Page) {
@@ -91,8 +88,9 @@ async function createFirstAdmin(page: Page) {
 }
 
 async function seedDatabase(page: Page) {
-  await page.getByRole('button', { name: /seed your database/i }).click()
-  await expect(page.getByText(/database seeded!/i)).toBeVisible({ timeout: 120000 })
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: /upsert portal starter content/i }).click()
+  await expect(page.getByText(/portal starter content upserted/i)).toBeVisible({ timeout: 120000 })
 }
 
 async function approveComment(page: Page) {
@@ -167,8 +165,11 @@ async function verifySeededPosts(page: Page) {
 
     const response = await page.goto(`/posts/${post.slug}`)
 
-    expect(response?.ok(), `Expected seeded post page /posts/${post.slug} to respond successfully`).toBeTruthy()
-    await expect(page.getByRole('heading', { name: post.title })).toBeVisible()
+    expect(
+      response?.ok(),
+      `Expected seeded post page /posts/${post.slug} to respond successfully`,
+    ).toBeTruthy()
+    await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
   }
 }
@@ -220,10 +221,12 @@ async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
   await expect(page.getByText('Active Now')).toBeVisible()
-  await expect(page.getByText('Project Spike Portal')).toBeVisible()
-  await expect(page.getByText('Cohort Project Spike Sync')).toBeVisible()
+  await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Sync' }),
+  ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join next session' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Active Threads' })).toBeVisible()
   await expect(page.getByText('Defining the project spike object')).toBeVisible()
@@ -231,6 +234,15 @@ async function verifyDashboardBrief(page: Page) {
     page.getByText('Group narrowed the portal around project spikes instead of broad PM tooling.'),
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Next Upcoming Sessions' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'View sessions' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Recently Active Projects' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'View projects' })).toBeVisible()
+  await expect(
+    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Portal' }),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Recent Public Posts' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
 }
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {

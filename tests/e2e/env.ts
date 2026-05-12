@@ -17,20 +17,8 @@ export const adminPassword = 'ChangeMe123!'
 export const commentText = 'Playwright public comment awaiting approval.'
 export const seededPosts = [
   {
-    title: 'Exploring the Power of Payload CMS',
-    slug: 'exploring-payload-cms',
-  },
-  {
-    title: 'Getting Started with Payload CMS Website Template',
-    slug: 'getting-started-payload-cms',
-  },
-  {
-    title: 'Medusa.js 2.0: A Game-Changer for E-commerce',
-    slug: 'medusajs-2-0-game-changer',
-  },
-  {
-    title: 'Vendure: A Powerful Open-Source E-commerce Solution',
-    slug: 'vendure-open-source-ecommerce',
+    title: 'Cohort Project Spike Portal Update',
+    slug: 'cohort-project-spike-portal-update',
   },
 ] as const
 

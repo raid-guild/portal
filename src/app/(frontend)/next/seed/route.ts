@@ -1,10 +1,9 @@
 import { createLocalReq, getPayload } from 'payload'
-import { seed } from '@/endpoints/seed'
+import { seedPortalContent } from '@/endpoints/seed/portal'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { NextRequest } from 'next/server'
 
-const payloadToken = 'payload-token'
 export const maxDuration = 60 // This function can run for a maximum of 60 seconds
 
 export async function POST(req: NextRequest): Promise<Response> {
@@ -23,10 +22,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     // At this point you should pass in a user, locale, and any other context you need for the Local API
     const payloadReq = await createLocalReq({ user }, payload)
 
-    await seed({ payload, req: payloadReq })
+    await seedPortalContent({ payload, req: payloadReq })
 
     return Response.json({ success: true })
-  } catch {
-    return new Response('Error seeding data.')
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown seed error'
+    payload.logger.error(message)
+    return new Response('Error seeding data.', { status: 500 })
   }
 }

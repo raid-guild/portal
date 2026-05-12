@@ -2,7 +2,6 @@ import type { DailyBrief } from '@/payload-types'
 
 import { headingNode, lexicalRoot, paragraphNode, text } from './lexical'
 
-const postPlaceholder = '{{POST_1}}' as unknown as number
 const authorPlaceholder = '{{AUTHOR}}' as unknown as number
 
 export const dailyBrief: Omit<DailyBrief, 'createdAt' | 'id' | 'updatedAt'> = {
@@ -51,7 +50,6 @@ export const dailyBrief: Omit<DailyBrief, 'createdAt' | 'id' | 'updatedAt'> = {
   visibility: 'authenticated',
   sourceNotes:
     'Seeded demo brief. Future versions can be generated from Discord summaries, project updates, publishing activity, and profile changes.',
-  relatedPosts: [postPlaceholder],
   authors: [authorPlaceholder],
   _status: 'published',
   publishedAt: '2026-05-05T12:00:00.000Z',
