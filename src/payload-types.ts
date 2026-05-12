@@ -992,6 +992,10 @@ export interface DailyBrief {
    */
   mediaFile?: (number | null) | Media;
   /**
+   * Optional externally hosted media URL, such as an S3 or CDN Remotion export.
+   */
+  externalMediaURL?: string | null;
+  /**
    * Helps the frontend decide how to present the attached media.
    */
   mediaType?: ('video' | 'audio' | 'remotion-scene' | 'other') | null;
@@ -1491,6 +1495,7 @@ export interface DailyBriefsSelect<T extends boolean = true> {
       };
   content?: T;
   mediaFile?: T;
+  externalMediaURL?: T;
   mediaType?: T;
   nextEvent?: T;
   activityItems?: T;

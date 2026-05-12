@@ -7,6 +7,7 @@ import * as migration_20260505_141508_daily_briefs from './20260505_141508_daily
 import * as migration_20260505_155406_points_ledger from './20260505_155406_points_ledger'
 import * as migration_20260511_200928_cohort_spike_primitives from './20260511_200928_cohort_spike_primitives'
 import * as migration_20260512_141508_brief_media_and_weekly_type from './20260512_141508_brief_media_and_weekly_type'
+import * as migration_20260512_144308_brief_external_media_url from './20260512_144308_brief_external_media_url'
 
 export const migrations = [
   {
@@ -53,5 +54,10 @@ export const migrations = [
     up: migration_20260512_141508_brief_media_and_weekly_type.up,
     down: migration_20260512_141508_brief_media_and_weekly_type.down,
     name: '20260512_141508_brief_media_and_weekly_type',
+  },
+  {
+    up: migration_20260512_144308_brief_external_media_url.up,
+    down: migration_20260512_144308_brief_external_media_url.down,
+    name: '20260512_144308_brief_external_media_url',
   },
 ]
