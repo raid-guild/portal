@@ -77,6 +77,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
     weeklyBrief?.mediaFile && typeof weeklyBrief.mediaFile === 'object'
       ? weeklyBrief.mediaFile
       : null
+  const weeklyBriefMediaURL =
+    weeklyBriefMedia?.url || toSafeURL(weeklyBrief?.externalMediaURL, { allowRelative: false })
 
   return (
     <main className="pb-24">
@@ -159,15 +161,15 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
             </div>
             <aside className="border border-border p-5">
               <p className="font-semibold">Brief media</p>
-              {weeklyBriefMedia?.url ? (
+              {weeklyBriefMediaURL ? (
                 <div className="mt-4">
                   {weeklyBrief.mediaType === 'audio' ? (
-                    <audio className="w-full" controls src={weeklyBriefMedia.url} />
+                    <audio className="w-full" controls src={weeklyBriefMediaURL} />
                   ) : (
                     <video
                       className="aspect-video w-full bg-card"
                       controls
-                      src={weeklyBriefMedia.url}
+                      src={weeklyBriefMediaURL}
                     />
                   )}
                   <p className="mt-3 text-xs uppercase tracking-normal text-muted-foreground">

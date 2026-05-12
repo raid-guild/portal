@@ -151,6 +151,15 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
       relationTo: 'media',
     },
     {
+      name: 'externalMediaURL',
+      type: 'text',
+      admin: {
+        description: 'Optional externally hosted media URL, such as an S3 or CDN Remotion export.',
+      },
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
       name: 'mediaType',
       type: 'select',
       admin: {
