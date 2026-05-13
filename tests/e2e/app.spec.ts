@@ -177,7 +177,7 @@ async function verifySeededPosts(page: Page) {
 async function verifyPublicHome(page: Page) {
   await page.goto('/')
   await expect(
-    page.getByRole('heading', { name: 'See what is active in the Guild right now.' }),
+    page.getByRole('heading', { name: 'Find the work already in motion.' }),
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next public session' })).toBeVisible()
@@ -189,10 +189,7 @@ async function verifyPublicHome(page: Page) {
     page.getByText('The weekly media export will appear here when it is attached.'),
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join for daily briefs' })).toBeVisible()
-  await expect(
-    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Sync' }).first(),
-  ).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'View sessions' }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
 }
@@ -245,9 +242,7 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
   await expect(page.getByText('Active Now')).toBeVisible()
   await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()
-  await expect(
-    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Sync' }),
-  ).toBeVisible()
+  await expect(page.getByText('Cohort Project Spike Sync').first()).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join next session' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible()

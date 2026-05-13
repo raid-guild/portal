@@ -13,32 +13,34 @@ export default function JoinPage() {
             Join the Portal
           </p>
           <h1 className="text-5xl font-semibold leading-tight md:text-7xl">
-            FORGE YOUR PATH.
-            <br />
-            EARN YOUR SEAT.
+            Join the current RaidGuild cohort cycle.
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-            RaidGuild&apos;s monthly cohort is a 4-week proving ground where you embark on real
-            projects, train with battle-tested builders, and claim your place in the premier design
-            and dev collective of the decentralized realm.
+            Create a profile, pick a track, and start contributing to live projects with builders,
+            creatives, operators, and strategists.
           </p>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
-            Cohorts launch on the first Monday of each month. Limited seats.
+            Start with the weekly brief, join the next session, and find the places where new
+            contributors can plug in right now.
           </p>
           <hr className="my-8 border-border" />
-          <p className="text-xl font-medium">Create an account, then build your profile.</p>
+          <p className="text-xl font-medium">
+            Turn participation into skills, visibility, and opportunity.
+          </p>
           <div className="mt-8 grid gap-4 text-sm leading-6 text-muted-foreground md:grid-cols-3">
             <div>
               <p className="font-semibold text-foreground">1. Create account</p>
-              <p className="mt-2">Get access to member-facing portal surfaces.</p>
+              <p className="mt-2">
+                Get access to daily briefs, member context, and contribution paths.
+              </p>
             </div>
             <div>
-              <p className="font-semibold text-foreground">2. Build profile</p>
-              <p className="mt-2">Choose your roles, skills, links, and visibility.</p>
+              <p className="font-semibold text-foreground">2. Pick a track</p>
+              <p className="mt-2">Find active projects, sessions, and open collaboration areas.</p>
             </div>
             <div>
-              <p className="font-semibold text-foreground">3. Get discovered</p>
-              <p className="mt-2">Make it easier to connect you with projects and opportunities.</p>
+              <p className="font-semibold text-foreground">3. Contribute visibly</p>
+              <p className="mt-2">Build with others and create attribution for meaningful work.</p>
             </div>
           </div>
         </div>
@@ -58,6 +60,6 @@ export default function JoinPage() {
 }
 
 export const metadata: Metadata = {
-  description: 'Create a RaidGuild Portal account and begin your profile.',
+  description: 'Join the current RaidGuild cohort cycle and find active contribution paths.',
   title: 'Join the Portal',
 }
