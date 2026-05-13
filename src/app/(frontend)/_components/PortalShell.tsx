@@ -66,6 +66,31 @@ const formatDateTime = (date?: string | null) => {
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
+const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief, emptyText }) => {
+  const mediaFile = brief.mediaFile && typeof brief.mediaFile === 'object' ? brief.mediaFile : null
+  const mediaURL = mediaFile?.url || toSafeURL(brief.externalMediaURL, { allowRelative: false })
+
+  return (
+    <aside className="border border-border p-5">
+      <p className="font-semibold">Brief media</p>
+      {mediaURL ? (
+        <div className="mt-4">
+          {brief.mediaType === 'audio' ? (
+            <audio className="w-full" controls src={mediaURL} />
+          ) : (
+            <video className="aspect-video w-full bg-card" controls src={mediaURL} />
+          )}
+          <p className="mt-3 text-xs uppercase tracking-normal text-muted-foreground">
+            {brief.mediaType || 'media'}
+          </p>
+        </div>
+      ) : (
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">{emptyText}</p>
+      )}
+    </aside>
+  )
+}
+
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   posts = [],
   projects = [],
@@ -73,12 +98,6 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   weeklyBrief,
 }) => {
   const nextEvent = upcomingEvents[0]
-  const weeklyBriefMedia =
-    weeklyBrief?.mediaFile && typeof weeklyBrief.mediaFile === 'object'
-      ? weeklyBrief.mediaFile
-      : null
-  const weeklyBriefMediaURL =
-    weeklyBriefMedia?.url || toSafeURL(weeklyBrief?.externalMediaURL, { allowRelative: false })
 
   return (
     <main className="pb-24">
@@ -159,29 +178,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
                 <Link href="/join">Join for daily briefs</Link>
               </Button>
             </div>
-            <aside className="border border-border p-5">
-              <p className="font-semibold">Brief media</p>
-              {weeklyBriefMediaURL ? (
-                <div className="mt-4">
-                  {weeklyBrief.mediaType === 'audio' ? (
-                    <audio className="w-full" controls src={weeklyBriefMediaURL} />
-                  ) : (
-                    <video
-                      className="aspect-video w-full bg-card"
-                      controls
-                      src={weeklyBriefMediaURL}
-                    />
-                  )}
-                  <p className="mt-3 text-xs uppercase tracking-normal text-muted-foreground">
-                    {weeklyBrief.mediaType || 'media'}
-                  </p>
-                </div>
-              ) : (
-                <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                  The weekly media export will appear here when it is attached.
-                </p>
-              )}
-            </aside>
+            <BriefMedia
+              brief={weeklyBrief}
+              emptyText="The weekly media export will appear here when it is attached."
+            />
           </div>
         </section>
       ) : null}
@@ -461,16 +461,24 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                   </ul>
                 ) : null}
               </div>
-              {nextEvent ? (
-                <div className="border border-border p-4 text-sm">
-                  <p className="font-semibold">Next session</p>
-                  <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
-                  <p className="mt-1 text-muted-foreground">{formatDateTime(nextEvent.startsAt)}</p>
-                  {nextEvent.locationLabel ? (
-                    <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
-                  ) : null}
-                </div>
-              ) : null}
+              <div className="space-y-4">
+                <BriefMedia
+                  brief={dailyBrief}
+                  emptyText="The daily media export will appear here when it is attached."
+                />
+                {nextEvent ? (
+                  <div className="border border-border p-4 text-sm">
+                    <p className="font-semibold">Next session</p>
+                    <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
+                    <p className="mt-1 text-muted-foreground">
+                      {formatDateTime(nextEvent.startsAt)}
+                    </p>
+                    {nextEvent.locationLabel ? (
+                      <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
