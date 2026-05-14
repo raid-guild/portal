@@ -47,6 +47,13 @@ export default function JoinPage() {
         <div>
           <SignupForm />
           <p className="mt-4 text-sm text-muted-foreground">
+            Bringing a project, bounty, or funding path?{' '}
+            <Link className="font-medium text-foreground underline" href="/sponsor">
+              Sponsor an opportunity
+            </Link>
+            .
+          </p>
+          <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link className="font-medium text-foreground underline" href="/admin/login">
               Log in

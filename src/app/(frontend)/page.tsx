@@ -7,6 +7,7 @@ import React from 'react'
 import type { User } from '@/payload-types'
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,8 +57,22 @@ export default async function HomePage() {
 }
 
 export const metadata: Metadata = {
-  description: 'Discover RaidGuild builders, projects, and public updates.',
-  title: 'RaidGuild Portal',
+  description:
+    'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
+  openGraph: mergeOpenGraph({
+    description:
+      'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
+    title: 'RaidGuild Portal | Find the work already in motion',
+    url: '/',
+  }),
+  title: 'RaidGuild Portal | Find the work already in motion',
+  twitter: {
+    card: 'summary_large_image',
+    description:
+      'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
+    images: ['/assets/image.png'],
+    title: 'RaidGuild Portal | Find the work already in motion',
+  },
 }
 
 const getRecentPosts = async () => {

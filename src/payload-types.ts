@@ -78,6 +78,7 @@ export interface Config {
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
+    sponsorInquiries: SponsorInquiry;
     media: Media;
     categories: Category;
     users: User;
@@ -104,6 +105,7 @@ export interface Config {
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
+    sponsorInquiries: SponsorInquiriesSelect<false> | SponsorInquiriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
@@ -1046,6 +1048,51 @@ export interface PointEvent {
   createdAt: string;
 }
 /**
+ * Private intake records for sponsor, bounty, project, and funding opportunities.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsorInquiries".
+ */
+export interface SponsorInquiry {
+  id: number;
+  name: string;
+  email: string;
+  organization: string;
+  sponsorType:
+    | 'project-opportunity'
+    | 'bounty-paid-work'
+    | 'grant-funding'
+    | 'mentorship-office-hours'
+    | 'tooling-infrastructure'
+    | 'other';
+  /**
+   * What the sponsor is bringing to the cohort.
+   */
+  opportunity: string;
+  /**
+   * Roles, skills, or kinds of collaborators requested.
+   */
+  contributorNeeds?: string | null;
+  budgetRange?: ('no-budget-yet' | 'under-1k' | '1k-5k' | '5k-15k' | '15k-plus' | 'unknown') | null;
+  timeline?: ('this-week' | 'this-month' | 'next-cohort-cycle' | 'flexible') | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  preferredNextStep?: ('talk-to-someone' | 'submit-for-review' | 'join-a-session') | null;
+  /**
+   * Whether this opportunity can be mentioned publicly after review.
+   */
+  canShowPublicly?: boolean | null;
+  status: 'new' | 'reviewing' | 'accepted' | 'declined' | 'converted';
+  reviewNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Comments submitted by visitors on blog posts
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1207,6 +1254,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'profileRoles';
         value: number | ProfileRole;
+      } | null)
+    | ({
+        relationTo: 'sponsorInquiries';
+        value: number | SponsorInquiry;
       } | null)
     | ({
         relationTo: 'media';
@@ -1705,6 +1756,33 @@ export interface ProfileRolesSelect<T extends boolean = true> {
   icon?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsorInquiries_select".
+ */
+export interface SponsorInquiriesSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  organization?: T;
+  sponsorType?: T;
+  opportunity?: T;
+  contributorNeeds?: T;
+  budgetRange?: T;
+  timeline?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  preferredNextStep?: T;
+  canShowPublicly?: T;
+  status?: T;
+  reviewNotes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

@@ -180,6 +180,8 @@ async function verifyPublicHome(page: Page) {
     page.getByRole('heading', { name: 'Find the work already in motion.' }),
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join RaidGuild' })).toBeVisible()
+  await expect(page.getByText('Bringing a project or bounty?')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Sponsor an opportunity' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next public session' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Upcoming Sessions' })).toBeVisible()
   await expect(
@@ -237,6 +239,39 @@ async function verifyPortalSkillEndpoint(page: Page) {
   expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
 }
 
+async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
+  await publicPage.goto('/sponsor')
+  await expect(
+    publicPage.getByRole('heading', { name: 'Bring an opportunity to the cohort.' }),
+  ).toBeVisible()
+  await fillFirst(publicPage.getByLabel(/^name$/i), 'Sponsor Lead')
+  await fillFirst(publicPage.getByLabel(/^email$/i), 'sponsor@example.com')
+  await fillFirst(publicPage.getByLabel(/organization/i), 'OpenClaw Labs')
+  await publicPage.getByLabel(/sponsor type/i).selectOption('bounty-paid-work')
+  await publicPage.getByLabel(/budget range/i).selectOption('1k-5k')
+  await fillFirst(
+    publicPage.getByLabel(/what are you bringing/i),
+    'A scoped bounty for contributors to package a reusable agent workflow template.',
+  )
+  await fillFirst(
+    publicPage.getByLabel(/what kind of contributors/i),
+    'TypeScript builders, product thinkers, and documentation support.',
+  )
+  await publicPage.getByLabel(/timeline/i).selectOption('this-month')
+  await publicPage.getByLabel(/preferred next step/i).selectOption('talk-to-someone')
+  await fillFirst(publicPage.getByLabel(/link label/i), 'Opportunity brief')
+  await fillFirst(publicPage.getByLabel(/relevant link/i), 'https://example.com/opportunity')
+  await publicPage.getByLabel(/mentioned publicly/i).check()
+  await publicPage.getByRole('button', { name: /submit sponsor inquiry/i }).click()
+  await expect(publicPage.getByRole('heading', { name: 'Sponsor inquiry received' })).toBeVisible()
+
+  await adminPage.goto('/admin/collections/sponsorInquiries')
+  await expect(adminPage.getByText('OpenClaw Labs')).toBeVisible({
+    timeout: 30000,
+  })
+  await expect(adminPage.getByRole('link', { name: 'Sponsor Lead' })).toBeVisible()
+}
+
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -276,6 +311,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
   await verifyPortalSkillEndpoint(publicPage)
+  await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
 

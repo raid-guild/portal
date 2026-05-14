@@ -313,6 +313,13 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
               <Link href="/projects">Explore projects</Link>
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground lg:text-right">
+            Bringing a project or bounty?{' '}
+            <Link className="font-medium text-foreground underline" href="/sponsor">
+              Sponsor an opportunity
+            </Link>
+            .
+          </p>
         </div>
       </section>
     </main>
