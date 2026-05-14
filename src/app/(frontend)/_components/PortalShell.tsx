@@ -378,7 +378,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           icon={<CalendarDays className="h-5 w-5" />}
           label="Sessions"
         />
-        <DashboardLink href="/create" icon={<PenLine className="h-5 w-5" />} label="Create" />
         <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
       </section>
 

@@ -45,9 +45,9 @@ export default async function EventsPage() {
         {user ? (
           <Link
             className="border border-border px-4 py-2 text-sm font-medium"
-            href="/create#session"
+            href="/admin/collections/events/create"
           >
-            Create session draft
+            Create session
           </Link>
         ) : null}
       </section>

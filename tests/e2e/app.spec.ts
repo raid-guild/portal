@@ -333,7 +333,7 @@ async function verifyPortalLoginRedirect(page: Page) {
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
 }
 
-async function createProfileAndRecords(page: Page) {
+async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
   await fillFirst(page.getByLabel(/^display name$/i), 'Playwright Admin')
@@ -357,49 +357,38 @@ async function createProfileAndRecords(page: Page) {
   await expect(page.getByRole('heading', { name: 'Playwright Admin' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Website' })).toBeVisible()
 
-  await page.goto('/create')
-  await expect(page.getByRole('heading', { name: 'Create portal records' })).toBeVisible()
-
-  await fillFirst(page.getByLabel(/^project title$/i), 'Playwright Project Draft')
-  await fillFirst(
-    page.getByLabel(/^summary$/i).first(),
-    'A draft project created from the member form.',
+  await page.goto('/projects')
+  await expect(page.getByRole('link', { name: 'Create project' })).toHaveAttribute(
+    'href',
+    '/admin/collections/projects/create',
   )
-  await fillFirst(page.getByLabel(/^current state$/i), 'Ready for review.')
-  await page
-    .locator('form')
-    .filter({ hasText: 'Project' })
-    .first()
-    .getByRole('button', { name: /create draft/i })
-    .click()
-  await expect(page.getByText('Project draft created.')).toBeVisible()
 
-  await fillFirst(page.getByLabel(/^session title$/i), 'Playwright Session Draft')
-  await fillFirst(page.getByLabel(/^starts at$/i), '2026-06-01T10:00')
-  await fillFirst(page.getByLabel(/^location$/i), 'Discord')
-  await page
-    .locator('form')
-    .filter({ hasText: 'Session' })
-    .getByRole('button', { name: /create draft/i })
-    .click()
-  await expect(page.getByText('Session draft created.')).toBeVisible()
-
-  await fillFirst(page.getByLabel(/^post title$/i), 'Playwright Post Draft')
-  await fillFirst(
-    page.getByLabel(/^body$/i),
-    'This draft post was created through the portal form.',
+  await page.goto('/events')
+  await expect(page.getByRole('link', { name: 'Create session' })).toHaveAttribute(
+    'href',
+    '/admin/collections/events/create',
   )
-  await page
-    .locator('form')
-    .filter({ hasText: 'Post' })
-    .getByRole('button', { name: /create draft/i })
-    .click()
-  await expect(page.getByText('Post draft created.')).toBeVisible()
 
-  await page.goto('/me')
-  await expect(page.getByText('Playwright Project Draft')).toBeVisible()
-  await expect(page.getByText('Playwright Session Draft')).toBeVisible()
-  await expect(page.getByText('Playwright Post Draft')).toBeVisible()
+  await page.goto('/posts')
+  await expect(page.getByRole('link', { name: 'Create post' })).toHaveAttribute(
+    'href',
+    '/admin/collections/posts/create',
+  )
+
+  await page.goto('/admin/collections/projects/create')
+  await expect(page).toHaveURL(/\/admin\/collections\/projects\/create/)
+  await expect(page.getByText('Creating new Project')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: /title/i }).first()).toBeVisible()
+
+  await page.goto('/admin/collections/events/create')
+  await expect(page).toHaveURL(/\/admin\/collections\/events\/create/)
+  await expect(page.getByText('Creating new Event')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: /title/i }).first()).toBeVisible()
+
+  await page.goto('/admin/collections/posts/create')
+  await expect(page).toHaveURL(/\/admin\/collections\/posts\/(create|\d+)/)
+  await expect(page.getByText(/Creating new Post|Status:\s*Draft/)).toBeVisible()
+  await expect(page.getByRole('textbox', { name: /title/i }).first()).toBeVisible()
 }
 
 async function verifyDashboardBrief(page: Page) {
@@ -432,7 +421,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
-  await createProfileAndRecords(page)
+  await createProfileAndVerifyContributorCreateLinks(page)
 
   const loginContext = await browser.newContext()
   const loginPage = await loginContext.newPage()

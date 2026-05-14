@@ -32,9 +32,9 @@ export default async function ProjectsPage() {
         {user ? (
           <Link
             className="border border-border px-4 py-2 text-sm font-medium"
-            href="/create#project"
+            href="/admin/collections/projects/create"
           >
-            Create project draft
+            Create project
           </Link>
         ) : null}
       </section>

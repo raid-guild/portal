@@ -48,9 +48,9 @@ export default async function Page({ params: paramsPromise }: Args) {
           {user ? (
             <Link
               className="border border-border px-4 py-2 text-sm font-medium"
-              href="/create#post"
+              href="/admin/collections/posts/create"
             >
-              Create post draft
+              Create post
             </Link>
           ) : null}
         </div>
