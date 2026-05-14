@@ -142,13 +142,14 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, r
   }
 
   return (
-    <form className="border border-border p-6" onSubmit={submitProfile}>
-      <div className="grid gap-8 lg:grid-cols-[1fr_18rem]">
+    <form className="border border-border bg-card/30 p-6" onSubmit={submitProfile}>
+      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="displayName">Display name</Label>
               <Input
+                className={fieldClassName}
                 defaultValue={profile?.displayName || ''}
                 id="displayName"
                 name="displayName"
@@ -157,23 +158,47 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, r
             </div>
             <div>
               <Label htmlFor="handle">Handle</Label>
-              <Input defaultValue={profile?.handle || ''} id="handle" name="handle" required />
+              <Input
+                className={fieldClassName}
+                defaultValue={profile?.handle || ''}
+                id="handle"
+                name="handle"
+                required
+              />
             </div>
           </div>
 
           <div>
             <Label htmlFor="bio">Bio</Label>
-            <Textarea defaultValue={profile?.bio || ''} id="bio" name="bio" required rows={4} />
+            <Textarea
+              className={fieldClassName}
+              defaultValue={profile?.bio || ''}
+              id="bio"
+              name="bio"
+              required
+              rows={4}
+            />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="location">Location</Label>
-              <Input defaultValue={profile?.location || ''} id="location" name="location" />
+              <Input
+                className={fieldClassName}
+                defaultValue={profile?.location || ''}
+                id="location"
+                name="location"
+              />
             </div>
             <div>
               <Label htmlFor="avatarFile">Avatar</Label>
-              <Input accept="image/*" id="avatarFile" name="avatarFile" type="file" />
+              <Input
+                accept="image/*"
+                className={fieldClassName}
+                id="avatarFile"
+                name="avatarFile"
+                type="file"
+              />
             </div>
           </div>
 
@@ -186,11 +211,17 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, r
           <div className="grid gap-4 md:grid-cols-2">
             <div>
               <Label htmlFor="discord">Discord</Label>
-              <Input defaultValue={profile?.contact?.discord || ''} id="discord" name="discord" />
+              <Input
+                className={fieldClassName}
+                defaultValue={profile?.contact?.discord || ''}
+                id="discord"
+                name="discord"
+              />
             </div>
             <div>
               <Label htmlFor="contactEmail">Contact email</Label>
               <Input
+                className={fieldClassName}
                 defaultValue={profile?.contact?.email || ''}
                 id="contactEmail"
                 name="contactEmail"
@@ -204,7 +235,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, r
           <div>
             <Label htmlFor="visibility">Visibility</Label>
             <select
-              className="h-10 w-full rounded border border-input bg-background px-3 text-sm"
+              className={selectClassName}
               defaultValue={profile?.visibility || 'public'}
               id="visibility"
               name="visibility"
@@ -251,7 +282,13 @@ const LinkInput: React.FC<{ label: string; name: string; profile?: Profile | nul
   return (
     <div>
       <Label htmlFor={name}>{label}</Label>
-      <Input defaultValue={existing?.url || ''} id={name} name={name} type="url" />
+      <Input
+        className={fieldClassName}
+        defaultValue={existing?.url || ''}
+        id={name}
+        name={name}
+        type="url"
+      />
     </div>
   )
 }
@@ -264,10 +301,11 @@ const Checklist: React.FC<{
 }> = ({ defaultSelected, items, label, name }) => (
   <fieldset>
     <legend className="text-sm font-medium">{label}</legend>
-    <div className="mt-3 max-h-56 space-y-2 overflow-auto border border-border p-3">
+    <div className="mt-3 max-h-56 space-y-2 overflow-auto border border-muted-foreground/30 bg-background/70 p-3">
       {items.map((item) => (
         <label className="flex items-start gap-2 text-sm leading-5" key={item.id}>
           <input
+            className="mt-1 accent-primary"
             defaultChecked={defaultSelected.has(String(item.id))}
             name={name}
             type="checkbox"
@@ -279,3 +317,8 @@ const Checklist: React.FC<{
     </div>
   </fieldset>
 )
+
+const fieldClassName =
+  'border-muted-foreground/30 bg-background/80 text-foreground shadow-sm focus-visible:ring-primary'
+
+const selectClassName = `${fieldClassName} h-10 w-full rounded px-3 text-sm`

@@ -33,6 +33,7 @@ export const CreatorForms: React.FC<CreatorFormsProps> = ({ profile, projects, u
     <div className="grid gap-8">
       <ScaffoldForm
         description="Create a draft project surface that can later be reviewed, expanded, and linked into briefs."
+        id="project"
         onSubmit={async (formData) => {
           setProjectStatus(emptyStatus)
           const title = textValue(formData, 'title')
@@ -84,6 +85,7 @@ export const CreatorForms: React.FC<CreatorFormsProps> = ({ profile, projects, u
 
       <ScaffoldForm
         description="Create a draft session with time, join link, calendar link, and optional project scope."
+        id="session"
         onSubmit={async (formData) => {
           setSessionStatus(emptyStatus)
           const title = textValue(formData, 'title')
@@ -133,12 +135,7 @@ export const CreatorForms: React.FC<CreatorFormsProps> = ({ profile, projects, u
         <TextField id="session-location" label="Location" name="locationLabel" />
         <div className="grid gap-4 md:grid-cols-2">
           <TextField id="session-join-url" label="Join URL" name="joinURL" type="url" />
-          <TextField
-            id="session-calendar-url"
-            label="Calendar URL"
-            name="calendarURL"
-            type="url"
-          />
+          <TextField id="session-calendar-url" label="Calendar URL" name="calendarURL" type="url" />
         </div>
         <SelectField
           id="session-related-project"
@@ -153,6 +150,7 @@ export const CreatorForms: React.FC<CreatorFormsProps> = ({ profile, projects, u
 
       <ScaffoldForm
         description="Create a draft post from a simple title, summary, and body. Editors can polish it later."
+        id="post"
         onSubmit={async (formData) => {
           setPostStatus(emptyStatus)
           const title = textValue(formData, 'title')
@@ -193,12 +191,14 @@ export const CreatorForms: React.FC<CreatorFormsProps> = ({ profile, projects, u
 const ScaffoldForm: React.FC<{
   children: React.ReactNode
   description: string
+  id: string
   onSubmit: (formData: FormData) => Promise<void>
   status: FormStatus
   title: string
-}> = ({ children, description, onSubmit, status, title }) => (
+}> = ({ children, description, id, onSubmit, status, title }) => (
   <form
-    className="border border-border p-6"
+    className="scroll-mt-8 border border-border bg-card/30 p-6"
+    id={id}
     onSubmit={async (event) => {
       event.preventDefault()
       await onSubmit(new FormData(event.currentTarget))
@@ -221,16 +221,10 @@ const TextField: React.FC<{
   name: string
   required?: boolean
   type?: string
-}> = ({
-  id,
-  label,
-  name,
-  required,
-  type = 'text',
-}) => (
+}> = ({ id, label, name, required, type = 'text' }) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
-    <Input id={id} name={name} required={required} type={type} />
+    <Input className={fieldClassName} id={id} name={name} required={required} type={type} />
   </div>
 )
 
@@ -243,7 +237,7 @@ const TextAreaField: React.FC<{
 }> = ({ id, label, name, required, rows = 4 }) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
-    <Textarea id={id} name={name} required={required} rows={rows} />
+    <Textarea className={fieldClassName} id={id} name={name} required={required} rows={rows} />
   </div>
 )
 
@@ -252,19 +246,10 @@ const SelectField: React.FC<{
   label: string
   name: string
   options: [string, string][]
-}> = ({
-  id,
-  label,
-  name,
-  options,
-}) => (
+}> = ({ id, label, name, options }) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
-    <select
-      className="h-10 w-full rounded border border-input bg-background px-3 text-sm"
-      id={id}
-      name={name}
-    >
+    <select className={selectClassName} id={id} name={name}>
       {options.map(([value, labelText]) => (
         <option key={value || 'none'} value={value}>
           {labelText}
@@ -284,6 +269,11 @@ const LinkFields = () => (
 const textValue = (formData: FormData, key: string) => String(formData.get(key) || '').trim()
 
 const compactArray = (items: string[]) => items.filter(Boolean)
+
+const fieldClassName =
+  'border-muted-foreground/30 bg-background/80 text-foreground shadow-sm focus-visible:ring-primary'
+
+const selectClassName = `${fieldClassName} h-10 w-full rounded px-3 text-sm`
 
 const linkArray = (formData: FormData) => {
   const label = textValue(formData, 'linkLabel')

@@ -6,24 +6,37 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { Profile, ProfileSkill } from '@/payload-types'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ProjectsPage() {
-  const projects = await getProjects()
+  const [projects, user] = await Promise.all([getProjects(), getCurrentUser()])
 
   return (
     <main className="container pb-24 pt-12">
-      <section>
-        <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-          Project Spikes
-        </p>
-        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Active project spikes</h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          Live collaboration surfaces that show what is being built, who is involved, and how to
-          jump in. This is not a project management tool.
-        </p>
+      <section className="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+            Project Spikes
+          </p>
+          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+            Active project spikes
+          </h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+            Live collaboration surfaces that show what is being built, who is involved, and how to
+            jump in. This is not a project management tool.
+          </p>
+        </div>
+        {user ? (
+          <Link
+            className="border border-border px-4 py-2 text-sm font-medium"
+            href="/create#project"
+          >
+            Create project draft
+          </Link>
+        ) : null}
       </section>
 
       <section className="mt-10 grid gap-4 md:grid-cols-2">
@@ -43,7 +56,10 @@ export default async function ProjectsPage() {
               <RelationshipPills items={project.profileSkills} />
               <ContributorList contributors={project.contributors} />
               {project.slug ? (
-                <Link className="mt-5 inline-block text-sm font-medium underline" href={`/projects/${project.slug}`}>
+                <Link
+                  className="mt-5 inline-block text-sm font-medium underline"
+                  href={`/projects/${project.slug}`}
+                >
                   View project
                 </Link>
               ) : null}

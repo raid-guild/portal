@@ -1,4 +1,5 @@
 import type { Metadata } from 'next/types'
+import Link from 'next/link'
 
 import { CollectionArchive } from '@/components/CollectionArchive'
 import { PageRange } from '@/components/PageRange'
@@ -7,12 +8,13 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
 
-export const dynamic = 'force-static'
-export const revalidate = 600
+export const dynamic = 'force-dynamic'
 
 export default async function Page() {
   const payload = await getPayload({ config: configPromise })
+  const user = await getCurrentUser()
 
   const posts = await payload.find({
     collection: 'posts',
@@ -31,8 +33,18 @@ export default async function Page() {
     <div className="pt-24 pb-24">
       <PageClient />
       <div className="container mb-16">
-        <div className="prose dark:prose-invert max-w-none">
-          <h1>Posts</h1>
+        <div className="flex flex-wrap items-end justify-between gap-6">
+          <div className="prose dark:prose-invert max-w-none">
+            <h1>Posts</h1>
+          </div>
+          {user ? (
+            <Link
+              className="border border-border px-4 py-2 text-sm font-medium"
+              href="/create#post"
+            >
+              Create post draft
+            </Link>
+          ) : null}
         </div>
       </div>
 

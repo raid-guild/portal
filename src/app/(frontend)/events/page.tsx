@@ -6,6 +6,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { Event, Project, Thread } from '@/payload-types'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
 export const dynamic = 'force-dynamic'
@@ -23,22 +24,32 @@ const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): 
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
 export default async function EventsPage() {
-  const events = await getEvents()
+  const [events, user] = await Promise.all([getEvents(), getCurrentUser()])
   const now = Date.now()
   const upcoming = events.filter((event) => new Date(event.startsAt).getTime() >= now)
   const past = events.filter((event) => new Date(event.startsAt).getTime() < now)
 
   return (
     <main className="container pb-24 pt-12">
-      <section>
-        <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-          Sessions
-        </p>
-        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Cohort sessions</h1>
-        <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          Live sessions, project spike syncs, and calendar anchors. Add sessions to your own
-          calendar so the next live moment is not buried in Discord.
-        </p>
+      <section className="flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+            Sessions
+          </p>
+          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Cohort sessions</h1>
+          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+            Live sessions, project spike syncs, and calendar anchors. Add sessions to your own
+            calendar so the next live moment is not buried in Discord.
+          </p>
+        </div>
+        {user ? (
+          <Link
+            className="border border-border px-4 py-2 text-sm font-medium"
+            href="/create#session"
+          >
+            Create session draft
+          </Link>
+        ) : null}
       </section>
 
       <section className="mt-10">
@@ -92,12 +103,18 @@ const SessionCard: React.FC<{ event: Event }> = ({ event }) => {
           {projects.length || threads.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {projects.map((project) => (
-                <span className="border border-border px-2 py-1 text-xs" key={`project-${project.id}`}>
+                <span
+                  className="border border-border px-2 py-1 text-xs"
+                  key={`project-${project.id}`}
+                >
                   {project.title}
                 </span>
               ))}
               {threads.map((thread) => (
-                <span className="border border-border px-2 py-1 text-xs" key={`thread-${thread.id}`}>
+                <span
+                  className="border border-border px-2 py-1 text-xs"
+                  key={`thread-${thread.id}`}
+                >
                   {thread.title}
                 </span>
               ))}
