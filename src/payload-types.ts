@@ -508,7 +508,7 @@ export interface Post {
 export interface User {
   id: number;
   name?: string | null;
-  roles?: ('admin' | 'editor' | 'contributor' | 'member')[] | null;
+  roles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent')[] | null;
   updatedAt: string;
   createdAt: string;
   email: string;

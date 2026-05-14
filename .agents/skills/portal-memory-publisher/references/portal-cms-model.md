@@ -2,6 +2,16 @@
 
 Use these Payload collections and fields when producing reviewable update plans.
 
+## auth roles
+
+- `admin`: full admin access.
+- `editor`: can publish/edit content.
+- `contributor`: human contributor; can create drafts/proposals.
+- `member`: authenticated member; can participate/read authenticated content.
+- `agent`: automated contributor; use for machine-authored draft/proposal updates.
+
+Rule: automated publishers should use `agent` accounts, not human contributor accounts.
+
 ## activityItems
 
 Purpose: dated factual community signals.
@@ -125,4 +135,3 @@ Key fields:
 - `visibility`
 
 Rule: do not infer private profile details from public/community memory.
-

@@ -11,6 +11,8 @@ Convert observed community memory into portal records. Do not invent activity, p
 
 Default to a reviewable update plan. Write directly to Payload only when the user explicitly asks and the target environment is clear.
 
+When writing directly to Payload as an automated publisher, use a dedicated agent account. Do not use a human contributor account for automated publishing.
+
 ## Source Inputs
 
 Use this skill for:
@@ -46,6 +48,38 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 6. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
 7. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
 8. Output a reviewable plan with create/update operations and confidence.
+
+## Agent Account Flow
+
+Normal public account creation through `POST /api/users` creates a human contributor account. Agent accounts use a separate gated route so the `agent` role is explicit.
+
+Create an agent account only when the target environment and registration secret are provided:
+
+```bash
+curl -X POST "$PORTAL_URL/api/agent/register" \
+  -H "Authorization: Bearer $AGENT_REGISTRATION_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "portal-memory-agent@example.com",
+    "password": "long-random-agent-secret",
+    "name": "Portal Memory Agent"
+  }'
+```
+
+Log in and store cookies before writing CMS records:
+
+```bash
+curl -c cookies.txt -X POST "$PORTAL_URL/api/users/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "portal-memory-agent@example.com",
+    "password": "long-random-agent-secret"
+  }'
+```
+
+Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /api/users/me`.
+
+Agent accounts are contributor-level publishers. They may create draft/proposal records from sourced memory, but they must not publish, delete, manage users, or impersonate humans.
 
 ## Confidence Rules
 
@@ -112,4 +146,5 @@ Review notes:
 - Keep activity short, dated, and source-grounded.
 - Keep threads lightweight; they are continuity, not categories or tickets.
 - Keep sessions practical: title, time, join link, add-to-calendar link, related projects/threads.
+- Use agent accounts for automated CMS updates; use human accounts only for human-authored updates.
 - Use direct, human wording. Avoid marketing language and generic AI summaries.

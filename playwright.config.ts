@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-import { baseURL, databaseURL, payloadSecret, port } from './tests/e2e/env'
+import { agentRegistrationSecret, baseURL, databaseURL, payloadSecret, port } from './tests/e2e/env'
 
 const slowMo = Number(process.env.PLAYWRIGHT_SLOW_MO ?? '0')
 
@@ -34,6 +34,7 @@ export default defineConfig({
       USE_LOCAL_SEED_MEDIA: 'true',
       PAYLOAD_SECRET: payloadSecret,
       NEXT_PUBLIC_SERVER_URL: baseURL,
+      AGENT_REGISTRATION_SECRET: agentRegistrationSecret,
     },
     timeout: 180000,
   },

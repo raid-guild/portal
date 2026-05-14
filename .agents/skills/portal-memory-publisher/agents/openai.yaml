@@ -1,4 +1,4 @@
 interface:
   display_name: "Portal Memory Publisher"
-  short_description: "Convert community memory into reviewable Payload portal updates."
-  default_prompt: "Use the portal-memory-publisher skill to convert this community memory into reviewable CMS update proposals."
+  short_description: "Convert community memory into reviewable Payload portal updates using agent-safe draft workflows."
+  default_prompt: "Use the portal-memory-publisher skill to convert this community memory into reviewable CMS update proposals. If writing directly, use a dedicated agent account."

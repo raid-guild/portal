@@ -1,6 +1,13 @@
 import { expect, test, type Locator, type Page } from '@playwright/test'
 
-import { adminEmail, adminPassword, commentText, seededPosts, targetPost } from './env'
+import {
+  adminEmail,
+  adminPassword,
+  agentRegistrationSecret,
+  commentText,
+  seededPosts,
+  targetPost,
+} from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
 
@@ -239,6 +246,41 @@ async function verifyPortalSkillEndpoint(page: Page) {
   expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
 }
 
+async function verifyAgentRegistrationFlow(page: Page) {
+  const email = 'portal-memory-agent@example.com'
+  const password = 'PlaywrightAgentSecret123!'
+
+  const registerResponse = await page.request.post('/api/agent/register', {
+    data: {
+      email,
+      name: 'Portal Memory Agent',
+      password,
+    },
+    headers: {
+      Authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+
+  expect(registerResponse.status()).toBe(201)
+  const registerBody = await registerResponse.json()
+  expect(registerBody.user.roles).toContain('agent')
+
+  const loginResponse = await page.request.post('/api/users/login', {
+    data: {
+      email,
+      password,
+    },
+  })
+
+  expect(loginResponse.ok()).toBeTruthy()
+
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+
+  const meBody = await meResponse.json()
+  expect(meBody.user.roles).toContain('agent')
+}
+
 async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
   await publicPage.goto('/sponsor')
   await expect(
@@ -405,6 +447,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
   await verifyPortalSkillEndpoint(publicPage)
+  await verifyAgentRegistrationFlow(publicPage)
   await verifyJoinFormEmailErrors(publicPage)
   await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)

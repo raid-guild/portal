@@ -9,6 +9,7 @@ import * as migration_20260511_200928_cohort_spike_primitives from './20260511_2
 import * as migration_20260512_141508_brief_media_and_weekly_type from './20260512_141508_brief_media_and_weekly_type'
 import * as migration_20260512_144308_brief_external_media_url from './20260512_144308_brief_external_media_url'
 import * as migration_20260514_153847_sponsor_inquiries from './20260514_153847_sponsor_inquiries'
+import * as migration_20260514_190000_agent_auth_role from './20260514_190000_agent_auth_role'
 
 export const migrations = [
   {
@@ -65,5 +66,10 @@ export const migrations = [
     up: migration_20260514_153847_sponsor_inquiries.up,
     down: migration_20260514_153847_sponsor_inquiries.down,
     name: '20260514_153847_sponsor_inquiries',
+  },
+  {
+    up: migration_20260514_190000_agent_auth_role.up,
+    down: migration_20260514_190000_agent_auth_role.down,
+    name: '20260514_190000_agent_auth_role',
   },
 ]
