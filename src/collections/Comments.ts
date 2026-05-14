@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
+import { hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
 
 export const Comments: CollectionConfig = {
@@ -7,6 +8,7 @@ export const Comments: CollectionConfig = {
   admin: {
     defaultColumns: ['content', 'author', 'post', 'isApproved', 'createdAt'],
     description: 'Comments submitted by visitors on blog posts',
+    hidden: hideFromNonEditors,
   },
   access: {
     read: ({ req: { user } }) => {
@@ -22,7 +24,7 @@ export const Comments: CollectionConfig = {
     },
     create: () => true,
     update: authenticated,
-    delete: authenticated
+    delete: authenticated,
   },
   hooks: {
     afterChange: [
@@ -34,7 +36,7 @@ export const Comments: CollectionConfig = {
               collection: 'posts',
               id: typeof doc.post === 'object' ? doc.post.id : doc.post,
             })
-            
+
             if (post?.slug) {
               const path = `/posts/${post.slug}`
               req.payload.logger.info(`Revalidating post at path: ${path}`)
@@ -45,8 +47,8 @@ export const Comments: CollectionConfig = {
           }
         }
         return doc
-      }
-    ]
+      },
+    ],
   },
   fields: [
     {
@@ -57,7 +59,7 @@ export const Comments: CollectionConfig = {
       validate: (value: string | undefined) => {
         if (!value || value.length > 2000) return 'Comments cannot be longer than 2000 characters'
         return true
-      }
+      },
     },
     {
       name: 'author',
@@ -67,14 +69,14 @@ export const Comments: CollectionConfig = {
           name: 'name',
           type: 'text',
           required: true,
-          maxLength: 100
+          maxLength: 100,
         },
         {
           name: 'email',
           type: 'email',
-          required: true
-        }
-      ]
+          required: true,
+        },
+      ],
     },
     {
       name: 'post',
@@ -83,8 +85,8 @@ export const Comments: CollectionConfig = {
       required: true,
       hasMany: false,
       admin: {
-        position: 'sidebar'
-      }
+        position: 'sidebar',
+      },
     },
     {
       name: 'isApproved',
@@ -92,8 +94,8 @@ export const Comments: CollectionConfig = {
       defaultValue: false,
       admin: {
         position: 'sidebar',
-        description: 'Comments must be approved before they appear publicly'
-      }
+        description: 'Comments must be approved before they appear publicly',
+      },
     },
     {
       name: 'publishedAt',
@@ -101,8 +103,8 @@ export const Comments: CollectionConfig = {
       admin: {
         position: 'sidebar',
         date: {
-          pickerAppearance: 'dayAndTime'
-        }
+          pickerAppearance: 'dayAndTime',
+        },
       },
       hooks: {
         beforeChange: [
@@ -111,10 +113,10 @@ export const Comments: CollectionConfig = {
               return new Date()
             }
             return value
-          }
-        ]
-      }
-    }
+          },
+        ],
+      },
+    },
   ],
-  timestamps: true
+  timestamps: true,
 }

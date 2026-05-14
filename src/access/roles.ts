@@ -40,8 +40,13 @@ export const hasRole = (
 
 export const isAdmin = (user: UserWithRoles | null | undefined): boolean => hasRole(user, 'admin')
 
+export const canAccessAdmin = (user: UserWithRoles | null | undefined): boolean => Boolean(user)
+
 export const canEditContent = (user: UserWithRoles | null | undefined): boolean =>
   hasRole(user, ['admin', 'editor'])
+
+export const hideFromNonEditors = ({ user }: { user: UserWithRoles | null | undefined }) =>
+  !canEditContent(user)
 
 export const canContributeContent = (user: UserWithRoles | null | undefined): boolean =>
   hasRole(user, ['admin', 'editor', 'contributor', 'agent'])

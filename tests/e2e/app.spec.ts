@@ -333,6 +333,54 @@ async function verifyPortalLoginRedirect(page: Page) {
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
 }
 
+async function verifyContributorAdminCreateAccess(page: Page) {
+  const email = 'contributor-create@example.com'
+  const password = 'ChangeMe123!'
+
+  const createResponse = await page.request.post('/api/users', {
+    data: {
+      email,
+      name: 'Contributor Create',
+      password,
+    },
+  })
+
+  expect(createResponse.status()).toBe(201)
+
+  await page.goto('/login')
+  await fillFirst(page.getByLabel(/^email$/i), email)
+  await fillFirst(page.getByLabel(/^password$/i), password)
+  await page.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
+
+  await page.goto('/projects')
+  await page.getByRole('link', { name: 'Create project' }).click()
+  await expect(page).toHaveURL(/\/admin\/collections\/projects\/create/)
+  await expect(page.getByText('Creating new Project')).toBeVisible()
+  const sidebar = page.locator('aside').first()
+  await expect(sidebar.getByRole('link', { name: 'Projects' })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: 'Events' })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: 'Posts' })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: 'Profiles' })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: 'Media' })).toBeVisible()
+  await expect(sidebar.getByRole('link', { name: 'Users' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Pages' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Sponsor Inquiries' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Point Events' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Profile Skills' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Profile Roles' })).toHaveCount(0)
+
+  await page.goto('/events')
+  await page.getByRole('link', { name: 'Create session' }).click()
+  await expect(page).toHaveURL(/\/admin\/collections\/events\/create/)
+  await expect(page.getByText('Creating new Event')).toBeVisible()
+
+  await page.goto('/posts')
+  await page.getByRole('link', { name: 'Create post' }).click()
+  await expect(page).toHaveURL(/\/admin\/collections\/posts\/(create|\d+)/)
+  await expect(page.getByText(/Creating new Post|Status:\s*Draft/)).toBeVisible()
+}
+
 async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
@@ -427,6 +475,11 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const loginPage = await loginContext.newPage()
   await verifyPortalLoginRedirect(loginPage)
   await loginContext.close()
+
+  const contributorContext = await browser.newContext()
+  const contributorPage = await contributorContext.newPage()
+  await verifyContributorAdminCreateAccess(contributorPage)
+  await contributorContext.close()
 
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()

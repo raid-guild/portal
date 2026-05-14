@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { adminsOnly, ownPointEventsOrAdmin } from '@/access/pointEvents'
+import { hideFromNonEditors } from '@/access/roles'
 
 export const PointEvents: CollectionConfig = {
   slug: 'pointEvents',
@@ -13,6 +14,7 @@ export const PointEvents: CollectionConfig = {
   admin: {
     defaultColumns: ['recipient', 'amount', 'reason', 'source', 'status', 'issuedAt'],
     group: 'Portal',
+    hidden: hideFromNonEditors,
     useAsTitle: 'reason',
   },
   fields: [

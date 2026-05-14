@@ -1,6 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
-import { canEditContent } from '@/access/roles'
+import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
 
 export const SponsorInquiries: CollectionConfig = {
@@ -15,6 +15,7 @@ export const SponsorInquiries: CollectionConfig = {
     defaultColumns: ['name', 'organization', 'sponsorType', 'status', 'createdAt'],
     description: 'Private intake records for sponsor, bounty, project, and funding opportunities.',
     group: 'Portal',
+    hidden: hideFromNonEditors,
     useAsTitle: 'organization',
   },
   fields: [

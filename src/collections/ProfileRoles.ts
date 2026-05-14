@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '@/access/anyone'
-import { admins } from '@/access/roles'
+import { admins, hideFromNonEditors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 
 export const ProfileRoles: CollectionConfig = {
@@ -15,6 +15,7 @@ export const ProfileRoles: CollectionConfig = {
   admin: {
     defaultColumns: ['title', 'type', 'group', 'slug'],
     group: 'Portal',
+    hidden: hideFromNonEditors,
     useAsTitle: 'title',
   },
   fields: [

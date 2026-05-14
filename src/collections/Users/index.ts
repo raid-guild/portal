@@ -1,12 +1,19 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminsFieldAccess, authRoleOptions, isAdmin, ownUserOrAdmin } from '@/access/roles'
+import {
+  adminsFieldAccess,
+  authRoleOptions,
+  canAccessAdmin,
+  hideFromNonEditors,
+  isAdmin,
+  ownUserOrAdmin,
+} from '@/access/roles'
 import { anyone } from '@/access/anyone'
 
 export const Users: CollectionConfig = {
   slug: 'users',
   access: {
-    admin: ({ req: { user } }) => isAdmin(user),
+    admin: ({ req: { user } }) => canAccessAdmin(user),
     create: anyone,
     delete: ({ req: { user } }) => isAdmin(user),
     read: ownUserOrAdmin,
@@ -14,6 +21,7 @@ export const Users: CollectionConfig = {
   },
   admin: {
     defaultColumns: ['name', 'email', 'roles'],
+    hidden: hideFromNonEditors,
     useAsTitle: 'name',
   },
   auth: true,

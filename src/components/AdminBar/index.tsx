@@ -67,8 +67,10 @@ export const AdminBar: React.FC<{
           className="py-2 text-white"
           classNames={{
             controls: 'font-medium text-white',
+            create: 'hidden',
+            edit: 'hidden',
             logo: 'text-white',
-            user: 'text-white',
+            user: 'hidden',
           }}
           cmsURL={getClientSideURL()}
           collection={collection}

@@ -307,7 +307,9 @@ export const seed = async ({
     payload.logger.info(`- Seeding cohort spike primitives...`)
 
     const frontendSkill = createdProfileSkills.find((skill) => skill.slug === 'frontend-dev')
-    const projectManagerSkill = createdProfileSkills.find((skill) => skill.slug === 'project-manager')
+    const projectManagerSkill = createdProfileSkills.find(
+      (skill) => skill.slug === 'project-manager',
+    )
     const communitySkill = createdProfileSkills.find((skill) => skill.slug === 'community')
     const warriorRole = createdProfileRoles.find((role) => role.slug === 'warrior')
     const monkRole = createdProfileRoles.find((role) => role.slug === 'monk')
@@ -370,7 +372,8 @@ export const seed = async ({
         contributionActions: [
           {
             title: 'Render the Update Brief',
-            description: 'Show recent activity, active threads, and next-session CTAs from Payload.',
+            description:
+              'Show recent activity, active threads, and next-session CTAs from Payload.',
             url: '/',
           },
           {
@@ -380,7 +383,8 @@ export const seed = async ({
           },
           {
             title: 'Add Session-Grounded Seeds',
-            description: 'Keep seed data tied to real cohort discussion instead of placeholder copy.',
+            description:
+              'Keep seed data tied to real cohort discussion instead of placeholder copy.',
             url: '/admin/collections/activityItems',
           },
         ],
@@ -410,8 +414,7 @@ export const seed = async ({
           collection: 'threads',
           data: {
             title: 'Calendar and session coordination',
-            summary:
-              'Making the next live moment visible and easy to add to personal calendars.',
+            summary: 'Making the next live moment visible and easy to add to personal calendars.',
             threadStatus: 'active',
             lastActiveAt: '2026-05-11T17:34:47.664Z',
             participants: [demoProfile.id],
@@ -561,8 +564,7 @@ export const seed = async ({
     payload.logger.info(`- Seeding daily brief...`)
 
     const seededDailyBrief = JSON.parse(
-      JSON.stringify(dailyBrief)
-        .replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
+      JSON.stringify(dailyBrief).replace(/"\{\{AUTHOR\}\}"/g, JSON.stringify(demoAuthorID)),
     )
 
     await payload.create({
@@ -656,13 +658,6 @@ export const seed = async ({
               type: 'custom',
               label: 'Sessions',
               url: '/events',
-            },
-          },
-          {
-            link: {
-              type: 'custom',
-              label: 'Posts',
-              url: '/posts',
             },
           },
           {
