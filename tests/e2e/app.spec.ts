@@ -183,6 +183,9 @@ async function verifySeededPosts(page: Page) {
 
 async function verifyPublicHome(page: Page) {
   await page.goto('/')
+  const header = page.locator('header').first()
+
+  await expect(header.getByRole('link', { name: 'Posts' })).toHaveCount(0)
   await expect(
     page.getByRole('heading', { name: 'Find the work already in motion.' }),
   ).toBeVisible()
@@ -365,10 +368,16 @@ async function verifyContributorAdminCreateAccess(page: Page) {
   await expect(sidebar.getByRole('link', { name: 'Media' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Users' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Pages' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Redirects' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Forms' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Form Submissions' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Search Results' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Sponsor Inquiries' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Point Events' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Profile Skills' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Profile Roles' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Header' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Footer' })).toHaveCount(0)
 
   await page.goto('/events')
   await page.getByRole('link', { name: 'Create session' }).click()
@@ -441,6 +450,7 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
 
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
+  await expect(page.getByRole('link', { name: /New Page/i })).toHaveCount(0)
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
   await expect(page.getByText('Active Now')).toBeVisible()
   await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()

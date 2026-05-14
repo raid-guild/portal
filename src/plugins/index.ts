@@ -10,6 +10,7 @@ import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
 
+import { hideFromNonEditors } from '@/access/roles'
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
 
@@ -27,6 +28,9 @@ export const plugins: Plugin[] = [
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {
+      admin: {
+        hidden: hideFromNonEditors,
+      },
       // @ts-expect-error
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
@@ -58,6 +62,9 @@ export const plugins: Plugin[] = [
       payment: false,
     },
     formOverrides: {
+      admin: {
+        hidden: hideFromNonEditors,
+      },
       fields: ({ defaultFields }) => {
         return defaultFields.map((field) => {
           if ('name' in field && field.name === 'confirmationMessage') {
@@ -78,6 +85,11 @@ export const plugins: Plugin[] = [
         })
       },
     },
+    formSubmissionOverrides: {
+      admin: {
+        hidden: hideFromNonEditors,
+      },
+    },
   }),
   searchPlugin({
     collections: ['posts'],
@@ -85,6 +97,9 @@ export const plugins: Plugin[] = [
     skipSync: ({ req }) =>
       process.env.DISABLE_SEARCH_SYNC === 'true' || Boolean(req.context.disableSearchSync),
     searchOverrides: {
+      admin: {
+        hidden: hideFromNonEditors,
+      },
       fields: ({ defaultFields }) => {
         return [...defaultFields, ...searchFields]
       },

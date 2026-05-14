@@ -1,33 +1,13 @@
 'use client'
 
-import type { PayloadAdminBarProps } from 'payload-admin-bar'
-
 import { cn } from '@/utilities/cn'
-import { useSelectedLayoutSegments } from 'next/navigation'
-import { PayloadAdminBar } from 'payload-admin-bar'
-import React, { useState } from 'react'
+import Link from 'next/link'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import './index.scss'
 
-import { getClientSideURL } from '@/utilities/getURL'
-
 const baseClass = 'admin-bar'
-
-const collectionLabels = {
-  pages: {
-    plural: 'Pages',
-    singular: 'Page',
-  },
-  posts: {
-    plural: 'Posts',
-    singular: 'Post',
-  },
-  projects: {
-    plural: 'Projects',
-    singular: 'Project',
-  },
-}
 
 const Title: React.FC = () => (
   /* eslint-disable @next/next/no-img-element */
@@ -42,17 +22,48 @@ const Title: React.FC = () => (
 )
 
 export const AdminBar: React.FC<{
-  adminBarProps?: PayloadAdminBarProps
-}> = (props) => {
-  const { adminBarProps } = props || {}
-  const segments = useSelectedLayoutSegments()
+  adminBarProps?: {
+    preview?: boolean
+  }
+}> = ({ adminBarProps }) => {
   const [show, setShow] = useState(false)
-  const collection = collectionLabels?.[segments?.[1]] ? segments?.[1] : 'pages'
   const router = useRouter()
 
-  const onAuthChange = React.useCallback((user) => {
-    setShow(user?.id)
+  useEffect(() => {
+    let isMounted = true
+
+    fetch('/api/users/me', {
+      credentials: 'include',
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        if (isMounted) setShow(Boolean(data?.user?.id))
+      })
+      .catch(() => {
+        if (isMounted) setShow(false)
+      })
+
+    return () => {
+      isMounted = false
+    }
   }, [])
+
+  const logout = async () => {
+    await fetch('/api/users/logout', {
+      credentials: 'include',
+      method: 'POST',
+    })
+
+    setShow(false)
+    router.push('/')
+    router.refresh()
+  }
+
+  const exitPreview = async () => {
+    await fetch('/next/exit-preview')
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <div
@@ -62,37 +73,21 @@ export const AdminBar: React.FC<{
       })}
     >
       <div className="container">
-        <PayloadAdminBar
-          {...adminBarProps}
-          className="py-2 text-white"
-          classNames={{
-            controls: 'font-medium text-white',
-            create: 'hidden',
-            edit: 'hidden',
-            logo: 'text-white',
-            user: 'hidden',
-          }}
-          cmsURL={getClientSideURL()}
-          collection={collection}
-          collectionLabels={{
-            plural: collectionLabels[collection]?.plural || 'Pages',
-            singular: collectionLabels[collection]?.singular || 'Page',
-          }}
-          logo={<Title />}
-          onAuthChange={onAuthChange}
-          onPreviewExit={() => {
-            fetch('/next/exit-preview').then(() => {
-              router.push('/')
-              router.refresh()
-            })
-          }}
-          style={{
-            backgroundColor: 'transparent',
-            padding: 0,
-            position: 'relative',
-            zIndex: 'unset',
-          }}
-        />
+        <div className="flex items-center justify-between py-2 text-sm font-medium text-white">
+          <Link aria-label="RaidGuild Portal dashboard" href="/dashboard">
+            <Title />
+          </Link>
+          <div className="flex items-center gap-4">
+            {adminBarProps?.preview ? (
+              <button className="text-white hover:text-primary" onClick={exitPreview} type="button">
+                Exit preview
+              </button>
+            ) : null}
+            <button className="text-white hover:text-primary" onClick={logout} type="button">
+              Logout
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
