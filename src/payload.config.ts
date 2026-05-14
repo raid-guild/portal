@@ -20,6 +20,7 @@ import { ProfileRoles } from './collections/ProfileRoles'
 import { ProfileSkills } from './collections/ProfileSkills'
 import { Projects } from './collections/Projects'
 import { Posts } from './collections/Posts'
+import { SponsorInquiries } from './collections/SponsorInquiries'
 import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
@@ -96,6 +97,7 @@ export default buildConfig({
     Profiles,
     ProfileSkills,
     ProfileRoles,
+    SponsorInquiries,
     Media,
     Categories,
     Users,

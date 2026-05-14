@@ -3,14 +3,18 @@ import { getServerSideURL } from './getURL'
 
 const defaultOpenGraph: Metadata['openGraph'] = {
   type: 'website',
-  description: 'An open-source website built with Payload and Next.js.',
+  description:
+    'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
   images: [
     {
-      url: `${getServerSideURL()}/website-template-OG.webp`,
+      alt: 'RaidGuild Portal',
+      height: 166,
+      url: `${getServerSideURL()}/assets/image.png`,
+      width: 589,
     },
   ],
   siteName: 'RaidGuild Portal',
-  title: 'RaidGuild Portal',
+  title: 'RaidGuild Portal | Find the work already in motion',
 }
 
 export const mergeOpenGraph = (og?: Metadata['openGraph']): Metadata['openGraph'] => {

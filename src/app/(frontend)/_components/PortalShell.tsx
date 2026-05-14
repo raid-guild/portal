@@ -108,11 +108,11 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
               RaidGuild Portal
             </p>
             <h1 className="mb-6 text-4xl font-semibold leading-tight md:text-6xl">
-              See what is active in the Guild right now.
+              Find the work already in motion.
             </h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              Public sessions, active project spikes, and recent updates give you a quick read on
-              where to jump in before creating an account.
+              Follow the weekly brief, see active projects, join upcoming sessions, and plug into
+              real opportunities across RaidGuild.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
@@ -158,7 +158,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
             <div>
               <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-                Weekly Brief
+                This week in RaidGuild
               </p>
               <h2 className="mt-2 text-3xl font-semibold">{weeklyBrief.title}</h2>
               <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -313,6 +313,13 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
               <Link href="/projects">Explore projects</Link>
             </Button>
           </div>
+          <p className="text-sm text-muted-foreground lg:text-right">
+            Bringing a project or bounty?{' '}
+            <Link className="font-medium text-foreground underline" href="/sponsor">
+              Sponsor an opportunity
+            </Link>
+            .
+          </p>
         </div>
       </section>
     </main>
