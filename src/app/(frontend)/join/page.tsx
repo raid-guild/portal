@@ -55,7 +55,7 @@ export default function JoinPage() {
           </p>
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{' '}
-            <Link className="font-medium text-foreground underline" href="/admin/login">
+            <Link className="font-medium text-foreground underline" href="/login">
               Log in
             </Link>
             .

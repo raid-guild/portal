@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { authenticated } from '@/access/authenticated'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -7,7 +8,7 @@ import { validateSafeURL } from '@/utilities/safeURL'
 export const Events: CollectionConfig = {
   slug: 'events',
   access: {
-    create: contentContributors,
+    create: authenticated,
     delete: contentContributors,
     read: readVisiblePortalContent,
     update: contentContributors,

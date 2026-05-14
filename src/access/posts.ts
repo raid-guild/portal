@@ -2,7 +2,7 @@ import type { Access, Where } from 'payload'
 
 import { canContributeContent, canEditContent } from './roles'
 
-export const createPosts: Access = ({ req: { user } }) => canContributeContent(user)
+export const createPosts: Access = ({ req: { user } }) => Boolean(user)
 
 export const deletePosts: Access = ({ req: { user } }) => canEditContent(user)
 

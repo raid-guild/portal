@@ -272,6 +272,94 @@ async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
   await expect(adminPage.getByRole('link', { name: 'Sponsor Lead' })).toBeVisible()
 }
 
+async function verifyJoinFormEmailErrors(page: Page) {
+  await page.goto('/join')
+  await fillFirst(page.getByLabel(/^display name$/i), 'Email Test')
+  await fillFirst(page.getByLabel(/^email$/i), 'samkuhlmann@odyssy')
+  await fillFirst(page.getByLabel(/^password$/i), 'password123')
+  await page.getByRole('button', { name: /create account/i }).click()
+  await expect(page.getByText('Enter a valid email address.')).toBeVisible()
+}
+
+async function verifyPortalLoginRedirect(page: Page) {
+  await page.goto('/login')
+  await expect(page.getByRole('heading', { name: 'Return to the current brief.' })).toBeVisible()
+  await fillFirst(page.getByLabel(/^email$/i), adminEmail)
+  await fillFirst(page.getByLabel(/^password$/i), adminPassword)
+  await page.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
+  await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
+}
+
+async function createProfileAndRecords(page: Page) {
+  await page.goto('/me')
+  await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
+  await fillFirst(page.getByLabel(/^display name$/i), 'Playwright Admin')
+  await fillFirst(page.getByLabel(/^handle$/i), 'playwright-admin')
+  await fillFirst(
+    page.getByLabel(/^bio$/i),
+    'Testing member-facing profile creation and public directory display.',
+  )
+  await fillFirst(page.getByLabel(/^location$/i), 'Denver')
+  await fillFirst(page.getByLabel(/^website$/i), 'https://example.com')
+  await page.getByLabel(/^Warrior$/i).check()
+  await page.getByLabel(/^Frontend Dev$/i).check()
+  await page.getByRole('button', { name: /save profile/i }).click()
+  await expect(page.getByText('Profile saved.')).toBeVisible()
+
+  await page.goto('/members')
+  await expect(page.getByRole('link', { name: 'Playwright Admin' })).toBeVisible()
+  await expect(page.getByText('@playwright-admin')).toBeVisible()
+  await page.getByRole('link', { name: 'Playwright Admin' }).click()
+  await expect(page).toHaveURL(/\/members\/playwright-admin/)
+  await expect(page.getByRole('heading', { name: 'Playwright Admin' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Website' })).toBeVisible()
+
+  await page.goto('/create')
+  await expect(page.getByRole('heading', { name: 'Create portal records' })).toBeVisible()
+
+  await fillFirst(page.getByLabel(/^project title$/i), 'Playwright Project Draft')
+  await fillFirst(
+    page.getByLabel(/^summary$/i).first(),
+    'A draft project created from the member form.',
+  )
+  await fillFirst(page.getByLabel(/^current state$/i), 'Ready for review.')
+  await page
+    .locator('form')
+    .filter({ hasText: 'Project' })
+    .first()
+    .getByRole('button', { name: /create draft/i })
+    .click()
+  await expect(page.getByText('Project draft created.')).toBeVisible()
+
+  await fillFirst(page.getByLabel(/^session title$/i), 'Playwright Session Draft')
+  await fillFirst(page.getByLabel(/^starts at$/i), '2026-06-01T10:00')
+  await fillFirst(page.getByLabel(/^location$/i), 'Discord')
+  await page
+    .locator('form')
+    .filter({ hasText: 'Session' })
+    .getByRole('button', { name: /create draft/i })
+    .click()
+  await expect(page.getByText('Session draft created.')).toBeVisible()
+
+  await fillFirst(page.getByLabel(/^post title$/i), 'Playwright Post Draft')
+  await fillFirst(
+    page.getByLabel(/^body$/i),
+    'This draft post was created through the portal form.',
+  )
+  await page
+    .locator('form')
+    .filter({ hasText: 'Post' })
+    .getByRole('button', { name: /create draft/i })
+    .click()
+  await expect(page.getByText('Post draft created.')).toBeVisible()
+
+  await page.goto('/me')
+  await expect(page.getByText('Playwright Project Draft')).toBeVisible()
+  await expect(page.getByText('Playwright Session Draft')).toBeVisible()
+  await expect(page.getByText('Playwright Post Draft')).toBeVisible()
+}
+
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -302,6 +390,12 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
+  await createProfileAndRecords(page)
+
+  const loginContext = await browser.newContext()
+  const loginPage = await loginContext.newPage()
+  await verifyPortalLoginRedirect(loginPage)
+  await loginContext.close()
 
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
@@ -311,6 +405,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
   await verifyPortalSkillEndpoint(publicPage)
+  await verifyJoinFormEmailErrors(publicPage)
   await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()

@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
+import Link from 'next/link'
 
 import { Input } from '@/components/ui/input'
 
@@ -12,10 +13,15 @@ type DirectoryTaxonomy = {
 
 export type DirectoryProfile = {
   authRoles: string[]
+  avatarURL?: string | null
   bio: string
   displayName: string
   handle: string
   id: number | string
+  links: {
+    label: string
+    url: string
+  }[]
   profileRoles: DirectoryTaxonomy[]
   profileSkills: DirectoryTaxonomy[]
 }
@@ -44,7 +50,8 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
     return profiles.filter((profile) => {
       const matchesAuthRole = authRole === 'all' || profile.authRoles.includes(authRole)
       const matchesProfileRole =
-        profileRole === 'all' || profile.profileRoles.some((role) => String(role.id) === profileRole)
+        profileRole === 'all' ||
+        profile.profileRoles.some((role) => String(role.id) === profileRole)
       const matchesProfileSkill =
         profileSkill === 'all' ||
         profile.profileSkills.some((skill) => String(skill.id) === profileSkill)
@@ -129,9 +136,28 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
           filteredProfiles.map((profile) => (
             <article className="border border-border p-5" key={profile.id}>
               <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-lg font-semibold">{profile.displayName}</p>
-                  <p className="text-sm text-muted-foreground">@{profile.handle}</p>
+                <div className="flex items-center gap-3">
+                  {profile.avatarURL ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt=""
+                      className="h-12 w-12 rounded-full object-cover"
+                      src={profile.avatarURL}
+                    />
+                  ) : (
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border text-sm font-semibold">
+                      {profile.displayName.slice(0, 1)}
+                    </div>
+                  )}
+                  <div>
+                    <Link
+                      className="text-lg font-semibold hover:underline"
+                      href={`/members/${profile.handle}`}
+                    >
+                      {profile.displayName}
+                    </Link>
+                    <p className="text-sm text-muted-foreground">@{profile.handle}</p>
+                  </div>
                 </div>
                 <span className="border border-border px-2 py-1 text-xs">
                   {profile.authRoles.includes('member') ? 'Member' : 'Contributor'}
@@ -142,6 +168,21 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
               </p>
               <TaxonomyPills items={profile.profileRoles} />
               <TaxonomyPills items={profile.profileSkills} />
+              {profile.links.length ? (
+                <div className="mt-4 flex flex-wrap gap-3">
+                  {profile.links.slice(0, 3).map((link) => (
+                    <Link
+                      className="text-sm font-medium underline"
+                      href={link.url}
+                      key={`${profile.id}-${link.label}`}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
             </article>
           ))
         ) : (

@@ -1,6 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
+import { authenticated } from '@/access/authenticated'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -8,7 +9,7 @@ import { validateSafeURL } from '@/utilities/safeURL'
 export const Projects: CollectionConfig = {
   slug: 'projects',
   access: {
-    create: contentContributors,
+    create: authenticated,
     delete: contentContributors,
     read: authenticatedOrPublished,
     update: contentContributors,

@@ -1,0 +1,37 @@
+import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import React from 'react'
+
+import { LoginForm } from '../_components/LoginForm'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
+
+export default async function LoginPage() {
+  const user = await getCurrentUser()
+
+  if (user) redirect('/dashboard')
+
+  return (
+    <main className="container pb-24 pt-12">
+      <section className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-start">
+        <div className="max-w-3xl">
+          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+            Member Login
+          </p>
+          <h1 className="text-5xl font-semibold leading-tight md:text-7xl">
+            Return to the current brief.
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
+            Log in to see the daily brief, active threads, upcoming sessions, and contribution paths
+            for the current cohort cycle.
+          </p>
+        </div>
+        <LoginForm />
+      </section>
+    </main>
+  )
+}
+
+export const metadata: Metadata = {
+  description: 'Log in to the RaidGuild Portal daily brief and authenticated dashboard.',
+  title: 'Log in',
+}

@@ -1,0 +1,223 @@
+import type { Metadata } from 'next'
+import Link from 'next/link'
+import { notFound, redirect } from 'next/navigation'
+import React from 'react'
+
+import configPromise from '@payload-config'
+import { getPayload } from 'payload'
+
+import type { Event, Post, Profile, Project } from '@/payload-types'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { toSafeURL } from '@/utilities/safeURL'
+
+export const dynamic = 'force-dynamic'
+
+type MemberProfilePageProps = {
+  params: Promise<{
+    handle: string
+  }>
+}
+
+export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
+  const user = await getCurrentUser()
+
+  if (!user) redirect('/join')
+
+  const { handle } = await params
+  const profile = await getProfile(handle)
+
+  if (!profile) notFound()
+
+  const createdRecords = await getCreatedRecords(profile)
+  const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
+  const roles = taxonomy(profile.profileRoles)
+  const skills = taxonomy(profile.profileSkills)
+
+  return (
+    <main className="container pb-24 pt-12">
+      <section className="grid gap-8 lg:grid-cols-[1fr_18rem]">
+        <div>
+          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+            Member Profile
+          </p>
+          <div className="flex items-center gap-5">
+            {avatar?.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="" className="h-20 w-20 rounded-full object-cover" src={avatar.url} />
+            ) : (
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border text-2xl font-semibold">
+                {profile.displayName.slice(0, 1)}
+              </div>
+            )}
+            <div>
+              <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
+                {profile.displayName}
+              </h1>
+              <p className="mt-2 text-muted-foreground">@{profile.handle}</p>
+            </div>
+          </div>
+          <p className="mt-8 max-w-3xl text-base leading-7 text-muted-foreground">{profile.bio}</p>
+        </div>
+        <aside className="border border-border p-5">
+          <p className="font-semibold">Links</p>
+          <div className="mt-4 space-y-3">
+            {profile.links?.length ? (
+              profile.links.map((link) => {
+                const safeURL = toSafeURL(link.url, { allowRelative: false })
+                if (!safeURL) return null
+
+                return (
+                  <Link
+                    className="block text-sm font-medium underline"
+                    href={safeURL}
+                    key={link.id || link.label}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {link.label}
+                  </Link>
+                )
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground">No public links yet.</p>
+            )}
+          </div>
+        </aside>
+      </section>
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <Taxonomy title="Roles" values={roles} />
+        <Taxonomy title="Skills" values={skills} />
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold">Created records</h2>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <CreatedList items={createdRecords.projects} title="Projects" />
+          <CreatedList items={createdRecords.events} title="Sessions" />
+          <CreatedList items={createdRecords.posts} title="Posts" />
+        </div>
+      </section>
+    </main>
+  )
+}
+
+export const metadata: Metadata = {
+  title: 'Member Profile',
+}
+
+const Taxonomy: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
+  <div className="border border-border p-5">
+    <h2 className="font-semibold">{title}</h2>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {values.length ? (
+        values.map((value) => (
+          <span className="border border-border px-2 py-1 text-xs" key={value}>
+            {value}
+          </span>
+        ))
+      ) : (
+        <p className="text-sm text-muted-foreground">None listed.</p>
+      )}
+    </div>
+  </div>
+)
+
+const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }> = ({
+  items,
+  title,
+}) => (
+  <div className="border border-border p-5">
+    <h3 className="font-semibold">{title}</h3>
+    <div className="mt-4 space-y-3">
+      {items.length ? (
+        items.map((item) => (
+          <p className="text-sm font-medium" key={item.id}>
+            {item.title}
+          </p>
+        ))
+      ) : (
+        <p className="text-sm text-muted-foreground">Nothing listed yet.</p>
+      )}
+    </div>
+  </div>
+)
+
+const getProfile = async (handle: string) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'profiles',
+    depth: 2,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    where: {
+      handle: {
+        equals: handle,
+      },
+    },
+  })
+
+  return result.docs[0] || null
+}
+
+const getCreatedRecords = async (profile: Profile) => {
+  const payload = await getPayload({ config: configPromise })
+  const profileUser = typeof profile.user === 'object' ? profile.user : null
+  const userID = profileUser?.id || profile.user
+
+  const [projects, events, posts] = await Promise.all([
+    payload.find({
+      collection: 'projects',
+      depth: 0,
+      limit: 6,
+      overrideAccess: true,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        contributors: {
+          in: [profile.id],
+        },
+      },
+    }),
+    payload.find({
+      collection: 'events',
+      depth: 0,
+      limit: 6,
+      overrideAccess: true,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        relatedProfiles: {
+          in: [profile.id],
+        },
+      },
+    }),
+    payload.find({
+      collection: 'posts',
+      depth: 0,
+      limit: 6,
+      overrideAccess: true,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        authors: {
+          in: [userID],
+        },
+      },
+    }),
+  ])
+
+  return {
+    events: events.docs,
+    posts: posts.docs,
+    projects: projects.docs,
+  }
+}
+
+const taxonomy = (items?: unknown[] | null) =>
+  (items || [])
+    .filter((item): item is { title: string } =>
+      Boolean(item && typeof item === 'object' && 'title' in item),
+    )
+    .map((item) => item.title)

@@ -5,8 +5,16 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Profile, ProfileRole, ProfileSkill, User } from '@/payload-types'
-import { Button } from '@/components/ui/button'
+import type {
+  Event,
+  Post,
+  Profile,
+  ProfileRole,
+  ProfileSkill,
+  Project,
+  User,
+} from '@/payload-types'
+import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 export const dynamic = 'force-dynamic'
@@ -23,6 +31,8 @@ export default async function MePage() {
     getProfileRoles(),
   ])
 
+  const createdRecords = await getCreatedRecords(user, profile)
+
   return (
     <main className="container pb-24 pt-12">
       <section className="grid gap-10 lg:grid-cols-[1fr_20rem]">
@@ -32,9 +42,8 @@ export default async function MePage() {
           </p>
           <h1 className="text-4xl font-semibold leading-tight md:text-5xl">My profile</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            This is the future member-facing profile wizard. The first full version should let
-            members manage identity, links, skills, roles, and visibility without entering Payload
-            Admin.
+            Manage your public identity, avatar, links, skills, roles, and visibility without
+            entering Payload Admin.
           </p>
         </div>
         <div className="border-l border-border pl-6 text-sm">
@@ -46,6 +55,11 @@ export default async function MePage() {
         </div>
       </section>
 
+      <section className="mt-12">
+        <h2 className="mb-4 text-2xl font-semibold">Profile wizard</h2>
+        <ProfileWizardForm profile={profile} roles={roles} skills={skills} />
+      </section>
+
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div className="border border-border p-6">
           <h2 className="text-xl font-semibold">Current Profile</h2>
@@ -54,17 +68,13 @@ export default async function MePage() {
           ) : (
             <div className="mt-4">
               <p className="text-sm leading-6 text-muted-foreground">
-                No profile exists for this account yet. The next iteration should turn this shell
-                into a guided creation flow.
+                No profile exists for this account yet. Use the profile wizard above to create one.
               </p>
-              <Button className="mt-5" disabled>
-                Wizard coming next
-              </Button>
             </div>
           )}
         </div>
         <div className="border border-border p-6">
-          <h2 className="text-xl font-semibold">Wizard Checklist</h2>
+          <h2 className="text-xl font-semibold">Profile Checklist</h2>
           <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
             <li>Basic identity: handle, display name, bio, location.</li>
             <li>Links: website, GitHub, Farcaster, Discord, portfolio.</li>
@@ -72,6 +82,18 @@ export default async function MePage() {
             <li>Profile roles: choose up to two RaidGuild roles.</li>
             <li>Visibility: public, authenticated members, or private.</li>
           </ul>
+        </div>
+      </section>
+
+      <section className="mt-12">
+        <h2 className="text-2xl font-semibold">Created by you</h2>
+        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+          Drafts and published records connected to your user or profile.
+        </p>
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <CreatedList items={createdRecords.projects} title="Projects" />
+          <CreatedList items={createdRecords.events} title="Sessions" />
+          <CreatedList items={createdRecords.posts} title="Posts" />
         </div>
       </section>
 
@@ -96,11 +118,19 @@ export const metadata: Metadata = {
 }
 
 const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
+  const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
+
   return (
     <div className="mt-4 space-y-4 text-sm leading-6">
-      <div>
-        <p className="font-semibold">{profile.displayName}</p>
-        <p className="text-muted-foreground">@{profile.handle}</p>
+      <div className="flex items-center gap-4">
+        {avatar?.url ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img alt="" className="h-14 w-14 rounded-full object-cover" src={avatar.url} />
+        ) : null}
+        <div>
+          <p className="font-semibold">{profile.displayName}</p>
+          <p className="text-muted-foreground">@{profile.handle}</p>
+        </div>
       </div>
       <p className="text-muted-foreground">{profile.bio}</p>
       <div className="flex flex-wrap gap-2">
@@ -112,6 +142,31 @@ const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
     </div>
   )
 }
+
+const CreatedList: React.FC<{
+  items: (Event | Post | Project)[]
+  title: string
+}> = ({ items, title }) => (
+  <div className="border border-border p-5">
+    <h3 className="font-semibold">{title}</h3>
+    <div className="mt-4 space-y-3">
+      {items.length ? (
+        items.map((item) => (
+          <article className="text-sm" key={item.id}>
+            <p className="font-medium">{item.title}</p>
+            {'_status' in item ? (
+              <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                {item._status || 'draft'}
+              </p>
+            ) : null}
+          </article>
+        ))
+      ) : (
+        <p className="text-sm text-muted-foreground">Nothing created yet.</p>
+      )}
+    </div>
+  </div>
+)
 
 const TaxonomyList: React.FC<{
   description: string
@@ -210,4 +265,61 @@ const getPointsTotal = async (user: User) => {
   })
 
   return result.docs.reduce((sum, event) => sum + (event.amount || 0), 0)
+}
+
+const getCreatedRecords = async (user: User, profile?: Profile | null) => {
+  const payload = await getPayload({ config: configPromise })
+  const profileID = profile?.id
+
+  const [projects, events, posts] = await Promise.all([
+    profileID
+      ? payload.find({
+          collection: 'projects',
+          depth: 0,
+          limit: 10,
+          overrideAccess: true,
+          pagination: false,
+          sort: '-updatedAt',
+          where: {
+            contributors: {
+              in: [profileID],
+            },
+          },
+        })
+      : Promise.resolve({ docs: [] as Project[] }),
+    profileID
+      ? payload.find({
+          collection: 'events',
+          depth: 0,
+          limit: 10,
+          overrideAccess: true,
+          pagination: false,
+          sort: '-updatedAt',
+          where: {
+            relatedProfiles: {
+              in: [profileID],
+            },
+          },
+        })
+      : Promise.resolve({ docs: [] as Event[] }),
+    payload.find({
+      collection: 'posts',
+      depth: 0,
+      limit: 10,
+      overrideAccess: true,
+      pagination: false,
+      sort: '-updatedAt',
+      where: {
+        authors: {
+          in: [user.id],
+        },
+      },
+    }),
+  ])
+
+  return {
+    events: events.docs,
+    posts: posts.docs,
+    projects: projects.docs,
+  }
 }

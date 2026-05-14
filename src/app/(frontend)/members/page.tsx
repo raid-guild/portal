@@ -25,8 +25,8 @@ export default async function MembersPage() {
         </p>
         <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Member directory</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-          A discovery surface for contributors and manually approved members, with filters for access
-          role, profile role, and skill.
+          A discovery surface for contributors and manually approved members, with filters for
+          access role, profile role, and skill.
         </p>
       </section>
 
@@ -63,24 +63,27 @@ const getMemberProfiles = async (): Promise<DirectoryProfile[]> => {
     },
   })
 
-  return result.docs
-    .map((profile) => {
-      const user = typeof profile.user === 'object' ? profile.user : null
-      const authRoles = Array.isArray(user?.roles) ? user.roles : []
+  return result.docs.map((profile) => {
+    const user = typeof profile.user === 'object' ? profile.user : null
+    const authRoles = Array.isArray(user?.roles) ? user.roles : []
 
-      return {
-        authRoles,
-        bio: profile.bio,
-        displayName: profile.displayName,
-        handle: profile.handle,
-        id: profile.id,
-        profileRoles: toTaxonomy(profile.profileRoles),
-        profileSkills: toTaxonomy(profile.profileSkills),
-      }
-    })
-    .filter((profile) => {
-      return profile.authRoles.includes('contributor') || profile.authRoles.includes('member')
-    })
+    return {
+      authRoles,
+      avatarURL:
+        typeof profile.avatar === 'object' && profile.avatar ? profile.avatar.url || null : null,
+      bio: profile.bio,
+      displayName: profile.displayName,
+      handle: profile.handle,
+      id: profile.id,
+      links:
+        profile.links?.map((link) => ({
+          label: link.label,
+          url: link.url,
+        })) || [],
+      profileRoles: toTaxonomy(profile.profileRoles),
+      profileSkills: toTaxonomy(profile.profileSkills),
+    }
+  })
 }
 
 const toTaxonomy = (items?: unknown[] | null) => {
