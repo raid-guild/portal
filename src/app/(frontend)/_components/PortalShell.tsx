@@ -8,7 +8,6 @@ import {
   FolderKanban,
   LayoutDashboard,
   PenLine,
-  UserRound,
   Users,
 } from 'lucide-react'
 
@@ -366,7 +365,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       </section>
 
       <section className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <DashboardLink href="/me" icon={<UserRound className="h-5 w-5" />} label="My Profile" />
         <DashboardLink href="/members" icon={<Users className="h-5 w-5" />} label="Members" />
         <DashboardLink
           href="/projects"

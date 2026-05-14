@@ -23,6 +23,58 @@ Use these primitives consistently:
 
 Each primitive should have one job. Avoid making one collection carry unrelated behavior.
 
+### Relationship Model
+
+The MVP should support flexible relationships between briefs, projects, threads, activity, and events without becoming a nested project management system.
+
+Use this shape:
+
+```txt
+Brief
+  -> Activity Items
+  -> Threads
+  -> Projects
+  -> Events
+
+Project
+  -> Activity Items
+  -> Threads
+  -> Events
+  -> Contributors
+
+Thread
+  -> Activity Items
+  -> Events
+  -> Projects
+  -> Participants
+```
+
+Important rules:
+
+- A thread can span multiple projects.
+- A thread can exist before a project exists.
+- A thread can remain projectless if it is a cohort-wide storyline.
+- A project can have activity items, sessions/events, and related threads.
+- A session/event can relate to projects, threads, both, or neither.
+- Activity items can be attached to a project, a thread, an event, profiles, or a useful combination of those.
+
+Examples:
+
+- `Calendar and session coordination` can be a projectless thread with activity items and events.
+- `Improving onboarding flow` can start as a cohort-wide thread, then later relate to an onboarding project.
+- `Defining the project spike object` can relate to the portal project and any future project model work.
+
+Avoid nested primitives in the MVP:
+
+- No threads of threads.
+- No projects of projects.
+- No parent/child project hierarchy.
+- No parent/child thread hierarchy.
+
+If something feels like a "thread of threads," split it into sibling threads or keep one broader thread with links.
+
+If something feels like a "project of projects," treat it as a future module such as `track`, `initiative`, or `program`. Do not add that hierarchy until there is clear product pressure and a portal view that needs it.
+
 ## Primitive Responsibilities
 
 ### Brief

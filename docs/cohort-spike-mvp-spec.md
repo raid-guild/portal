@@ -333,6 +333,14 @@ Fields:
 
 Avoid tasks, assignments, and due dates in the first version.
 
+Relationship rules:
+
+- Threads can relate to multiple projects.
+- Threads can exist without a project when they represent cohort-wide continuity.
+- Threads can have related activity items and sessions/events through those collections.
+- Do not support threads of threads in the MVP. Use sibling threads or links instead.
+- Do not support project hierarchies in the MVP. Future `track`, `initiative`, or `program` concepts should be introduced only when a real portal view needs them.
+
 #### `events`
 
 Purpose: make the next session visible and easy to add to a personal calendar.

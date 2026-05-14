@@ -38,6 +38,15 @@
   </a>
 </p>
 
+## About This Repo
+
+This repo is being evolved from a Payload CMS website boilerplate into the
+RaidGuild Portal: a CMS-backed surface for briefs, projects, threads, activity,
+sessions, profiles, and contributor workflows.
+
+Start with [Portal Documentation](./docs/README.md) for the current product
+mental model, implementation direction, and contributor guidelines.
+
 ## About this boilerplate
 
 This boilerplate is a pre-configured, ready-to-deploy solution for Payload CMS as a website builder. It includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed, production-ready website. This template is optimized for seamless deployment on [Railway](https://railway.app?referralCode=-Yg50p), and uses PostgreSQL for both local development and production environments.
@@ -73,7 +82,7 @@ Use one-click deploy template:
 3. Start PostgreSQL: `docker compose up -d postgres`
 4. Install dependencies: `pnpm install` or `npm install`
 5. Run development mode: `pnpm dev` or `npm run dev`
-or
+   or
 6. Build the project: `pnpm build` or `npm run build`
 7. Start the server: `pnpm start` or `npm run start`
 
@@ -108,7 +117,6 @@ If you prefer `npm`, you can run:
 4. `npm run test:e2e:manual`
 
 `test:e2e:manual` runs the suite in headed mode with a visible slowdown between actions and pauses only at the end of the happy path. While paused, the browser stays open so you can click around and manually inspect seeded content, the admin area, and public pages. When you are done, resume or stop the Playwright session from the inspector/terminal.
-
 
 ### Requirements
 

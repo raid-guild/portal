@@ -451,6 +451,12 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByRole('link', { name: /New Page/i })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Open account menu' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'My Profile' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Open account menu' }).click()
+  await expect(page.getByRole('menuitem', { name: 'My profile' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
   await expect(page.getByText('Active Now')).toBeVisible()
   await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()
