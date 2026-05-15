@@ -774,6 +774,47 @@ export interface Project {
     [k: string]: unknown;
   } | null;
   projectStatus?: ('active' | 'building' | 'archived' | 'exploratory' | 'exploring' | 'shipping') | null;
+  projectKind?:
+    | (
+        | 'raidguild-project'
+        | 'client-artifact'
+        | 'internal-tool'
+        | 'reference-repo'
+        | 'rip'
+        | 'cohort-project'
+        | 'experiment'
+        | 'template'
+        | 'unknown'
+      )
+    | null;
+  reviewStatus?:
+    | (
+        | 'unreviewed'
+        | 'needs-review'
+        | 'in-review'
+        | 'needs-more-evidence'
+        | 'ready-for-prism'
+        | 'ready-for-cms'
+        | 'published'
+      )
+    | null;
+  confidence?: ('low' | 'medium' | 'high') | null;
+  historicalRelevance?: ('low' | 'medium' | 'high' | 'unknown') | null;
+  claimedBy?: (number | null) | Profile;
+  reviewedBy?: (number | null) | Profile;
+  reviewedAt?: string | null;
+  /**
+   * Best-known project start date. For imported archives, this usually comes from repo creation or earliest source evidence.
+   */
+  startedAt?: string | null;
+  /**
+   * Best-known launch, delivery, or public release date.
+   */
+  launchedAt?: string | null;
+  /**
+   * Best-known completion, sunset, or handoff date.
+   */
+  completedAt?: string | null;
   currentState?:
     | {
         body: string;
@@ -781,6 +822,13 @@ export interface Project {
       }[]
     | null;
   lastActiveAt?: string | null;
+  isFeatured?: boolean | null;
+  featuredFrom?: string | null;
+  featuredUntil?: string | null;
+  /**
+   * Higher values surface first when multiple projects are featured.
+   */
+  featuredPriority?: number | null;
   primaryCTA?: {
     label?: string | null;
     url?: string | null;
@@ -794,6 +842,60 @@ export interface Project {
     | null;
   coverImage?: (number | null) | Media;
   contributors?: (number | Profile)[] | null;
+  /**
+   * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
+   */
+  canonicalProject?: (number | null) | Project;
+  /**
+   * Related project records, component repos, companion artifacts, or follow-on work.
+   */
+  relatedProjects?: (number | Project)[] | null;
+  /**
+   * Why the current confidence level is justified.
+   */
+  confidenceRationale?: string | null;
+  openQuestions?:
+    | {
+        question: string;
+        status?: ('open' | 'answered' | 'not-applicable') | null;
+        answer?: string | null;
+        answeredBy?: (number | null) | Profile;
+        answeredAt?: string | null;
+        sourceURL?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Raw evidence used by importers and reviewers. Keep this separate from curated public links.
+   */
+  sourceEvidence?:
+    | {
+        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'website' | 'docs' | 'other';
+        label: string;
+        url?: string | null;
+        sourceID?: string | null;
+        confidence?: ('low' | 'medium' | 'high') | null;
+        notes?: string | null;
+        firstSeenAt?: string | null;
+        lastSeenAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Candidate people extracted from commits, Discord, or docs before they are promoted to contributors.
+   */
+  peopleEvidence?:
+    | {
+        handle: string;
+        role?: string | null;
+        profile?: (number | null) | Profile;
+        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'other';
+        sourceURL?: string | null;
+        confidence?: ('low' | 'medium' | 'high') | null;
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
   profileSkills?: (number | ProfileSkill)[] | null;
   activityItems?: (number | ActivityItem)[] | null;
   threads?: (number | Thread)[] | null;
@@ -1621,6 +1723,16 @@ export interface ProjectsSelect<T extends boolean = true> {
   summary?: T;
   description?: T;
   projectStatus?: T;
+  projectKind?: T;
+  reviewStatus?: T;
+  confidence?: T;
+  historicalRelevance?: T;
+  claimedBy?: T;
+  reviewedBy?: T;
+  reviewedAt?: T;
+  startedAt?: T;
+  launchedAt?: T;
+  completedAt?: T;
   currentState?:
     | T
     | {
@@ -1628,6 +1740,10 @@ export interface ProjectsSelect<T extends boolean = true> {
         id?: T;
       };
   lastActiveAt?: T;
+  isFeatured?: T;
+  featuredFrom?: T;
+  featuredUntil?: T;
+  featuredPriority?: T;
   primaryCTA?:
     | T
     | {
@@ -1643,6 +1759,45 @@ export interface ProjectsSelect<T extends boolean = true> {
       };
   coverImage?: T;
   contributors?: T;
+  canonicalProject?: T;
+  relatedProjects?: T;
+  confidenceRationale?: T;
+  openQuestions?:
+    | T
+    | {
+        question?: T;
+        status?: T;
+        answer?: T;
+        answeredBy?: T;
+        answeredAt?: T;
+        sourceURL?: T;
+        id?: T;
+      };
+  sourceEvidence?:
+    | T
+    | {
+        sourceType?: T;
+        label?: T;
+        url?: T;
+        sourceID?: T;
+        confidence?: T;
+        notes?: T;
+        firstSeenAt?: T;
+        lastSeenAt?: T;
+        id?: T;
+      };
+  peopleEvidence?:
+    | T
+    | {
+        handle?: T;
+        role?: T;
+        profile?: T;
+        sourceType?: T;
+        sourceURL?: T;
+        confidence?: T;
+        notes?: T;
+        id?: T;
+      };
   profileSkills?: T;
   activityItems?: T;
   threads?: T;
