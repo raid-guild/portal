@@ -10,6 +10,7 @@ import * as migration_20260512_141508_brief_media_and_weekly_type from './202605
 import * as migration_20260512_144308_brief_external_media_url from './20260512_144308_brief_external_media_url'
 import * as migration_20260514_153847_sponsor_inquiries from './20260514_153847_sponsor_inquiries'
 import * as migration_20260514_190000_agent_auth_role from './20260514_190000_agent_auth_role'
+import * as migration_20260515_214741_project_archive_curation_fields from './20260515_214741_project_archive_curation_fields'
 
 export const migrations = [
   {
@@ -71,5 +72,10 @@ export const migrations = [
     up: migration_20260514_190000_agent_auth_role.up,
     down: migration_20260514_190000_agent_auth_role.down,
     name: '20260514_190000_agent_auth_role',
+  },
+  {
+    up: migration_20260515_214741_project_archive_curation_fields.up,
+    down: migration_20260515_214741_project_archive_curation_fields.down,
+    name: '20260515_214741_project_archive_curation_fields',
   },
 ]
