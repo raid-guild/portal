@@ -5,7 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Profile, ProfileSkill } from '@/payload-types'
+import type { Media, Profile, ProfileSkill } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -42,57 +42,60 @@ export default async function ProjectsPage() {
       <section className="mt-10 grid gap-4 md:grid-cols-2">
         {projects.length ? (
           projects.map((project) => (
-            <article className="border border-border p-6" key={project.id}>
-              <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                {project.projectStatus || 'Project'}
-              </p>
-              <h2 className="mt-2 text-2xl font-semibold">{project.title}</h2>
-              <p className="mt-4 text-sm leading-6 text-muted-foreground">{project.summary}</p>
-              {project.currentState?.[0]?.body ? (
-                <p className="mt-4 border-l border-border pl-4 text-sm leading-6 text-muted-foreground">
-                  {project.currentState[0].body}
+            <article className="overflow-hidden border border-border" key={project.id}>
+              <ProjectCoverImage coverImage={project.coverImage} title={project.title} />
+              <div className="p-6">
+                <p className="text-xs uppercase tracking-normal text-muted-foreground">
+                  {project.projectStatus || 'Project'}
                 </p>
-              ) : null}
-              <RelationshipPills items={project.profileSkills} />
-              <ContributorList contributors={project.contributors} />
-              {project.slug ? (
-                <Link
-                  className="mt-5 inline-block text-sm font-medium underline"
-                  href={`/projects/${project.slug}`}
-                >
-                  View project
-                </Link>
-              ) : null}
-              {project.links?.length ? (
-                <div className="mt-5 flex flex-wrap gap-3">
-                  {project.links.map((link) => {
-                    const safeURL = toSafeURL(link.url, {
-                      allowRelative: false,
-                      protocols: ['http:', 'https:'],
-                    })
+                <h2 className="mt-2 text-2xl font-semibold">{project.title}</h2>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">{project.summary}</p>
+                {project.currentState?.[0]?.body ? (
+                  <p className="mt-4 border-l border-border pl-4 text-sm leading-6 text-muted-foreground">
+                    {project.currentState[0].body}
+                  </p>
+                ) : null}
+                <RelationshipPills items={project.profileSkills} />
+                <ContributorList contributors={project.contributors} />
+                {project.slug ? (
+                  <Link
+                    className="mt-5 inline-block text-sm font-medium underline"
+                    href={`/projects/${project.slug}`}
+                  >
+                    View project
+                  </Link>
+                ) : null}
+                {project.links?.length ? (
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    {project.links.map((link) => {
+                      const safeURL = toSafeURL(link.url, {
+                        allowRelative: false,
+                        protocols: ['http:', 'https:'],
+                      })
 
-                    if (!safeURL) {
+                      if (!safeURL) {
+                        return (
+                          <span className="text-sm font-medium" key={`${project.id}-${link.url}`}>
+                            {link.label}
+                          </span>
+                        )
+                      }
+
                       return (
-                        <span className="text-sm font-medium" key={`${project.id}-${link.url}`}>
+                        <Link
+                          className="text-sm font-medium underline"
+                          href={safeURL}
+                          key={`${project.id}-${link.url}`}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
                           {link.label}
-                        </span>
+                        </Link>
                       )
-                    }
-
-                    return (
-                      <Link
-                        className="text-sm font-medium underline"
-                        href={safeURL}
-                        key={`${project.id}-${link.url}`}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        {link.label}
-                      </Link>
-                    )
-                  })}
-                </div>
-              ) : null}
+                    })}
+                  </div>
+                ) : null}
+              </div>
             </article>
           ))
         ) : (
@@ -107,6 +110,24 @@ export default async function ProjectsPage() {
 
 export const metadata: Metadata = {
   title: 'Projects',
+}
+
+const ProjectCoverImage: React.FC<{
+  coverImage?: number | Media | null
+  title: string
+}> = ({ coverImage, title }) => {
+  if (!coverImage || typeof coverImage !== 'object' || !coverImage.url) return null
+
+  return (
+    <div className="aspect-[1200/630] border-b border-border bg-muted">
+      <img
+        alt={coverImage.alt || `${title} cover image`}
+        className="h-full w-full object-cover"
+        loading="lazy"
+        src={coverImage.url}
+      />
+    </div>
+  )
 }
 
 const RelationshipPills: React.FC<{ items?: (number | ProfileSkill)[] | null }> = ({ items }) => {

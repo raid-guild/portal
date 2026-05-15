@@ -6,7 +6,15 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { ActivityItem, Event, Profile, Project, ProfileSkill, Thread } from '@/payload-types'
+import type {
+  ActivityItem,
+  Event,
+  Media,
+  Profile,
+  Project,
+  ProfileSkill,
+  Thread,
+} from '@/payload-types'
 import { toSafeURL } from '@/utilities/safeURL'
 
 export const dynamic = 'force-dynamic'
@@ -53,7 +61,9 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
   return (
     <main className="container pb-24 pt-12">
-      <section className="grid gap-8 border-b border-border pb-10 lg:grid-cols-[1fr_18rem]">
+      <ProjectCoverImage coverImage={project.coverImage} title={project.title} />
+
+      <section className="grid gap-8 border-b border-border pb-10 pt-8 lg:grid-cols-[1fr_18rem]">
         <div>
           <Link className="text-sm font-medium text-muted-foreground hover:underline" href="/projects">
             Projects
@@ -240,6 +250,23 @@ const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ child
     <div className="mt-5">{children}</div>
   </section>
 )
+
+const ProjectCoverImage: React.FC<{
+  coverImage?: number | Media | null
+  title: string
+}> = ({ coverImage, title }) => {
+  if (!coverImage || typeof coverImage !== 'object' || !coverImage.url) return null
+
+  return (
+    <div className="mb-8 aspect-[1200/630] overflow-hidden border border-border bg-muted">
+      <img
+        alt={coverImage.alt || `${title} cover image`}
+        className="h-full w-full object-cover"
+        src={coverImage.url}
+      />
+    </div>
+  )
+}
 
 const SafeLink: React.FC<{ className?: string; href?: string | null; label: string }> = ({
   className,
