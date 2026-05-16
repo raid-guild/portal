@@ -17,8 +17,14 @@ const getArgValue = (name: string) => {
 }
 
 const main = async () => {
-  const csvPath = getArgValue('--csv') || defaultCSVPath
-  const dryRun = process.argv.includes('--dry-run')
+  const positionalArgs = process.argv.slice(2)
+  const csvArg = positionalArgs.find((arg) => arg.startsWith('csv='))
+  const csvPath =
+    getArgValue('--csv') ||
+    csvArg?.replace(/^csv=/, '') ||
+    positionalArgs.find((arg) => arg.endsWith('.csv')) ||
+    defaultCSVPath
+  const dryRun = process.argv.includes('--dry-run') || positionalArgs.includes('dry-run')
   const payload = await getPayload({ config: configPromise })
   const csv = await readFile(path.resolve(csvPath), 'utf8')
   const result = await importLegacyMemberProfiles({ csv, dryRun, payload })
@@ -26,7 +32,7 @@ const main = async () => {
   console.log(JSON.stringify(result, null, 2))
 }
 
-main().catch((error) => {
+await main().catch((error) => {
   console.error(error)
   process.exit(1)
 })

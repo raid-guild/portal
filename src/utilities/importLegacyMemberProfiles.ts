@@ -421,7 +421,10 @@ const parseCSV = (csv: string): CSVRow[] => {
 
 const normalizeEmail = (value: string | undefined) => {
   const email = clean(value).toLowerCase()
-  return email || undefined
+  if (!email) return undefined
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return undefined
+
+  return email
 }
 
 const clean = (value: string | undefined) => value?.trim() || ''
