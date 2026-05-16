@@ -14,7 +14,9 @@ import type {
   Project,
   ProfileSkill,
   Thread,
+  User,
 } from '@/payload-types'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
 export const dynamic = 'force-dynamic'
@@ -49,7 +51,8 @@ const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): 
 
 export default async function ProjectPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
-  const project = await queryProjectBySlug({ slug })
+  const user = await getCurrentUser()
+  const project = await queryProjectBySlug({ slug, user })
 
   if (!project) notFound()
 
@@ -236,7 +239,8 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
-  const project = await queryProjectBySlug({ slug })
+  const user = await getCurrentUser()
+  const project = await queryProjectBySlug({ slug, user })
 
   return {
     description: project?.summary,
@@ -302,7 +306,7 @@ const ActionLink: React.FC<{
   return <SafeLink className={className} href={action.url} label={action.label} />
 }
 
-const queryProjectBySlug = cache(async ({ slug }: { slug: string }) => {
+const queryProjectBySlug = cache(async ({ slug, user }: { slug: string; user: User | null }) => {
   const payload = await getPayload({ config: configPromise })
 
   const result = await payload.find({
@@ -312,6 +316,7 @@ const queryProjectBySlug = cache(async ({ slug }: { slug: string }) => {
     limit: 1,
     overrideAccess: false,
     pagination: false,
+    user: user || undefined,
     where: {
       and: [
         {

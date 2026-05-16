@@ -774,6 +774,7 @@ export interface Project {
     [k: string]: unknown;
   } | null;
   projectStatus?: ('active' | 'building' | 'archived' | 'exploratory' | 'exploring' | 'shipping') | null;
+  visibility?: ('public' | 'authenticated' | 'member' | 'admin') | null;
   projectKind?:
     | (
         | 'raidguild-project'
@@ -929,7 +930,23 @@ export interface Project {
  */
 export interface Profile {
   id: number;
+  /**
+   * Blank users mark imported or legacy profiles as unclaimed.
+   */
   user?: (number | null) | User;
+  /**
+   * Imported profiles can stay unclaimed until a matching account claims them.
+   */
+  claimStatus: 'unclaimed' | 'claimed';
+  /**
+   * Email from the legacy CRM used to match a new signup to this unclaimed profile.
+   */
+  claimEmail?: string | null;
+  claimedAt?: string | null;
+  /**
+   * Optional legacy CRM identifier for import reconciliation.
+   */
+  sourceCRMID?: string | null;
   handle: string;
   displayName: string;
   bio: string;
@@ -1723,6 +1740,7 @@ export interface ProjectsSelect<T extends boolean = true> {
   summary?: T;
   description?: T;
   projectStatus?: T;
+  visibility?: T;
   projectKind?: T;
   reviewStatus?: T;
   confidence?: T;
@@ -1857,6 +1875,10 @@ export interface ThreadsSelect<T extends boolean = true> {
  */
 export interface ProfilesSelect<T extends boolean = true> {
   user?: T;
+  claimStatus?: T;
+  claimEmail?: T;
+  claimedAt?: T;
+  sourceCRMID?: T;
   handle?: T;
   displayName?: T;
   bio?: T;

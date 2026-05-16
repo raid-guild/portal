@@ -165,6 +165,7 @@ const getCreatedRecords = async (profile: Profile) => {
   const payload = await getPayload({ config: configPromise })
   const profileUser = typeof profile.user === 'object' ? profile.user : null
   const userID = profileUser?.id || profile.user
+  const hasUserID = typeof userID === 'number' || Boolean(userID && !Number.isNaN(Number(userID)))
 
   const [projects, events, posts] = await Promise.all([
     payload.find({
@@ -193,19 +194,23 @@ const getCreatedRecords = async (profile: Profile) => {
         },
       },
     }),
-    payload.find({
-      collection: 'posts',
-      depth: 0,
-      limit: 6,
-      overrideAccess: true,
-      pagination: false,
-      sort: '-updatedAt',
-      where: {
-        authors: {
-          in: [userID],
-        },
-      },
-    }),
+    hasUserID
+      ? payload.find({
+          collection: 'posts',
+          depth: 0,
+          limit: 6,
+          overrideAccess: true,
+          pagination: false,
+          sort: '-updatedAt',
+          where: {
+            authors: {
+              in: [userID],
+            },
+          },
+        })
+      : Promise.resolve({
+          docs: [],
+        }),
   ])
 
   return {

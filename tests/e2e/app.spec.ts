@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 
 import {
   adminEmail,
@@ -225,6 +225,95 @@ async function verifySeededProjectSpike(page: Page) {
   await expect(page.getByText('Render the Update Brief')).toBeVisible()
 }
 
+async function verifyMemberOnlyProjectVisibility(
+  adminPage: Page,
+  browser: Browser,
+  publicPage: Page,
+) {
+  const memberOnlyProjectTitle = 'Member Only Project Spike'
+  const memberOnlyProjectSlug = 'member-only-project-spike'
+  const memberEmail = 'project-member@example.com'
+  const contributorEmail = 'project-contributor@example.com'
+  const password = 'ChangeMe123!'
+
+  const projectResponse = await adminPage.request.post('/api/projects', {
+    data: {
+      title: memberOnlyProjectTitle,
+      summary: 'A project spike that should only be visible to users with the member role.',
+      currentState: [
+        {
+          body: 'Member-only collaboration details are visible after member login.',
+        },
+      ],
+      lastActiveAt: new Date().toISOString(),
+      projectStatus: 'active',
+      publishedAt: new Date().toISOString(),
+      slug: memberOnlyProjectSlug,
+      slugLock: true,
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(projectResponse.status()).toBe(201)
+
+  const memberResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: memberEmail,
+      name: 'Project Member',
+      password,
+      roles: ['member'],
+    },
+  })
+
+  expect(memberResponse.status()).toBe(201)
+
+  const contributorResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: contributorEmail,
+      name: 'Project Contributor',
+      password,
+      roles: ['contributor'],
+    },
+  })
+
+  expect(contributorResponse.status()).toBe(201)
+
+  await publicPage.goto('/projects')
+  await expect(publicPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(0)
+  const publicDetailResponse = await publicPage.goto(`/projects/${memberOnlyProjectSlug}`)
+  expect(publicDetailResponse?.status()).toBe(404)
+
+  const contributorContext = await browser.newContext()
+  const contributorPage = await contributorContext.newPage()
+  await contributorPage.goto('/login')
+  await fillFirst(contributorPage.getByLabel(/^email$/i), contributorEmail)
+  await fillFirst(contributorPage.getByLabel(/^password$/i), password)
+  await contributorPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(contributorPage).toHaveURL(/\/dashboard/)
+  await contributorPage.goto('/projects')
+  await expect(contributorPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(
+    0,
+  )
+  const contributorDetailResponse = await contributorPage.goto(`/projects/${memberOnlyProjectSlug}`)
+  expect(contributorDetailResponse?.status()).toBe(404)
+  await contributorContext.close()
+
+  const memberContext = await browser.newContext()
+  const memberPage = await memberContext.newPage()
+  await memberPage.goto('/login')
+  await fillFirst(memberPage.getByLabel(/^email$/i), memberEmail)
+  await fillFirst(memberPage.getByLabel(/^password$/i), password)
+  await memberPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(memberPage).toHaveURL(/\/dashboard/)
+  await memberPage.goto('/projects')
+  await expect(memberPage.getByRole('heading', { name: memberOnlyProjectTitle })).toBeVisible()
+  await memberPage.goto(`/projects/${memberOnlyProjectSlug}`)
+  await expect(memberPage.getByRole('heading', { name: memberOnlyProjectTitle })).toBeVisible()
+  await expect(memberPage.getByText('Member-only collaboration details')).toBeVisible()
+  await memberContext.close()
+}
+
 async function verifySeededSessions(page: Page) {
   await page.goto('/events')
   await expect(page.getByRole('heading', { name: 'Cohort sessions' })).toBeVisible()
@@ -448,6 +537,148 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await expect(page.getByRole('textbox', { name: /title/i }).first()).toBeVisible()
 }
 
+async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
+  const email = 'legacy-profile@example.com'
+  const password = 'ChangeMe123!'
+  const displayName = 'Legacy Profile Claim'
+  const handle = 'legacy-profile-claim'
+
+  const [skillsResponse, rolesResponse] = await Promise.all([
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileRoles', {
+      params: {
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(skillsResponse.ok()).toBeTruthy()
+  expect(rolesResponse.ok()).toBeTruthy()
+
+  const skillsBody = await skillsResponse.json()
+  const rolesBody = await rolesResponse.json()
+  const skillID = skillsBody.docs[0]?.id
+  const roleID = rolesBody.docs[0]?.id
+
+  expect(skillID).toBeTruthy()
+  expect(roleID).toBeTruthy()
+
+  const profileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'Imported from the legacy CRM and waiting for the owner to claim it.',
+      claimEmail: email,
+      claimStatus: 'unclaimed',
+      displayName,
+      handle,
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      visibility: 'public',
+    },
+  })
+
+  expect(profileResponse.status()).toBe(201)
+
+  const userResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email,
+      name: 'Legacy Profile Owner',
+      password,
+    },
+  })
+
+  expect(userResponse.status()).toBe(201)
+
+  const claimContext = await browser.newContext()
+  const claimPage = await claimContext.newPage()
+
+  await claimPage.goto('/login')
+  await fillFirst(claimPage.getByLabel(/^email$/i), email)
+  await fillFirst(claimPage.getByLabel(/^password$/i), password)
+  await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(claimPage).toHaveURL(/\/dashboard/)
+
+  await claimPage.goto('/me')
+  await expect(claimPage.getByRole('heading', { name: 'Claim an existing profile' })).toBeVisible()
+  await expect(claimPage.getByText(displayName)).toBeVisible()
+  await expect(claimPage.getByText(`@${handle}`)).toBeVisible()
+  await claimPage.getByRole('button', { name: 'Claim profile' }).click()
+  await expect(claimPage.getByText('Profile connected')).toBeVisible()
+  await expect(claimPage.getByText(displayName)).toBeVisible()
+
+  await claimContext.close()
+}
+
+async function verifyLegacyMemberImport(adminPage: Page) {
+  const suffix = Date.now()
+  const sourceCRMID = `legacy-${suffix}`
+  const displayName = `Legacy Import ${suffix}`
+  const handle = `legacy-import-${suffix}`
+  const email = `${handle}@example.com`
+  const csv = [
+    'member_id,name,email,eth_address,primary_class_key,guild_classes,skills,application_skills,introduction,github,twitter,discord,telegram',
+    `${sourceCRMID},"${displayName}",${email},0x0000000000000000000000000000000000000000,FRONTEND_DEV,"PROJECT_MANAGEMENT, COMMUNITY","SOLIDITY (SECONDARY), CONTENT (SECONDARY)",UX_RESEARCH,"Imported legacy profile with\nquoted multiline bio.",${handle},@${handle},legacy-discord,legacy-telegram`,
+  ].join('\n')
+
+  const dryRunResponse = await adminPage.request.post('/api/profiles/import-legacy?dryRun=true', {
+    data: { csv },
+  })
+
+  expect(dryRunResponse.ok()).toBeTruthy()
+  const dryRunBody = await dryRunResponse.json()
+  expect(dryRunBody).toMatchObject({
+    created: 1,
+    dryRun: true,
+    total: 1,
+    updated: 0,
+  })
+
+  const importResponse = await adminPage.request.post('/api/profiles/import-legacy', {
+    data: { csv },
+  })
+
+  expect(importResponse.ok()).toBeTruthy()
+  const importBody = await importResponse.json()
+  expect(importBody).toMatchObject({
+    created: 1,
+    dryRun: false,
+    total: 1,
+    updated: 0,
+  })
+
+  const profileResponse = await adminPage.request.get('/api/profiles', {
+    params: {
+      depth: '2',
+      limit: '1',
+      'where[sourceCRMID][equals]': sourceCRMID,
+    },
+  })
+
+  expect(profileResponse.ok()).toBeTruthy()
+  const profileBody = await profileResponse.json()
+  const importedProfile = profileBody.docs[0]
+
+  expect(importedProfile).toMatchObject({
+    claimEmail: email,
+    claimStatus: 'unclaimed',
+    displayName,
+    handle,
+    sourceCRMID,
+    visibility: 'public',
+  })
+  expect(importedProfile.profileSkills.length).toBeGreaterThan(0)
+  expect(importedProfile.profileRoles.length).toBeGreaterThan(0)
+
+  await adminPage.goto('/members')
+  await expect(adminPage.getByText(displayName)).toBeVisible()
+  await adminPage.goto(`/members/${handle}`)
+  await expect(adminPage.getByRole('heading', { name: displayName })).toBeVisible()
+}
+
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByRole('link', { name: /New Page/i })).toHaveCount(0)
@@ -486,6 +717,8 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await seedDatabase(page)
   await verifyDashboardBrief(page)
   await createProfileAndVerifyContributorCreateLinks(page)
+  await verifyProfileClaimFlow(page, browser)
+  await verifyLegacyMemberImport(page)
 
   const loginContext = await browser.newContext()
   const loginPage = await loginContext.newPage()
@@ -501,6 +734,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicPage = await publicContext.newPage()
 
   await verifyPublicHome(publicPage)
+  await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)

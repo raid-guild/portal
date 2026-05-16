@@ -284,8 +284,11 @@ Recommended additions:
 - `activityItems`: relationship to future `activityItems`, has many.
 - `threads`: relationship to future `threads`, has many.
 - `contributionActions`: array of title, description, url.
+- `visibility`: `public`, `authenticated`, `member`, `admin`.
 
-Keep drafts/publishing. Public views should only show published project spikes.
+Keep drafts/publishing. Public views should only show published public project spikes.
+Member-only project spikes should require the authenticated user to have the
+`member` auth role.
 
 ### Add New Collections
 

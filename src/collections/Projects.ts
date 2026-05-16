@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
-import { authenticatedOrPublished } from '@/access/authenticatedOrPublished'
 import { authenticated } from '@/access/authenticated'
+import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -11,7 +11,7 @@ export const Projects: CollectionConfig = {
   access: {
     create: authenticated,
     delete: contentContributors,
-    read: authenticatedOrPublished,
+    read: readVisiblePortalContent,
     update: contentContributors,
   },
   admin: {
@@ -20,6 +20,7 @@ export const Projects: CollectionConfig = {
       'slug',
       'projectKind',
       'projectStatus',
+      'visibility',
       'reviewStatus',
       'confidence',
       'lastActiveAt',
@@ -76,6 +77,33 @@ export const Projects: CollectionConfig = {
         {
           label: 'Shipping',
           value: 'shipping',
+        },
+      ],
+    },
+    {
+      name: 'visibility',
+      type: 'select',
+      admin: {
+        position: 'sidebar',
+      },
+      defaultValue: 'public',
+      index: true,
+      options: [
+        {
+          label: 'Public',
+          value: 'public',
+        },
+        {
+          label: 'Authenticated',
+          value: 'authenticated',
+        },
+        {
+          label: 'Members',
+          value: 'member',
+        },
+        {
+          label: 'Admin',
+          value: 'admin',
         },
       ],
     },

@@ -2,7 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { ownProfileOrAdmin, privateProfileField, publicProfilesOrOwner } from '@/access/profiles'
-import { admins, isAdmin } from '@/access/roles'
+import { admins, adminsFieldAccess, isAdmin } from '@/access/roles'
 
 const handlePattern = /^[a-z0-9_-]+$/i
 
@@ -15,7 +15,7 @@ export const Profiles: CollectionConfig = {
     update: ownProfileOrAdmin,
   },
   admin: {
-    defaultColumns: ['displayName', 'handle', 'status', 'visibility', 'updatedAt'],
+    defaultColumns: ['displayName', 'handle', 'claimStatus', 'status', 'visibility', 'updatedAt'],
     group: 'Portal',
     useAsTitle: 'displayName',
   },
@@ -24,12 +24,80 @@ export const Profiles: CollectionConfig = {
       name: 'user',
       type: 'relationship',
       admin: {
+        description: 'Blank users mark imported or legacy profiles as unclaimed.',
         position: 'sidebar',
       },
       hasMany: false,
       relationTo: 'users',
-      unique: true,
-      validate: (value) => (value ? true : 'User is required'),
+    },
+    {
+      name: 'claimStatus',
+      type: 'select',
+      access: {
+        create: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        description: 'Imported profiles can stay unclaimed until a matching account claims them.',
+        position: 'sidebar',
+      },
+      defaultValue: 'claimed',
+      index: true,
+      options: [
+        {
+          label: 'Unclaimed',
+          value: 'unclaimed',
+        },
+        {
+          label: 'Claimed',
+          value: 'claimed',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'claimEmail',
+      type: 'email',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        description:
+          'Email from the legacy CRM used to match a new signup to this unclaimed profile.',
+        position: 'sidebar',
+      },
+      index: true,
+    },
+    {
+      name: 'claimedAt',
+      type: 'date',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'sourceCRMID',
+      type: 'text',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        description: 'Optional legacy CRM identifier for import reconciliation.',
+        position: 'sidebar',
+      },
+      index: true,
     },
     {
       name: 'handle',
@@ -174,21 +242,37 @@ export const Profiles: CollectionConfig = {
   hooks: {
     beforeValidate: [
       ({ data, req, operation }) => {
+        const normalizedData = data?.claimEmail
+          ? {
+              ...data,
+              claimEmail: String(data.claimEmail).trim().toLowerCase(),
+            }
+          : data
+
         if ((operation === 'create' || operation === 'update') && req.user && !isAdmin(req.user)) {
           return {
-            ...data,
+            ...normalizedData,
+            claimStatus: 'claimed',
+            ...(operation === 'create' ? { claimedAt: new Date().toISOString() } : {}),
             user: req.user.id,
           }
         }
 
-        if (operation === 'create' && req.user && !data?.user) {
+        if (
+          operation === 'create' &&
+          req.user &&
+          !normalizedData?.user &&
+          normalizedData?.claimStatus !== 'unclaimed'
+        ) {
           return {
-            ...data,
+            ...normalizedData,
+            claimStatus: 'claimed',
+            claimedAt: new Date().toISOString(),
             user: req.user.id,
           }
         }
 
-        return data
+        return normalizedData
       },
     ],
   },
