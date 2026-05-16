@@ -592,6 +592,9 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   })
 
   expect(userResponse.status()).toBe(201)
+  const createdUser = await userResponse.json()
+  const createdUserID = createdUser.doc?.id || createdUser.id
+  expect(createdUserID).toBeTruthy()
 
   const claimContext = await browser.newContext()
   const claimPage = await claimContext.newPage()
@@ -609,6 +612,12 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   await claimPage.getByRole('button', { name: 'Claim profile' }).click()
   await expect(claimPage.getByText('Profile connected')).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
+
+  const claimedUserResponse = await adminPage.request.get(`/api/users/${createdUserID}`)
+  expect(claimedUserResponse.ok()).toBeTruthy()
+  const claimedUser = await claimedUserResponse.json()
+  expect(claimedUser.roles).toContain('contributor')
+  expect(claimedUser.roles).toContain('member')
 
   await claimContext.close()
 }

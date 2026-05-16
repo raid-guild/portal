@@ -2,6 +2,16 @@ import configPromise from '@payload-config'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
+import type { User } from '@/payload-types'
+
+type UserRole = Exclude<NonNullable<User['roles']>[number], undefined>
+
+const withMemberRole = (roles: User['roles']): UserRole[] => {
+  const existingRoles: UserRole[] = Array.isArray(roles) ? roles.filter(Boolean) : ['contributor']
+
+  return Array.from(new Set([...existingRoles, 'member']))
+}
+
 export async function POST(request: Request) {
   const payload = await getPayload({ config: configPromise })
   const requestHeaders = await headers()
@@ -9,6 +19,10 @@ export async function POST(request: Request) {
 
   if (!user?.email) {
     return Response.json({ message: 'Log in to claim a profile.' }, { status: 401 })
+  }
+
+  if (!user.id) {
+    return Response.json({ message: 'Unable to identify the current user.' }, { status: 401 })
   }
 
   const body = await request.json().catch(() => null)
@@ -84,11 +98,24 @@ export async function POST(request: Request) {
     overrideAccess: true,
   })
 
+  const updatedUser = await payload.update({
+    id: user.id,
+    collection: 'users',
+    data: {
+      roles: withMemberRole(user.roles),
+    },
+    overrideAccess: true,
+  })
+
   return Response.json({
     profile: {
       displayName: updatedProfile.displayName,
       handle: updatedProfile.handle,
       id: updatedProfile.id,
+    },
+    user: {
+      id: updatedUser.id,
+      roles: updatedUser.roles,
     },
   })
 }
