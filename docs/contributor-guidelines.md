@@ -98,7 +98,9 @@ Answers:
 - Who is involved?
 - How can someone participate?
 
-Projects should be lightweight collaboration hubs with summary, status, contributors, links, current state, activity, threads, and contribution actions.
+Projects should be lightweight collaboration hubs with summary, status, visibility, contributors, links, current state, activity, threads, and contribution actions.
+
+Project visibility can be public, authenticated, member-only, or admin-only. Use member-only when the project should be visible to confirmed RaidGuild members but not to all authenticated contributors.
 
 Do not turn projects into task boards, sprint managers, assignment systems, or repo mirrors.
 
@@ -163,6 +165,11 @@ Answers:
 - How do they relate to projects, threads, or activity?
 
 Profiles should support discovery and attribution. They should emerge from contribution, not dominate the MVP.
+
+Imported legacy profiles may be unclaimed. Keep those records as `Profile`
+records with `claimStatus: unclaimed`, blank `user`, and private `claimEmail`
+for matching a future signup. Use the admin-only legacy import route for the old
+CRM CSV; do not add those external records to the deterministic app seed.
 
 Do not let profile features distract from brief, project, activity, thread, and event visibility.
 

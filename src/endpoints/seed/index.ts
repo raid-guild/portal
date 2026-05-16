@@ -317,15 +317,17 @@ export const seed = async ({
     const demoProfile = await payload.create({
       collection: 'profiles',
       data: {
-        user: demoAuthor.id,
-        handle: 'duckanbro',
-        displayName: 'duckanbro',
         bio: 'Cohort contributor helping turn meeting context into a visible project spike portal.',
+        claimedAt: '2026-05-11T17:34:47.664Z',
+        claimStatus: 'claimed',
+        displayName: 'duckanbro',
+        handle: 'duckanbro',
         profileSkills: [frontendSkill?.id, projectManagerSkill?.id, communitySkill?.id].filter(
           isDefined,
         ),
         profileRoles: [warriorRole?.id, monkRole?.id].filter(isDefined),
         status: 'active',
+        user: demoAuthor.id,
         visibility: 'public',
       },
     })

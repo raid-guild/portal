@@ -24,11 +24,12 @@ export default async function MePage() {
 
   if (!user) redirect('/join')
 
-  const [profile, pointsTotal, skills, roles] = await Promise.all([
+  const [profile, pointsTotal, skills, roles, claimableProfiles] = await Promise.all([
     getProfileForUser(user.id),
     getPointsTotal(user),
     getProfileSkills(),
     getProfileRoles(),
+    getClaimableProfiles(user),
   ])
 
   const createdRecords = await getCreatedRecords(user, profile)
@@ -57,7 +58,12 @@ export default async function MePage() {
 
       <section className="mt-12">
         <h2 className="mb-4 text-2xl font-semibold">Profile wizard</h2>
-        <ProfileWizardForm profile={profile} roles={roles} skills={skills} />
+        <ProfileWizardForm
+          claimableProfiles={profile ? [] : claimableProfiles}
+          profile={profile}
+          roles={roles}
+          skills={skills}
+        />
       </section>
 
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
@@ -234,6 +240,41 @@ const getProfileRoles = async () => {
     overrideAccess: true,
     pagination: false,
     sort: 'title',
+  })
+
+  return result.docs
+}
+
+const getClaimableProfiles = async (user: User) => {
+  if (!user.email) return []
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'profiles',
+    depth: 0,
+    limit: 5,
+    overrideAccess: true,
+    pagination: false,
+    sort: 'displayName',
+    where: {
+      and: [
+        {
+          claimStatus: {
+            equals: 'unclaimed',
+          },
+        },
+        {
+          claimEmail: {
+            equals: user.email.trim().toLowerCase(),
+          },
+        },
+        {
+          user: {
+            exists: false,
+          },
+        },
+      ],
+    },
   })
 
   return result.docs

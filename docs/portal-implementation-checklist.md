@@ -15,11 +15,13 @@
 - [x] Add `profileRoles` collection.
 - [x] Add `profiles` collection.
 - [x] Relate `profiles.user` to `users`.
+- [x] Allow imported profiles to remain unclaimed until a matching signup claims them.
 - [x] Relate `profiles.profileSkills` to `profileSkills`.
 - [x] Relate `profiles.profileRoles` to `profileRoles`.
 - [x] Use `media` for profile avatars.
 - [x] Add field-level access for private contact fields.
 - [x] Add profile handle validation and uniqueness.
+- [x] Add an admin-only legacy member CSV import with dry-run support.
 - [x] Generate Payload types after collection changes.
 
 ## Phase 3: Member Profile Flow
@@ -52,9 +54,10 @@
 - [x] Relate projects to contributor `profiles`.
 - [x] Relate projects to `profileSkills`.
 - [x] Add project links and cover images.
-- [ ] Create `/projects`.
-- [ ] Create `/projects/[slug]`.
-- [ ] Decide whether projects use drafts/publishing.
+- [x] Add project visibility, including member-only project access.
+- [x] Create `/projects`.
+- [x] Create `/projects/[slug]`.
+- [x] Decide whether projects use drafts/publishing.
 - [ ] Add API examples for reading projects and contributors.
 
 ## Phase 5A: Cohort Spike MVP Primitives

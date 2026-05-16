@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 type ProfileWizardFormProps = {
+  claimableProfiles?: Profile[]
   profile?: Profile | null
   roles: ProfileRole[]
   skills: ProfileSkill[]
@@ -22,12 +23,45 @@ const selectedRoleIDs = (profile?: Profile | null) => selectedIDs(profile?.profi
 
 const selectedSkillIDs = (profile?: Profile | null) => selectedIDs(profile?.profileSkills)
 
-export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, roles, skills }) => {
+export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
+  claimableProfiles = [],
+  profile,
+  roles,
+  skills,
+}) => {
+  const [claimError, setClaimError] = useState<string | null>(null)
+  const [claimingProfileID, setClaimingProfileID] = useState<number | string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const initialRoleIDs = useMemo(() => selectedRoleIDs(profile), [profile])
   const initialSkillIDs = useMemo(() => selectedSkillIDs(profile), [profile])
+
+  const claimProfile = async (profileID: number | string) => {
+    setClaimError(null)
+    setClaimingProfileID(profileID)
+
+    try {
+      const res = await fetch('/api/profiles/claim', {
+        body: JSON.stringify({ profileID }),
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        method: 'POST',
+      })
+
+      if (!res.ok) {
+        const json = await res.json().catch(() => null)
+        throw new Error(json?.message || 'Unable to claim profile.')
+      }
+
+      window.location.reload()
+    } catch (err) {
+      setClaimError(err instanceof Error ? err.message : 'Unable to claim profile.')
+      setClaimingProfileID(null)
+    }
+  }
 
   const submitProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -142,133 +176,162 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({ profile, r
   }
 
   return (
-    <form className="border border-border bg-card/30 p-6" onSubmit={submitProfile}>
-      <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="space-y-5">
-          <div className="grid gap-4 md:grid-cols-2">
+    <div className="space-y-6">
+      {!profile && claimableProfiles.length ? (
+        <section className="border border-border bg-card/30 p-6">
+          <h3 className="text-lg font-semibold">Claim an existing profile</h3>
+          <div className="mt-4 space-y-3">
+            {claimableProfiles.map((claimableProfile) => (
+              <article
+                className="flex flex-wrap items-center justify-between gap-4 border border-border p-4"
+                key={claimableProfile.id}
+              >
+                <div>
+                  <p className="font-medium">{claimableProfile.displayName}</p>
+                  <p className="text-sm text-muted-foreground">@{claimableProfile.handle}</p>
+                </div>
+                <Button
+                  disabled={claimingProfileID === claimableProfile.id}
+                  onClick={() => claimProfile(claimableProfile.id)}
+                  type="button"
+                >
+                  {claimingProfileID === claimableProfile.id ? 'Claiming...' : 'Claim profile'}
+                </Button>
+              </article>
+            ))}
+          </div>
+          {claimError ? <p className="mt-4 text-sm text-destructive">{claimError}</p> : null}
+        </section>
+      ) : null}
+
+      <form className="border border-border bg-card/30 p-6" onSubmit={submitProfile}>
+        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
+          <div className="space-y-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="displayName">Display name</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.displayName || ''}
+                  id="displayName"
+                  name="displayName"
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="handle">Handle</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.handle || ''}
+                  id="handle"
+                  name="handle"
+                  required
+                />
+              </div>
+            </div>
+
             <div>
-              <Label htmlFor="displayName">Display name</Label>
-              <Input
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
                 className={fieldClassName}
-                defaultValue={profile?.displayName || ''}
-                id="displayName"
-                name="displayName"
+                defaultValue={profile?.bio || ''}
+                id="bio"
+                name="bio"
                 required
+                rows={4}
               />
             </div>
-            <div>
-              <Label htmlFor="handle">Handle</Label>
-              <Input
-                className={fieldClassName}
-                defaultValue={profile?.handle || ''}
-                id="handle"
-                name="handle"
-                required
-              />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.location || ''}
+                  id="location"
+                  name="location"
+                />
+              </div>
+              <div>
+                <Label htmlFor="avatarFile">Avatar</Label>
+                <Input
+                  accept="image/*"
+                  className={fieldClassName}
+                  id="avatarFile"
+                  name="avatarFile"
+                  type="file"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <LinkInput label="Website" name="websiteURL" profile={profile} />
+              <LinkInput label="GitHub" name="githubURL" profile={profile} />
+              <LinkInput label="Portfolio" name="portfolioURL" profile={profile} />
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <Label htmlFor="discord">Discord</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.contact?.discord || ''}
+                  id="discord"
+                  name="discord"
+                />
+              </div>
+              <div>
+                <Label htmlFor="contactEmail">Contact email</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.contact?.email || ''}
+                  id="contactEmail"
+                  name="contactEmail"
+                  type="email"
+                />
+              </div>
             </div>
           </div>
 
-          <div>
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              className={fieldClassName}
-              defaultValue={profile?.bio || ''}
-              id="bio"
-              name="bio"
-              required
-              rows={4}
+          <aside className="space-y-5">
+            <div>
+              <Label htmlFor="visibility">Visibility</Label>
+              <select
+                className={selectClassName}
+                defaultValue={profile?.visibility || 'public'}
+                id="visibility"
+                name="visibility"
+              >
+                <option value="public">Public</option>
+                <option value="authenticated">Authenticated</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+
+            <Checklist
+              defaultSelected={initialRoleIDs}
+              items={roles}
+              label="Profile roles"
+              name="profileRoles"
             />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="location">Location</Label>
-              <Input
-                className={fieldClassName}
-                defaultValue={profile?.location || ''}
-                id="location"
-                name="location"
-              />
-            </div>
-            <div>
-              <Label htmlFor="avatarFile">Avatar</Label>
-              <Input
-                accept="image/*"
-                className={fieldClassName}
-                id="avatarFile"
-                name="avatarFile"
-                type="file"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
-            <LinkInput label="Website" name="websiteURL" profile={profile} />
-            <LinkInput label="GitHub" name="githubURL" profile={profile} />
-            <LinkInput label="Portfolio" name="portfolioURL" profile={profile} />
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            <div>
-              <Label htmlFor="discord">Discord</Label>
-              <Input
-                className={fieldClassName}
-                defaultValue={profile?.contact?.discord || ''}
-                id="discord"
-                name="discord"
-              />
-            </div>
-            <div>
-              <Label htmlFor="contactEmail">Contact email</Label>
-              <Input
-                className={fieldClassName}
-                defaultValue={profile?.contact?.email || ''}
-                id="contactEmail"
-                name="contactEmail"
-                type="email"
-              />
-            </div>
-          </div>
+            <Checklist
+              defaultSelected={initialSkillIDs}
+              items={skills}
+              label="Profile skills"
+              name="profileSkills"
+            />
+          </aside>
         </div>
 
-        <aside className="space-y-5">
-          <div>
-            <Label htmlFor="visibility">Visibility</Label>
-            <select
-              className={selectClassName}
-              defaultValue={profile?.visibility || 'public'}
-              id="visibility"
-              name="visibility"
-            >
-              <option value="public">Public</option>
-              <option value="authenticated">Authenticated</option>
-              <option value="private">Private</option>
-            </select>
-          </div>
+        {error ? <p className="mt-5 text-sm text-destructive">{error}</p> : null}
+        {success ? <p className="mt-5 text-sm text-muted-foreground">{success}</p> : null}
 
-          <Checklist
-            defaultSelected={initialRoleIDs}
-            items={roles}
-            label="Profile roles"
-            name="profileRoles"
-          />
-          <Checklist
-            defaultSelected={initialSkillIDs}
-            items={skills}
-            label="Profile skills"
-            name="profileSkills"
-          />
-        </aside>
-      </div>
-
-      {error ? <p className="mt-5 text-sm text-destructive">{error}</p> : null}
-      {success ? <p className="mt-5 text-sm text-muted-foreground">{success}</p> : null}
-
-      <Button className="mt-6" disabled={isLoading} type="submit">
-        {isLoading ? 'Saving...' : 'Save profile'}
-        {!isLoading ? <Save className="ml-2 h-4 w-4" /> : null}
-      </Button>
-    </form>
+        <Button className="mt-6" disabled={isLoading} type="submit">
+          {isLoading ? 'Saving...' : 'Save profile'}
+          {!isLoading ? <Save className="ml-2 h-4 w-4" /> : null}
+        </Button>
+      </form>
+    </div>
   )
 }
 

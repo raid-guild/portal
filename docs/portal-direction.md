@@ -74,8 +74,24 @@ Suggested fields:
 - `contact`
 - `profileSkills`: relationship to `profileSkills`, has many
 - `profileRoles`: relationship to `profileRoles`, has many
+- `claimStatus`: `unclaimed` or `claimed`
+- `claimEmail`: private legacy email used to let a matching signup claim the profile
+- `claimedAt`
+- `sourceCRMID`
 - `status`: draft/review/published or active/inactive, final naming TBD
 - `visibility`: public/authenticated/private, final shape TBD
+
+Imported legacy CRM profiles can leave `user` blank and set `claimStatus` to
+`unclaimed`. A new signup can claim the profile when their account email matches
+the private `claimEmail`.
+
+Legacy CRM records should be imported through the admin-only
+`/api/profiles/import-legacy` route instead of normal production seed behavior.
+Run the import with `?dryRun=true` first, then POST the same CSV without the
+query flag once the summary looks correct. The import upserts by `sourceCRMID`
+from the old `member_id`, maps legacy class/skill fields into the current
+profile role and skill taxonomy, and preserves already claimed profile
+ownership.
 
 ### profileSkills
 

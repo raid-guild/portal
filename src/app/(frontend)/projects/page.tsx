@@ -5,14 +5,15 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Media, Profile, ProfileSkill } from '@/payload-types'
+import type { Media, Profile, ProfileSkill, User } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
 export const dynamic = 'force-dynamic'
 
 export default async function ProjectsPage() {
-  const [projects, user] = await Promise.all([getProjects(), getCurrentUser()])
+  const user = await getCurrentUser()
+  const projects = await getProjects(user)
 
   return (
     <main className="container pb-24 pt-12">
@@ -167,7 +168,7 @@ const ContributorList: React.FC<{ contributors?: (number | Profile)[] | null }> 
   )
 }
 
-const getProjects = async () => {
+const getProjects = async (user: User | null) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'projects',
@@ -176,6 +177,7 @@ const getProjects = async () => {
     limit: 60,
     overrideAccess: false,
     sort: '-publishedAt',
+    user: user || undefined,
     where: {
       _status: {
         equals: 'published',
