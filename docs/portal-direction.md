@@ -117,6 +117,11 @@ Suggested fields:
 - `group`
 - `icon`: optional upload relationship to `media`
 
+Future profile recognition should use a separate badges and props module instead
+of overloading profile roles. Badges are durable profile flex such as
+`cohort-grad`; props are stackable lightweight `1up` recognition using a
+mushroom emoji. See `docs/badges-and-props-feature-spec.md`.
+
 ### projects
 
 Discoverability records for work RaidGuild members have built or contributed to.
