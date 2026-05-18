@@ -34,8 +34,7 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
       })
 
       if (!res.ok) {
-        const error = await res.json()
-        throw new Error(error.errors?.[0]?.message || 'Failed to submit comment')
+        throw new Error(await getResponseErrorMessage(res))
       }
 
       setSuccess(true)
@@ -94,6 +93,21 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
       </Button>
     </form>
   )
+}
+
+const getResponseErrorMessage = async (res: Response): Promise<string> => {
+  const fallback = 'Failed to submit comment'
+  const text = await res.text().catch(() => '')
+
+  if (!text) return fallback
+
+  try {
+    const error = JSON.parse(text) as { errors?: { message?: string }[]; message?: string }
+
+    return error.errors?.[0]?.message || error.message || fallback
+  } catch {
+    return text || fallback
+  }
 }
 
 export default CommentForm

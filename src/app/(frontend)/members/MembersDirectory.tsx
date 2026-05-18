@@ -5,6 +5,7 @@ import { Search } from 'lucide-react'
 import Link from 'next/link'
 
 import { Input } from '@/components/ui/input'
+import { toSafeURL } from '@/utilities/safeURL'
 
 type DirectoryTaxonomy = {
   id: number | string
@@ -170,17 +171,23 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
               <TaxonomyPills items={profile.profileSkills} />
               {profile.links.length ? (
                 <div className="mt-4 flex flex-wrap gap-3">
-                  {profile.links.slice(0, 3).map((link) => (
-                    <Link
-                      className="portal-link"
-                      href={link.url}
-                      key={`${profile.id}-${link.label}`}
-                      rel="noopener noreferrer"
-                      target="_blank"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
+                  {profile.links.slice(0, 3).map((link) => {
+                    const safeURL = toProfileLinkURL(link.url)
+
+                    if (!safeURL) return null
+
+                    return (
+                      <Link
+                        className="portal-link"
+                        href={safeURL}
+                        key={`${profile.id}-${link.label}`}
+                        rel="noopener noreferrer"
+                        target="_blank"
+                      >
+                        {link.label}
+                      </Link>
+                    )
+                  })}
                 </div>
               ) : null}
             </article>
@@ -227,6 +234,13 @@ const TaxonomyPills: React.FC<{ items: DirectoryTaxonomy[] }> = ({ items }) => {
       ))}
     </div>
   )
+}
+
+const toProfileLinkURL = (value: string): string | null => {
+  const trimmed = value.trim()
+  const normalized = trimmed.startsWith('www.') ? `https://${trimmed}` : trimmed
+
+  return toSafeURL(normalized, { allowRelative: false, protocols: ['http:', 'https:'] })
 }
 
 const uniqueByTitle = (items: DirectoryTaxonomy[]) => {
