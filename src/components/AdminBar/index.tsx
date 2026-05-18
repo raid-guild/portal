@@ -117,19 +117,23 @@ export const AdminBar: React.FC<{
 
   return (
     <div
-      className={cn(baseClass, 'py-2 bg-black text-white', {
+      className={cn(baseClass, 'py-2 bg-moloch-900 text-scroll-100', {
         block: show,
         hidden: !show,
       })}
     >
       <div className="container">
-        <div className="flex items-center justify-between py-2 text-sm font-medium text-white">
+        <div className="flex items-center justify-between py-2 text-sm font-medium text-scroll-100">
           <Link aria-label="RaidGuild Portal dashboard" href="/dashboard">
             <Title />
           </Link>
           <div className="flex items-center gap-4">
             {adminBarProps?.preview ? (
-              <button className="text-white hover:text-primary" onClick={exitPreview} type="button">
+              <button
+                className="text-scroll-100 hover:text-primary"
+                onClick={exitPreview}
+                type="button"
+              >
                 Exit preview
               </button>
             ) : null}
@@ -138,11 +142,11 @@ export const AdminBar: React.FC<{
                 aria-expanded={open}
                 aria-haspopup="menu"
                 aria-label="Open account menu"
-                className="flex h-10 items-center gap-2 rounded-sm border border-white/20 bg-white/5 px-2 text-white transition hover:border-primary hover:text-primary"
+                className="flex h-10 items-center gap-2 rounded-sm border border-scroll-100/20 bg-scroll-100/5 px-2 text-scroll-100 transition hover:border-primary hover:text-primary"
                 onClick={() => setOpen((current) => !current)}
                 type="button"
               >
-                <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-white/25 bg-white/10 text-xs font-semibold">
+                <span className="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-scroll-100/25 bg-scroll-100/10 text-xs font-bold">
                   {avatarURL ? (
                     <img
                       alt={profile?.avatar?.alt || accountName}
@@ -161,7 +165,7 @@ export const AdminBar: React.FC<{
                   role="menu"
                 >
                   <div className="border-b border-border px-3 py-2">
-                    <p className="truncate text-sm font-semibold">{accountName}</p>
+                    <p className="truncate text-sm font-bold">{accountName}</p>
                     {profile?.handle ? (
                       <p className="truncate text-xs text-muted-foreground">@{profile.handle}</p>
                     ) : null}

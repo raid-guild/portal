@@ -38,10 +38,7 @@ export default async function Page() {
             <h1>Posts</h1>
           </div>
           {user ? (
-            <Link
-              className="border border-border px-4 py-2 text-sm font-medium"
-              href="/admin/collections/posts/create"
-            >
+            <Link className="portal-admin-link" href="/admin/collections/posts/create">
               Create post
             </Link>
           ) : null}

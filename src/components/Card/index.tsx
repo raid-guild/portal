@@ -31,10 +31,7 @@ export const Card: React.FC<{
 
   return (
     <article
-      className={cn(
-        'border border-border rounded-lg overflow-hidden bg-card hover:cursor-pointer',
-        className,
-      )}
+      className={cn('portal-card overflow-hidden hover:cursor-pointer', className)}
       ref={card.ref}
     >
       <div className="relative w-full ">
@@ -43,7 +40,7 @@ export const Card: React.FC<{
       </div>
       <div className="p-4">
         {showCategories && hasCategories && (
-          <div className="uppercase text-sm mb-4">
+          <div className="portal-kicker mb-4">
             {showCategories && hasCategories && (
               <div>
                 {categories?.map((category, index) => {

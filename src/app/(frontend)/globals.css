@@ -3,84 +3,86 @@
 @tailwind utilities;
 
 @layer base {
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    font-size: auto;
-    font-weight: auto;
-  }
-
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --moloch-900: 12 61% 10%;
+    --moloch-800: 12 61% 11%;
+    --moloch-700: 11 56% 18%;
+    --moloch-600: 11 52% 27%;
+    --moloch-500: 12 44% 46%;
+    --scroll-100: 56 60% 94%;
+    --scroll-200: 49 47% 88%;
+    --scroll-300: 43 34% 78%;
+    --neutral-black: 0 0% 5%;
+    --guild-olive: 55 61% 20%;
+    --guild-muted: 26 20% 38%;
 
-    --card: 240 5% 96%;
-    --card-foreground: 222.2 84% 4.9%;
+    --background: var(--neutral-black);
+    --foreground: var(--scroll-100);
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --card: var(--moloch-800);
+    --card-foreground: var(--scroll-100);
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --popover: var(--neutral-black);
+    --popover-foreground: var(--scroll-100);
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --primary: var(--moloch-500);
+    --primary-foreground: var(--scroll-100);
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --secondary: var(--moloch-800);
+    --secondary-foreground: var(--scroll-100);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --muted: var(--moloch-800);
+    --muted-foreground: var(--scroll-300);
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --accent: var(--moloch-500);
+    --accent-foreground: var(--scroll-100);
 
-    --border: 240 6% 90%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive: 12 44% 46%;
+    --destructive-foreground: var(--scroll-100);
 
-    --radius: 0.2rem;
+    --border: 56, 60%, 94%, 0.16;
+    --input: 56 60% 94%;
+    --ring: var(--moloch-500);
 
-    --success: 196 52% 74%;
-    --warning: 34 89% 85%;
-    --error: 10 100% 86%;
+    --radius: 0.125rem;
+
+    --success: 55 61% 20%;
+    --warning: 38 63% 46%;
+    --error: var(--moloch-500);
   }
 
   [data-theme='dark'] {
-    --background: 0 0% 0%;
-    --foreground: 210 40% 98%;
+    --background: var(--neutral-black);
+    --foreground: var(--scroll-100);
 
-    --card: 0 0% 4%;
-    --card-foreground: 210 40% 98%;
+    --card: var(--moloch-800);
+    --card-foreground: var(--scroll-100);
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
+    --popover: var(--neutral-black);
+    --popover-foreground: var(--scroll-100);
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: var(--moloch-500);
+    --primary-foreground: var(--scroll-100);
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: var(--moloch-800);
+    --secondary-foreground: var(--scroll-100);
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: var(--moloch-800);
+    --muted-foreground: var(--scroll-300);
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: var(--moloch-500);
+    --accent-foreground: var(--scroll-100);
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: var(--moloch-500);
+    --destructive-foreground: var(--scroll-100);
 
-    --border: 0, 0%, 15%, 0.5;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --border: 56, 60%, 94%, 0.2;
+    --input: 56 60% 94%;
+    --ring: var(--scroll-200);
 
-    --success: 196 100% 14%;
-    --warning: 34 51% 25%;
-    --error: 10 39% 43%;
+    --success: 55 43% 52%;
+    --warning: 38 63% 60%;
+    --error: 12 44% 55%;
   }
 }
 
@@ -89,7 +91,74 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background font-serif text-foreground antialiased;
+    font-feature-settings:
+      'kern' 1,
+      'liga' 1;
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-bold;
+  }
+
+  a {
+    @apply decoration-primary underline-offset-4;
+  }
+}
+
+@layer components {
+  .portal-kicker {
+    @apply font-mono text-xs uppercase leading-none tracking-[0.08em] text-muted-foreground;
+  }
+
+  .portal-title {
+    @apply font-display text-4xl font-bold leading-[1.08] text-foreground md:text-5xl;
+  }
+
+  .portal-title-lg {
+    @apply font-display text-5xl font-bold leading-[1.05] text-foreground md:text-6xl;
+  }
+
+  .portal-heading {
+    @apply font-display text-2xl font-bold leading-tight text-foreground;
+  }
+
+  .portal-heading-sm {
+    @apply font-display text-xl font-bold leading-tight text-foreground;
+  }
+
+  .portal-body {
+    @apply text-base leading-7 text-muted-foreground;
+  }
+
+  .portal-body-sm {
+    @apply text-sm leading-6 text-muted-foreground;
+  }
+
+  .portal-band {
+    @apply border-y border-border bg-neutral-black py-12;
+  }
+
+  .portal-panel {
+    @apply border border-border bg-card/35 p-5;
+  }
+
+  .portal-card {
+    @apply border border-border bg-card/25 p-5 transition-colors hover:bg-card/45;
+  }
+
+  .portal-pill {
+    @apply border border-border bg-card/60 px-2 py-1 font-mono text-xs leading-none text-muted-foreground;
+  }
+
+  .portal-link {
+    @apply text-sm font-bold text-foreground underline decoration-primary/50 transition-colors hover:text-primary;
+  }
+
+  .portal-admin-link {
+    @apply inline-flex h-10 items-center rounded-sm border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary;
   }
 }
 
