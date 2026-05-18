@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from '@/utilities/cn'
 
 type SpeakerOption = {
   id: number | string
@@ -28,6 +29,17 @@ const sessionTypes = [
   ['pitch', 'Pitch'],
 ]
 
+const durations = [
+  [30, '30 min'],
+  [60, '1 hour'],
+] as const
+
+const visibilityOptions = [
+  ['public', 'Public'],
+  ['authenticated', 'Members'],
+  ['admin', 'Admin'],
+] as const
+
 export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
   defaultSpeakerID,
@@ -37,13 +49,25 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const router = useRouter()
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [durationMinutes, setDurationMinutes] = useState(30)
+  const [speakerID, setSpeakerID] = useState(() => String(defaultSpeakerID || ''))
+  const [speakerQuery, setSpeakerQuery] = useState(() => {
+    const selected = speakers.find((speaker) => String(speaker.id) === String(defaultSpeakerID))
+
+    return selected?.label || ''
+  })
+  const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(false)
+  const [visibility, setVisibility] = useState('public')
 
-  const speakerDefault = useMemo(() => {
-    if (defaultSpeakerID) return String(defaultSpeakerID)
+  const filteredSpeakers = useMemo(() => {
+    const query = speakerQuery.trim().toLowerCase()
+    const matches = query
+      ? speakers.filter((speaker) => speaker.label.toLowerCase().includes(query))
+      : speakers
 
-    return speakers[0] ? String(speakers[0].id) : ''
-  }, [defaultSpeakerID, speakers])
+    return matches.slice(0, 8)
+  }, [speakerQuery, speakers])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -52,16 +76,16 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
 
     const formData = new FormData(event.currentTarget)
     const body = {
-      durationMinutes: Number(formData.get('durationMinutes') || 30),
+      durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
       sessionType: String(formData.get('sessionType') || 'brownbag'),
-      speaker: String(formData.get('speaker') || ''),
+      speaker: speakerID,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
       summary: String(formData.get('summary') || ''),
       syncDiscord,
       title: String(formData.get('title') || ''),
-      visibility: String(formData.get('visibility') || 'public'),
+      visibility,
     }
 
     try {
@@ -89,14 +113,20 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   }
 
   return (
-    <form className="portal-card mt-8 grid gap-6" onSubmit={handleSubmit}>
-      <div className="grid gap-5 md:grid-cols-2">
+    <form className="mt-8 grid gap-5" onSubmit={handleSubmit}>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="title" label="Title">
-          <Input id="title" name="title" placeholder="Cohort demo session" required />
+          <Input
+            className="h-12 border-scroll-100/25 bg-card/35"
+            id="title"
+            name="title"
+            placeholder="Cohort demo session"
+            required
+          />
         </Field>
         <Field htmlFor="sessionType" label="Type">
           <select
-            className="portal-select"
+            className="portal-select h-12 border-scroll-100/25 bg-card/35 font-mono text-xs font-bold uppercase tracking-[0.08em]"
             defaultValue="brownbag"
             id="sessionType"
             name="sessionType"
@@ -110,6 +140,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
         </Field>
         <Field htmlFor="startsAt" label="Start time">
           <Input
+            className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase"
             defaultValue={defaultStart}
             id="startsAt"
             name="startsAt"
@@ -117,72 +148,133 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             type="datetime-local"
           />
         </Field>
-        <Field htmlFor="durationMinutes" label="Duration">
-          <select
-            className="portal-select"
-            defaultValue="30"
-            id="durationMinutes"
-            name="durationMinutes"
-          >
-            <option value="30">30 minutes</option>
-            <option value="60">1 hour</option>
-          </select>
-        </Field>
-        <Field htmlFor="speaker" label="Speaker">
-          <select
-            className="portal-select"
-            defaultValue={speakerDefault}
-            id="speaker"
-            name="speaker"
-          >
-            <option value="">No speaker</option>
-            {speakers.map((speaker) => (
-              <option key={speaker.id} value={speaker.id}>
-                {speaker.label}
-              </option>
+        <Field label="Duration">
+          <SegmentedGrid>
+            {durations.map(([value, label]) => (
+              <SquareOption
+                isSelected={durationMinutes === value}
+                key={value}
+                label={label}
+                onClick={() => setDurationMinutes(value)}
+              />
             ))}
-          </select>
+          </SegmentedGrid>
         </Field>
-        <Field htmlFor="visibility" label="Visibility">
-          <select className="portal-select" defaultValue="public" id="visibility" name="visibility">
-            <option value="public">Public</option>
-            <option value="authenticated">Authenticated</option>
-            <option value="admin">Admin only</option>
-          </select>
+        <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker">
+          <div className="relative">
+            <input name="speaker" type="hidden" value={speakerID} />
+            <Input
+              autoComplete="off"
+              className="h-12 border-scroll-100/25 bg-card/35"
+              id="speakerSearch"
+              onBlur={() => window.setTimeout(() => setShowSpeakerResults(false), 120)}
+              onChange={(event) => {
+                setSpeakerQuery(event.target.value)
+                setSpeakerID('')
+                setShowSpeakerResults(true)
+              }}
+              onFocus={() => setShowSpeakerResults(true)}
+              placeholder="Search speaker"
+              value={speakerQuery}
+            />
+            {showSpeakerResults ? (
+              <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
+                <button
+                  className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => {
+                    setSpeakerID('')
+                    setSpeakerQuery('')
+                    setShowSpeakerResults(false)
+                  }}
+                  type="button"
+                >
+                  No speaker
+                </button>
+                {filteredSpeakers.map((speaker) => (
+                  <button
+                    className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
+                    key={speaker.id}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => {
+                      setSpeakerID(String(speaker.id))
+                      setSpeakerQuery(speaker.label)
+                      setShowSpeakerResults(false)
+                    }}
+                    type="button"
+                  >
+                    {speaker.label}
+                  </button>
+                ))}
+                {!filteredSpeakers.length ? (
+                  <p className="px-3 py-3 text-sm text-muted-foreground">No matching speakers.</p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        </Field>
+        <Field className="sm:col-span-2" label="Visibility">
+          <SegmentedGrid className="sm:grid-cols-3">
+            {visibilityOptions.map(([value, label]) => (
+              <SquareOption
+                isSelected={visibility === value}
+                key={value}
+                label={label}
+                onClick={() => setVisibility(value)}
+              />
+            ))}
+          </SegmentedGrid>
         </Field>
       </div>
       <Field htmlFor="summary" label="Summary">
         <Textarea
+          className="min-h-28 border-scroll-100/25 bg-card/35"
           id="summary"
           name="summary"
           placeholder="What will happen in this session?"
           rows={4}
         />
       </Field>
-      <div className="grid gap-5 md:grid-cols-2">
-        <Field htmlFor="locationLabel" label="Location label">
-          <Input id="locationLabel" name="locationLabel" placeholder="Discord #cohort-voice" />
-        </Field>
-        <Field htmlFor="joinURL" label="Join URL">
-          <Input id="joinURL" name="joinURL" placeholder="https://..." type="url" />
-        </Field>
-      </div>
-      <label className="flex items-start gap-3 text-sm text-muted-foreground">
-        <input
-          checked={syncDiscord}
-          className="mt-1"
-          disabled={!canSyncDiscord}
-          onChange={(event) => setSyncDiscord(event.target.checked)}
-          type="checkbox"
-        />
-        <span>
-          Create Discord scheduled event
-          {!canSyncDiscord ? ' (bot credentials not configured)' : ''}
-        </span>
-      </label>
+      <details className="border border-border bg-card/20">
+        <summary className="cursor-pointer px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary">
+          Advanced
+        </summary>
+        <div className="grid gap-5 border-t border-border p-4 sm:grid-cols-2">
+          <Field htmlFor="locationLabel" label="Location label">
+            <Input
+              className="h-12 border-scroll-100/25 bg-background/70"
+              id="locationLabel"
+              name="locationLabel"
+              placeholder="Discord #cohort-voice"
+            />
+          </Field>
+          <Field htmlFor="joinURL" label="Join URL">
+            <Input
+              className="h-12 border-scroll-100/25 bg-background/70"
+              id="joinURL"
+              name="joinURL"
+              placeholder="https://..."
+              type="url"
+            />
+          </Field>
+          <label className="flex items-start gap-3 text-sm text-muted-foreground sm:col-span-2">
+            <input
+              checked={syncDiscord}
+              className="mt-1 accent-primary"
+              disabled={!canSyncDiscord}
+              onChange={(event) => setSyncDiscord(event.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              Create Discord scheduled event
+              {!canSyncDiscord ? ' (bot credentials not configured)' : ''}
+            </span>
+          </label>
+        </div>
+      </details>
       {error ? <p className="text-sm text-destructive">{error}</p> : null}
       <div>
-        <Button disabled={isSubmitting} type="submit">
+        <Button className="h-12 w-full sm:w-auto" disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Creating...' : 'Create session'}
         </Button>
       </div>
@@ -190,15 +282,46 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   )
 }
 
-const Field: React.FC<{ children: React.ReactNode; htmlFor: string; label: string }> = ({
-  children,
-  htmlFor,
-  label,
-}) => (
-  <div className="grid gap-2">
-    <Label htmlFor={htmlFor}>{label}</Label>
+const Field: React.FC<{
+  children: React.ReactNode
+  className?: string
+  htmlFor?: string
+  label: string
+}> = ({ children, className, htmlFor, label }) => (
+  <div className={cn('grid gap-2', className)}>
+    <Label
+      className="font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground"
+      htmlFor={htmlFor}
+    >
+      {label}
+    </Label>
     {children}
   </div>
+)
+
+const SegmentedGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
+  children,
+  className,
+}) => <div className={cn('grid grid-cols-2 gap-2', className)}>{children}</div>
+
+const SquareOption: React.FC<{
+  isSelected: boolean
+  label: string
+  onClick: () => void
+}> = ({ isSelected, label, onClick }) => (
+  <button
+    aria-pressed={isSelected}
+    className={cn(
+      'flex h-12 items-center justify-center border px-3 text-center font-mono text-xs font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
+      isSelected
+        ? 'border-primary bg-primary text-primary-foreground'
+        : 'border-border bg-card/35 text-muted-foreground hover:border-primary hover:text-primary',
+    )}
+    onClick={onClick}
+    type="button"
+  >
+    {label}
+  </button>
 )
 
 const toISODateTime = (value: string): string => {
