@@ -138,6 +138,11 @@ Suggested fields:
 Projects should show details, links, and contributors. They should not become
 tasks, milestones, assignments, or PM workflow records.
 
+Future requests for help should use a lightweight `contributionRequests` feature
+module if they need independent status, comments, filtering, or cross-portal
+discovery. Keep project-local help fields embedded only while the request surface
+is simple. See `docs/contribution-requests-feature-spec.md`.
+
 ## Publishing Flow
 
 The current API draft-post flow works, but permissions are too broad. The desired
