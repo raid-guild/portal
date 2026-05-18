@@ -148,6 +148,17 @@ module if they need independent status, comments, filtering, or cross-portal
 discovery. Keep project-local help fields embedded only while the request surface
 is simple. See `docs/contribution-requests-feature-spec.md`.
 
+### events
+
+Session records for cohort gatherings, demos, workshops, brownbags, all hands,
+and pitches. Events should stay focused on calendar visibility, joining, and
+light coordination rather than becoming a course or scheduling platform.
+
+The frontend session creation flow lives at `/events/new` for contributors and
+records the session type, start/end time, speaker, visibility, and optional
+Discord scheduled event sync state. Payload admin remains the canonical place
+for deeper editorial cleanup.
+
 Future daily participation should use a separate `dailyEngagements` module that
 creates `pointEvents` for simple once-per-day check-ins. Keep points as a ledger,
 not profile state. See `docs/points-and-daily-engagement-feature-spec.md`.

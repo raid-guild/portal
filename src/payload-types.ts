@@ -1042,12 +1042,17 @@ export interface Event {
   id: number;
   title: string;
   summary?: string | null;
+  sessionType: 'brownbag' | 'workshop' | 'all-hands' | 'demo' | 'pitch';
+  speaker?: (number | null) | Profile;
   startsAt: string;
   endsAt?: string | null;
   locationLabel?: string | null;
   joinURL?: string | null;
   calendarURL?: string | null;
   discordEventURL?: string | null;
+  discordScheduledEventID?: string | null;
+  discordSyncStatus?: ('not_configured' | 'synced' | 'failed') | null;
+  discordSyncError?: string | null;
   relatedProjects?: (number | Project)[] | null;
   relatedThreads?: (number | Thread)[] | null;
   relatedProfiles?: (number | Profile)[] | null;
@@ -1697,12 +1702,17 @@ export interface DailyBriefsSelect<T extends boolean = true> {
 export interface EventsSelect<T extends boolean = true> {
   title?: T;
   summary?: T;
+  sessionType?: T;
+  speaker?: T;
   startsAt?: T;
   endsAt?: T;
   locationLabel?: T;
   joinURL?: T;
   calendarURL?: T;
   discordEventURL?: T;
+  discordScheduledEventID?: T;
+  discordSyncStatus?: T;
+  discordSyncError?: T;
   relatedProjects?: T;
   relatedThreads?: T;
   relatedProfiles?: T;

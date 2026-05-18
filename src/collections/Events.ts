@@ -29,6 +29,45 @@ export const Events: CollectionConfig = {
       type: 'textarea',
     },
     {
+      name: 'sessionType',
+      type: 'select',
+      admin: {
+        position: 'sidebar',
+      },
+      defaultValue: 'brownbag',
+      options: [
+        {
+          label: 'Brownbag',
+          value: 'brownbag',
+        },
+        {
+          label: 'Workshop',
+          value: 'workshop',
+        },
+        {
+          label: 'All hands',
+          value: 'all-hands',
+        },
+        {
+          label: 'Demo',
+          value: 'demo',
+        },
+        {
+          label: 'Pitch',
+          value: 'pitch',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'speaker',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      relationTo: 'profiles',
+    },
+    {
       name: 'startsAt',
       type: 'date',
       admin: {
@@ -73,6 +112,44 @@ export const Events: CollectionConfig = {
         validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
     },
     {
+      name: 'discordScheduledEventID',
+      type: 'text',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+    },
+    {
+      name: 'discordSyncStatus',
+      type: 'select',
+      admin: {
+        position: 'sidebar',
+        readOnly: true,
+      },
+      defaultValue: 'not_configured',
+      options: [
+        {
+          label: 'Not configured',
+          value: 'not_configured',
+        },
+        {
+          label: 'Synced',
+          value: 'synced',
+        },
+        {
+          label: 'Failed',
+          value: 'failed',
+        },
+      ],
+    },
+    {
+      name: 'discordSyncError',
+      type: 'textarea',
+      admin: {
+        readOnly: true,
+      },
+    },
+    {
       name: 'relatedProjects',
       type: 'relationship',
       hasMany: true,
@@ -96,7 +173,7 @@ export const Events: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
-      defaultValue: 'authenticated',
+      defaultValue: 'public',
       options: [
         {
           label: 'Authenticated',
