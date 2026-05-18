@@ -108,7 +108,7 @@
 
 ## Deferred
 
-- [ ] Bounty system.
+- [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
 - [ ] Module/plugin registry.
