@@ -108,6 +108,7 @@
 
 ## Deferred
 
+- [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
 - [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Badges and 1up props recognition. See `docs/badges-and-props-feature-spec.md`.
 - [ ] Entitlements.
