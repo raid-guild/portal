@@ -160,6 +160,10 @@
   .portal-admin-link {
     @apply inline-flex h-10 items-center rounded-sm border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary;
   }
+
+  .portal-select {
+    @apply h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
 }
 
 html {

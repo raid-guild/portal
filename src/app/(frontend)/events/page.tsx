@@ -23,8 +23,27 @@ const formatDateTime = (date?: string | null) => {
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
+type SessionType = NonNullable<Event['sessionType']>
+
+const sessionTypeLabels: Record<SessionType, string> = {
+  'all-hands': 'All hands',
+  brownbag: 'Brownbag',
+  demo: 'Demo',
+  pitch: 'Pitch',
+  workshop: 'Workshop',
+}
+
+const sessionTypeStyles: Record<SessionType, string> = {
+  'all-hands': 'border-moloch-500/30 bg-moloch-500/10',
+  brownbag: 'border-guild-olive/30 bg-guild-olive/10',
+  demo: 'border-success/30 bg-success/10',
+  pitch: 'border-warning/30 bg-warning/10',
+  workshop: 'border-scroll-200/30 bg-scroll-200/10',
+}
+
 export default async function EventsPage() {
-  const [events, user] = await Promise.all([getEvents(), getCurrentUser()])
+  const user = await getCurrentUser()
+  const events = await getEvents(user)
   const now = Date.now()
   const upcoming = events.filter((event) => new Date(event.startsAt).getTime() >= now)
   const past = events.filter((event) => new Date(event.startsAt).getTime() < now)
@@ -41,17 +60,17 @@ export default async function EventsPage() {
           </p>
         </div>
         {user ? (
-          <Link className="portal-admin-link" href="/admin/collections/events/create">
+          <Link className="portal-admin-link" href="/events/new">
             Create session
           </Link>
         ) : null}
       </section>
 
       <section className="mt-10">
-        <h2 className="portal-heading">Upcoming</h2>
-        <div className="mt-5 grid gap-4">
+        <h2 className="portal-heading">Upcoming Sessions</h2>
+        <div className="mt-5 grid gap-3">
           {upcoming.length ? (
-            upcoming.map((event) => <SessionCard event={event} key={event.id} />)
+            upcoming.map((event) => <SessionRow event={event} key={event.id} />)
           ) : (
             <p className="text-sm text-muted-foreground">No upcoming sessions are published yet.</p>
           )}
@@ -61,9 +80,9 @@ export default async function EventsPage() {
       {past.length ? (
         <section className="mt-12">
           <h2 className="portal-heading">Past Sessions</h2>
-          <div className="mt-5 grid gap-4">
+          <div className="mt-5 grid gap-3">
             {past.map((event) => (
-              <SessionCard event={event} key={event.id} />
+              <SessionRow event={event} key={event.id} />
             ))}
           </div>
         </section>
@@ -77,41 +96,60 @@ export const metadata: Metadata = {
   title: 'Sessions',
 }
 
-const SessionCard: React.FC<{ event: Event }> = ({ event }) => {
+const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
+  const speaker = typeof event.speaker === 'object' ? event.speaker : null
+  const sessionType = event.sessionType || 'brownbag'
+  const startsAt = new Date(event.startsAt)
+  const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
+  const date = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(startsAt)
 
   return (
-    <article className="portal-panel">
-      <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
-        <div>
-          <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
-          <h3 className="mt-2 portal-heading-sm">{event.title}</h3>
-          {event.summary ? (
-            <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
-          ) : null}
-          {event.locationLabel ? (
-            <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
-          ) : null}
-          {projects.length || threads.length ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {projects.map((project) => (
-                <span className="portal-pill" key={`project-${project.id}`}>
-                  {project.title}
-                </span>
-              ))}
-              {threads.map((thread) => (
-                <span className="portal-pill" key={`thread-${thread.id}`}>
-                  {thread.title}
-                </span>
-              ))}
+    <article className="grid gap-4 border-b border-border py-4 sm:grid-cols-[4rem_1fr]">
+      <div className="flex items-baseline gap-2 sm:block">
+        <p className="font-mono text-xs uppercase text-muted-foreground">{day}</p>
+        <p className="font-display text-2xl font-bold leading-none text-foreground">{date}</p>
+      </div>
+      <div className={`rounded-sm border p-5 ${sessionTypeStyles[sessionType]}`}>
+        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="portal-pill">{sessionTypeLabels[sessionType]}</span>
+              <span className="text-sm text-muted-foreground">
+                {formatDateTime(event.startsAt)}
+              </span>
             </div>
-          ) : null}
-        </div>
-        <div className="flex flex-wrap content-start gap-3 lg:justify-end">
-          <SafeLink href={event.joinURL} label="Join" />
-          <SafeLink href={event.calendarURL} label="Add to calendar" />
-          <SafeLink href={event.discordEventURL} label="Discord event" />
+            <h3 className="mt-3 portal-heading-sm">{event.title}</h3>
+            {speaker ? (
+              <p className="mt-2 text-sm text-muted-foreground">Hosted by {speaker.displayName}</p>
+            ) : null}
+            {event.summary ? (
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
+            ) : null}
+            {event.locationLabel ? (
+              <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
+            ) : null}
+            {projects.length || threads.length ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {projects.map((project) => (
+                  <span className="portal-pill" key={`project-${project.id}`}>
+                    {project.title}
+                  </span>
+                ))}
+                {threads.map((thread) => (
+                  <span className="portal-pill" key={`thread-${thread.id}`}>
+                    {thread.title}
+                  </span>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="flex flex-wrap content-start gap-3 lg:justify-end">
+            <SafeLink href={event.joinURL} label="Join" />
+            <SafeLink href={event.calendarURL} label="Add to calendar" />
+            <SafeLink href={event.discordEventURL} label="Discord event" />
+          </div>
         </div>
       </div>
     </article>
@@ -137,7 +175,7 @@ const SafeLink: React.FC<{ href?: string | null; label: string }> = ({ href, lab
   )
 }
 
-const getEvents = async () => {
+const getEvents = async (user: Awaited<ReturnType<typeof getCurrentUser>>) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'events',
@@ -146,6 +184,7 @@ const getEvents = async () => {
     limit: 100,
     overrideAccess: false,
     sort: 'startsAt',
+    user: user || undefined,
     where: {
       _status: {
         equals: 'published',

@@ -13,6 +13,7 @@ import * as migration_20260514_190000_agent_auth_role from './20260514_190000_ag
 import * as migration_20260515_214741_project_archive_curation_fields from './20260515_214741_project_archive_curation_fields'
 import * as migration_20260516_120000_project_visibility from './20260516_120000_project_visibility'
 import * as migration_20260516_130000_profile_claims from './20260516_130000_profile_claims'
+import * as migration_20260518_120000_session_creation_fields from './20260518_120000_session_creation_fields'
 
 export const migrations = [
   {
@@ -89,5 +90,10 @@ export const migrations = [
     up: migration_20260516_130000_profile_claims.up,
     down: migration_20260516_130000_profile_claims.down,
     name: '20260516_130000_profile_claims',
+  },
+  {
+    up: migration_20260518_120000_session_creation_fields.up,
+    down: migration_20260518_120000_session_creation_fields.down,
+    name: '20260518_120000_session_creation_fields',
   },
 ]

@@ -470,8 +470,8 @@ async function verifyContributorAdminCreateAccess(page: Page) {
 
   await page.goto('/events')
   await page.getByRole('link', { name: 'Create session' }).click()
-  await expect(page).toHaveURL(/\/admin\/collections\/events\/create/)
-  await expect(page.getByText('Creating new Event')).toBeVisible()
+  await expect(page).toHaveURL(/\/events\/new/)
+  await expect(page.getByRole('heading', { name: 'Create session' })).toBeVisible()
 
   await page.goto('/posts')
   await page.getByRole('link', { name: 'Create post' }).click()
@@ -512,8 +512,15 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await page.goto('/events')
   await expect(page.getByRole('link', { name: 'Create session' })).toHaveAttribute(
     'href',
-    '/admin/collections/events/create',
+    '/events/new',
   )
+  await page.getByRole('link', { name: 'Create session' }).click()
+  await expect(page).toHaveURL(/\/events\/new/)
+  const sessionTitle = `Playwright Brownbag ${Date.now()}`
+  await fillFirst(page.getByLabel(/^title$/i), sessionTitle)
+  await page.getByRole('button', { name: /^create session$/i }).click()
+  await expect(page).toHaveURL(/\/events/)
+  await expect(page.getByText(sessionTitle)).toBeVisible()
 
   await page.goto('/posts')
   await expect(page.getByRole('link', { name: 'Create post' })).toHaveAttribute(
