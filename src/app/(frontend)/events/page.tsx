@@ -33,27 +33,22 @@ export default async function EventsPage() {
     <main className="container pb-24 pt-12">
       <section className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-            Sessions
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Cohort sessions</h1>
+          <p className="mb-4 portal-kicker">Sessions</p>
+          <h1 className="portal-title">Cohort sessions</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Live sessions, project spike syncs, and calendar anchors. Add sessions to your own
             calendar so the next live moment is not buried in Discord.
           </p>
         </div>
         {user ? (
-          <Link
-            className="border border-border px-4 py-2 text-sm font-medium"
-            href="/admin/collections/events/create"
-          >
+          <Link className="portal-admin-link" href="/admin/collections/events/create">
             Create session
           </Link>
         ) : null}
       </section>
 
       <section className="mt-10">
-        <h2 className="text-2xl font-semibold">Upcoming</h2>
+        <h2 className="portal-heading">Upcoming</h2>
         <div className="mt-5 grid gap-4">
           {upcoming.length ? (
             upcoming.map((event) => <SessionCard event={event} key={event.id} />)
@@ -65,7 +60,7 @@ export default async function EventsPage() {
 
       {past.length ? (
         <section className="mt-12">
-          <h2 className="text-2xl font-semibold">Past Sessions</h2>
+          <h2 className="portal-heading">Past Sessions</h2>
           <div className="mt-5 grid gap-4">
             {past.map((event) => (
               <SessionCard event={event} key={event.id} />
@@ -87,13 +82,11 @@ const SessionCard: React.FC<{ event: Event }> = ({ event }) => {
   const threads = relationDocs<Thread>(event.relatedThreads)
 
   return (
-    <article className="border border-border p-5">
+    <article className="portal-panel">
       <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
         <div>
-          <p className="text-xs uppercase tracking-normal text-muted-foreground">
-            {formatDateTime(event.startsAt)}
-          </p>
-          <h3 className="mt-2 text-xl font-semibold">{event.title}</h3>
+          <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
+          <h3 className="mt-2 portal-heading-sm">{event.title}</h3>
           {event.summary ? (
             <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
           ) : null}
@@ -103,18 +96,12 @@ const SessionCard: React.FC<{ event: Event }> = ({ event }) => {
           {projects.length || threads.length ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {projects.map((project) => (
-                <span
-                  className="border border-border px-2 py-1 text-xs"
-                  key={`project-${project.id}`}
-                >
+                <span className="portal-pill" key={`project-${project.id}`}>
                   {project.title}
                 </span>
               ))}
               {threads.map((thread) => (
-                <span
-                  className="border border-border px-2 py-1 text-xs"
-                  key={`thread-${thread.id}`}
-                >
+                <span className="portal-pill" key={`thread-${thread.id}`}>
                   {thread.title}
                 </span>
               ))}
@@ -140,7 +127,7 @@ const SafeLink: React.FC<{ href?: string | null; label: string }> = ({ href, lab
 
   return (
     <Link
-      className="text-sm font-medium underline"
+      className="portal-link"
       href={safeURL}
       rel={isExternal ? 'noopener noreferrer' : undefined}
       target={isExternal ? '_blank' : undefined}

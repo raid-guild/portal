@@ -38,26 +38,24 @@ export default async function MePage() {
     <main className="container pb-24 pt-12">
       <section className="grid gap-10 lg:grid-cols-[1fr_20rem]">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-            Profile Builder
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">My profile</h1>
+          <p className="mb-4 portal-kicker">Profile Builder</p>
+          <h1 className="portal-title">My profile</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Manage your public identity, avatar, links, skills, roles, and visibility without
             entering Payload Admin.
           </p>
         </div>
         <div className="border-l border-border pl-6 text-sm">
-          <p className="font-semibold">{user.email}</p>
+          <p className="font-bold">{user.email}</p>
           <p className="mt-2 text-muted-foreground">
             {profile ? 'Profile connected' : 'Profile not started'}
           </p>
-          <p className="mt-3 text-2xl font-semibold">{pointsTotal} points</p>
+          <p className="mt-3 portal-heading">{pointsTotal} points</p>
         </div>
       </section>
 
       <section className="mt-12">
-        <h2 className="mb-4 text-2xl font-semibold">Profile wizard</h2>
+        <h2 className="mb-4 portal-heading">Profile wizard</h2>
         <ProfileWizardForm
           claimableProfiles={profile ? [] : claimableProfiles}
           profile={profile}
@@ -67,8 +65,8 @@ export default async function MePage() {
       </section>
 
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
-        <div className="border border-border p-6">
-          <h2 className="text-xl font-semibold">Current Profile</h2>
+        <div className="portal-panel">
+          <h2 className="portal-heading-sm">Current Profile</h2>
           {profile ? (
             <ProfileSummary profile={profile} />
           ) : (
@@ -79,8 +77,8 @@ export default async function MePage() {
             </div>
           )}
         </div>
-        <div className="border border-border p-6">
-          <h2 className="text-xl font-semibold">Profile Checklist</h2>
+        <div className="portal-panel">
+          <h2 className="portal-heading-sm">Profile Checklist</h2>
           <ul className="mt-4 space-y-3 text-sm leading-6 text-muted-foreground">
             <li>Basic identity: handle, display name, bio, location.</li>
             <li>Links: website, GitHub, Farcaster, Discord, portfolio.</li>
@@ -92,7 +90,7 @@ export default async function MePage() {
       </section>
 
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Created by you</h2>
+        <h2 className="portal-heading">Created by you</h2>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           Drafts and published records connected to your user or profile.
         </p>
@@ -134,16 +132,14 @@ const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
           <img alt="" className="h-14 w-14 rounded-full object-cover" src={avatar.url} />
         ) : null}
         <div>
-          <p className="font-semibold">{profile.displayName}</p>
+          <p className="font-bold">{profile.displayName}</p>
           <p className="text-muted-foreground">@{profile.handle}</p>
         </div>
       </div>
       <p className="text-muted-foreground">{profile.bio}</p>
       <div className="flex flex-wrap gap-2">
-        <span className="border border-border px-2 py-1 text-xs">Status: {profile.status}</span>
-        <span className="border border-border px-2 py-1 text-xs">
-          Visibility: {profile.visibility}
-        </span>
+        <span className="portal-pill">Status: {profile.status}</span>
+        <span className="portal-pill">Visibility: {profile.visibility}</span>
       </div>
     </div>
   )
@@ -153,18 +149,14 @@ const CreatedList: React.FC<{
   items: (Event | Post | Project)[]
   title: string
 }> = ({ items, title }) => (
-  <div className="border border-border p-5">
-    <h3 className="font-semibold">{title}</h3>
+  <div className="portal-panel">
+    <h3 className="font-bold">{title}</h3>
     <div className="mt-4 space-y-3">
       {items.length ? (
         items.map((item) => (
           <article className="text-sm" key={item.id}>
             <p className="font-medium">{item.title}</p>
-            {'_status' in item ? (
-              <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                {item._status || 'draft'}
-              </p>
-            ) : null}
+            {'_status' in item ? <p className="portal-kicker">{item._status || 'draft'}</p> : null}
           </article>
         ))
       ) : (
@@ -180,11 +172,11 @@ const TaxonomyList: React.FC<{
   title: string
 }> = ({ description, items, title }) => (
   <div>
-    <h2 className="text-2xl font-semibold">{title}</h2>
+    <h2 className="portal-heading">{title}</h2>
     <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
     <div className="mt-6 grid gap-3 sm:grid-cols-2">
       {items.map((item) => (
-        <div className="border border-border p-4" key={item.id}>
+        <div className="portal-card" key={item.id}>
           {'iconPath' in item && item.iconPath ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img alt="" className="mb-3 h-8 w-8" src={item.iconPath} />

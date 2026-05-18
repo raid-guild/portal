@@ -70,8 +70,8 @@ const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief,
   const mediaURL = mediaFile?.url || toSafeURL(brief.externalMediaURL, { allowRelative: false })
 
   return (
-    <aside className="border border-border p-5">
-      <p className="font-semibold">Brief media</p>
+    <aside className="portal-panel">
+      <p className="portal-heading-sm">Brief media</p>
       {mediaURL ? (
         <div className="mt-4">
           {brief.mediaType === 'audio' ? (
@@ -79,9 +79,7 @@ const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief,
           ) : (
             <video className="aspect-video w-full bg-card" controls src={mediaURL} />
           )}
-          <p className="mt-3 text-xs uppercase tracking-normal text-muted-foreground">
-            {brief.mediaType || 'media'}
-          </p>
+          <p className="mt-3 portal-kicker">{brief.mediaType || 'media'}</p>
         </div>
       ) : (
         <p className="mt-4 text-sm leading-6 text-muted-foreground">{emptyText}</p>
@@ -103,12 +101,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       <section className="container py-16 md:py-24">
         <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div className="max-w-3xl">
-            <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-              RaidGuild Portal
-            </p>
-            <h1 className="mb-6 text-4xl font-semibold leading-tight md:text-6xl">
-              Find the work already in motion.
-            </h1>
+            <p className="mb-4 portal-kicker">RaidGuild Portal</p>
+            <h1 className="mb-6 portal-title-lg">Find the work already in motion.</h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
               Follow the weekly brief, see active projects, join upcoming sessions, and plug into
               real opportunities across RaidGuild.
@@ -124,17 +118,15 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
               </Button>
             </div>
           </div>
-          <div className="border border-border p-5">
+          <div className="portal-panel">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              <h2 className="font-semibold">Next public session</h2>
+              <h2 className="portal-heading-sm">Next public session</h2>
             </div>
             {nextEvent ? (
               <div className="mt-4">
-                <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                  {formatDateTime(nextEvent.startsAt)}
-                </p>
-                <h2 className="mt-2 text-xl font-semibold">{nextEvent.title}</h2>
+                <p className="portal-kicker">{formatDateTime(nextEvent.startsAt)}</p>
+                <h2 className="mt-2 portal-heading-sm">{nextEvent.title}</h2>
                 {nextEvent.locationLabel ? (
                   <p className="mt-2 text-sm text-muted-foreground">{nextEvent.locationLabel}</p>
                 ) : null}
@@ -156,10 +148,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         <section className="container py-12">
           <div className="grid gap-8 lg:grid-cols-[1fr_22rem]">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-                This week in RaidGuild
-              </p>
-              <h2 className="mt-2 text-3xl font-semibold">{weeklyBrief.title}</h2>
+              <p className="portal-kicker">This week in RaidGuild</p>
+              <h2 className="mt-2 portal-heading">{weeklyBrief.title}</h2>
               <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
                 {weeklyBrief.summary}
               </p>
@@ -185,10 +175,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         </section>
       ) : null}
 
-      <section className="border-y border-border bg-card/40 py-12">
+      <section className="portal-band">
         <div className="container grid gap-8 lg:grid-cols-[18rem_1fr]">
           <div>
-            <h2 className="text-2xl font-semibold">Upcoming Sessions</h2>
+            <h2 className="portal-heading">Upcoming Sessions</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Live sessions are the easiest way to understand what is moving and where contributors
               are needed.
@@ -200,11 +190,9 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           <div className="grid gap-4 md:grid-cols-3">
             {upcomingEvents.length ? (
               upcomingEvents.slice(0, 3).map((event) => (
-                <article className="border border-border bg-background p-5" key={event.id}>
-                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                    {formatDateTime(event.startsAt)}
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold">{event.title}</h3>
+                <article className="portal-card" key={event.id}>
+                  <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
+                  <h3 className="mt-2 portal-heading-sm">{event.title}</h3>
                   {event.summary ? (
                     <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
                       {event.summary}
@@ -223,10 +211,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         </div>
       </section>
 
-      <section className="border-y border-border bg-card/40 py-12">
+      <section className="portal-band">
         <div className="container grid gap-8 lg:grid-cols-[18rem_1fr]">
           <div>
-            <h2 className="text-2xl font-semibold">Public Updates</h2>
+            <h2 className="portal-heading">Public Updates</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
               Published posts stay public so visitors can see the current signal before creating an
               account.
@@ -236,14 +224,12 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
             {posts.length ? (
               posts.map((post) => (
                 <Link
-                  className="block border border-border bg-background p-5 transition-colors hover:bg-card"
+                  className="block portal-card transition-colors hover:bg-card"
                   href={`/posts/${post.slug}`}
                   key={post.id}
                 >
-                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                    {formatDate(post.publishedAt) || 'Published'}
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold">{post.title}</h3>
+                  <p className="portal-kicker">{formatDate(post.publishedAt) || 'Published'}</p>
+                  <h3 className="mt-2 portal-heading-sm">{post.title}</h3>
                   {post.meta?.description ? (
                     <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
                       {post.meta.description}
@@ -261,7 +247,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       <section className="container py-12">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h2 className="text-2xl font-semibold">Project Visibility</h2>
+            <h2 className="portal-heading">Project Visibility</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
               Projects are for discovery and attribution, not task management.
             </p>
@@ -274,14 +260,12 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           {projects.length ? (
             projects.map((project) => (
               <Link
-                className="block border border-border p-5 transition-colors hover:bg-card"
+                className="block portal-card"
                 href={`/projects/${project.slug}`}
                 key={project.id}
               >
-                <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                  {project.projectStatus || 'Project'}
-                </p>
-                <h3 className="mt-2 text-lg font-semibold">{project.title}</h3>
+                <p className="portal-kicker">{project.projectStatus || 'Project'}</p>
+                <h3 className="mt-2 portal-heading-sm">{project.title}</h3>
                 <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
                   {project.summary}
                 </p>
@@ -295,10 +279,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         </div>
       </section>
 
-      <section className="border-t border-border bg-card/40 py-12">
+      <section className="portal-band">
         <div className="container grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <h2 className="text-2xl font-semibold">Ready to participate?</h2>
+            <h2 className="portal-heading">Ready to participate?</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
               Create an account to build a profile, follow project work, and get routed toward the
               right sessions and contribution paths.
@@ -314,7 +298,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           </div>
           <p className="text-sm text-muted-foreground lg:text-right">
             Bringing a project or bounty?{' '}
-            <Link className="font-medium text-foreground underline" href="/sponsor">
+            <Link
+              className="font-bold text-foreground underline decoration-primary/50"
+              href="/sponsor"
+            >
               Sponsor an opportunity
             </Link>
             .
@@ -345,19 +332,15 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
     <main className="container pb-24 pt-12">
       <section className="grid gap-10 lg:grid-cols-[1fr_18rem]">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-            Member Home
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-            Portal dashboard shell
-          </h1>
+          <p className="mb-4 portal-kicker">Member Home</p>
+          <h1 className="portal-title">Portal dashboard shell</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             This will become the authenticated home for profile completion, recent activity, useful
             links, and future collaboration signals.
           </p>
         </div>
         <div className="border-l border-border pl-6 text-sm">
-          <p className="font-semibold">{user.email}</p>
+          <p className="font-mono text-sm font-bold">{user.email}</p>
           <p className="mt-2 text-muted-foreground">
             {hasProfile ? `Profile: ${profile?.displayName}` : 'No profile connected yet.'}
           </p>
@@ -379,18 +362,18 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
       </section>
 
-      <section className="mt-12 border border-border p-6">
+      <section className="mt-12 portal-panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
               <Award className="h-5 w-5" />
-              <h2 className="text-xl font-semibold">Guild Points</h2>
+              <h2 className="portal-heading-sm">Guild Points</h2>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
               Admin-issued contribution signal for future portal gamification.
             </p>
           </div>
-          <p className="text-3xl font-semibold">{pointsTotal}</p>
+          <p className="portal-heading">{pointsTotal}</p>
         </div>
         <div className="mt-5 space-y-3">
           {pointEvents.length ? (
@@ -403,10 +386,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                   ) : null}
                 </div>
                 <div className="text-right">
-                  <p className="font-semibold">+{event.amount}</p>
-                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                    {event.source}
-                  </p>
+                  <p className="font-mono font-bold">+{event.amount}</p>
+                  <p className="portal-kicker">{event.source}</p>
                 </div>
               </div>
             ))
@@ -416,17 +397,15 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="mt-12 border border-border">
+      <section className="mt-12 border border-border bg-background/70">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
-              <p className="font-semibold">RaidGuild Cohort</p>
+              <p className="portal-heading-sm">RaidGuild Cohort</p>
             </div>
             {dailyBrief?.statusLabel ? (
-              <span className="border border-border px-2 py-1 text-xs uppercase tracking-normal">
-                {dailyBrief.statusLabel}
-              </span>
+              <span className="portal-pill">{dailyBrief.statusLabel}</span>
             ) : null}
             {dailyBrief?.focusLabel ? (
               <span className="text-sm text-muted-foreground">{dailyBrief.focusLabel}</span>
@@ -448,10 +427,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           <div className="p-6">
             <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
               <div>
-                <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-                  What is happening
-                </p>
-                <h2 className="mt-2 text-3xl font-semibold">{dailyBrief.title}</h2>
+                <p className="portal-kicker">What is happening</p>
+                <h2 className="mt-2 portal-heading">{dailyBrief.title}</h2>
                 <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
                   {dailyBrief.summary}
                 </p>
@@ -472,8 +449,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                   emptyText="The daily media export will appear here when it is attached."
                 />
                 {nextEvent ? (
-                  <div className="border border-border p-4 text-sm">
-                    <p className="font-semibold">Next session</p>
+                  <div className="portal-card text-sm">
+                    <p className="font-bold text-foreground">Next session</p>
                     <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
                     <p className="mt-1 text-muted-foreground">
                       {formatDateTime(nextEvent.startsAt)}
@@ -491,11 +468,9 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                 {briefActivityItems.length ? (
                   <div className="space-y-3">
                     {briefActivityItems.slice(0, 6).map((item) => (
-                      <article className="border border-border p-4" key={item.id}>
+                      <article className="portal-card" key={item.id}>
                         <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                            {item.activityType}
-                          </p>
+                          <p className="portal-kicker">{item.activityType}</p>
                           <p className="text-xs text-muted-foreground">
                             {formatDateTime(item.happenedAt)}
                           </p>
@@ -520,10 +495,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                 {briefThreads.length ? (
                   <div className="space-y-3">
                     {briefThreads.slice(0, 6).map((thread) => (
-                      <article className="border border-border p-4" key={thread.id}>
-                        <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                          {thread.threadStatus}
-                        </p>
+                      <article className="portal-card" key={thread.id}>
+                        <p className="portal-kicker">{thread.threadStatus}</p>
                         <h3 className="mt-2 font-medium">{thread.title}</h3>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
                           {thread.summary}
@@ -541,10 +514,10 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
 
             {dailyBrief.engagementActions?.length ? (
               <div className="mt-8">
-                <h2 className="text-xl font-semibold">Ways to Engage</h2>
+                <h2 className="portal-heading-sm">Ways to Engage</h2>
                 <div className="mt-4 grid gap-3 md:grid-cols-3">
                   {dailyBrief.engagementActions.map((action) => (
-                    <article className="border border-border p-4" key={action.id || action.label}>
+                    <article className="portal-card" key={action.id || action.label}>
                       <h3 className="font-medium">{action.label}</h3>
                       {action.description ? (
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
@@ -568,7 +541,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
         <DashboardPanel
           action={
-            <Link className="text-sm font-medium underline" href="/events">
+            <Link className="portal-link" href="/events">
               View sessions
             </Link>
           }
@@ -577,11 +550,9 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           {upcomingEvents.length ? (
             <div className="space-y-4">
               {upcomingEvents.slice(0, 3).map((event) => (
-                <article className="border border-border p-4" key={event.id}>
-                  <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                    {formatDateTime(event.startsAt)}
-                  </p>
-                  <h3 className="mt-2 font-semibold">{event.title}</h3>
+                <article className="portal-card" key={event.id}>
+                  <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
+                  <h3 className="mt-2 font-bold text-foreground">{event.title}</h3>
                   {event.locationLabel ? (
                     <p className="mt-2 text-sm text-muted-foreground">{event.locationLabel}</p>
                   ) : null}
@@ -599,7 +570,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
 
         <DashboardPanel
           action={
-            <Link className="text-sm font-medium underline" href="/projects">
+            <Link className="portal-link" href="/projects">
               View projects
             </Link>
           }
@@ -609,19 +580,17 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4">
               {recentProjects.slice(0, 3).map((project) => (
                 <Link
-                  className="block border border-border p-4 transition-colors hover:bg-card"
+                  className="block portal-card transition-colors hover:bg-card"
                   href={`/projects/${project.slug}`}
                   key={project.id}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                      {project.projectStatus || 'Project'}
-                    </p>
+                    <p className="portal-kicker">{project.projectStatus || 'Project'}</p>
                     <p className="text-xs text-muted-foreground">
                       {formatDate(project.lastActiveAt || project.updatedAt) || 'Recently active'}
                     </p>
                   </div>
-                  <h3 className="mt-2 font-semibold">{project.title}</h3>
+                  <h3 className="mt-2 font-bold text-foreground">{project.title}</h3>
                   <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                     {project.summary}
                   </p>
@@ -635,10 +604,10 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       </section>
 
       <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
-        <div className="border border-border p-6">
+        <div className="portal-panel">
           <div className="flex items-center gap-2">
             <LayoutDashboard className="h-5 w-5" />
-            <h2 className="text-xl font-semibold">Next Profile Step</h2>
+            <h2 className="portal-heading-sm">Next Profile Step</h2>
           </div>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
             {hasProfile
@@ -649,8 +618,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             <Link href="/me">{hasProfile ? 'Review profile' : 'Start profile'}</Link>
           </Button>
         </div>
-        <div className="border border-border p-6">
-          <h2 className="text-xl font-semibold">Recent Public Posts</h2>
+        <div className="portal-panel">
+          <h2 className="portal-heading-sm">Recent Public Posts</h2>
           <div className="mt-4 space-y-4">
             {recentPosts.length ? (
               recentPosts.map((post) => (
@@ -678,7 +647,7 @@ const DashboardLink: React.FC<{ href: string; icon: React.ReactNode; label: stri
   label,
 }) => (
   <Link
-    className="flex min-h-24 items-center justify-between border border-border p-5 transition-colors hover:bg-card"
+    className="flex min-h-24 items-center justify-between portal-panel transition-colors hover:bg-card"
     href={href}
   >
     <span className="flex items-center gap-3 font-medium">
@@ -694,7 +663,7 @@ const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
   title,
 }) => (
   <section>
-    <h2 className="text-xl font-semibold">{title}</h2>
+    <h2 className="portal-heading-sm">{title}</h2>
     <div className="mt-4">{children}</div>
   </section>
 )
@@ -704,9 +673,9 @@ const DashboardPanel: React.FC<{
   children: React.ReactNode
   title: string
 }> = ({ action, children, title }) => (
-  <section className="border border-border p-6">
+  <section className="portal-panel">
     <div className="flex flex-wrap items-center justify-between gap-4">
-      <h2 className="text-xl font-semibold">{title}</h2>
+      <h2 className="portal-heading-sm">{title}</h2>
       {action}
     </div>
     <div className="mt-4">{children}</div>
@@ -726,7 +695,7 @@ const SafeTextLink: React.FC<{ className?: string; href?: string | null; label: 
 
   return (
     <Link
-      className={`text-sm font-medium underline ${className || ''}`}
+      className={`portal-link ${className || ''}`}
       href={safeURL}
       rel={isExternal ? 'noopener noreferrer' : undefined}
       target={isExternal ? '_blank' : undefined}

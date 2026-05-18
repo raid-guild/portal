@@ -20,10 +20,8 @@ export default async function MembersPage() {
   return (
     <main className="container pb-24 pt-12">
       <section>
-        <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-          Members
-        </p>
-        <h1 className="text-4xl font-semibold leading-tight md:text-5xl">Member directory</h1>
+        <p className="mb-4 portal-kicker">Members</p>
+        <h1 className="portal-title">Member directory</h1>
         <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
           A discovery surface for contributors and manually approved members, with filters for
           access role, profile role, and skill.

@@ -68,28 +68,27 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
       <section className="grid gap-8 border-b border-border pb-10 pt-8 lg:grid-cols-[1fr_18rem]">
         <div>
-          <Link className="text-sm font-medium text-muted-foreground hover:underline" href="/projects">
+          <Link
+            className="text-sm font-medium text-muted-foreground hover:underline"
+            href="/projects"
+          >
             Projects
           </Link>
-          <p className="mt-6 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
-            {project.projectStatus || 'Project spike'}
-          </p>
-          <h1 className="mt-3 text-4xl font-semibold leading-tight md:text-5xl">
-            {project.title}
-          </h1>
+          <p className="mt-6 portal-kicker">{project.projectStatus || 'Project spike'}</p>
+          <h1 className="mt-3 portal-title">{project.title}</h1>
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
             {project.summary}
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             {skills.map((skill) => (
-              <span className="border border-border px-2 py-1 text-xs" key={skill.id}>
+              <span className="portal-pill" key={skill.id}>
                 {skill.title}
               </span>
             ))}
           </div>
         </div>
-        <aside className="border border-border p-5 text-sm">
-          <p className="font-semibold">Project state</p>
+        <aside className="portal-panel text-sm">
+          <p className="font-bold">Project state</p>
           <p className="mt-2 text-muted-foreground">
             Last active: {formatDate(project.lastActiveAt || project.updatedAt) || 'Recently'}
           </p>
@@ -106,8 +105,8 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
       </section>
 
       {project.currentState?.length ? (
-        <section className="mt-10 border border-border p-6">
-          <h2 className="text-2xl font-semibold">What is happening</h2>
+        <section className="mt-10 portal-panel">
+          <h2 className="portal-heading">What is happening</h2>
           <ul className="mt-5 space-y-3 text-sm leading-6 text-muted-foreground">
             {project.currentState.map((item) => (
               <li key={item.id || item.body}>{item.body}</li>
@@ -122,16 +121,14 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
             {activityItems.length ? (
               <div className="space-y-3">
                 {activityItems.map((item) => (
-                  <article className="border border-border p-4" key={item.id}>
+                  <article className="portal-card" key={item.id}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                        {item.activityType}
-                      </p>
+                      <p className="portal-kicker">{item.activityType}</p>
                       <p className="text-xs text-muted-foreground">
                         {formatDateTime(item.happenedAt)}
                       </p>
                     </div>
-                    <h3 className="mt-2 font-semibold">{item.title}</h3>
+                    <h3 className="mt-2 font-bold">{item.title}</h3>
                     {item.body ? (
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.body}</p>
                     ) : null}
@@ -150,19 +147,17 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
             {threads.length ? (
               <div className="grid gap-3 md:grid-cols-2">
                 {threads.map((thread) => (
-                  <article className="border border-border p-4" key={thread.id}>
-                    <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                      {thread.threadStatus}
-                    </p>
-                    <h3 className="mt-2 font-semibold">{thread.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {thread.summary}
-                    </p>
+                  <article className="portal-card" key={thread.id}>
+                    <p className="portal-kicker">{thread.threadStatus}</p>
+                    <h3 className="mt-2 font-bold">{thread.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-muted-foreground">{thread.summary}</p>
                   </article>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No active threads have been linked yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No active threads have been linked yet.
+              </p>
             )}
           </Section>
         </div>
@@ -172,8 +167,8 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
             {events.length ? (
               <div className="space-y-3">
                 {events.map((event) => (
-                  <article className="border border-border p-4" key={event.id}>
-                    <h3 className="font-semibold">{event.title}</h3>
+                  <article className="portal-card" key={event.id}>
+                    <h3 className="font-bold">{event.title}</h3>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {formatDateTime(event.startsAt)}
                     </p>
@@ -188,7 +183,9 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No project sessions have been linked yet.</p>
+              <p className="text-sm text-muted-foreground">
+                No project sessions have been linked yet.
+              </p>
             )}
           </Section>
 
@@ -196,8 +193,8 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
             {project.contributionActions?.length ? (
               <div className="space-y-3">
                 {project.contributionActions.map((action) => (
-                  <article className="border border-border p-4" key={action.id || action.title}>
-                    <h3 className="font-semibold">{action.title}</h3>
+                  <article className="portal-card" key={action.id || action.title}>
+                    <h3 className="font-bold">{action.title}</h3>
                     {action.description ? (
                       <p className="mt-2 text-sm leading-6 text-muted-foreground">
                         {action.description}
@@ -224,7 +221,12 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
                   />
                 ))}
                 {project.links?.map((link) => (
-                  <SafeLink className="block" href={link.url} key={link.id || link.url} label={link.label} />
+                  <SafeLink
+                    className="block"
+                    href={link.url}
+                    key={link.id || link.url}
+                    label={link.label}
+                  />
                 ))}
               </div>
             ) : (
@@ -249,8 +251,8 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (
-  <section className="border border-border p-6">
-    <h2 className="text-xl font-semibold">{title}</h2>
+  <section className="portal-panel">
+    <h2 className="portal-heading-sm">{title}</h2>
     <div className="mt-5">{children}</div>
   </section>
 )
@@ -262,7 +264,7 @@ const ProjectCoverImage: React.FC<{
   if (!coverImage || typeof coverImage !== 'object' || !coverImage.url) return null
 
   return (
-    <div className="mb-8 aspect-[1200/630] overflow-hidden border border-border bg-muted">
+    <div className="mb-8 aspect-[1200/630] overflow-hidden bg-muted border border-border">
       <img
         alt={coverImage.alt || `${title} cover image`}
         className="h-full w-full object-cover"
@@ -287,7 +289,7 @@ const SafeLink: React.FC<{ className?: string; href?: string | null; label: stri
 
   return (
     <Link
-      className={`text-sm font-medium underline ${className || ''}`}
+      className={`portal-link ${className || ''}`}
       href={safeURL}
       rel={isExternal ? 'noopener noreferrer' : undefined}
       target={isExternal ? '_blank' : undefined}
