@@ -37,7 +37,7 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
         const error = await res.json()
         throw new Error(error.errors?.[0]?.message || 'Failed to submit comment')
       }
-      
+
       setSuccess(true)
       setContent('')
       setName('')
@@ -53,16 +53,11 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-xl font-bold">Leave a comment</h3>
-      
+
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
+          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
@@ -87,9 +82,9 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
         />
       </div>
 
-      {error && <div className="text-red-500">{error}</div>}
+      {error && <div className="text-destructive">{error}</div>}
       {success && (
-        <div className="text-green-500">
+        <div className="text-guild-olive">
           Comment submitted successfully! It will appear after approval.
         </div>
       )}

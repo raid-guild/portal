@@ -5,7 +5,7 @@ import * as React from 'react'
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
-      className={cn('rounded-lg border bg-card text-card-foreground shadow-sm', className)}
+      className={cn('rounded-sm border border-border bg-card/60 text-card-foreground', className)}
       ref={ref}
       {...props}
     />
@@ -22,11 +22,7 @@ CardHeader.displayName = 'CardHeader'
 
 const CardTitle = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLHeadingElement>>(
   ({ className, ...props }, ref) => (
-    <h3
-      className={cn('text-2xl font-semibold leading-none tracking-tight', className)}
-      ref={ref}
-      {...props}
-    />
+    <h3 className={cn('portal-heading-sm', className)} ref={ref} {...props} />
   ),
 )
 CardTitle.displayName = 'CardTitle'

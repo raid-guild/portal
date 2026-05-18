@@ -89,10 +89,31 @@ export default {
         success: 'hsl(var(--success))',
         error: 'hsl(var(--error))',
         warning: 'hsl(var(--warning))',
+        moloch: {
+          500: 'hsl(var(--moloch-500))',
+          600: 'hsl(var(--moloch-600))',
+          700: 'hsl(var(--moloch-700))',
+          800: 'hsl(var(--moloch-800))',
+          900: 'hsl(var(--moloch-900))',
+        },
+        scroll: {
+          100: 'hsl(var(--scroll-100))',
+          200: 'hsl(var(--scroll-200))',
+          300: 'hsl(var(--scroll-300))',
+        },
+        guild: {
+          olive: 'hsl(var(--guild-olive))',
+          muted: 'hsl(var(--guild-muted))',
+        },
+        neutral: {
+          black: 'hsl(var(--neutral-black))',
+        },
       },
       fontFamily: {
-        mono: ['var(--font-geist-mono)'],
-        sans: ['var(--font-geist-sans)'],
+        display: ['Mazius Display', 'Georgia', 'serif'],
+        mono: ['Ubuntu Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
+        sans: ['EB Garamond', 'Georgia', 'serif'],
+        serif: ['EB Garamond', 'Georgia', 'serif'],
       },
       keyframes: {
         'accordion-down': {

@@ -37,29 +37,25 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
     <main className="container pb-24 pt-12">
       <section className="grid gap-8 lg:grid-cols-[1fr_18rem]">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-            Member Profile
-          </p>
+          <p className="mb-4 portal-kicker">Member Profile</p>
           <div className="flex items-center gap-5">
             {avatar?.url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img alt="" className="h-20 w-20 rounded-full object-cover" src={avatar.url} />
             ) : (
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border text-2xl font-semibold">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border border-border portal-heading">
                 {profile.displayName.slice(0, 1)}
               </div>
             )}
             <div>
-              <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-                {profile.displayName}
-              </h1>
+              <h1 className="portal-title">{profile.displayName}</h1>
               <p className="mt-2 text-muted-foreground">@{profile.handle}</p>
             </div>
           </div>
           <p className="mt-8 max-w-3xl text-base leading-7 text-muted-foreground">{profile.bio}</p>
         </div>
-        <aside className="border border-border p-5">
-          <p className="font-semibold">Links</p>
+        <aside className="portal-panel">
+          <p className="font-bold">Links</p>
           <div className="mt-4 space-y-3">
             {profile.links?.length ? (
               profile.links.map((link) => {
@@ -68,7 +64,7 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
 
                 return (
                   <Link
-                    className="block text-sm font-medium underline"
+                    className="block portal-link"
                     href={safeURL}
                     key={link.id || link.label}
                     rel="noopener noreferrer"
@@ -91,7 +87,7 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
       </section>
 
       <section className="mt-12">
-        <h2 className="text-2xl font-semibold">Created records</h2>
+        <h2 className="portal-heading">Created records</h2>
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <CreatedList items={createdRecords.projects} title="Projects" />
           <CreatedList items={createdRecords.events} title="Sessions" />
@@ -107,12 +103,12 @@ export const metadata: Metadata = {
 }
 
 const Taxonomy: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (
-  <div className="border border-border p-5">
-    <h2 className="font-semibold">{title}</h2>
+  <div className="portal-panel">
+    <h2 className="font-bold">{title}</h2>
     <div className="mt-4 flex flex-wrap gap-2">
       {values.length ? (
         values.map((value) => (
-          <span className="border border-border px-2 py-1 text-xs" key={value}>
+          <span className="portal-pill" key={value}>
             {value}
           </span>
         ))
@@ -127,8 +123,8 @@ const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }
   items,
   title,
 }) => (
-  <div className="border border-border p-5">
-    <h3 className="font-semibold">{title}</h3>
+  <div className="portal-panel">
+    <h3 className="font-bold">{title}</h3>
     <div className="mt-4 space-y-3">
       {items.length ? (
         items.map((item) => (

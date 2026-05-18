@@ -69,7 +69,7 @@ export const LoginForm: React.FC = () => {
   }
 
   return (
-    <form className="border border-border bg-background p-6" onSubmit={handleSubmit}>
+    <form className="portal-panel" onSubmit={handleSubmit}>
       <div className="space-y-5">
         <div>
           <Label htmlFor="login-email">Email</Label>
@@ -106,7 +106,7 @@ export const LoginForm: React.FC = () => {
       </Button>
       <p className="mt-4 text-sm text-muted-foreground">
         Need an account?{' '}
-        <Link className="font-medium text-foreground underline" href="/join">
+        <Link className="font-bold text-foreground underline decoration-primary/50" href="/join">
           Join the cohort
         </Link>
         .

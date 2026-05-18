@@ -19,22 +19,15 @@ export default async function ProjectsPage() {
     <main className="container pb-24 pt-12">
       <section className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="mb-4 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
-            Project Spikes
-          </p>
-          <h1 className="text-4xl font-semibold leading-tight md:text-5xl">
-            Active project spikes
-          </h1>
+          <p className="mb-4 portal-kicker">Project Spikes</p>
+          <h1 className="portal-title">Active project spikes</h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             Live collaboration surfaces that show what is being built, who is involved, and how to
             jump in. This is not a project management tool.
           </p>
         </div>
         {user ? (
-          <Link
-            className="border border-border px-4 py-2 text-sm font-medium"
-            href="/admin/collections/projects/create"
-          >
+          <Link className="portal-admin-link" href="/admin/collections/projects/create">
             Create project
           </Link>
         ) : null}
@@ -43,13 +36,11 @@ export default async function ProjectsPage() {
       <section className="mt-10 grid gap-4 md:grid-cols-2">
         {projects.length ? (
           projects.map((project) => (
-            <article className="overflow-hidden border border-border" key={project.id}>
+            <article className="overflow-hidden portal-card p-0" key={project.id}>
               <ProjectCoverImage coverImage={project.coverImage} title={project.title} />
               <div className="p-6">
-                <p className="text-xs uppercase tracking-normal text-muted-foreground">
-                  {project.projectStatus || 'Project'}
-                </p>
-                <h2 className="mt-2 text-2xl font-semibold">{project.title}</h2>
+                <p className="portal-kicker">{project.projectStatus || 'Project'}</p>
+                <h2 className="mt-2 portal-heading">{project.title}</h2>
                 <p className="mt-4 text-sm leading-6 text-muted-foreground">{project.summary}</p>
                 {project.currentState?.[0]?.body ? (
                   <p className="mt-4 border-l border-border pl-4 text-sm leading-6 text-muted-foreground">
@@ -60,7 +51,7 @@ export default async function ProjectsPage() {
                 <ContributorList contributors={project.contributors} />
                 {project.slug ? (
                   <Link
-                    className="mt-5 inline-block text-sm font-medium underline"
+                    className="mt-5 inline-block portal-link"
                     href={`/projects/${project.slug}`}
                   >
                     View project
@@ -84,7 +75,7 @@ export default async function ProjectsPage() {
 
                       return (
                         <Link
-                          className="text-sm font-medium underline"
+                          className="portal-link"
                           href={safeURL}
                           key={`${project.id}-${link.url}`}
                           rel="noopener noreferrer"
@@ -141,7 +132,7 @@ const RelationshipPills: React.FC<{ items?: (number | ProfileSkill)[] | null }> 
   return (
     <div className="mt-4 flex flex-wrap gap-2">
       {docs.map((item) => (
-        <span className="border border-border px-2 py-1 text-xs" key={item.id}>
+        <span className="portal-pill" key={item.id}>
           {item.title}
         </span>
       ))}

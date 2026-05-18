@@ -178,12 +178,12 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   return (
     <div className="space-y-6">
       {!profile && claimableProfiles.length ? (
-        <section className="border border-border bg-card/30 p-6">
-          <h3 className="text-lg font-semibold">Claim an existing profile</h3>
+        <section className="portal-panel">
+          <h3 className="portal-heading-sm">Claim an existing profile</h3>
           <div className="mt-4 space-y-3">
             {claimableProfiles.map((claimableProfile) => (
               <article
-                className="flex flex-wrap items-center justify-between gap-4 border border-border p-4"
+                className="flex flex-wrap items-center justify-between gap-4 portal-card"
                 key={claimableProfile.id}
               >
                 <div>
@@ -204,7 +204,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
         </section>
       ) : null}
 
-      <form className="border border-border bg-card/30 p-6" onSubmit={submitProfile}>
+      <form className="portal-panel" onSubmit={submitProfile}>
         <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
           <div className="space-y-5">
             <div className="grid gap-4 md:grid-cols-2">

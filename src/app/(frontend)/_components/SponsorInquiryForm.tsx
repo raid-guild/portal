@@ -107,8 +107,8 @@ export const SponsorInquiryForm: React.FC = () => {
 
   if (isSubmitted) {
     return (
-      <div className="border border-border bg-background p-6">
-        <h2 className="text-xl font-semibold">Sponsor inquiry received</h2>
+      <div className="portal-panel">
+        <h2 className="portal-heading-sm">Sponsor inquiry received</h2>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           The opportunity is now in review. A RaidGuild contributor will follow up if it is a fit
           for the current cohort cycle.
@@ -121,7 +121,7 @@ export const SponsorInquiryForm: React.FC = () => {
   }
 
   return (
-    <form className="border border-border bg-background p-6" onSubmit={handleSubmit}>
+    <form className="portal-panel" onSubmit={handleSubmit}>
       <div className="grid gap-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -194,7 +194,7 @@ const SelectField: React.FC<{
   <div>
     <Label htmlFor={name}>{label}</Label>
     <select
-      className="flex h-10 w-full rounded border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      className="flex h-10 w-full rounded-sm border border-border bg-background/70 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       id={name}
       name={name}
     >

@@ -132,7 +132,7 @@ export const SignupForm: React.FC = () => {
   }
 
   return (
-    <form className="border border-border bg-background p-6" onSubmit={handleSubmit}>
+    <form className="portal-panel" onSubmit={handleSubmit}>
       <div className="space-y-5">
         <div>
           <Label htmlFor="name">Display name</Label>

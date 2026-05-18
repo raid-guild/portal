@@ -84,7 +84,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
 
   return (
     <>
-      <section className="mt-10 grid gap-3 border border-border p-4 lg:grid-cols-[1fr_12rem_12rem_12rem]">
+      <section className="mt-10 grid gap-3 portal-card lg:grid-cols-[1fr_12rem_12rem_12rem]">
         <label className="relative block">
           <span className="sr-only">Search members</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -134,7 +134,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
       <section className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredProfiles.length ? (
           filteredProfiles.map((profile) => (
-            <article className="border border-border p-5" key={profile.id}>
+            <article className="portal-panel" key={profile.id}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex items-center gap-3">
                   {profile.avatarURL ? (
@@ -145,13 +145,13 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
                       src={profile.avatarURL}
                     />
                   ) : (
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border text-sm font-semibold">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border font-mono text-sm font-bold">
                       {profile.displayName.slice(0, 1)}
                     </div>
                   )}
                   <div>
                     <Link
-                      className="text-lg font-semibold hover:underline"
+                      className="portal-heading-sm hover:underline"
                       href={`/members/${profile.handle}`}
                     >
                       {profile.displayName}
@@ -159,7 +159,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
                     <p className="text-sm text-muted-foreground">@{profile.handle}</p>
                   </div>
                 </div>
-                <span className="border border-border px-2 py-1 text-xs">
+                <span className="portal-pill">
                   {profile.authRoles.includes('member') ? 'Member' : 'Contributor'}
                 </span>
               </div>
@@ -172,7 +172,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
                 <div className="mt-4 flex flex-wrap gap-3">
                   {profile.links.slice(0, 3).map((link) => (
                     <Link
-                      className="text-sm font-medium underline"
+                      className="portal-link"
                       href={link.url}
                       key={`${profile.id}-${link.label}`}
                       rel="noopener noreferrer"
@@ -202,7 +202,7 @@ const DirectorySelect: React.FC<{
   <label className="block">
     <span className="sr-only">{label}</span>
     <select
-      className="h-10 w-full rounded border border-input bg-background px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       onChange={(event) => onChange(event.target.value)}
       value={value}
     >
@@ -221,7 +221,7 @@ const TaxonomyPills: React.FC<{ items: DirectoryTaxonomy[] }> = ({ items }) => {
   return (
     <div className="mt-4 flex flex-wrap gap-2">
       {items.map((item) => (
-        <span className="border border-border px-2 py-1 text-xs" key={item.id}>
+        <span className="portal-pill" key={item.id}>
           {item.title}
         </span>
       ))}
