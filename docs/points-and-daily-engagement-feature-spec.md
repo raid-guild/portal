@@ -61,6 +61,10 @@ user: relationship -> users, required
 engagementDate: date, required
 checkedIn: checkbox, required, default true
 comment: textarea
+commentVisibility: private / member / public
+commentStatus: none / pending_review / approved / hidden / rejected
+commentApprovedBy: relationship -> users
+commentApprovedAt: date
 pointEvent: relationship -> pointEvents
 status: valid / void
 voidReason: textarea
@@ -129,6 +133,12 @@ Checked in today
 +1 point
 ```
 
+If the user included a comment:
+
+```txt
+Comment submitted for review
+```
+
 If already submitted:
 
 ```txt
@@ -149,8 +159,32 @@ Examples:
 - "Reviewed the portal project spec."
 - "Caught up on the latest brief."
 
-Do not use comments as a public feed in the first version. Admins may review
-comments in Payload for moderation, learning, or future product tuning.
+The check-in and the comment display state should be separate.
+
+- `status` controls whether the check-in is valid.
+- `pointEvent.status` controls whether the point award is valid.
+- `commentStatus` controls whether the optional comment can be shown.
+
+Points should be awarded immediately for a valid check-in. Admin approval should
+only affect whether the comment becomes visible on member or public surfaces.
+Rejecting, hiding, or leaving a comment pending should not remove the daily point
+unless an admin voids the whole engagement or reverses the point event.
+
+Recommended comment defaults:
+
+```txt
+no comment -> commentStatus: none
+with comment -> commentStatus: pending_review
+commentVisibility -> member
+```
+
+Admins and editors can approve, hide, or reject comments. Public/member surfaces
+should only show comments where `commentStatus = approved` and visibility allows
+the current viewer.
+
+Do not use daily engagement comments as a broad public feed in the first version.
+Admins may review comments in Payload for moderation, learning, or future product
+tuning.
 
 ## Access Model
 
@@ -160,7 +194,10 @@ Recommended default:
 - Users can read their own daily engagement history.
 - Admins can read all daily engagements.
 - Admins can void daily engagements if needed.
+- Admins and editors can approve, hide, or reject optional comments.
 - Public users cannot read engagement records.
+- Public users can only read approved public comment excerpts if a public display
+  surface is added later.
 
 If member-only behavior is desired, require the `member` auth role before check-in
 creation.
@@ -222,7 +259,8 @@ Admin:
 
 - list daily engagements
 - filter by date, user, profile, status
-- view optional comments
+- filter comments by review status
+- approve, hide, or reject optional comments for display
 - void invalid records
 
 Avoid a leaderboard in the first version. If comparison becomes useful later,
@@ -238,7 +276,9 @@ Keep the first slice narrow:
 3. Create a `pointEvents` record worth 1 point after a valid check-in.
 4. Show a simple check-in card on the authenticated dashboard or `/me`.
 5. Show recent personal check-ins.
-6. Add e2e coverage for first check-in, duplicate prevention, and point award.
+6. Add an admin review state for optional comments.
+7. Add e2e coverage for first check-in, duplicate prevention, point award, and
+   comment approval visibility.
 
 Defer streaks, leaderboards, categories, configurable point amounts, and public
 engagement feeds.
