@@ -36,8 +36,8 @@ export default async function NewSessionPage() {
   }
 
   const [speakers, defaultProfile] = await Promise.all([
-    getSpeakerOptions(),
-    getProfileForUser(user.id),
+    getSpeakerOptions(user),
+    getProfileForUser(user.id, user),
   ])
 
   return (
@@ -61,15 +61,21 @@ export const metadata: Metadata = {
   title: 'Create session',
 }
 
-const getSpeakerOptions = async () => {
+type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
+
+const getSpeakerOptions = async (user: CurrentUser) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'profiles',
     depth: 0,
     limit: 100,
-    overrideAccess: true,
+    overrideAccess: false,
     pagination: false,
+    select: {
+      displayName: true,
+    },
     sort: 'displayName',
+    user,
     where: {
       status: {
         equals: 'active',
@@ -83,14 +89,15 @@ const getSpeakerOptions = async () => {
   }))
 }
 
-const getProfileForUser = async (userID: string | number) => {
+const getProfileForUser = async (userID: string | number, user: CurrentUser) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'profiles',
     depth: 0,
     limit: 1,
-    overrideAccess: true,
+    overrideAccess: false,
     pagination: false,
+    user,
     where: {
       user: {
         equals: userID,

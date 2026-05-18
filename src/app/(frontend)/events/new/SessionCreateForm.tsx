@@ -204,5 +204,8 @@ const Field: React.FC<{ children: React.ReactNode; htmlFor: string; label: strin
 const toISODateTime = (value: string): string => {
   if (!value) return ''
 
-  return new Date(value).toISOString()
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return ''
+
+  return parsed.toISOString()
 }

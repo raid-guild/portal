@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   const speaker = numberValue(body?.speaker)
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
-  const syncDiscord = Boolean(body?.syncDiscord)
+  const syncDiscord = booleanValue(body?.syncDiscord)
 
   if (!title) {
     return Response.json({ message: 'Session title is required.' }, { status: 400 })
@@ -150,4 +150,11 @@ const numberValue = (value: unknown): number | null => {
 
 const enumValue = <T extends string>(value: unknown, options: readonly T[]): T | null => {
   return typeof value === 'string' && options.includes(value as T) ? (value as T) : null
+}
+
+const booleanValue = (value: unknown): boolean => {
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'string') return value.trim().toLowerCase() === 'true'
+
+  return false
 }

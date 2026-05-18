@@ -516,10 +516,11 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   )
   await page.getByRole('link', { name: 'Create session' }).click()
   await expect(page).toHaveURL(/\/events\/new/)
-  await fillFirst(page.getByLabel(/^title$/i), 'Playwright Brownbag')
+  const sessionTitle = `Playwright Brownbag ${Date.now()}`
+  await fillFirst(page.getByLabel(/^title$/i), sessionTitle)
   await page.getByRole('button', { name: /^create session$/i }).click()
   await expect(page).toHaveURL(/\/events/)
-  await expect(page.getByText('Playwright Brownbag')).toBeVisible()
+  await expect(page.getByText(sessionTitle)).toBeVisible()
 
   await page.goto('/posts')
   await expect(page.getByRole('link', { name: 'Create post' })).toHaveAttribute(

@@ -50,15 +50,30 @@ export const createDiscordScheduledEvent = async ({
     scheduled_start_time: startsAt,
   }
 
-  const response = await fetch(`${DISCORD_API_BASE}/guilds/${guildID}/scheduled-events`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bot ${token}`,
-      'Content-Type': 'application/json',
-      'X-Audit-Log-Reason': 'Created from RaidGuild Portal',
-    },
-    body: JSON.stringify(body),
-  })
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 10_000)
+  let response: Response
+
+  try {
+    response = await fetch(`${DISCORD_API_BASE}/guilds/${guildID}/scheduled-events`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bot ${token}`,
+        'Content-Type': 'application/json',
+        'X-Audit-Log-Reason': 'Created from RaidGuild Portal',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Discord scheduled event sync timed out.')
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeout)
+  }
 
   if (!response.ok) {
     const message = await response.text().catch(() => '')
