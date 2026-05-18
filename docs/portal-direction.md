@@ -117,6 +117,11 @@ Suggested fields:
 - `group`
 - `icon`: optional upload relationship to `media`
 
+Future profile recognition should use a separate badges and props module instead
+of overloading profile roles. Badges are durable profile flex such as
+`cohort-grad`; props are stackable lightweight `1up` recognition using a
+mushroom emoji. See `docs/badges-and-props-feature-spec.md`.
+
 ### projects
 
 Discoverability records for work RaidGuild members have built or contributed to.
@@ -142,6 +147,10 @@ Future requests for help should use a lightweight `contributionRequests` feature
 module if they need independent status, comments, filtering, or cross-portal
 discovery. Keep project-local help fields embedded only while the request surface
 is simple. See `docs/contribution-requests-feature-spec.md`.
+
+Future daily participation should use a separate `dailyEngagements` module that
+creates `pointEvents` for simple once-per-day check-ins. Keep points as a ledger,
+not profile state. See `docs/points-and-daily-engagement-feature-spec.md`.
 
 ## Publishing Flow
 
