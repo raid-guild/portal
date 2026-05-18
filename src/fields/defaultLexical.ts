@@ -4,6 +4,7 @@ import {
   ItalicFeature,
   LinkFeature,
   ParagraphFeature,
+  UploadFeature,
   lexicalEditor,
   UnderlineFeature,
 } from '@payloadcms/richtext-lexical'
@@ -36,6 +37,9 @@ export const defaultLexical: Config['editor'] = lexicalEditor({
             },
           ]
         },
+      }),
+      UploadFeature({
+        enabledCollections: ['media'],
       }),
     ]
   },
