@@ -122,9 +122,11 @@ The first profile-claim version should be conservative:
 
 1. User signs up with an email address.
 2. The portal looks for an unclaimed profile with the same normalized email.
-3. If exactly one match exists, link the profile to the user and mark it claimed.
-4. If multiple matches exist, require admin review.
-5. If no match exists, continue as a normal signup.
+3. If exactly one match exists, send a signed verification link to that email.
+4. When the user opens the verification link while logged in, link the profile to
+   the user and mark it claimed.
+5. If multiple matches exist, require admin review.
+6. If no match exists, continue as a normal signup.
 
 Recommended profile fields:
 
@@ -166,5 +168,6 @@ a clear reason to manage campaign creation from the portal.
 - Which external list source is authoritative for early signups?
 - Does the legacy CRM export include reliable profile email addresses for all
   unclaimed members?
-- Should claim links use one-time tokens, same-email signup matching, or both?
+- Should claim tokens be persisted for one-time use, or are short-lived signed
+  links enough for launch?
 - Who owns final copy and compliance for the launch campaign?

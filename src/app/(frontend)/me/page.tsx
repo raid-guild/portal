@@ -14,15 +14,29 @@ import type {
   Project,
   User,
 } from '@/payload-types'
+import { EmailVerificationCard } from '../_components/EmailVerificationCard'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 export const dynamic = 'force-dynamic'
 
-export default async function MePage() {
-  const user = await getCurrentUser()
+type Args = {
+  searchParams: Promise<Record<string, string | undefined>>
+}
 
-  if (!user) redirect('/join')
+export default async function MePage({ searchParams: searchParamsPromise }: Args) {
+  const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
+
+  if (!user) {
+    const params = new URLSearchParams()
+
+    for (const [key, value] of Object.entries(searchParams)) {
+      if (value) params.set(key, value)
+    }
+
+    const returnPath = params.size ? `/me?${params.toString()}` : '/me'
+    redirect(`/login?next=${encodeURIComponent(returnPath)}`)
+  }
 
   const [profile, pointsTotal, skills, roles, claimableProfiles] = await Promise.all([
     getProfileForUser(user.id),
@@ -45,9 +59,9 @@ export default async function MePage() {
             entering Payload Admin.
           </p>
         </div>
-        <div className="border-l border-border pl-6 text-sm">
-          <p className="font-bold">{user.email}</p>
-          <p className="mt-2 text-muted-foreground">
+        <div>
+          <EmailVerificationCard email={user.email} emailVerifiedAt={user.emailVerifiedAt} />
+          <p className="mt-4 border-l border-border pl-6 text-sm text-muted-foreground">
             {profile ? 'Profile connected' : 'Profile not started'}
           </p>
           <p className="mt-3 portal-heading">{pointsTotal} points</p>
@@ -57,6 +71,7 @@ export default async function MePage() {
       <section className="mt-12">
         <h2 className="mb-4 portal-heading">Profile wizard</h2>
         <ProfileWizardForm
+          accountEmail={user.email}
           claimableProfiles={profile ? [] : claimableProfiles}
           profile={profile}
           roles={roles}

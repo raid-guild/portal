@@ -12,7 +12,7 @@ import { notifyAuthChanged } from '@/utilities/authEvents'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-export const LoginForm: React.FC = () => {
+export const LoginForm: React.FC<{ nextPath?: string | null }> = ({ nextPath }) => {
   const router = useRouter()
   const [emailError, setEmailError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
@@ -62,7 +62,7 @@ export const LoginForm: React.FC = () => {
 
       notifyAuthChanged()
       router.refresh()
-      router.push('/dashboard')
+      router.push(nextPath || '/dashboard')
     } catch {
       setFormError('Unable to log in. Try again.')
     } finally {

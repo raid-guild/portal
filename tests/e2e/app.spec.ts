@@ -1,10 +1,12 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
+import crypto from 'crypto'
 
 import {
   adminEmail,
   adminPassword,
   agentRegistrationSecret,
   commentText,
+  payloadSecret,
   seededPosts,
   targetPost,
 } from './env'
@@ -187,7 +189,7 @@ async function verifyPublicHome(page: Page) {
 
   await expect(header.getByRole('link', { name: 'Posts' })).toHaveCount(0)
   await expect(
-    page.getByRole('heading', { name: 'Find the work already in motion.' }),
+    page.getByRole('heading', { name: 'A digital coworking space for builders' }),
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByText('Bringing a project or bounty?')).toBeVisible()
@@ -609,6 +611,9 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   })
 
   expect(profileResponse.status()).toBe(201)
+  const profileBody = await profileResponse.json()
+  const profileID = profileBody.doc?.id || profileBody.id
+  expect(profileID).toBeTruthy()
 
   const userResponse = await adminPage.request.post('/api/users', {
     data: {
@@ -636,17 +641,92 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   await expect(claimPage.getByRole('heading', { name: 'Claim an existing profile' })).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
   await expect(claimPage.getByText(`@${handle}`)).toBeVisible()
-  await claimPage.getByRole('button', { name: 'Claim profile' }).click()
+
+  const unverifiedClaimResponse = await claimPage.request.post('/api/profiles/claim', {
+    data: { profileID },
+  })
+  expect(unverifiedClaimResponse.status()).toBe(403)
+
+  await claimPage.getByRole('button', { name: 'Email claim link' }).click()
+  await expect(claimPage.getByText('Verification email sent.')).toBeVisible()
+
+  const claimToken = signProfileClaimToken({
+    email,
+    exp: Date.now() + 1000 * 60 * 30,
+    profileID: String(profileID),
+    userID: String(createdUserID),
+  })
+  const claimPath = `/me?claimProfile=${encodeURIComponent(
+    String(profileID),
+  )}&claimToken=${encodeURIComponent(claimToken)}`
+
+  await claimContext.clearCookies()
+  await claimPage.goto(claimPath)
+  await expect(claimPage).toHaveURL(/\/login\?next=/)
+  await fillFirst(claimPage.getByLabel(/^email$/i), email)
+  await fillFirst(claimPage.getByLabel(/^password$/i), password)
+  await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(claimPage.getByText('Profile connected')).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
+  await expect(claimPage.getByText('Email not verified')).toBeVisible()
+
+  await claimPage.getByRole('button', { name: 'Verify email' }).click()
+  await expect(claimPage.getByText('Verification email sent.')).toBeVisible()
+
+  const emailVerificationToken = signAccountEmailVerificationToken({
+    email,
+    exp: Date.now() + 1000 * 60 * 30,
+    purpose: 'account-email',
+    userID: String(createdUserID),
+  })
+  const emailVerificationPath = `/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`
+
+  await claimContext.clearCookies()
+  await claimPage.goto(emailVerificationPath)
+  await expect(claimPage).toHaveURL(/\/login\?next=/)
+  await fillFirst(claimPage.getByLabel(/^email$/i), email)
+  await fillFirst(claimPage.getByLabel(/^password$/i), password)
+  await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(claimPage.getByText('Email verified', { exact: true })).toBeVisible()
 
   const claimedUserResponse = await adminPage.request.get(`/api/users/${createdUserID}`)
   expect(claimedUserResponse.ok()).toBeTruthy()
   const claimedUser = await claimedUserResponse.json()
   expect(claimedUser.roles).toContain('contributor')
   expect(claimedUser.roles).toContain('member')
+  expect(claimedUser.emailVerifiedAt).toBeTruthy()
 
   await claimContext.close()
+}
+
+function signProfileClaimToken(payload: {
+  email: string
+  exp: number
+  profileID: string
+  userID: string
+}) {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signature = crypto
+    .createHmac('sha256', payloadSecret)
+    .update(encodedPayload)
+    .digest('base64url')
+
+  return `${encodedPayload}.${signature}`
+}
+
+function signAccountEmailVerificationToken(payload: {
+  email: string
+  exp: number
+  purpose: 'account-email'
+  userID: string
+}) {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
+  const signature = crypto
+    .createHmac('sha256', payloadSecret)
+    .update(encodedPayload)
+    .digest('base64url')
+
+  return `${encodedPayload}.${signature}`
 }
 
 async function verifyLegacyMemberImport(adminPage: Page) {

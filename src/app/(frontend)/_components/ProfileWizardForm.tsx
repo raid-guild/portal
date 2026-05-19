@@ -1,7 +1,7 @@
 'use client'
 
 import { Save } from 'lucide-react'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import type { Profile, ProfileRole, ProfileSkill } from '@/payload-types'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 
 type ProfileWizardFormProps = {
+  accountEmail?: string | null
   claimableProfiles?: Profile[]
   profile?: Profile | null
   roles: ProfileRole[]
@@ -24,6 +25,7 @@ const selectedRoleIDs = (profile?: Profile | null) => selectedIDs(profile?.profi
 const selectedSkillIDs = (profile?: Profile | null) => selectedIDs(profile?.profileSkills)
 
 export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
+  accountEmail,
   claimableProfiles = [],
   profile,
   roles,
@@ -31,19 +33,21 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 }) => {
   const [claimError, setClaimError] = useState<string | null>(null)
   const [claimingProfileID, setClaimingProfileID] = useState<number | string | null>(null)
+  const [claimSuccess, setClaimSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
   const initialRoleIDs = useMemo(() => selectedRoleIDs(profile), [profile])
   const initialSkillIDs = useMemo(() => selectedSkillIDs(profile), [profile])
 
-  const claimProfile = async (profileID: number | string) => {
+  const claimProfile = async (profileID: number | string, token?: string | null) => {
     setClaimError(null)
+    setClaimSuccess(null)
     setClaimingProfileID(profileID)
 
     try {
       const res = await fetch('/api/profiles/claim', {
-        body: JSON.stringify({ profileID }),
+        body: JSON.stringify(token ? { profileID, token } : { intent: 'request', profileID }),
         credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
@@ -53,15 +57,35 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 
       if (!res.ok) {
         const json = await res.json().catch(() => null)
-        throw new Error(json?.message || 'Unable to claim profile.')
+        throw new Error(json?.message || 'Unable to verify profile claim.')
       }
 
-      window.location.reload()
+      if (token) {
+        window.location.href = '/me'
+        return
+      }
+
+      setClaimSuccess('Verification email sent. Open the link in that email to claim this profile.')
+      setClaimingProfileID(null)
     } catch (err) {
-      setClaimError(err instanceof Error ? err.message : 'Unable to claim profile.')
+      setClaimError(err instanceof Error ? err.message : 'Unable to verify profile claim.')
       setClaimingProfileID(null)
     }
   }
+
+  useEffect(() => {
+    if (profile || typeof window === 'undefined') return
+
+    const params = new URLSearchParams(window.location.search)
+    const claimProfileID = params.get('claimProfile')
+    const claimToken = params.get('claimToken')
+
+    if (!claimProfileID || !claimToken) return
+
+    void claimProfile(claimProfileID, claimToken)
+    // The claim URL should be consumed once on page load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profile])
 
   const submitProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -180,6 +204,10 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
       {!profile && claimableProfiles.length ? (
         <section className="portal-panel">
           <h3 className="portal-heading-sm">Claim an existing profile</h3>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            We found legacy member profiles that match {accountEmail || 'this account'}. Send a
+            verification link to that email before connecting one to your account.
+          </p>
           <div className="mt-4 space-y-3">
             {claimableProfiles.map((claimableProfile) => (
               <article
@@ -195,11 +223,14 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                   onClick={() => claimProfile(claimableProfile.id)}
                   type="button"
                 >
-                  {claimingProfileID === claimableProfile.id ? 'Claiming...' : 'Claim profile'}
+                  {claimingProfileID === claimableProfile.id ? 'Sending...' : 'Email claim link'}
                 </Button>
               </article>
             ))}
           </div>
+          {claimSuccess ? (
+            <p className="mt-4 text-sm text-muted-foreground">{claimSuccess}</p>
+          ) : null}
           {claimError ? <p className="mt-4 text-sm text-destructive">{claimError}</p> : null}
         </section>
       ) : null}

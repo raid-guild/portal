@@ -5,10 +5,23 @@ import React from 'react'
 import { LoginForm } from '../_components/LoginForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
-export default async function LoginPage() {
-  const user = await getCurrentUser()
+type Args = {
+  searchParams: Promise<{
+    next?: string
+  }>
+}
 
-  if (user) redirect('/dashboard')
+const getSafeNextPath = (next?: string) => {
+  if (!next || !next.startsWith('/') || next.startsWith('//')) return null
+
+  return next
+}
+
+export default async function LoginPage({ searchParams: searchParamsPromise }: Args) {
+  const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
+  const nextPath = getSafeNextPath(searchParams.next)
+
+  if (user) redirect(nextPath || '/dashboard')
 
   return (
     <main className="container pb-24 pt-12">
@@ -21,7 +34,7 @@ export default async function LoginPage() {
             for the current cohort cycle.
           </p>
         </div>
-        <LoginForm />
+        <LoginForm nextPath={nextPath} />
       </section>
     </main>
   )

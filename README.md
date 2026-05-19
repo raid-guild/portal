@@ -86,17 +86,19 @@ Use one-click deploy template:
 6. Build the project: `pnpm build` or `npm run build`
 7. Start the server: `pnpm start` or `npm run start`
 
-### Email And Password Resets
+### Email, Password Resets, And Profile Claims
 
 Payload email delivery is optional in local development. Without `SENDGRID_API_KEY`, Payload writes email output to the server console.
 
-Set these variables to enable SendGrid SMTP delivery for password resets:
+Set these variables to enable SendGrid SMTP delivery for password resets, welcome emails, account email verification, and legacy profile claim verification:
 
 - `SENDGRID_API_KEY`
 - `EMAIL_FROM_ADDRESS`
 - `EMAIL_FROM_NAME`
 
 The public reset flow is available at `/forgot-password` and `/reset-password?token=...`.
+Logged-in users can verify their account email from `/me`.
+Legacy profile claims are requested from `/me`; matching unclaimed profiles send a verification link to the legacy `claimEmail` before the profile is attached to the logged-in user.
 
 ### End-to-End Testing
 
