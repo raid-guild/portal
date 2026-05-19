@@ -1,5 +1,6 @@
 // storage-adapter-import-placeholder
 import { postgresAdapter } from '@payloadcms/db-postgres'
+import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
 import sharp from 'sharp' // sharp-import
 import { readFile } from 'fs/promises'
@@ -80,6 +81,21 @@ export default buildConfig({
   },
   // This config helps us configure global or default features that the other editors can inherit
   editor: defaultLexical,
+  email: process.env.SENDGRID_API_KEY
+    ? nodemailerAdapter({
+        defaultFromAddress: process.env.EMAIL_FROM_ADDRESS || 'noreply@raidguild.org',
+        defaultFromName: process.env.EMAIL_FROM_NAME || 'RaidGuild Portal',
+        transportOptions: {
+          auth: {
+            pass: process.env.SENDGRID_API_KEY,
+            user: 'apikey',
+          },
+          host: 'smtp.sendgrid.net',
+          port: 587,
+          secure: false,
+        },
+      })
+    : undefined,
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URI || '',

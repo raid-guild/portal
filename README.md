@@ -86,6 +86,18 @@ Use one-click deploy template:
 6. Build the project: `pnpm build` or `npm run build`
 7. Start the server: `pnpm start` or `npm run start`
 
+### Email And Password Resets
+
+Payload email delivery is optional in local development. Without `SENDGRID_API_KEY`, Payload writes email output to the server console.
+
+Set these variables to enable SendGrid SMTP delivery for password resets:
+
+- `SENDGRID_API_KEY`
+- `EMAIL_FROM_ADDRESS`
+- `EMAIL_FROM_NAME`
+
+The public reset flow is available at `/forgot-password` and `/reset-password?token=...`.
+
 ### End-to-End Testing
 
 The Playwright suite boots a fresh PostgreSQL container, builds the app from scratch, creates the first admin user through the onboarding UI, upserts the portal starter content, submits a public comment, approves it in the admin UI, and verifies it appears on the public post page.

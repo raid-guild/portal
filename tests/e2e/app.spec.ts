@@ -423,11 +423,26 @@ async function verifyJoinFormEmailErrors(page: Page) {
 async function verifyPortalLoginRedirect(page: Page) {
   await page.goto('/login')
   await expect(page.getByRole('heading', { name: 'Return to the current brief.' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /forgot password/i })).toBeVisible()
   await fillFirst(page.getByLabel(/^email$/i), adminEmail)
   await fillFirst(page.getByLabel(/^password$/i), adminPassword)
   await page.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(page).toHaveURL(/\/dashboard/)
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
+}
+
+async function verifyPasswordResetPages(browser: Browser) {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  await page.goto('/forgot-password')
+  await expect(page.getByRole('heading', { name: /reset your password/i })).toBeVisible()
+
+  await page.goto('/reset-password')
+  await expect(page.getByRole('heading', { name: /choose a new password/i })).toBeVisible()
+  await expect(page.getByText(/reset token is missing/i)).toBeVisible()
+
+  await context.close()
 }
 
 async function verifyContributorAdminCreateAccess(page: Page) {
@@ -761,6 +776,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededSessions(publicPage)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)
+  await verifyPasswordResetPages(browser)
   await verifyJoinFormEmailErrors(publicPage)
   await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)

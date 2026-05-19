@@ -3,6 +3,9 @@ declare global {
     interface ProcessEnv {
       PAYLOAD_SECRET: string
       DATABASE_URI: string
+      EMAIL_FROM_ADDRESS?: string
+      EMAIL_FROM_NAME?: string
+      SENDGRID_API_KEY?: string
       NEXT_PUBLIC_SERVER_URL: string
       VERCEL_PROJECT_PRODUCTION_URL: string
     }

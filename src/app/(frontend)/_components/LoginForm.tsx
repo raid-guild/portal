@@ -91,9 +91,18 @@ export const LoginForm: React.FC = () => {
           ) : null}
         </div>
         <div>
-          <Label htmlFor="login-password">Password</Label>
+          <div className="flex items-center justify-between gap-3">
+            <Label htmlFor="login-password">Password</Label>
+            <Link
+              className="text-xs font-bold text-foreground underline decoration-primary/50"
+              href="/forgot-password"
+            >
+              Forgot password?
+            </Link>
+          </div>
           <Input
             autoComplete="current-password"
+            className="mt-2"
             id="login-password"
             name="password"
             required

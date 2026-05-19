@@ -63,4 +63,5 @@ The main portal surfaces are:
 - [Portal direction](./portal-direction.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
+- [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)
