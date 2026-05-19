@@ -27,7 +27,7 @@ const sessionTypes = [
   ['all-hands', 'All hands'],
   ['demo', 'Demo'],
   ['pitch', 'Pitch'],
-]
+] as const
 
 const durations = [
   [30, '30 min'],
@@ -50,6 +50,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
+  const [sessionType, setSessionType] = useState('brownbag')
   const [speakerID, setSpeakerID] = useState(() => String(defaultSpeakerID || ''))
   const [speakerQuery, setSpeakerQuery] = useState(() => {
     const selected = speakers.find((speaker) => String(speaker.id) === String(defaultSpeakerID))
@@ -57,7 +58,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
     return selected?.label || ''
   })
   const [showSpeakerResults, setShowSpeakerResults] = useState(false)
-  const [syncDiscord, setSyncDiscord] = useState(false)
+  const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
   const [visibility, setVisibility] = useState('public')
 
   const filteredSpeakers = useMemo(() => {
@@ -79,7 +80,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
-      sessionType: String(formData.get('sessionType') || 'brownbag'),
+      sessionType,
       speaker: speakerID,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
       summary: String(formData.get('summary') || ''),
@@ -124,23 +125,21 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             required
           />
         </Field>
-        <Field htmlFor="sessionType" label="Type">
-          <select
-            className="portal-select h-12 border-scroll-100/25 bg-card/35 font-mono text-xs font-bold uppercase tracking-[0.08em]"
-            defaultValue="brownbag"
-            id="sessionType"
-            name="sessionType"
-          >
+        <Field className="sm:col-span-2" label="Type">
+          <SegmentedGrid className="grid-cols-2 sm:grid-cols-5">
             {sessionTypes.map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
+              <SquareOption
+                isSelected={sessionType === value}
+                key={value}
+                label={label}
+                onClick={() => setSessionType(value)}
+              />
             ))}
-          </select>
+          </SegmentedGrid>
         </Field>
         <Field htmlFor="startsAt" label="Start time">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase"
+            className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
             defaultValue={defaultStart}
             id="startsAt"
             name="startsAt"
