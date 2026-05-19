@@ -322,7 +322,12 @@ async function verifySeededSessions(page: Page) {
   await expect(page.getByText('Discord #cohort-voice')).toBeVisible()
   await expect(page.getByText('Cohort Project Spike Portal')).toBeVisible()
   await expect(page.getByText('Defining the project spike object')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Add to calendar' })).toBeVisible()
+  await expect(
+    page
+      .getByRole('article')
+      .filter({ hasText: 'Cohort Project Spike Sync' })
+      .getByRole('link', { name: 'Add to calendar' }),
+  ).toBeVisible()
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
