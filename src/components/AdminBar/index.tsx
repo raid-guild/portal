@@ -1,9 +1,10 @@
 'use client'
 
+import { authChangeEvent, notifyAuthChanged } from '@/utilities/authEvents'
 import { cn } from '@/utilities/cn'
 import { ChevronDown, LogOut, Shield, UserRound } from 'lucide-react'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 import './index.scss'
@@ -48,42 +49,56 @@ export const AdminBar: React.FC<{
   const [user, setUser] = useState<AccountUser | null>(null)
   const router = useRouter()
 
+  const loadAccount = useCallback(async (isMounted: () => boolean = () => true) => {
+    try {
+      const response = await fetch('/api/users/me', {
+        credentials: 'include',
+      })
+      const data = response.ok ? await response.json() : null
+      if (!isMounted()) return
+
+      const currentUser = data?.user
+
+      setUser(currentUser || null)
+      setShow(Boolean(currentUser?.id))
+
+      if (currentUser?.id) {
+        const profileResponse = await fetch(
+          `/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`,
+          {
+            credentials: 'include',
+          },
+        )
+        const profileData = profileResponse.ok ? await profileResponse.json() : null
+        if (isMounted()) setProfile(profileData?.docs?.[0] || null)
+        return
+      }
+
+      setProfile(null)
+    } catch {
+      if (!isMounted()) return
+
+      setProfile(null)
+      setShow(false)
+      setUser(null)
+    }
+  }, [])
+
   useEffect(() => {
     let isMounted = true
+    const isStillMounted = () => isMounted
+    const handleAuthChange = () => {
+      void loadAccount(isStillMounted)
+    }
 
-    fetch('/api/users/me', {
-      credentials: 'include',
-    })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (!isMounted) return
-
-        const currentUser = data?.user
-
-        setUser(currentUser || null)
-        setShow(Boolean(currentUser?.id))
-
-        if (currentUser?.id) {
-          fetch(`/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`, {
-            credentials: 'include',
-          })
-            .then((response) => (response.ok ? response.json() : null))
-            .then((profileData) => {
-              if (isMounted) setProfile(profileData?.docs?.[0] || null)
-            })
-            .catch(() => {
-              if (isMounted) setProfile(null)
-            })
-        }
-      })
-      .catch(() => {
-        if (isMounted) setShow(false)
-      })
+    void loadAccount(isStillMounted)
+    window.addEventListener(authChangeEvent, handleAuthChange)
 
     return () => {
       isMounted = false
+      window.removeEventListener(authChangeEvent, handleAuthChange)
     }
-  }, [])
+  }, [loadAccount])
 
   const logout = async () => {
     await fetch('/api/users/logout', {
@@ -95,6 +110,7 @@ export const AdminBar: React.FC<{
     setProfile(null)
     setShow(false)
     setUser(null)
+    notifyAuthChanged()
     router.push('/')
     router.refresh()
   }
