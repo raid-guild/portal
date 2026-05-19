@@ -3,6 +3,7 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
+import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { createDiscordScheduledEvent } from '@/utilities/discordScheduledEvents'
 import { validateSafeURL } from '@/utilities/safeURL'
 
@@ -70,11 +71,19 @@ export async function POST(request: Request) {
 
   const startsAtDate = new Date(startsAt)
   const endsAtDate = new Date(startsAtDate.getTime() + durationMinutes * 60 * 1000)
+  const initialCalendarURL = createGoogleCalendarURL({
+    description: summary,
+    endsAt: endsAtDate.toISOString(),
+    location: joinURL || locationLabel,
+    startsAt: startsAtDate.toISOString(),
+    title,
+  })
 
   const created = await payload.create({
     collection: 'events',
     data: {
       _status: 'published',
+      calendarURL: initialCalendarURL,
       discordSyncStatus: syncDiscord ? 'failed' : 'not_configured',
       endsAt: endsAtDate.toISOString(),
       joinURL: joinURL || undefined,
@@ -112,8 +121,19 @@ export async function POST(request: Request) {
       collection: 'events',
       data: {
         ...discordEvent,
+        calendarURL:
+          joinURL || locationLabel
+            ? initialCalendarURL
+            : createGoogleCalendarURL({
+                description: summary,
+                endsAt: endsAtDate.toISOString(),
+                location: discordEvent.discordEventURL,
+                startsAt: startsAtDate.toISOString(),
+                title,
+              }),
         discordSyncError: null,
         discordSyncStatus: 'synced',
+        joinURL: joinURL || discordEvent.discordEventURL,
       },
       overrideAccess: false,
       user,

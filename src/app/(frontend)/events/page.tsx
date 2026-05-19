@@ -5,7 +5,9 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent } from '@/access/roles'
 import type { Event, Profile, Project, Thread } from '@/payload-types'
+import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -47,6 +49,7 @@ export default async function EventsPage() {
   const now = Date.now()
   const upcoming = events.filter((event) => new Date(event.startsAt).getTime() >= now)
   const past = events.filter((event) => new Date(event.startsAt).getTime() < now)
+  const canManageSessions = canContributeContent(user)
 
   return (
     <main className="container pb-24 pt-12">
@@ -70,7 +73,9 @@ export default async function EventsPage() {
         <h2 className="portal-heading">Upcoming Sessions</h2>
         <div className="mt-5 grid gap-3">
           {upcoming.length ? (
-            upcoming.map((event) => <SessionRow event={event} key={event.id} />)
+            upcoming.map((event) => (
+              <SessionRow canManageSessions={canManageSessions} event={event} key={event.id} />
+            ))
           ) : (
             <p className="text-sm text-muted-foreground">No upcoming sessions are published yet.</p>
           )}
@@ -82,7 +87,7 @@ export default async function EventsPage() {
           <h2 className="portal-heading">Past Sessions</h2>
           <div className="mt-5 grid gap-3">
             {past.map((event) => (
-              <SessionRow event={event} key={event.id} />
+              <SessionRow canManageSessions={canManageSessions} event={event} key={event.id} />
             ))}
           </div>
         </section>
@@ -96,7 +101,10 @@ export const metadata: Metadata = {
   title: 'Sessions',
 }
 
-const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
+const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
+  canManageSessions,
+  event,
+}) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
   const speakers = relationDocs<Profile>(event.relatedProfiles)
@@ -136,6 +144,11 @@ const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
             {event.locationLabel ? (
               <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
             ) : null}
+            {canManageSessions && event.discordSyncStatus === 'failed' ? (
+              <p className="mt-3 border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                Discord sync failed: {formatDiscordSyncError(event.discordSyncError)}
+              </p>
+            ) : null}
             {projects.length || threads.length ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 {projects.map((project) => (
@@ -153,7 +166,10 @@ const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
           </div>
           <div className="flex flex-wrap content-start gap-3 lg:justify-end">
             <SafeLink href={event.joinURL} label="Join" />
-            <SafeLink href={event.calendarURL} label="Add to calendar" />
+            <SafeLink
+              href={event.calendarURL || getCalendarFallbackURL(event)}
+              label="Add to calendar"
+            />
             <SafeLink href={event.discordEventURL} label="Discord event" />
           </div>
         </div>
@@ -179,6 +195,34 @@ const SafeLink: React.FC<{ href?: string | null; label: string }> = ({ href, lab
       {label}
     </Link>
   )
+}
+
+const formatDiscordSyncError = (value?: string | null): string => {
+  if (!value) return 'No error details were returned.'
+
+  try {
+    const parsed = JSON.parse(value) as { code?: number | string; message?: string }
+    const message = parsed.message || value
+
+    return parsed.code ? `${message} (${parsed.code})` : message
+  } catch {
+    return value
+  }
+}
+
+const getCalendarFallbackURL = (event: Event): string | null => {
+  if (!event.startsAt) return null
+
+  const endsAt =
+    event.endsAt || new Date(new Date(event.startsAt).getTime() + 30 * 60 * 1000).toISOString()
+
+  return createGoogleCalendarURL({
+    description: event.summary,
+    endsAt,
+    location: event.joinURL || event.discordEventURL || event.locationLabel,
+    startsAt: event.startsAt,
+    title: event.title,
+  })
 }
 
 const getEvents = async (user: Awaited<ReturnType<typeof getCurrentUser>>) => {
