@@ -9,6 +9,7 @@ import {
   ownUserOrAdmin,
 } from '@/access/roles'
 import { anyone } from '@/access/anyone'
+import { getServerSideURL } from '@/utilities/getURL'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -24,7 +25,21 @@ export const Users: CollectionConfig = {
     hidden: hideFromNonEditors,
     useAsTitle: 'name',
   },
-  auth: true,
+  auth: {
+    forgotPassword: {
+      generateEmailHTML: (args) => {
+        const token = args?.token
+        const resetURL = `${getServerSideURL()}/reset-password?token=${encodeURIComponent(token || '')}`
+
+        return `
+          <p>A password reset was requested for your RaidGuild Portal account.</p>
+          <p><a href="${resetURL}">Reset your password</a></p>
+          <p>This link expires soon. If you did not request this, you can ignore this email.</p>
+        `
+      },
+      generateEmailSubject: () => 'Reset your RaidGuild Portal password',
+    },
+  },
   fields: [
     {
       name: 'name',
