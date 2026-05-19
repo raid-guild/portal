@@ -157,10 +157,16 @@ const numberValue = (value: unknown): number | null => {
 const numberArrayValue = (value: unknown): number[] => {
   if (!Array.isArray(value)) return []
 
+  const seen = new Set<number>()
+
   return value.flatMap((item) => {
     const parsed = numberValue(item)
+    if (parsed === null || !Number.isSafeInteger(parsed) || parsed < 1 || seen.has(parsed)) {
+      return []
+    }
 
-    return parsed ? [parsed] : []
+    seen.add(parsed)
+    return [parsed]
   })
 }
 

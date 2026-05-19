@@ -102,9 +102,9 @@ const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
   const speakers = relationDocs<Profile>(event.relatedProfiles)
   const speaker = typeof event.speaker === 'object' ? event.speaker : null
   const hostNames = speakers.length
-    ? speakers.map((profile) => profile.displayName)
+    ? speakers.map((profile) => profile.displayName).filter(Boolean)
     : speaker
-      ? [speaker.displayName]
+      ? [speaker.displayName].filter(Boolean)
       : []
   const sessionType = event.sessionType || 'brownbag'
   const startsAt = new Date(event.startsAt)
