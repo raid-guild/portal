@@ -8,6 +8,7 @@ import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { notifyAuthChanged } from '@/utilities/authEvents'
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -59,8 +60,9 @@ export const LoginForm: React.FC = () => {
         return
       }
 
-      router.push('/dashboard')
+      notifyAuthChanged()
       router.refresh()
+      router.push('/dashboard')
     } catch {
       setFormError('Unable to log in. Try again.')
     } finally {
