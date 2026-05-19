@@ -33,13 +33,18 @@ export const ForgotPasswordForm: React.FC = () => {
     }
 
     try {
-      await fetch('/api/users/forgot-password', {
+      const response = await fetch('/api/users/forgot-password', {
         body: JSON.stringify({ email }),
         headers: {
           'Content-Type': 'application/json',
         },
         method: 'POST',
       })
+
+      if (!response.ok) {
+        setFormError('Unable to send reset instructions. Try again.')
+        return
+      }
 
       setSent(true)
     } catch {
