@@ -9,7 +9,7 @@ import { canContributeContent } from '@/access/roles'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { canCreateDiscordScheduledEvents } from '@/utilities/discordScheduledEvents'
 
-import { SessionCreateForm } from './SessionCreateForm'
+import { SessionCreateForm, type RelationOption } from './SessionCreateForm'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,9 +35,11 @@ export default async function NewSessionPage() {
     )
   }
 
-  const [speakers, defaultProfile] = await Promise.all([
+  const [speakers, defaultProfile, projects, threads] = await Promise.all([
     getSpeakerOptions(user),
     getProfileForUser(user.id, user),
+    getProjectOptions(user),
+    getThreadOptions(user),
   ])
 
   return (
@@ -51,7 +53,9 @@ export default async function NewSessionPage() {
         canSyncDiscord={canCreateDiscordScheduledEvents()}
         defaultSpeakerID={defaultProfile?.id}
         defaultStart={getDefaultStart()}
+        projects={projects}
         speakers={speakers}
+        threads={threads}
       />
     </main>
   )
@@ -106,6 +110,48 @@ const getProfileForUser = async (userID: string | number, user: CurrentUser) => 
   })
 
   return result.docs[0] || null
+}
+
+const getProjectOptions = async (user: CurrentUser): Promise<RelationOption[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'projects',
+    depth: 0,
+    limit: 100,
+    overrideAccess: false,
+    pagination: false,
+    select: {
+      title: true,
+    },
+    sort: 'title',
+    user,
+  })
+
+  return result.docs.map((project) => ({
+    id: project.id,
+    label: project.title,
+  }))
+}
+
+const getThreadOptions = async (user: CurrentUser): Promise<RelationOption[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'threads',
+    depth: 0,
+    limit: 100,
+    overrideAccess: false,
+    pagination: false,
+    select: {
+      title: true,
+    },
+    sort: 'title',
+    user,
+  })
+
+  return result.docs.map((thread) => ({
+    id: thread.id,
+    label: thread.title,
+  }))
 }
 
 const getDefaultStart = () => {

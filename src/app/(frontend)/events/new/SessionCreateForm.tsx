@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/utilities/cn'
 
-type SpeakerOption = {
+export type RelationOption = {
   id: number | string
   label: string
 }
@@ -18,7 +18,9 @@ type SessionCreateFormProps = {
   canSyncDiscord: boolean
   defaultSpeakerID?: number | string | null
   defaultStart: string
-  speakers: SpeakerOption[]
+  projects: RelationOption[]
+  speakers: RelationOption[]
+  threads: RelationOption[]
 }
 
 const sessionTypes = [
@@ -43,13 +45,16 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
   defaultSpeakerID,
   defaultStart,
+  projects,
   speakers,
+  threads,
 }) => {
   const router = useRouter()
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
   const [sessionType, setSessionType] = useState('brownbag')
+  const [projectID, setProjectID] = useState('')
   const [speakerIDs, setSpeakerIDs] = useState<string[]>(() =>
     defaultSpeakerID ? [String(defaultSpeakerID)] : [],
   )
@@ -60,6 +65,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   })
   const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
+  const [threadID, setThreadID] = useState('')
   const [visibility, setVisibility] = useState('public')
 
   const filteredSpeakers = useMemo(() => {
@@ -89,6 +95,8 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
+      relatedProjects: projectID ? [projectID] : [],
+      relatedThreads: threadID ? [threadID] : [],
       sessionType,
       speaker: speakerIDs[0] || '',
       speakers: speakerIDs,
@@ -269,6 +277,36 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           Advanced
         </summary>
         <div className="grid gap-5 border-t border-border p-4 sm:grid-cols-2">
+          <Field htmlFor="relatedProject" label="Related project">
+            <select
+              className="portal-select h-12 border-scroll-100/25 bg-background/70"
+              id="relatedProject"
+              onChange={(event) => setProjectID(event.target.value)}
+              value={projectID}
+            >
+              <option value="">No related project</option>
+              {projects.map((project) => (
+                <option key={project.id} value={project.id}>
+                  {project.label}
+                </option>
+              ))}
+            </select>
+          </Field>
+          <Field htmlFor="relatedThread" label="Related thread">
+            <select
+              className="portal-select h-12 border-scroll-100/25 bg-background/70"
+              id="relatedThread"
+              onChange={(event) => setThreadID(event.target.value)}
+              value={threadID}
+            >
+              <option value="">No related thread</option>
+              {threads.map((thread) => (
+                <option key={thread.id} value={thread.id}>
+                  {thread.label}
+                </option>
+              ))}
+            </select>
+          </Field>
           <Field htmlFor="locationLabel" label="Location label">
             <Input
               className="h-12 border-scroll-100/25 bg-background/70"

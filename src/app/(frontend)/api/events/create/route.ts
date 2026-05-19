@@ -37,6 +37,8 @@ export async function POST(request: Request) {
   const durationMinutes = numberValue(body?.durationMinutes)
   const sessionType = enumValue<SessionType>(body?.sessionType, SESSION_TYPES)
   const visibility = enumValue<Visibility>(body?.visibility, VISIBILITIES) || 'public'
+  const relatedProjects = numberArrayValue(body?.relatedProjects)
+  const relatedThreads = numberArrayValue(body?.relatedThreads)
   const speakers = numberArrayValue(body?.speakers)
   const speaker = speakers[0] || numberValue(body?.speaker)
   const locationLabel = stringValue(body?.locationLabel)
@@ -79,6 +81,8 @@ export async function POST(request: Request) {
       locationLabel: locationLabel || undefined,
       publishedAt: new Date().toISOString(),
       relatedProfiles: speakers.length ? speakers : undefined,
+      relatedProjects: relatedProjects.length ? relatedProjects : undefined,
+      relatedThreads: relatedThreads.length ? relatedThreads : undefined,
       sessionType,
       speaker: speaker || undefined,
       startsAt: startsAtDate.toISOString(),
