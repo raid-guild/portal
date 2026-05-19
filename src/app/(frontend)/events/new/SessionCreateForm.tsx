@@ -37,7 +37,6 @@ const durations = [
 const visibilityOptions = [
   ['public', 'Public'],
   ['authenticated', 'Members'],
-  ['admin', 'Admin'],
 ] as const
 
 export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
@@ -51,11 +50,13 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
   const [sessionType, setSessionType] = useState('brownbag')
-  const [speakerID, setSpeakerID] = useState(() => String(defaultSpeakerID || ''))
+  const [speakerIDs, setSpeakerIDs] = useState<string[]>(() =>
+    defaultSpeakerID ? [String(defaultSpeakerID)] : [],
+  )
   const [speakerQuery, setSpeakerQuery] = useState(() => {
     const selected = speakers.find((speaker) => String(speaker.id) === String(defaultSpeakerID))
 
-    return selected?.label || ''
+    return selected ? '' : ''
   })
   const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
@@ -63,12 +64,20 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
 
   const filteredSpeakers = useMemo(() => {
     const query = speakerQuery.trim().toLowerCase()
+    const selected = new Set(speakerIDs)
+    const available = speakers.filter((speaker) => !selected.has(String(speaker.id)))
     const matches = query
-      ? speakers.filter((speaker) => speaker.label.toLowerCase().includes(query))
-      : speakers
+      ? available.filter((speaker) => speaker.label.toLowerCase().includes(query))
+      : available
 
     return matches.slice(0, 8)
-  }, [speakerQuery, speakers])
+  }, [speakerIDs, speakerQuery, speakers])
+
+  const selectedSpeakers = useMemo(() => {
+    const selected = new Set(speakerIDs)
+
+    return speakers.filter((speaker) => selected.has(String(speaker.id)))
+  }, [speakerIDs, speakers])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -81,7 +90,8 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
       sessionType,
-      speaker: speakerID,
+      speaker: speakerIDs[0] || '',
+      speakers: speakerIDs,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
       summary: String(formData.get('summary') || ''),
       syncDiscord,
@@ -125,18 +135,6 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             required
           />
         </Field>
-        <Field className="sm:col-span-2" label="Type">
-          <SegmentedGrid className="grid-cols-2 sm:grid-cols-5">
-            {sessionTypes.map(([value, label]) => (
-              <SquareOption
-                isSelected={sessionType === value}
-                key={value}
-                label={label}
-                onClick={() => setSessionType(value)}
-              />
-            ))}
-          </SegmentedGrid>
-        </Field>
         <Field htmlFor="startsAt" label="Start time">
           <Input
             className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
@@ -159,9 +157,54 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             ))}
           </SegmentedGrid>
         </Field>
-        <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker">
+        <Field label="Visibility">
+          <SegmentedGrid>
+            {visibilityOptions.map(([value, label]) => (
+              <SquareOption
+                isSelected={visibility === value}
+                key={value}
+                label={label}
+                onClick={() => setVisibility(value)}
+              />
+            ))}
+          </SegmentedGrid>
+        </Field>
+        <Field className="sm:col-span-2" label="Type">
+          <SegmentedGrid className="grid-cols-2 sm:grid-cols-5">
+            {sessionTypes.map(([value, label]) => (
+              <SquareOption
+                isSelected={sessionType === value}
+                key={value}
+                label={label}
+                onClick={() => setSessionType(value)}
+              />
+            ))}
+          </SegmentedGrid>
+        </Field>
+        <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker/s">
           <div className="relative">
-            <input name="speaker" type="hidden" value={speakerID} />
+            <div className="mb-2 flex min-h-10 flex-wrap gap-2">
+              {selectedSpeakers.length ? (
+                selectedSpeakers.map((speaker) => (
+                  <button
+                    className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                    key={speaker.id}
+                    onClick={() =>
+                      setSpeakerIDs((current) =>
+                        current.filter((speakerID) => speakerID !== String(speaker.id)),
+                      )
+                    }
+                    type="button"
+                  >
+                    {speaker.label} x
+                  </button>
+                ))
+              ) : (
+                <p className="flex items-center text-sm text-muted-foreground">
+                  No speakers selected
+                </p>
+              )}
+            </div>
             <Input
               autoComplete="off"
               className="h-12 border-scroll-100/25 bg-card/35"
@@ -169,7 +212,6 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               onBlur={() => window.setTimeout(() => setShowSpeakerResults(false), 120)}
               onChange={(event) => {
                 setSpeakerQuery(event.target.value)
-                setSpeakerID('')
                 setShowSpeakerResults(true)
               }}
               onFocus={() => setShowSpeakerResults(true)}
@@ -182,7 +224,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
                   className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => {
-                    setSpeakerID('')
+                    setSpeakerIDs([])
                     setSpeakerQuery('')
                     setShowSpeakerResults(false)
                   }}
@@ -196,9 +238,9 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
                     key={speaker.id}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => {
-                      setSpeakerID(String(speaker.id))
-                      setSpeakerQuery(speaker.label)
-                      setShowSpeakerResults(false)
+                      setSpeakerIDs((current) => [...current, String(speaker.id)])
+                      setSpeakerQuery('')
+                      setShowSpeakerResults(true)
                     }}
                     type="button"
                   >
@@ -211,18 +253,6 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               </div>
             ) : null}
           </div>
-        </Field>
-        <Field className="sm:col-span-2" label="Visibility">
-          <SegmentedGrid className="sm:grid-cols-3">
-            {visibilityOptions.map(([value, label]) => (
-              <SquareOption
-                isSelected={visibility === value}
-                key={value}
-                label={label}
-                onClick={() => setVisibility(value)}
-              />
-            ))}
-          </SegmentedGrid>
         </Field>
       </div>
       <Field htmlFor="summary" label="Summary">

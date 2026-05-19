@@ -37,7 +37,8 @@ export async function POST(request: Request) {
   const durationMinutes = numberValue(body?.durationMinutes)
   const sessionType = enumValue<SessionType>(body?.sessionType, SESSION_TYPES)
   const visibility = enumValue<Visibility>(body?.visibility, VISIBILITIES) || 'public'
-  const speaker = numberValue(body?.speaker)
+  const speakers = numberArrayValue(body?.speakers)
+  const speaker = speakers[0] || numberValue(body?.speaker)
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
   const syncDiscord = booleanValue(body?.syncDiscord)
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
       joinURL: joinURL || undefined,
       locationLabel: locationLabel || undefined,
       publishedAt: new Date().toISOString(),
+      relatedProfiles: speakers.length ? speakers : undefined,
       sessionType,
       speaker: speaker || undefined,
       startsAt: startsAtDate.toISOString(),
@@ -146,6 +148,16 @@ const numberValue = (value: unknown): number | null => {
   }
 
   return null
+}
+
+const numberArrayValue = (value: unknown): number[] => {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((item) => {
+    const parsed = numberValue(item)
+
+    return parsed ? [parsed] : []
+  })
 }
 
 const enumValue = <T extends string>(value: unknown, options: readonly T[]): T | null => {

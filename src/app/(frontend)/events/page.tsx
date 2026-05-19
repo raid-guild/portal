@@ -5,7 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { Event, Project, Thread } from '@/payload-types'
+import type { Event, Profile, Project, Thread } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -99,7 +99,13 @@ export const metadata: Metadata = {
 const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
+  const speakers = relationDocs<Profile>(event.relatedProfiles)
   const speaker = typeof event.speaker === 'object' ? event.speaker : null
+  const hostNames = speakers.length
+    ? speakers.map((profile) => profile.displayName)
+    : speaker
+      ? [speaker.displayName]
+      : []
   const sessionType = event.sessionType || 'brownbag'
   const startsAt = new Date(event.startsAt)
   const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
@@ -121,8 +127,8 @@ const SessionRow: React.FC<{ event: Event }> = ({ event }) => {
               </span>
             </div>
             <h3 className="mt-3 portal-heading-sm">{event.title}</h3>
-            {speaker ? (
-              <p className="mt-2 text-sm text-muted-foreground">Hosted by {speaker.displayName}</p>
+            {hostNames.length ? (
+              <p className="mt-2 text-sm text-muted-foreground">Hosted by {hostNames.join(', ')}</p>
             ) : null}
             {event.summary ? (
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
