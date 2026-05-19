@@ -102,10 +102,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div className="max-w-3xl">
             <p className="mb-4 portal-kicker">RaidGuild Portal</p>
-            <h1 className="mb-6 portal-title-lg">Find the work already in motion.</h1>
+            <h1 className="mb-6 portal-title-lg">A digital coworking space for builders</h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              Follow the weekly brief, see active projects, join upcoming sessions, and plug into
-              real opportunities across RaidGuild.
+              Join sessions, find a team, build your skills, and help turn ideas into shipped work
+              with the RaidGuild community.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
@@ -180,8 +180,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           <div>
             <h2 className="portal-heading">Upcoming Sessions</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Live sessions are the easiest way to understand what is moving and where contributors
-              are needed.
+              Live sessions are where builders compare notes, learn from one another, and find the
+              next place to contribute.
             </p>
             <Button asChild className="mt-5" variant="outline">
               <Link href="/events">View sessions</Link>
@@ -214,10 +214,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       <section className="portal-band">
         <div className="container grid gap-8 lg:grid-cols-[18rem_1fr]">
           <div>
-            <h2 className="portal-heading">Public Updates</h2>
+            <h2 className="portal-heading">What&apos;s Shipping</h2>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              Published posts stay public so visitors can see the current signal before creating an
-              account.
+              Recent signals from the community so visitors can see what teams are learning,
+              building, and releasing.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-2">
@@ -247,9 +247,10 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       <section className="container py-12">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h2 className="portal-heading">Project Visibility</h2>
+            <h2 className="portal-heading">Find a Team</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Projects are for discovery and attribution, not task management.
+              Active projects help builders discover collaboration surfaces, people, context, and
+              useful next steps.
             </p>
           </div>
           <Button asChild variant="outline">
@@ -284,8 +285,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           <div>
             <h2 className="portal-heading">Ready to participate?</h2>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Create an account to build a profile, follow project work, and get routed toward the
-              right sessions and contribution paths.
+              Create an account to join sessions, build a profile, find teams, and get routed toward
+              skill-building contribution paths.
             </p>
           </div>
           <div className="flex flex-wrap gap-3">
