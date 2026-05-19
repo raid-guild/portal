@@ -54,7 +54,9 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
   const [sessionType, setSessionType] = useState('brownbag')
-  const [projectID, setProjectID] = useState('')
+  const [projectIDs, setProjectIDs] = useState<string[]>([])
+  const [projectQuery, setProjectQuery] = useState('')
+  const [showProjectResults, setShowProjectResults] = useState(false)
   const [speakerIDs, setSpeakerIDs] = useState<string[]>(() =>
     defaultSpeakerID ? [String(defaultSpeakerID)] : [],
   )
@@ -65,25 +67,18 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   })
   const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
-  const [threadID, setThreadID] = useState('')
+  const [threadIDs, setThreadIDs] = useState<string[]>([])
+  const [threadQuery, setThreadQuery] = useState('')
+  const [showThreadResults, setShowThreadResults] = useState(false)
   const [visibility, setVisibility] = useState('public')
 
-  const filteredSpeakers = useMemo(() => {
-    const query = speakerQuery.trim().toLowerCase()
-    const selected = new Set(speakerIDs)
-    const available = speakers.filter((speaker) => !selected.has(String(speaker.id)))
-    const matches = query
-      ? available.filter((speaker) => speaker.label.toLowerCase().includes(query))
-      : available
+  const filteredProjects = useRelationFilter(projects, projectIDs, projectQuery)
+  const filteredSpeakers = useRelationFilter(speakers, speakerIDs, speakerQuery)
+  const filteredThreads = useRelationFilter(threads, threadIDs, threadQuery)
 
-    return matches.slice(0, 8)
-  }, [speakerIDs, speakerQuery, speakers])
-
-  const selectedSpeakers = useMemo(() => {
-    const selected = new Set(speakerIDs)
-
-    return speakers.filter((speaker) => selected.has(String(speaker.id)))
-  }, [speakerIDs, speakers])
+  const selectedProjects = useSelectedRelations(projects, projectIDs)
+  const selectedSpeakers = useSelectedRelations(speakers, speakerIDs)
+  const selectedThreads = useSelectedRelations(threads, threadIDs)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -95,8 +90,8 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
-      relatedProjects: projectID ? [projectID] : [],
-      relatedThreads: threadID ? [threadID] : [],
+      relatedProjects: projectIDs,
+      relatedThreads: threadIDs,
       sessionType,
       speaker: speakerIDs[0] || '',
       speakers: speakerIDs,
@@ -190,77 +185,25 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           </SegmentedGrid>
         </Field>
         <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker/s">
-          <div className="relative">
-            <div className="mb-2 flex min-h-10 flex-wrap gap-2">
-              {selectedSpeakers.length ? (
-                selectedSpeakers.map((speaker) => (
-                  <button
-                    className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-                    key={speaker.id}
-                    onClick={() =>
-                      setSpeakerIDs((current) =>
-                        current.filter((speakerID) => speakerID !== String(speaker.id)),
-                      )
-                    }
-                    type="button"
-                  >
-                    {speaker.label} x
-                  </button>
-                ))
-              ) : (
-                <p className="flex items-center text-sm text-muted-foreground">
-                  No speakers selected
-                </p>
-              )}
-            </div>
-            <Input
-              autoComplete="off"
-              className="h-12 border-scroll-100/25 bg-card/35"
-              id="speakerSearch"
-              onBlur={() => window.setTimeout(() => setShowSpeakerResults(false), 120)}
-              onChange={(event) => {
-                setSpeakerQuery(event.target.value)
-                setShowSpeakerResults(true)
-              }}
-              onFocus={() => setShowSpeakerResults(true)}
-              placeholder="Search speaker"
-              value={speakerQuery}
-            />
-            {showSpeakerResults ? (
-              <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
-                <button
-                  className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
-                  onMouseDown={(event) => event.preventDefault()}
-                  onClick={() => {
-                    setSpeakerIDs([])
-                    setSpeakerQuery('')
-                    setShowSpeakerResults(false)
-                  }}
-                  type="button"
-                >
-                  No speaker
-                </button>
-                {filteredSpeakers.map((speaker) => (
-                  <button
-                    className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
-                    key={speaker.id}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => {
-                      setSpeakerIDs((current) => [...current, String(speaker.id)])
-                      setSpeakerQuery('')
-                      setShowSpeakerResults(true)
-                    }}
-                    type="button"
-                  >
-                    {speaker.label}
-                  </button>
-                ))}
-                {!filteredSpeakers.length ? (
-                  <p className="px-3 py-3 text-sm text-muted-foreground">No matching speakers.</p>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
+          <RelationTypeahead
+            emptyLabel="No speakers selected"
+            filteredOptions={filteredSpeakers}
+            inputID="speakerSearch"
+            noSelectionLabel="No speaker"
+            onAdd={(option) => setSpeakerIDs((current) => [...current, String(option.id)])}
+            onClear={() => setSpeakerIDs([])}
+            onQueryChange={setSpeakerQuery}
+            onRemove={(option) =>
+              setSpeakerIDs((current) =>
+                current.filter((speakerID) => speakerID !== String(option.id)),
+              )
+            }
+            onResultsOpenChange={setShowSpeakerResults}
+            placeholder="Search speaker"
+            query={speakerQuery}
+            selectedOptions={selectedSpeakers}
+            showResults={showSpeakerResults}
+          />
         </Field>
       </div>
       <Field htmlFor="summary" label="Summary">
@@ -277,35 +220,47 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           Advanced
         </summary>
         <div className="grid gap-5 border-t border-border p-4 sm:grid-cols-2">
-          <Field htmlFor="relatedProject" label="Related project">
-            <select
-              className="portal-select h-12 border-scroll-100/25 bg-background/70"
-              id="relatedProject"
-              onChange={(event) => setProjectID(event.target.value)}
-              value={projectID}
-            >
-              <option value="">No related project</option>
-              {projects.map((project) => (
-                <option key={project.id} value={project.id}>
-                  {project.label}
-                </option>
-              ))}
-            </select>
+          <Field htmlFor="relatedProjectSearch" label="Related projects">
+            <RelationTypeahead
+              emptyLabel="No projects selected"
+              filteredOptions={filteredProjects}
+              inputID="relatedProjectSearch"
+              noSelectionLabel="No project"
+              onAdd={(option) => setProjectIDs((current) => [...current, String(option.id)])}
+              onClear={() => setProjectIDs([])}
+              onQueryChange={setProjectQuery}
+              onRemove={(option) =>
+                setProjectIDs((current) =>
+                  current.filter((projectID) => projectID !== String(option.id)),
+                )
+              }
+              onResultsOpenChange={setShowProjectResults}
+              placeholder="Search project"
+              query={projectQuery}
+              selectedOptions={selectedProjects}
+              showResults={showProjectResults}
+            />
           </Field>
-          <Field htmlFor="relatedThread" label="Related thread">
-            <select
-              className="portal-select h-12 border-scroll-100/25 bg-background/70"
-              id="relatedThread"
-              onChange={(event) => setThreadID(event.target.value)}
-              value={threadID}
-            >
-              <option value="">No related thread</option>
-              {threads.map((thread) => (
-                <option key={thread.id} value={thread.id}>
-                  {thread.label}
-                </option>
-              ))}
-            </select>
+          <Field htmlFor="relatedThreadSearch" label="Related threads">
+            <RelationTypeahead
+              emptyLabel="No threads selected"
+              filteredOptions={filteredThreads}
+              inputID="relatedThreadSearch"
+              noSelectionLabel="No thread"
+              onAdd={(option) => setThreadIDs((current) => [...current, String(option.id)])}
+              onClear={() => setThreadIDs([])}
+              onQueryChange={setThreadQuery}
+              onRemove={(option) =>
+                setThreadIDs((current) =>
+                  current.filter((threadID) => threadID !== String(option.id)),
+                )
+              }
+              onResultsOpenChange={setShowThreadResults}
+              placeholder="Search thread"
+              query={threadQuery}
+              selectedOptions={selectedThreads}
+              showResults={showThreadResults}
+            />
           </Field>
           <Field htmlFor="locationLabel" label="Location label">
             <Input
@@ -366,6 +321,102 @@ const Field: React.FC<{
   </div>
 )
 
+const RelationTypeahead: React.FC<{
+  emptyLabel: string
+  filteredOptions: RelationOption[]
+  inputID: string
+  noSelectionLabel: string
+  onAdd: (option: RelationOption) => void
+  onClear: () => void
+  onQueryChange: (query: string) => void
+  onRemove: (option: RelationOption) => void
+  onResultsOpenChange: (isOpen: boolean) => void
+  placeholder: string
+  query: string
+  selectedOptions: RelationOption[]
+  showResults: boolean
+}> = ({
+  emptyLabel,
+  filteredOptions,
+  inputID,
+  noSelectionLabel,
+  onAdd,
+  onClear,
+  onQueryChange,
+  onRemove,
+  onResultsOpenChange,
+  placeholder,
+  query,
+  selectedOptions,
+  showResults,
+}) => (
+  <div className="relative">
+    <div className="mb-2 flex min-h-10 flex-wrap gap-2">
+      {selectedOptions.length ? (
+        selectedOptions.map((option) => (
+          <button
+            className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            key={option.id}
+            onClick={() => onRemove(option)}
+            type="button"
+          >
+            {option.label} x
+          </button>
+        ))
+      ) : (
+        <p className="flex items-center text-sm text-muted-foreground">{emptyLabel}</p>
+      )}
+    </div>
+    <Input
+      autoComplete="off"
+      className="h-12 border-scroll-100/25 bg-card/35"
+      id={inputID}
+      onBlur={() => window.setTimeout(() => onResultsOpenChange(false), 120)}
+      onChange={(event) => {
+        onQueryChange(event.target.value)
+        onResultsOpenChange(true)
+      }}
+      onFocus={() => onResultsOpenChange(true)}
+      placeholder={placeholder}
+      value={query}
+    />
+    {showResults ? (
+      <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
+        <button
+          className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
+          onMouseDown={(event) => event.preventDefault()}
+          onClick={() => {
+            onClear()
+            onQueryChange('')
+            onResultsOpenChange(false)
+          }}
+          type="button"
+        >
+          {noSelectionLabel}
+        </button>
+        {filteredOptions.map((option) => (
+          <button
+            className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
+            key={option.id}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              onAdd(option)
+              onQueryChange('')
+              onResultsOpenChange(true)
+            }}
+            type="button"
+          >
+            {option.label}
+          </button>
+        ))}
+        {!filteredOptions.length ? (
+          <p className="px-3 py-3 text-sm text-muted-foreground">No matching results.</p>
+        ) : null}
+      </div>
+    ) : null}
+  </div>
+)
+
 const SegmentedGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className,
@@ -390,6 +441,29 @@ const SquareOption: React.FC<{
     {label}
   </button>
 )
+
+const useRelationFilter = (
+  options: RelationOption[],
+  selectedIDs: string[],
+  query: string,
+): RelationOption[] =>
+  useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase()
+    const selected = new Set(selectedIDs)
+    const available = options.filter((option) => !selected.has(String(option.id)))
+    const matches = normalizedQuery
+      ? available.filter((option) => option.label.toLowerCase().includes(normalizedQuery))
+      : available
+
+    return matches.slice(0, 8)
+  }, [options, query, selectedIDs])
+
+const useSelectedRelations = (options: RelationOption[], selectedIDs: string[]): RelationOption[] =>
+  useMemo(() => {
+    const selected = new Set(selectedIDs)
+
+    return options.filter((option) => selected.has(String(option.id)))
+  }, [options, selectedIDs])
 
 const toISODateTime = (value: string): string => {
   if (!value) return ''
