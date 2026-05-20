@@ -512,6 +512,7 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   )
   await fillFirst(page.getByLabel(/^location$/i), 'Denver')
   await fillFirst(page.getByLabel(/^website$/i), 'https://example.com')
+  await fillFirst(page.getByLabel(/^x$/i), 'playwright')
   await page.getByLabel(/^Warrior$/i).check()
   await page.getByLabel(/^Frontend Dev$/i).check()
   await page.getByRole('button', { name: /save profile/i }).click()
@@ -781,6 +782,9 @@ async function verifyLegacyMemberImport(adminPage: Page) {
   expect(importedProfile).toMatchObject({
     claimEmail: email,
     claimStatus: 'unclaimed',
+    contact: {
+      x: `@${handle}`,
+    },
     displayName,
     handle,
     sourceCRMID,

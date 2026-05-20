@@ -149,6 +149,7 @@ export const importLegacyMemberProfiles = async ({
         discord: clean(row.discord),
         email: claimEmail,
         telegram: clean(row.telegram),
+        x: clean(row.twitter),
       },
       displayName,
       handle,
@@ -339,7 +340,12 @@ const getLegacyTokens = (row: CSVRow) => {
 const splitTokens = (value: string | undefined) => {
   return (value || '')
     .split(',')
-    .map((item) => item.replace(/\(.+\)/, '').trim().toUpperCase())
+    .map((item) =>
+      item
+        .replace(/\(.+\)/, '')
+        .trim()
+        .toUpperCase(),
+    )
     .filter(Boolean)
 }
 

@@ -76,7 +76,7 @@ Suggested fields:
 - `location`
 - `walletAddress`
 - `links`
-- `contact`
+- `contact`: private contact fields including email, Discord, Telegram, Farcaster, and X
 - `profileSkills`: relationship to `profileSkills`, has many
 - `profileRoles`: relationship to `profileRoles`, has many
 - `claimStatus`: `unclaimed` or `claimed`

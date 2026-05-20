@@ -179,6 +179,11 @@ export const Profiles: CollectionConfig = {
           name: 'farcaster',
           type: 'text',
         },
+        {
+          name: 'x',
+          label: 'X',
+          type: 'text',
+        },
       ],
     },
     {
