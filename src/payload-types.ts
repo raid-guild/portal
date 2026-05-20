@@ -969,6 +969,9 @@ export interface Profile {
     discord?: string | null;
     telegram?: string | null;
     farcaster?: string | null;
+    /**
+     * X handle without the @ symbol.
+     */
     x?: string | null;
   };
   profileSkills: (number | ProfileSkill)[];

@@ -734,7 +734,7 @@ async function verifyLegacyMemberImport(adminPage: Page) {
   const suffix = Date.now()
   const sourceCRMID = `legacy-${suffix}`
   const displayName = `Legacy Import ${suffix}`
-  const handle = `legacy-import-${suffix}`
+  const handle = `legacy${suffix.toString(36).slice(-6)}`
   const email = `${handle}@example.com`
   const csv = [
     'member_id,name,email,eth_address,primary_class_key,guild_classes,skills,application_skills,introduction,github,twitter,discord,telegram',
@@ -783,7 +783,7 @@ async function verifyLegacyMemberImport(adminPage: Page) {
     claimEmail: email,
     claimStatus: 'unclaimed',
     contact: {
-      x: `@${handle}`,
+      x: handle,
     },
     displayName,
     handle,

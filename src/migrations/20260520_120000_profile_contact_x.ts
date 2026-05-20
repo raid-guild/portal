@@ -4,11 +4,20 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
     ALTER TABLE "profiles" ADD COLUMN "contact_x" varchar;
 
+    WITH chosen_links AS (
+      SELECT DISTINCT ON ("_parent_id")
+        "_parent_id",
+        "url"
+      FROM "profiles_links"
+      WHERE lower("label") IN ('x', 'twitter')
+        AND NULLIF("url", '') IS NOT NULL
+      ORDER BY "_parent_id", "_order" ASC, "id" ASC
+    )
     UPDATE "profiles"
     SET "contact_x" = NULLIF(
       regexp_replace(
         regexp_replace(
-          regexp_replace("profiles_links"."url", '^https?://(www\\.)?(x|twitter)\\.com/', '', 'i'),
+          regexp_replace(chosen_links."url", '^https?://(www\\.)?(x|twitter)\\.com/', '', 'i'),
           '^@',
           ''
         ),
@@ -17,11 +26,9 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
       ),
       ''
     )
-    FROM "profiles_links"
-    WHERE "profiles"."id" = "profiles_links"."_parent_id"
-      AND "profiles"."contact_x" IS NULL
-      AND lower("profiles_links"."label") IN ('x', 'twitter')
-      AND NULLIF("profiles_links"."url", '') IS NOT NULL;
+    FROM chosen_links
+    WHERE "profiles"."id" = chosen_links."_parent_id"
+      AND "profiles"."contact_x" IS NULL;
   `)
 }
 

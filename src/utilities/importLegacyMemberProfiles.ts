@@ -149,7 +149,7 @@ export const importLegacyMemberProfiles = async ({
         discord: clean(row.discord),
         email: claimEmail,
         telegram: clean(row.telegram),
-        x: clean(row.twitter),
+        x: normalizeXHandle(row.twitter),
       },
       displayName,
       handle,
@@ -431,6 +431,19 @@ const normalizeEmail = (value: string | undefined) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return undefined
 
   return email
+}
+
+const normalizeXHandle = (value: string | undefined) => {
+  const cleaned = clean(value)
+  if (!cleaned) return ''
+
+  const handle = cleaned
+    .replace(/^https?:\/\/(www\.)?(x|twitter)\.com\//i, '')
+    .replace(/^@/, '')
+    .replace(/[/?#].*$/, '')
+    .trim()
+
+  return /^[A-Za-z0-9_]{1,15}$/.test(handle) ? handle : ''
 }
 
 const clean = (value: string | undefined) => value?.trim() || ''
