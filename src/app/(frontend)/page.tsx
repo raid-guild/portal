@@ -58,20 +58,20 @@ export default async function HomePage() {
 
 export const metadata: Metadata = {
   description:
-    'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
+    'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
   openGraph: mergeOpenGraph({
     description:
-      'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
-    title: 'RaidGuild Portal | Find the work already in motion',
+      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+    title: 'RaidGuild Portal | A digital coworking space for builders',
     url: '/',
   }),
-  title: 'RaidGuild Portal | Find the work already in motion',
+  title: 'RaidGuild Portal | A digital coworking space for builders',
   twitter: {
     card: 'summary_large_image',
     description:
-      'Follow the weekly brief, see active projects, join upcoming sessions, and plug into real opportunities across RaidGuild.',
+      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
     images: ['/assets/image.png'],
-    title: 'RaidGuild Portal | Find the work already in motion',
+    title: 'RaidGuild Portal | A digital coworking space for builders',
   },
 }
 

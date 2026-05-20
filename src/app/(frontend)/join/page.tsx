@@ -10,14 +10,14 @@ export default function JoinPage() {
       <section className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-start">
         <div className="max-w-3xl">
           <p className="mb-4 portal-kicker">Join the Portal</p>
-          <h1 className="portal-title-lg">Join the current RaidGuild cohort cycle.</h1>
+          <h1 className="portal-title-lg">Join the RaidGuild builder workspace.</h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-foreground">
-            Create a profile, pick a track, and start contributing to live projects with builders,
-            creatives, operators, and strategists.
+            Create a profile, join sessions, find a team, and start contributing to live projects
+            with builders, creatives, operators, and strategists.
           </p>
           <p className="mt-5 text-base leading-7 text-muted-foreground">
-            Start with the weekly brief, join the next session, and find the places where new
-            contributors can plug in right now.
+            Start with the weekly brief, join the next live session, and find the places where new
+            contributors can build skills through shipped work.
           </p>
           <hr className="my-8 border-border" />
           <p className="text-xl font-medium">
@@ -31,12 +31,16 @@ export default function JoinPage() {
               </p>
             </div>
             <div>
-              <p className="font-bold text-foreground">2. Pick a track</p>
-              <p className="mt-2">Find active projects, sessions, and open collaboration areas.</p>
+              <p className="font-bold text-foreground">2. Find a team</p>
+              <p className="mt-2">
+                Use sessions and project context to find open collaboration areas.
+              </p>
             </div>
             <div>
               <p className="font-bold text-foreground">3. Contribute visibly</p>
-              <p className="mt-2">Build with others and create attribution for meaningful work.</p>
+              <p className="mt-2">
+                Build skills with others and create attribution for meaningful work.
+              </p>
             </div>
           </div>
         </div>
@@ -69,6 +73,7 @@ export default function JoinPage() {
 }
 
 export const metadata: Metadata = {
-  description: 'Join the current RaidGuild cohort cycle and find active contribution paths.',
+  description:
+    'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
   title: 'Join the Portal',
 }

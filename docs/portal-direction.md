@@ -39,7 +39,12 @@ Auth roles belong on `users` and control application permissions:
 New accounts should start as `contributor`, except the first user in a fresh
 install, who must become `admin` to preserve the Payload onboarding flow. The
 `member` role should be assigned manually by an admin when the community process
-is ready for it.
+is ready for it, or automatically when an imported legacy member profile is
+claimed through email verification.
+
+Users also track `emailVerifiedAt` after they verify their signup email from the
+profile page. Account email verification is separate from member status; it only
+proves control of the auth email address.
 
 Profile roles belong on `profiles` through relationships to `profileRoles`.
 They describe how a member contributes and should be usable for discovery,
@@ -75,15 +80,16 @@ Suggested fields:
 - `profileSkills`: relationship to `profileSkills`, has many
 - `profileRoles`: relationship to `profileRoles`, has many
 - `claimStatus`: `unclaimed` or `claimed`
-- `claimEmail`: private legacy email used to let a matching signup claim the profile
+- `claimEmail`: private legacy email used to send a profile claim verification link
 - `claimedAt`
 - `sourceCRMID`
 - `status`: draft/review/published or active/inactive, final naming TBD
 - `visibility`: public/authenticated/private, final shape TBD
 
 Imported legacy CRM profiles can leave `user` blank and set `claimStatus` to
-`unclaimed`. A new signup can claim the profile when their account email matches
-the private `claimEmail`.
+`unclaimed`. A logged-in user can request a claim when their account email
+matches the private `claimEmail`, but the claim is only completed after they
+open the signed verification link sent to that email.
 
 Legacy CRM records should be imported through the admin-only
 `/api/profiles/import-legacy` route instead of normal production seed behavior.

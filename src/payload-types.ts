@@ -509,6 +509,10 @@ export interface User {
   id: number;
   name?: string | null;
   roles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent')[] | null;
+  /**
+   * Set after the user verifies their account email from the portal.
+   */
+  emailVerifiedAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2081,6 +2085,7 @@ export interface CategoriesSelect<T extends boolean = true> {
 export interface UsersSelect<T extends boolean = true> {
   name?: T;
   roles?: T;
+  emailVerifiedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

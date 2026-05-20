@@ -62,6 +62,21 @@ export const Users: CollectionConfig = {
       options: authRoleOptions,
       saveToJWT: true,
     },
+    {
+      name: 'emailVerifiedAt',
+      type: 'date',
+      access: {
+        create: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        description: 'Set after the user verifies their account email from the portal.',
+        position: 'sidebar',
+      },
+    },
   ],
   hooks: {
     afterChange: [

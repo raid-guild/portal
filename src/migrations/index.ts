@@ -14,6 +14,7 @@ import * as migration_20260515_214741_project_archive_curation_fields from './20
 import * as migration_20260516_120000_project_visibility from './20260516_120000_project_visibility'
 import * as migration_20260516_130000_profile_claims from './20260516_130000_profile_claims'
 import * as migration_20260518_120000_session_creation_fields from './20260518_120000_session_creation_fields'
+import * as migration_20260519_120000_user_email_verification from './20260519_120000_user_email_verification'
 
 export const migrations = [
   {
@@ -95,5 +96,10 @@ export const migrations = [
     up: migration_20260518_120000_session_creation_fields.up,
     down: migration_20260518_120000_session_creation_fields.down,
     name: '20260518_120000_session_creation_fields',
+  },
+  {
+    up: migration_20260519_120000_user_email_verification.up,
+    down: migration_20260519_120000_user_email_verification.down,
+    name: '20260519_120000_user_email_verification',
   },
 ]
