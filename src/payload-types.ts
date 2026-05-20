@@ -969,6 +969,10 @@ export interface Profile {
     discord?: string | null;
     telegram?: string | null;
     farcaster?: string | null;
+    /**
+     * X handle without the @ symbol.
+     */
+    x?: string | null;
   };
   profileSkills: (number | ProfileSkill)[];
   profileRoles: (number | ProfileRole)[];
@@ -1913,6 +1917,7 @@ export interface ProfilesSelect<T extends boolean = true> {
         discord?: T;
         telegram?: T;
         farcaster?: T;
+        x?: T;
       };
   profileSkills?: T;
   profileRoles?: T;

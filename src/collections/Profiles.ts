@@ -179,6 +179,24 @@ export const Profiles: CollectionConfig = {
           name: 'farcaster',
           type: 'text',
         },
+        {
+          name: 'x',
+          label: 'X',
+          type: 'text',
+          admin: {
+            description: 'X handle without the @ symbol.',
+          },
+          maxLength: 15,
+          validate: (value: null | string | undefined) => {
+            if (!value) return true
+
+            if (!/^[A-Za-z0-9_]{1,15}$/.test(value)) {
+              return 'X handle must be 1-15 characters and contain only letters, numbers, and underscores'
+            }
+
+            return true
+          },
+        },
       ],
     },
     {

@@ -166,6 +166,9 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
           email: String(formData.get('contactEmail') || '').trim(),
           farcaster: String(formData.get('farcaster') || '').trim(),
           telegram: String(formData.get('telegram') || '').trim(),
+          x: String(formData.get('x') || '')
+            .trim()
+            .replace(/^@/, ''),
         },
         displayName: String(formData.get('displayName') || '').trim(),
         handle: String(formData.get('handle') || '').trim(),
@@ -319,6 +322,16 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                   id="contactEmail"
                   name="contactEmail"
                   type="email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="x">X</Label>
+                <Input
+                  className={fieldClassName}
+                  defaultValue={profile?.contact?.x || ''}
+                  id="x"
+                  name="x"
+                  placeholder="raidguild"
                 />
               </div>
             </div>
