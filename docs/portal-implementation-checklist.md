@@ -91,7 +91,7 @@
 
 ## Phase 6: External API Hardening
 
-- [ ] Add signup abuse controls before public launch: rate limiting, CAPTCHA, and stricter signup email verification gates. The portal can now verify account email ownership from `/me`, but signup is not blocked on verification yet.
+- [ ] Add signup abuse controls before public launch: rate limiting, CAPTCHA, and stricter signup email verification gates. New self-serve signups now start as `unverified`, can manage their own `/me` profile, and become `contributor` only after account email verification.
 - [ ] Decide approved external origins for browser API consumers.
 - [ ] Update CORS configuration intentionally.
 - [ ] Document REST examples for profiles, projects, posts, and media.

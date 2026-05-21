@@ -10,8 +10,9 @@ type UserRole = Exclude<NonNullable<User['roles']>[number], undefined>
 
 const withMemberRole = (roles: User['roles']): UserRole[] => {
   const existingRoles: UserRole[] = Array.isArray(roles) ? roles.filter(Boolean) : ['contributor']
+  const withoutUnverified = existingRoles.filter((role) => role !== 'unverified')
 
-  return Array.from(new Set([...existingRoles, 'member']))
+  return Array.from(new Set([...withoutUnverified, 'contributor', 'member']))
 }
 
 type ClaimTokenPayload = {
@@ -223,6 +224,7 @@ export async function POST(request: Request) {
     id: user.id,
     collection: 'users',
     data: {
+      emailVerifiedAt: new Date().toISOString(),
       roles: withMemberRole(user.roles),
     },
     overrideAccess: true,

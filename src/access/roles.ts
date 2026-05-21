@@ -1,6 +1,6 @@
 import type { Access, AccessArgs, FieldAccess } from 'payload'
 
-const AUTH_ROLES = ['admin', 'editor', 'contributor', 'member', 'agent'] as const
+const AUTH_ROLES = ['admin', 'editor', 'contributor', 'member', 'agent', 'unverified'] as const
 
 export type AuthRole = (typeof AUTH_ROLES)[number]
 
@@ -40,7 +40,8 @@ export const hasRole = (
 
 export const isAdmin = (user: UserWithRoles | null | undefined): boolean => hasRole(user, 'admin')
 
-export const canAccessAdmin = (user: UserWithRoles | null | undefined): boolean => Boolean(user)
+export const canAccessAdmin = (user: UserWithRoles | null | undefined): boolean =>
+  hasRole(user, ['admin', 'editor', 'contributor', 'member', 'agent'])
 
 export const canEditContent = (user: UserWithRoles | null | undefined): boolean =>
   hasRole(user, ['admin', 'editor'])
@@ -54,6 +55,8 @@ export const canContributeContent = (user: UserWithRoles | null | undefined): bo
 export const admins: Access = ({ req: { user } }) => isAdmin(user)
 
 export const contentContributors: Access = ({ req: { user } }) => canContributeContent(user)
+
+export const contentEditors: Access = ({ req: { user } }) => canEditContent(user)
 
 export const adminsFieldAccess: FieldAccess = ({ req: { user } }) => isAdmin(user)
 
