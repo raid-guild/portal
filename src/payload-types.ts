@@ -508,7 +508,7 @@ export interface Post {
 export interface User {
   id: number;
   name?: string | null;
-  roles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent')[] | null;
+  roles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent' | 'unverified')[] | null;
   /**
    * Set after the user verifies their account email from the portal.
    */

@@ -460,12 +460,38 @@ async function verifyContributorAdminCreateAccess(page: Page) {
   })
 
   expect(createResponse.status()).toBe(201)
+  const createdUser = await createResponse.json()
+  const createdUserID = createdUser.doc?.id || createdUser.id
+  expect(createdUserID).toBeTruthy()
+  expect(createdUser.doc?.roles || createdUser.roles).toContain('unverified')
 
   await page.goto('/login')
   await fillFirst(page.getByLabel(/^email$/i), email)
   await fillFirst(page.getByLabel(/^password$/i), password)
   await page.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(page).toHaveURL(/\/dashboard/)
+
+  await page.goto('/projects')
+  await expect(page.getByRole('link', { name: 'Create project' })).toHaveCount(0)
+
+  await page.goto('/me')
+  await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
+  await expect(page.getByText('Email not verified')).toBeVisible()
+
+  const emailVerificationToken = signAccountEmailVerificationToken({
+    email,
+    exp: Date.now() + 1000 * 60 * 30,
+    purpose: 'account-email',
+    userID: String(createdUserID),
+  })
+  await page.goto(`/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`)
+  await expect(page.getByText('Email verified', { exact: true })).toBeVisible()
+
+  const verifiedUserResponse = await page.request.get(`/api/users/${createdUserID}`)
+  expect(verifiedUserResponse.ok()).toBeTruthy()
+  const verifiedUser = await verifiedUserResponse.json()
+  expect(verifiedUser.roles).toContain('contributor')
+  expect(verifiedUser.roles).not.toContain('unverified')
 
   await page.goto('/projects')
   await page.getByRole('link', { name: 'Create project' }).click()
@@ -669,25 +695,6 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(claimPage.getByText('Profile connected')).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
-  await expect(claimPage.getByText('Email not verified')).toBeVisible()
-
-  await claimPage.getByRole('button', { name: 'Verify email' }).click()
-  await expect(claimPage.getByText('Verification email sent.')).toBeVisible()
-
-  const emailVerificationToken = signAccountEmailVerificationToken({
-    email,
-    exp: Date.now() + 1000 * 60 * 30,
-    purpose: 'account-email',
-    userID: String(createdUserID),
-  })
-  const emailVerificationPath = `/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`
-
-  await claimContext.clearCookies()
-  await claimPage.goto(emailVerificationPath)
-  await expect(claimPage).toHaveURL(/\/login\?next=/)
-  await fillFirst(claimPage.getByLabel(/^email$/i), email)
-  await fillFirst(claimPage.getByLabel(/^password$/i), password)
-  await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(claimPage.getByText('Email verified', { exact: true })).toBeVisible()
 
   const claimedUserResponse = await adminPage.request.get(`/api/users/${createdUserID}`)
@@ -695,6 +702,7 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   const claimedUser = await claimedUserResponse.json()
   expect(claimedUser.roles).toContain('contributor')
   expect(claimedUser.roles).toContain('member')
+  expect(claimedUser.roles).not.toContain('unverified')
   expect(claimedUser.emailVerifiedAt).toBeTruthy()
 
   await claimContext.close()

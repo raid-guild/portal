@@ -57,7 +57,7 @@ export const Users: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
-      defaultValue: ['contributor'],
+      defaultValue: ['unverified'],
       hasMany: true,
       options: authRoleOptions,
       saveToJWT: true,
@@ -105,7 +105,7 @@ export const Users: CollectionConfig = {
         if (!isAdmin(req.user)) {
           return {
             ...data,
-            roles: ['contributor'],
+            roles: ['unverified'],
           }
         }
 

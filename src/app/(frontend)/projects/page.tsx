@@ -5,6 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent } from '@/access/roles'
 import type { Media, Profile, ProfileSkill, User } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -13,6 +14,7 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProjectsPage() {
   const user = await getCurrentUser()
+  const canCreateProject = canContributeContent(user)
   const projects = await getProjects(user)
 
   return (
@@ -26,7 +28,7 @@ export default async function ProjectsPage() {
             jump in. This is not a project management tool.
           </p>
         </div>
-        {user ? (
+        {canCreateProject ? (
           <Link className="portal-admin-link" href="/admin/collections/projects/create">
             Create project
           </Link>

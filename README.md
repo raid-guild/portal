@@ -97,8 +97,8 @@ Set these variables to enable SendGrid SMTP delivery for password resets, welcom
 - `EMAIL_FROM_NAME`
 
 The public reset flow is available at `/forgot-password` and `/reset-password?token=...`.
-Logged-in users can verify their account email from `/me`.
-Legacy profile claims are requested from `/me`; matching unclaimed profiles send a verification link to the legacy `claimEmail` before the profile is attached to the logged-in user.
+Logged-in users can verify their account email from `/me`; self-serve signups start as `unverified` and become `contributor` after verification.
+Legacy profile claims are requested from `/me`; matching unclaimed profiles send a verification link to the legacy `claimEmail` before the profile is attached to the logged-in user and the account is promoted to `member`.
 
 ### End-to-End Testing
 

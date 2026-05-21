@@ -35,16 +35,25 @@ Auth roles belong on `users` and control application permissions:
 - `editor`
 - `contributor`
 - `member`
+- `agent`
+- `unverified`
 
-New accounts should start as `contributor`, except the first user in a fresh
-install, who must become `admin` to preserve the Payload onboarding flow. The
-`member` role should be assigned manually by an admin when the community process
-is ready for it, or automatically when an imported legacy member profile is
-claimed through email verification.
+New self-serve accounts should start as `unverified`, except the first user in a
+fresh install, who must become `admin` to preserve the Payload onboarding flow.
+Unverified users can sign in and manage their own profile from `/me`, but they
+should not access the Payload admin or create contributor content until they
+verify their account email. Email verification promotes an `unverified` account
+to `contributor`.
+
+The `member` role should be assigned manually by an admin when the community
+process is ready for it, or automatically when an imported legacy member profile
+is claimed through email verification. A successful profile claim also verifies
+the account email and promotes the user to `contributor`.
 
 Users also track `emailVerifiedAt` after they verify their signup email from the
-profile page. Account email verification is separate from member status; it only
-proves control of the auth email address.
+profile page. Account email verification is separate from member status; it
+proves control of the auth email address and unlocks baseline contributor
+permissions.
 
 Profile roles belong on `profiles` through relationships to `profileRoles`.
 They describe how a member contributes and should be usable for discovery,

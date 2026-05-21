@@ -1,16 +1,15 @@
 import type { CollectionConfig } from 'payload'
 
 import { anyone } from '../access/anyone'
-import { authenticated } from '../access/authenticated'
-import { hideFromNonEditors } from '@/access/roles'
+import { contentEditors, hideFromNonEditors } from '@/access/roles'
 
 export const Categories: CollectionConfig = {
   slug: 'categories',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: contentEditors,
+    delete: contentEditors,
     read: anyone,
-    update: authenticated,
+    update: contentEditors,
   },
   admin: {
     hidden: hideFromNonEditors,

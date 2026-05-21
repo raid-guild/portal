@@ -3,7 +3,10 @@ import crypto from 'crypto'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
+import type { User } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+
+type UserRole = Exclude<NonNullable<User['roles']>[number], undefined>
 
 type EmailVerificationTokenPayload = {
   email: string
@@ -13,6 +16,13 @@ type EmailVerificationTokenPayload = {
 }
 
 const EMAIL_VERIFICATION_TOKEN_TTL_MS = 1000 * 60 * 30
+
+const verifiedRoles = (roles: User['roles']): UserRole[] => {
+  const existingRoles: UserRole[] = Array.isArray(roles) ? roles.filter(Boolean) : ['unverified']
+  const withoutUnverified = existingRoles.filter((role) => role !== 'unverified')
+
+  return Array.from(new Set([...withoutUnverified, 'contributor']))
+}
 
 const signEmailVerificationPayload = (payload: EmailVerificationTokenPayload): string => {
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString('base64url')
@@ -128,6 +138,7 @@ export async function POST(request: Request) {
     collection: 'users',
     data: {
       emailVerifiedAt: new Date().toISOString(),
+      roles: verifiedRoles(user.roles),
     },
     overrideAccess: true,
   })
