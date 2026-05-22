@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 
 import { RelatedPosts } from '@/blocks/RelatedPosts/Component'
 import { PayloadRedirects } from '@/components/PayloadRedirects'
@@ -9,7 +10,7 @@ import React, { cache } from 'react'
 import RichText from '@/components/RichText'
 import { Comments } from '@/components/Comments'
 
-import type { Post } from '@/payload-types'
+import type { Event, Post, Thread } from '@/payload-types'
 
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
@@ -58,6 +59,7 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="container">
+          <PostSourceContext post={post} />
           <RichText className="max-w-[48rem] mx-auto" content={post.content} enableGutter={false} />
           {post.relatedPosts && post.relatedPosts.length > 0 && (
             <RelatedPosts
@@ -65,7 +67,7 @@ export default async function Post({ params: paramsPromise }: Args) {
               docs={post.relatedPosts.filter((post) => typeof post === 'object')}
             />
           )}
-          
+
           {/* Add Comments section */}
           <div className="max-w-[48rem] mx-auto mt-16">
             <Comments postId={typeof post.id === 'string' ? parseInt(post.id, 10) : post.id} />
@@ -103,3 +105,39 @@ const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
 
   return result.docs?.[0] || null
 })
+
+const PostSourceContext: React.FC<{ post: Post }> = ({ post }) => {
+  const sourceSession = typeof post.sourceSession === 'object' ? post.sourceSession : null
+  const parentThread = typeof post.parentThread === 'object' ? post.parentThread : null
+  const wikiTopics = post.wikiCandidateTopics?.map((item) => item.topic).filter(Boolean) || []
+
+  if (!sourceSession && !parentThread && !wikiTopics.length && !post.wikiCandidate) return null
+
+  return (
+    <aside className="mx-auto mb-8 max-w-[48rem] border border-border bg-card/25 p-5">
+      <p className="portal-kicker">Source Context</p>
+      <div className="mt-4 flex flex-wrap gap-3">
+        {sourceSession ? <SourceSessionLink event={sourceSession} /> : null}
+        {parentThread ? <ThreadPill thread={parentThread} /> : null}
+        {wikiTopics.map((topic) => (
+          <span className="portal-pill" key={topic}>
+            Wiki candidate: {topic}
+          </span>
+        ))}
+        {!wikiTopics.length && post.wikiCandidate ? (
+          <span className="portal-pill">Wiki candidate</span>
+        ) : null}
+      </div>
+    </aside>
+  )
+}
+
+const SourceSessionLink: React.FC<{ event: Event }> = ({ event }) => (
+  <Link className="portal-link" href={`/events/${event.id}`}>
+    Source session: {event.title}
+  </Link>
+)
+
+const ThreadPill: React.FC<{ thread: Thread }> = ({ thread }) => (
+  <span className="portal-pill">Thread: {thread.title}</span>
+)

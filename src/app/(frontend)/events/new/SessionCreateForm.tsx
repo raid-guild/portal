@@ -18,12 +18,14 @@ type SessionCreateFormProps = {
   canSyncDiscord: boolean
   defaultSpeakerID?: number | string | null
   defaultStart: string
+  minStart: string
   projects: RelationOption[]
   speakers: RelationOption[]
   threads: RelationOption[]
 }
 
 const sessionTypes = [
+  ['fireside', 'Fireside'],
   ['brownbag', 'Brownbag'],
   ['workshop', 'Workshop'],
   ['all-hands', 'All hands'],
@@ -45,6 +47,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
   defaultSpeakerID,
   defaultStart,
+  minStart,
   projects,
   speakers,
   threads,
@@ -143,6 +146,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
             defaultValue={defaultStart}
             id="startsAt"
+            min={minStart}
             name="startsAt"
             required
             type="datetime-local"

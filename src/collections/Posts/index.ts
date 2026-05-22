@@ -18,6 +18,7 @@ import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { enforcePostWorkflow } from './hooks/enforcePostWorkflow'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidatePost } from './hooks/revalidatePost'
+import { validateSafeURL } from '@/utilities/safeURL'
 
 import {
   MetaDescriptionField,
@@ -106,7 +107,99 @@ export const Posts: CollectionConfig<'posts'> = {
         {
           fields: [
             {
+              name: 'contentType',
+              type: 'select',
+              admin: {
+                position: 'sidebar',
+              },
+              defaultValue: 'article',
+              options: [
+                {
+                  label: 'Article',
+                  value: 'article',
+                },
+                {
+                  label: 'Recap',
+                  value: 'recap',
+                },
+                {
+                  label: 'Quote',
+                  value: 'quote',
+                },
+                {
+                  label: 'Clip',
+                  value: 'clip',
+                },
+                {
+                  label: 'Lesson',
+                  value: 'lesson',
+                },
+                {
+                  label: 'Announcement',
+                  value: 'announcement',
+                },
+                {
+                  label: 'Newsletter',
+                  value: 'newsletter',
+                },
+              ],
+            },
+            {
+              name: 'artifactKind',
+              type: 'select',
+              admin: {
+                position: 'sidebar',
+              },
+              defaultValue: 'article',
+              options: [
+                {
+                  label: 'Article',
+                  value: 'article',
+                },
+                {
+                  label: 'Embed',
+                  value: 'embed',
+                },
+                {
+                  label: 'Note',
+                  value: 'note',
+                },
+              ],
+            },
+            {
+              name: 'sourceSession',
+              type: 'relationship',
+              admin: {
+                position: 'sidebar',
+              },
+              relationTo: 'events',
+            },
+            {
+              name: 'parentThread',
+              type: 'relationship',
+              admin: {
+                position: 'sidebar',
+              },
+              relationTo: 'threads',
+            },
+            {
               name: 'relatedPosts',
+              type: 'relationship',
+              admin: {
+                position: 'sidebar',
+              },
+              filterOptions: ({ id }) => {
+                return {
+                  id: {
+                    not_in: [id],
+                  },
+                }
+              },
+              hasMany: true,
+              relationTo: 'posts',
+            },
+            {
+              name: 'derivedFromPosts',
               type: 'relationship',
               admin: {
                 position: 'sidebar',
@@ -129,6 +222,32 @@ export const Posts: CollectionConfig<'posts'> = {
               },
               hasMany: true,
               relationTo: 'categories',
+            },
+            {
+              name: 'wikiCandidate',
+              type: 'checkbox',
+              defaultValue: false,
+            },
+            {
+              name: 'wikiCandidateTopics',
+              type: 'array',
+              fields: [
+                {
+                  name: 'topic',
+                  type: 'text',
+                  required: true,
+                },
+              ],
+            },
+            {
+              name: 'sourceArtifactURL',
+              type: 'text',
+              validate: (value) =>
+                validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+            },
+            {
+              name: 'sourceArtifactID',
+              type: 'text',
             },
           ],
           label: 'Meta',

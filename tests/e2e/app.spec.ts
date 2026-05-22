@@ -332,6 +332,71 @@ async function verifySeededSessions(page: Page) {
   ).toBeVisible()
 }
 
+async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const pastStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const pastEnd = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+  const publishedAt = new Date().toISOString()
+  const publicTitle = `Public Fireside Detail ${suffix}`
+  const authenticatedTitle = `Authenticated Fireside Detail ${suffix}`
+
+  const publicResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: publicTitle,
+      summary: 'A public session with member-visible source material.',
+      startsAt: pastStart,
+      endsAt: pastEnd,
+      sessionType: 'fireside',
+      sourceArtifactURL: 'https://example.com/source-artifact',
+      sourceStatus: 'processed',
+      visibility: 'public',
+      _status: 'published',
+      publishedAt,
+    },
+  })
+  expect(publicResponse.status()).toBe(201)
+  const publicEventBody = await publicResponse.json()
+  const publicEventID = publicEventBody.doc?.id || publicEventBody.id
+  expect(publicEventID).toBeTruthy()
+
+  const authenticatedResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: authenticatedTitle,
+      summary: 'An authenticated session hidden from anonymous visitors.',
+      startsAt: pastStart,
+      endsAt: pastEnd,
+      sessionType: 'fireside',
+      sourceArtifactURL: 'https://example.com/authenticated-source-artifact',
+      sourceStatus: 'processed',
+      visibility: 'authenticated',
+      _status: 'published',
+      publishedAt,
+    },
+  })
+  expect(authenticatedResponse.status()).toBe(201)
+  const authenticatedEventBody = await authenticatedResponse.json()
+  const authenticatedEventID = authenticatedEventBody.doc?.id || authenticatedEventBody.id
+  expect(authenticatedEventID).toBeTruthy()
+
+  await publicPage.goto(`/events/${publicEventID}`)
+  await expect(publicPage.getByRole('heading', { name: publicTitle })).toBeVisible()
+  await expect(publicPage.getByText('Continue In The Portal')).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Source Material' })).toHaveCount(0)
+
+  const anonymousAuthenticatedResponse = await publicPage.goto(`/events/${authenticatedEventID}`)
+  expect(anonymousAuthenticatedResponse?.status()).toBe(404)
+  await expect(publicPage.getByRole('heading', { name: authenticatedTitle })).toHaveCount(0)
+
+  await adminPage.goto(`/events/${publicEventID}`)
+  await expect(adminPage.getByRole('heading', { name: publicTitle })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Source artifact' })).toBeVisible()
+
+  await adminPage.goto(`/events/${authenticatedEventID}`)
+  await expect(adminPage.getByRole('heading', { name: authenticatedTitle })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
+}
+
 async function verifyPortalSkillEndpoint(page: Page) {
   const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
 
@@ -866,6 +931,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
+  await verifySessionDetailVisibility(page, publicPage)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)

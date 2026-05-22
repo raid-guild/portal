@@ -31,6 +31,7 @@ const sessionTypeLabels: Record<SessionType, string> = {
   'all-hands': 'All hands',
   brownbag: 'Brownbag',
   demo: 'Demo',
+  fireside: 'Fireside',
   pitch: 'Pitch',
   workshop: 'Workshop',
 }
@@ -39,6 +40,7 @@ const sessionTypeStyles: Record<SessionType, string> = {
   'all-hands': 'border-moloch-500/30 bg-moloch-500/10',
   brownbag: 'border-guild-olive/30 bg-guild-olive/10',
   demo: 'border-success/30 bg-success/10',
+  fireside: 'border-primary/40 bg-primary/10',
   pitch: 'border-warning/30 bg-warning/10',
   workshop: 'border-scroll-200/30 bg-scroll-200/10',
 }
@@ -107,13 +109,19 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
 }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
-  const speakers = relationDocs<Profile>(event.relatedProfiles)
+  const speakers = relationDocs<Profile>(event.speakerProfiles)
+  const hosts = relationDocs<Profile>(event.hostProfiles)
+  const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const speaker = typeof event.speaker === 'object' ? event.speaker : null
-  const hostNames = speakers.length
-    ? speakers.map((profile) => profile.displayName).filter(Boolean)
-    : speaker
-      ? [speaker.displayName].filter(Boolean)
-      : []
+  const hostNames = hosts.length
+    ? hosts.map((profile) => profile.displayName).filter(Boolean)
+    : speakers.length
+      ? speakers.map((profile) => profile.displayName).filter(Boolean)
+      : relatedProfiles.length
+        ? relatedProfiles.map((profile) => profile.displayName).filter(Boolean)
+        : speaker
+          ? [speaker.displayName].filter(Boolean)
+          : []
   const sessionType = event.sessionType || 'brownbag'
   const startsAt = new Date(event.startsAt)
   const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
@@ -134,12 +142,24 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
                 {formatDateTime(event.startsAt)}
               </span>
             </div>
-            <h3 className="mt-3 portal-heading-sm">{event.title}</h3>
+            <h3 className="mt-3 portal-heading-sm">
+              <Link className="transition-colors hover:text-primary" href={`/events/${event.id}`}>
+                {event.title}
+              </Link>
+            </h3>
             {hostNames.length ? (
-              <p className="mt-2 text-sm text-muted-foreground">Hosted by {hostNames.join(', ')}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {event.sessionType === 'fireside' ? 'Featuring' : 'Hosted by'}{' '}
+                {hostNames.join(', ')}
+              </p>
             ) : null}
             {event.summary ? (
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
+            ) : null}
+            {event.sourceStatus && new Date(event.startsAt).getTime() < Date.now() ? (
+              <p className="mt-3 inline-flex border border-border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                {event.sourceStatus.replace('_', ' ')}
+              </p>
             ) : null}
             {event.locationLabel ? (
               <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
@@ -165,6 +185,9 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
             ) : null}
           </div>
           <div className="flex flex-wrap content-start gap-3 lg:justify-end">
+            <Link className="portal-link" href={`/events/${event.id}`}>
+              Details
+            </Link>
             <SafeLink href={event.joinURL} label="Join" />
             <SafeLink
               href={event.calendarURL || getCalendarFallbackURL(event)}
