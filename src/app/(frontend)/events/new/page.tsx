@@ -53,6 +53,7 @@ export default async function NewSessionPage() {
         canSyncDiscord={canCreateDiscordScheduledEvents()}
         defaultSpeakerID={defaultProfile?.id}
         defaultStart={getDefaultStart()}
+        minStart={getMinimumStart()}
         projects={projects}
         speakers={speakers}
         threads={threads}
@@ -163,6 +164,14 @@ const getDefaultStart = () => {
     date.setHours(date.getHours() + 1)
   }
 
+  const offset = date.getTimezoneOffset()
+  const local = new Date(date.getTime() - offset * 60 * 1000)
+
+  return local.toISOString().slice(0, 16)
+}
+
+const getMinimumStart = () => {
+  const date = new Date()
   const offset = date.getTimezoneOffset()
   const local = new Date(date.getTime() - offset * 60 * 1000)
 

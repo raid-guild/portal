@@ -7,7 +7,7 @@ import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { createDiscordScheduledEvent } from '@/utilities/discordScheduledEvents'
 import { validateSafeURL } from '@/utilities/safeURL'
 
-const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch'] as const
+const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside'] as const
 const DURATIONS = [30, 60] as const
 const VISIBILITIES = ['public', 'authenticated', 'admin'] as const
 
@@ -70,6 +70,14 @@ export async function POST(request: Request) {
   }
 
   const startsAtDate = new Date(startsAt)
+
+  if (startsAtDate.getTime() <= Date.now()) {
+    return Response.json(
+      { message: 'Use Payload admin to add or enrich past sessions.' },
+      { status: 400 },
+    )
+  }
+
   const endsAtDate = new Date(startsAtDate.getTime() + durationMinutes * 60 * 1000)
   const initialCalendarURL = createGoogleCalendarURL({
     description: summary,
@@ -94,6 +102,7 @@ export async function POST(request: Request) {
       relatedThreads: relatedThreads.length ? relatedThreads : undefined,
       sessionType,
       speaker: speaker || undefined,
+      speakerProfiles: speakers.length ? speakers : undefined,
       startsAt: startsAtDate.toISOString(),
       summary: summary || undefined,
       title,
