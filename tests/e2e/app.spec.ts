@@ -397,6 +397,44 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
 }
 
+async function verifySessionTypeCreation(page: Page) {
+  const sessionTypes = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside']
+  const suffix = Date.now()
+
+  for (const [index, sessionType] of sessionTypes.entries()) {
+    const startsAt = new Date(Date.now() + (index + 2) * 60 * 60 * 1000).toISOString()
+    const response = await page.request.post('/api/events/create', {
+      data: {
+        durationMinutes: 30,
+        sessionType,
+        startsAt,
+        summary: `Regression coverage for ${sessionType} session creation.`,
+        syncDiscord: false,
+        title: `Playwright ${sessionType} session ${suffix}`,
+        visibility: 'public',
+      },
+    })
+
+    expect(response.ok(), `${sessionType} session creation should succeed`).toBeTruthy()
+
+    const cmsStartsAt = new Date(Date.now() + (index + 10) * 60 * 60 * 1000)
+    const cmsResponse = await page.request.post('/api/events', {
+      data: {
+        _status: 'published',
+        endsAt: new Date(cmsStartsAt.getTime() + 30 * 60 * 1000).toISOString(),
+        publishedAt: new Date().toISOString(),
+        sessionType,
+        startsAt: cmsStartsAt.toISOString(),
+        summary: `CMS API regression coverage for ${sessionType} session creation.`,
+        title: `Playwright CMS ${sessionType} session ${suffix}`,
+        visibility: 'public',
+      },
+    })
+
+    expect(cmsResponse.ok(), `${sessionType} CMS event creation should succeed`).toBeTruthy()
+  }
+}
+
 async function verifyPortalSkillEndpoint(page: Page) {
   const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
 
@@ -932,6 +970,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
+  await verifySessionTypeCreation(page)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)

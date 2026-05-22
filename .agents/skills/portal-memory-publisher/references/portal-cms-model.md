@@ -59,12 +59,18 @@ Key fields:
 
 - `title`
 - `summary`
+- `sessionType`: `brownbag`, `workshop`, `all-hands`, `demo`, `pitch`, `fireside`
 - `startsAt`
 - `endsAt`
 - `locationLabel`
 - `joinURL`
 - `calendarURL`
 - `discordEventURL`
+- `discordScheduledEventID`
+- `discordSyncStatus`: `not_configured`, `synced`, `failed`
+- `discordSyncError`
+- `hostProfiles`
+- `speakerProfiles`
 - `relatedProjects`
 - `relatedThreads`
 - `relatedProfiles`
@@ -72,6 +78,8 @@ Key fields:
 - `_status`
 
 Rule: sessions can be cohort-wide or scoped to one or more projects through `relatedProjects`.
+
+Rule: direct `POST /api/events` creates only the Portal record. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
 
 ## projects
 
