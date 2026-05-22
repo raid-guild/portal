@@ -70,17 +70,11 @@ const contentTypeOrder = [
 export default async function SessionDetailPage({ params: paramsPromise }: Args) {
   const { id = '' } = await paramsPromise
   const user = await getCurrentUser()
-  let event = await getEvent(id, user)
-  let isPreviewOnly = false
-
-  if (!event && !user) {
-    event = await getAuthenticatedPreviewEvent(id)
-    isPreviewOnly = Boolean(event)
-  }
+  const event = await getEvent(id, user)
 
   if (!event) notFound()
 
-  const canViewFullDetails = Boolean(user) && !isPreviewOnly
+  const canViewFullDetails = Boolean(user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
   const startsAt = new Date(event.startsAt)
   const isPast = startsAt.getTime() < Date.now()
@@ -156,7 +150,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </Section>
       ) : null}
 
-      {!user ? <PortalSessionCTA eventID={event.id} isPreviewOnly={isPreviewOnly} /> : null}
+      {!user ? <PortalSessionCTA eventID={event.id} /> : null}
 
       {canViewFullDetails && isPast && sourceLinks.some((link) => link.href) ? (
         <Section title="Source Material">
@@ -274,15 +268,10 @@ const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ child
   </section>
 )
 
-const PortalSessionCTA: React.FC<{ eventID: number; isPreviewOnly: boolean }> = ({
-  eventID,
-  isPreviewOnly,
-}) => (
+const PortalSessionCTA: React.FC<{ eventID: number }> = ({ eventID }) => (
   <section className="mt-12 border border-primary/30 bg-primary/10 p-5">
     <p className="portal-kicker">Continue In The Portal</p>
-    <h2 className="portal-heading-sm mt-3">
-      {isPreviewOnly ? 'Log in to view session details' : 'Log in for the full session graph'}
-    </h2>
+    <h2 className="portal-heading-sm mt-3">Log in for the full session graph</h2>
     <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
       See source materials, related projects, profiles, derived posts, and wiki candidates from this
       session.
@@ -389,27 +378,6 @@ const getEvent = async (
       overrideAccess: false,
       user: user || undefined,
     })
-  } catch {
-    return null
-  }
-}
-
-const getAuthenticatedPreviewEvent = async (id: string): Promise<Event | null> => {
-  if (!id) return null
-
-  const payload = await getPayload({ config: configPromise })
-
-  try {
-    const event = await payload.findByID({
-      id,
-      collection: 'events',
-      depth: 1,
-      overrideAccess: true,
-    })
-
-    if (event._status !== 'published' || event.visibility !== 'authenticated') return null
-
-    return event
   } catch {
     return null
   }

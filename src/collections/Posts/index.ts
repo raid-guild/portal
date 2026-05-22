@@ -18,6 +18,7 @@ import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { enforcePostWorkflow } from './hooks/enforcePostWorkflow'
 import { populateAuthors } from './hooks/populateAuthors'
 import { revalidatePost } from './hooks/revalidatePost'
+import { validateSafeURL } from '@/utilities/safeURL'
 
 import {
   MetaDescriptionField,
@@ -200,6 +201,16 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'derivedFromPosts',
               type: 'relationship',
+              admin: {
+                position: 'sidebar',
+              },
+              filterOptions: ({ id }) => {
+                return {
+                  id: {
+                    not_in: [id],
+                  },
+                }
+              },
               hasMany: true,
               relationTo: 'posts',
             },
@@ -231,6 +242,8 @@ export const Posts: CollectionConfig<'posts'> = {
             {
               name: 'sourceArtifactURL',
               type: 'text',
+              validate: (value) =>
+                validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
             },
             {
               name: 'sourceArtifactID',
