@@ -174,6 +174,12 @@ records the session type, start/end time, speaker, visibility, and optional
 Discord scheduled event sync state. Payload admin remains the canonical place
 for deeper editorial cleanup.
 
+Agents and server-to-server publishers should use `/api/events/create` when
+creating a future session that should attempt Discord scheduled event sync.
+Direct Payload collection writes to `/api/events` are Portal-only writes and do
+not call Discord. This keeps imports, past-session enrichment, and admin cleanup
+from unexpectedly creating external Discord events.
+
 Future daily participation should use a separate `dailyEngagements` module that
 creates `pointEvents` for simple once-per-day check-ins. Keep points as a ledger,
 not profile state. See `docs/points-and-daily-engagement-feature-spec.md`.

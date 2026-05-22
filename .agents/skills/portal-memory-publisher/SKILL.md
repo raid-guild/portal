@@ -81,6 +81,34 @@ Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /
 
 Agent accounts are contributor-level publishers. They may create draft/proposal records from sourced memory, but they must not publish, delete, manage users, or impersonate humans.
 
+## Event Creation And Discord Sync
+
+Use the raw Payload collection endpoint (`POST /api/events`) only for Portal-only records, imports, past-session enrichment, drafts, or records that already have external calendar/Discord links.
+
+When creating a future Portal session that should try to create a Discord scheduled event, use the Portal session endpoint instead:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Workshop planning session",
+    "summary": "Plan the next workshop format and owner handoff.",
+    "startsAt": "2026-05-29T18:00:00.000Z",
+    "durationMinutes": 60,
+    "sessionType": "workshop",
+    "visibility": "public",
+    "syncDiscord": true
+  }'
+```
+
+Expected behavior:
+
+- If Discord sync is configured and succeeds, Portal stores `discordScheduledEventID`, `discordEventURL`, `joinURL`, and `discordSyncStatus: synced`.
+- If Discord sync fails, Portal still creates the event and stores `discordSyncStatus: failed` with `discordSyncError`.
+- If `syncDiscord` is false, missing, or Discord env vars are absent, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
+
+Do not tell users a Discord scheduled event was created unless the response has `discordSyncStatus: synced` and a `discordEventURL`.
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.
