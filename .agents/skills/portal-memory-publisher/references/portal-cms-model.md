@@ -89,6 +89,8 @@ Rule: direct `POST /api/events` creates only the Portal record. Agents that inte
 
 Rule: recurring sessions are lightweight event metadata, not a separate collection. When generating the next occurrence, copy `seriesKey`, `seriesTitle`, `recurrenceCadence`, and `recurrenceUntil`, set `previousOccurrence` to the current event, then patch the current event's `nextOccurrence`.
 
+Rule: attach Prism recording/summary artifacts through authenticated `POST /api/events/artifacts/ingest`. Agent accounts may call it after login. Match by `eventID` when known or `discord.scheduledEventID` from the Discord adapter payload.
+
 ## projects
 
 Purpose: live collaboration surfaces.

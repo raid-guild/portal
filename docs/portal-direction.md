@@ -180,6 +180,13 @@ Direct Payload collection writes to `/api/events` are Portal-only writes and do
 not call Discord. This keeps imports, past-session enrichment, and admin cleanup
 from unexpectedly creating external Discord events.
 
+Prism recording/summary callbacks should use authenticated
+`/api/events/artifacts/ingest` requests from a Portal agent account. The endpoint
+matches an event by explicit `eventID` or Discord scheduled event ID and updates
+the event's recording/transcript/summary artifact fields. Unmatched callbacks
+should stay in the Prism workflow for human review rather than creating inferred
+sessions.
+
 Future daily participation should use a separate `dailyEngagements` module that
 creates `pointEvents` for simple once-per-day check-ins. Keep points as a ledger,
 not profile state. See `docs/points-and-daily-engagement-feature-spec.md`.

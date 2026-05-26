@@ -119,6 +119,35 @@ For recurring sessions, Portal uses copied event metadata rather than a separate
 
 When an agent workflow creates the next occurrence, copy the series fields forward, set `previousOccurrence` on the new event, and patch `nextOccurrence` on the current event. Do not invent recurrence if the current event has no `seriesKey` and `recurrenceCadence`.
 
+## Event Artifact Ingest
+
+Prism workflows should attach recording, transcript, and summary artifacts through the dedicated ingest endpoint instead of raw-updating event fields:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/events/artifacts/ingest" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "discord": {
+      "scheduledEventID": "1234567890"
+    },
+    "artifacts": {
+      "artifactID": "prism-artifact-id",
+      "recordingURL": "https://example.com/recording",
+      "transcriptURL": "https://example.com/transcript",
+      "summaryURL": "https://example.com/summary"
+    }
+  }'
+```
+
+Authenticate with a Portal user session. Agent accounts may call this endpoint after login; anonymous requests are rejected.
+
+Matching order:
+
+- explicit `eventID`, when supplied
+- `discord.scheduledEventID`
+
+The endpoint updates `recordingURL`, `transcriptArtifactURL`, `summaryArtifactURL`, `sourceArtifactURL`, `sourceArtifactID`, and `sourceStatus`. If no event matches, keep the artifact in the Prism workflow for human review rather than inventing a Portal event.
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.

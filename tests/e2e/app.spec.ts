@@ -462,6 +462,63 @@ async function verifySessionTypeCreation(page: Page) {
   await expect(page.getByText('Playwright Weekly Series / Weekly')).toBeVisible()
 }
 
+async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Playwright Artifact Event ${suffix}`
+  const discordScheduledEventID = `discord-event-${suffix}`
+  const startsAt = new Date(Date.now() + 20 * 60 * 60 * 1000)
+  const response = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      discordScheduledEventID,
+      endsAt: new Date(startsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      publishedAt: new Date().toISOString(),
+      sessionType: 'workshop',
+      startsAt: startsAt.toISOString(),
+      title,
+      visibility: 'public',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+
+  const unauthorizedResponse = await publicPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      discord: {
+        scheduledEventID: discordScheduledEventID,
+      },
+    },
+  })
+
+  expect(unauthorizedResponse.status()).toBe(401)
+
+  const ingestResponse = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      artifacts: {
+        artifactID: `artifact-${suffix}`,
+        recordingURL: 'https://example.com/recording',
+        summaryURL: 'https://example.com/summary',
+        transcriptURL: 'https://example.com/transcript',
+      },
+      discord: {
+        scheduledEventID: discordScheduledEventID,
+      },
+    },
+  })
+
+  expect(ingestResponse.ok()).toBeTruthy()
+  const ingestBody = await ingestResponse.json()
+  expect(ingestBody.matchedBy).toBe('discordScheduledEventID')
+  expect(ingestBody.event).toMatchObject({
+    recordingURL: 'https://example.com/recording',
+    sourceArtifactID: `artifact-${suffix}`,
+    sourceArtifactURL: 'https://example.com/summary',
+    sourceStatus: 'summarized',
+    summaryArtifactURL: 'https://example.com/summary',
+    transcriptArtifactURL: 'https://example.com/transcript',
+  })
+}
+
 async function verifyPortalSkillEndpoint(page: Page) {
   const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
 
@@ -998,6 +1055,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)
+  await verifyEventArtifactIngest(page, publicPage)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)
