@@ -109,6 +109,16 @@ Expected behavior:
 
 Do not tell users a Discord scheduled event was created unless the response has `discordSyncStatus: synced` and a `discordEventURL`.
 
+For recurring sessions, Portal uses copied event metadata rather than a separate series collection:
+
+- `seriesKey`: stable grouping key, e.g. `weekly-all-hands`
+- `seriesTitle`: display grouping label
+- `recurrenceCadence`: `weekly`, `biweekly`, or `monthly`
+- `recurrenceUntil`: optional end date
+- `previousOccurrence` / `nextOccurrence`: event-to-event chain
+
+When an agent workflow creates the next occurrence, copy the series fields forward, set `previousOccurrence` on the new event, and patch `nextOccurrence` on the current event. Do not invent recurrence if the current event has no `seriesKey` and `recurrenceCadence`.
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.

@@ -45,6 +45,12 @@ const sessionTypeStyles: Record<SessionType, string> = {
   workshop: 'border-scroll-200/30 bg-scroll-200/10',
 }
 
+const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, string> = {
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
+  weekly: 'Weekly',
+}
+
 export default async function EventsPage() {
   const user = await getCurrentUser()
   const events = await getEvents(user)
@@ -138,6 +144,14 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <span className="portal-pill">{sessionTypeLabels[sessionType]}</span>
+              {event.seriesKey ? (
+                <span className="portal-pill">
+                  {event.seriesTitle || event.seriesKey}
+                  {event.recurrenceCadence
+                    ? ` / ${recurrenceCadenceLabels[event.recurrenceCadence]}`
+                    : ''}
+                </span>
+              ) : null}
               <span className="text-sm text-muted-foreground">
                 {formatDateTime(event.startsAt)}
               </span>

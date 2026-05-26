@@ -30,6 +30,14 @@ const formatDateTime = (date?: string | null) => {
   }).format(new Date(date))
 }
 
+const formatDate = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+  }).format(new Date(date))
+}
+
 const sessionTypeLabels: Record<NonNullable<Event['sessionType']>, string> = {
   'all-hands': 'All hands',
   brownbag: 'Brownbag',
@@ -45,6 +53,12 @@ const sourceStatusLabels: Record<NonNullable<Event['sourceStatus']>, string> = {
   recorded: 'Recorded',
   scheduled: 'Scheduled',
   summarized: 'Summarized',
+}
+
+const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, string> = {
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
+  weekly: 'Weekly',
 }
 
 const contentTypeLabels: Record<string, string> = {
@@ -114,6 +128,9 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
             {event.sourceStatus ? (
               <span className="portal-pill">{sourceStatusLabels[event.sourceStatus]}</span>
             ) : null}
+            {event.seriesKey ? (
+              <span className="portal-pill">{event.seriesTitle || event.seriesKey}</span>
+            ) : null}
             <span className="text-sm text-muted-foreground">{event.visibility}</span>
           </div>
           <h1 className="portal-title mt-5">{event.title}</h1>
@@ -131,6 +148,12 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           </p>
           {event.locationLabel ? (
             <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
+          ) : null}
+          {event.recurrenceCadence ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {recurrenceCadenceLabels[event.recurrenceCadence]}
+              {event.recurrenceUntil ? ` until ${formatDate(event.recurrenceUntil)}` : ''}
+            </p>
           ) : null}
           <div className="mt-5 flex flex-wrap gap-3">
             {!isPast ? <SafeLink href={event.joinURL} label="Join" /> : null}
@@ -151,6 +174,15 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
       ) : null}
 
       {!user ? <PortalSessionCTA eventID={event.id} /> : null}
+
+      {canViewFullDetails && (event.previousOccurrence || event.nextOccurrence) ? (
+        <Section title="Series Navigation">
+          <div className="flex flex-wrap gap-3">
+            <OccurrenceLink event={event.previousOccurrence} label="Previous session" />
+            <OccurrenceLink event={event.nextOccurrence} label="Next session" />
+          </div>
+        </Section>
+      ) : null}
 
       {canViewFullDetails && isPast && sourceLinks.some((link) => link.href) ? (
         <Section title="Source Material">
@@ -317,6 +349,19 @@ const ProfileLink: React.FC<{ profile: Profile }> = ({ profile }) => {
   return (
     <Link className="portal-pill transition-colors hover:text-primary" href={href}>
       {profile.displayName}
+    </Link>
+  )
+}
+
+const OccurrenceLink: React.FC<{ event?: number | Event | null; label: string }> = ({
+  event,
+  label,
+}) => {
+  if (!event || typeof event !== 'object') return null
+
+  return (
+    <Link className="portal-link" href={`/events/${event.id}`}>
+      {label}: {event.title}
     </Link>
   )
 }

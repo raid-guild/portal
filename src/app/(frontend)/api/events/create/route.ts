@@ -10,10 +10,12 @@ import { validateSafeURL } from '@/utilities/safeURL'
 const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside'] as const
 const DURATIONS = [30, 60] as const
 const VISIBILITIES = ['public', 'authenticated', 'admin'] as const
+const RECURRENCE_CADENCES = ['weekly', 'biweekly', 'monthly'] as const
 
 type SessionType = (typeof SESSION_TYPES)[number]
 type Duration = (typeof DURATIONS)[number]
 type Visibility = (typeof VISIBILITIES)[number]
+type RecurrenceCadence = (typeof RECURRENCE_CADENCES)[number]
 
 export async function POST(request: Request) {
   const payload = await getPayload({ config: configPromise })
@@ -44,6 +46,13 @@ export async function POST(request: Request) {
   const speaker = speakers[0] || numberValue(body?.speaker)
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
+  const seriesKey = normalizeSeriesKey(body?.seriesKey)
+  const seriesTitle = stringValue(body?.seriesTitle)
+  const recurrenceCadence = enumValue<RecurrenceCadence>(
+    body?.recurrenceCadence,
+    RECURRENCE_CADENCES,
+  )
+  const recurrenceUntil = stringValue(body?.recurrenceUntil)
   const syncDiscord = booleanValue(body?.syncDiscord)
 
   if (!title) {
@@ -69,11 +78,35 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Enter a valid join URL.' }, { status: 400 })
   }
 
+  const hasRecurrenceDetails = Boolean(
+    seriesKey || seriesTitle || recurrenceCadence || recurrenceUntil,
+  )
+
+  if (hasRecurrenceDetails && (!seriesKey || !recurrenceCadence)) {
+    return Response.json(
+      { message: 'Recurring sessions need a series key and cadence.' },
+      { status: 400 },
+    )
+  }
+
   const startsAtDate = new Date(startsAt)
 
   if (startsAtDate.getTime() <= Date.now()) {
     return Response.json(
       { message: 'Use Payload admin to add or enrich past sessions.' },
+      { status: 400 },
+    )
+  }
+
+  const recurrenceUntilDate = recurrenceUntil ? new Date(recurrenceUntil) : null
+
+  if (recurrenceUntil && (!recurrenceUntilDate || Number.isNaN(recurrenceUntilDate.getTime()))) {
+    return Response.json({ message: 'Enter a valid recurrence end date.' }, { status: 400 })
+  }
+
+  if (recurrenceUntilDate && recurrenceUntilDate.getTime() <= startsAtDate.getTime()) {
+    return Response.json(
+      { message: 'Recurrence end date must be after the session start time.' },
       { status: 400 },
     )
   }
@@ -100,7 +133,11 @@ export async function POST(request: Request) {
       relatedProfiles: speakers.length ? speakers : undefined,
       relatedProjects: relatedProjects.length ? relatedProjects : undefined,
       relatedThreads: relatedThreads.length ? relatedThreads : undefined,
+      recurrenceCadence: recurrenceCadence || undefined,
+      recurrenceUntil: recurrenceUntilDate ? recurrenceUntilDate.toISOString() : undefined,
       sessionType,
+      seriesKey: seriesKey || undefined,
+      seriesTitle: seriesTitle || undefined,
       speaker: speaker || undefined,
       speakerProfiles: speakers.length ? speakers : undefined,
       startsAt: startsAtDate.toISOString(),
@@ -208,4 +245,15 @@ const booleanValue = (value: unknown): boolean => {
   if (typeof value === 'string') return value.trim().toLowerCase() === 'true'
 
   return false
+}
+
+const normalizeSeriesKey = (value: unknown): string => {
+  if (typeof value !== 'string') return ''
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
 }

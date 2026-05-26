@@ -234,6 +234,83 @@ export const Events: CollectionConfig = {
       ],
     },
     {
+      name: 'seriesKey',
+      type: 'text',
+      admin: {
+        description:
+          'Stable key for lightweight recurring-session grouping, e.g. weekly-all-hands.',
+        position: 'sidebar',
+      },
+      index: true,
+    },
+    {
+      name: 'seriesTitle',
+      type: 'text',
+      admin: {
+        description: 'Display title for the recurring session group.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'recurrenceCadence',
+      type: 'select',
+      admin: {
+        description: 'Copied forward by agents/jobs when generating the next occurrence.',
+        position: 'sidebar',
+      },
+      options: [
+        {
+          label: 'Weekly',
+          value: 'weekly',
+        },
+        {
+          label: 'Every other week',
+          value: 'biweekly',
+        },
+        {
+          label: 'Monthly',
+          value: 'monthly',
+        },
+      ],
+    },
+    {
+      name: 'recurrenceUntil',
+      type: 'date',
+      admin: {
+        date: {
+          pickerAppearance: 'dayOnly',
+        },
+        description: 'Optional end date for recurrence generation.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'previousOccurrence',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      filterOptions: ({ id }) => ({
+        id: {
+          not_in: [id],
+        },
+      }),
+      relationTo: 'events',
+    },
+    {
+      name: 'nextOccurrence',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      filterOptions: ({ id }) => ({
+        id: {
+          not_in: [id],
+        },
+      }),
+      relationTo: 'events',
+    },
+    {
       name: 'roleFocus',
       type: 'select',
       admin: {

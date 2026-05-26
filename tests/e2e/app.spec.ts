@@ -433,6 +433,33 @@ async function verifySessionTypeCreation(page: Page) {
 
     expect(cmsResponse.ok(), `${sessionType} CMS event creation should succeed`).toBeTruthy()
   }
+
+  const recurringStartsAt = new Date(Date.now() + 18 * 60 * 60 * 1000).toISOString()
+  const recurringResponse = await page.request.post('/api/events/create', {
+    data: {
+      durationMinutes: 60,
+      recurrenceCadence: 'weekly',
+      recurrenceUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      seriesKey: `playwright-weekly-${suffix}`,
+      seriesTitle: 'Playwright Weekly Series',
+      sessionType: 'workshop',
+      startsAt: recurringStartsAt,
+      summary: 'Regression coverage for recurring session metadata.',
+      syncDiscord: false,
+      title: `Playwright recurring session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+
+  expect(recurringResponse.ok(), 'recurring session creation should succeed').toBeTruthy()
+  const recurringBody = await recurringResponse.json()
+  const recurringEvent = recurringBody.event
+  expect(recurringEvent.seriesKey).toBe(`playwright-weekly-${suffix}`)
+  expect(recurringEvent.seriesTitle).toBe('Playwright Weekly Series')
+  expect(recurringEvent.recurrenceCadence).toBe('weekly')
+
+  await page.goto('/events')
+  await expect(page.getByText('Playwright Weekly Series / Weekly')).toBeVisible()
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {

@@ -43,6 +43,12 @@ const visibilityOptions = [
   ['authenticated', 'Members'],
 ] as const
 
+const recurrenceCadences = [
+  ['weekly', 'Weekly'],
+  ['biweekly', 'Every 2 weeks'],
+  ['monthly', 'Monthly'],
+] as const
+
 export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
   defaultSpeakerID,
@@ -56,6 +62,8 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrenceCadence, setRecurrenceCadence] = useState('weekly')
   const [sessionType, setSessionType] = useState('brownbag')
   const [projectIDs, setProjectIDs] = useState<string[]>([])
   const [projectQuery, setProjectQuery] = useState('')
@@ -93,9 +101,13 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
+      recurrenceCadence: isRecurring ? recurrenceCadence : '',
+      recurrenceUntil: isRecurring ? String(formData.get('recurrenceUntil') || '') : '',
       relatedProjects: projectIDs,
       relatedThreads: threadIDs,
       sessionType,
+      seriesKey: isRecurring ? String(formData.get('seriesKey') || '') : '',
+      seriesTitle: isRecurring ? String(formData.get('seriesTitle') || '') : '',
       speaker: speakerIDs[0] || '',
       speakers: speakerIDs,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
@@ -283,6 +295,58 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               type="url"
             />
           </Field>
+          <div className="grid gap-4 border border-border bg-background/40 p-4 sm:col-span-2">
+            <label className="flex items-start gap-3 text-sm text-muted-foreground">
+              <input
+                checked={isRecurring}
+                className="mt-1 accent-primary"
+                onChange={(event) => setIsRecurring(event.target.checked)}
+                type="checkbox"
+              />
+              <span>Part of a recurring session series</span>
+            </label>
+            {isRecurring ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor="seriesKey" label="Series key">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70"
+                    id="seriesKey"
+                    name="seriesKey"
+                    placeholder="weekly-all-hands"
+                    required={isRecurring}
+                  />
+                </Field>
+                <Field htmlFor="seriesTitle" label="Series title">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70"
+                    id="seriesTitle"
+                    name="seriesTitle"
+                    placeholder="Weekly All Hands"
+                  />
+                </Field>
+                <Field className="sm:col-span-2" label="Cadence">
+                  <SegmentedGrid className="grid-cols-1 sm:grid-cols-3">
+                    {recurrenceCadences.map(([value, label]) => (
+                      <SquareOption
+                        isSelected={recurrenceCadence === value}
+                        key={value}
+                        label={label}
+                        onClick={() => setRecurrenceCadence(value)}
+                      />
+                    ))}
+                  </SegmentedGrid>
+                </Field>
+                <Field htmlFor="recurrenceUntil" label="End date">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70 font-mono text-xs uppercase accent-primary"
+                    id="recurrenceUntil"
+                    name="recurrenceUntil"
+                    type="date"
+                  />
+                </Field>
+              </div>
+            ) : null}
+          </div>
           <label className="flex items-start gap-3 text-sm text-muted-foreground sm:col-span-2">
             <input
               checked={syncDiscord}

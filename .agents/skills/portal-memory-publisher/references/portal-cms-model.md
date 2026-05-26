@@ -71,6 +71,12 @@ Key fields:
 - `discordSyncError`
 - `hostProfiles`
 - `speakerProfiles`
+- `seriesKey`
+- `seriesTitle`
+- `recurrenceCadence`: `weekly`, `biweekly`, `monthly`
+- `recurrenceUntil`
+- `previousOccurrence`
+- `nextOccurrence`
 - `relatedProjects`
 - `relatedThreads`
 - `relatedProfiles`
@@ -80,6 +86,8 @@ Key fields:
 Rule: sessions can be cohort-wide or scoped to one or more projects through `relatedProjects`.
 
 Rule: direct `POST /api/events` creates only the Portal record. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
+
+Rule: recurring sessions are lightweight event metadata, not a separate collection. When generating the next occurrence, copy `seriesKey`, `seriesTitle`, `recurrenceCadence`, and `recurrenceUntil`, set `previousOccurrence` to the current event, then patch the current event's `nextOccurrence`.
 
 ## projects
 
