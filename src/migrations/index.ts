@@ -19,6 +19,7 @@ import * as migration_20260520_120000_profile_contact_x from './20260520_120000_
 import * as migration_20260521_120000_unverified_auth_role from './20260521_120000_unverified_auth_role'
 import * as migration_20260522_120000_fireside_content_flow from './20260522_120000_fireside_content_flow'
 import * as migration_20260526_120000_event_recurrence_fields from './20260526_120000_event_recurrence_fields'
+import * as migration_20260526_130000_event_member_visibility from './20260526_130000_event_member_visibility'
 
 export const migrations = [
   {
@@ -125,5 +126,10 @@ export const migrations = [
     up: migration_20260526_120000_event_recurrence_fields.up,
     down: migration_20260526_120000_event_recurrence_fields.down,
     name: '20260526_120000_event_recurrence_fields',
+  },
+  {
+    up: migration_20260526_130000_event_member_visibility.up,
+    down: migration_20260526_130000_event_member_visibility.down,
+    name: '20260526_130000_event_member_visibility',
   },
 ]

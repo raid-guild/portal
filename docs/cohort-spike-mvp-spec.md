@@ -351,10 +351,11 @@ Purpose: make the next session visible and easy to add to a personal calendar.
 Fields:
 
 - `title`: text, required
-- `sessionType`: `brownbag`, `workshop`, `all-hands`, `demo`, `pitch`
+- `sessionType`: `brownbag`, `workshop`, `all-hands`, `demo`, `pitch`, `fireside`
 - `startsAt`: date, required
 - `endsAt`: date, optional
-- `speaker`: relationship to `profiles`, optional
+- `hostProfiles`: relationship to `profiles`, has many
+- `speakerProfiles`: relationship to `profiles`, has many
 - `locationLabel`: text, optional
 - `joinURL`: text, optional safe URL
 - `calendarURL`: text, optional safe URL
@@ -364,12 +365,14 @@ Fields:
 - `discordSyncError`: textarea, optional
 - `relatedProjects`: relationship to `projects`, has many
 - `relatedThreads`: relationship to `threads`, has many
-- `visibility`: `public`, `authenticated`, `admin`
+- `seriesKey`, `seriesTitle`, `recurrenceCadence`, `recurrenceUntil`: optional recurrence metadata copied between event records
+- `visibility`: `public`, `authenticated`, `member`, `admin`
 
 MVP requirement: support external calendar and Discord event links before
 building native calendar subscription logic. Contributors should be able to
-create a basic session from `/events/new`; Payload admin remains available for
-full editorial control.
+create a basic future session from `/events/new`; Payload admin remains
+available for full editorial control and past-session enrichment. The session
+list should separate live, upcoming, and past sessions.
 
 ## Implementation Phases
 

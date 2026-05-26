@@ -16,11 +16,11 @@ export type RelationOption = {
 
 type SessionCreateFormProps = {
   canSyncDiscord: boolean
-  defaultSpeakerID?: number | string | null
+  defaultHostID?: number | string | null
   defaultStart: string
   minStart: string
   projects: RelationOption[]
-  speakers: RelationOption[]
+  profileOptions: RelationOption[]
   threads: RelationOption[]
 }
 
@@ -40,7 +40,8 @@ const durations = [
 
 const visibilityOptions = [
   ['public', 'Public'],
-  ['authenticated', 'Members'],
+  ['authenticated', 'Portal'],
+  ['member', 'Members'],
 ] as const
 
 const recurrenceCadences = [
@@ -51,11 +52,11 @@ const recurrenceCadences = [
 
 export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
-  defaultSpeakerID,
+  defaultHostID,
   defaultStart,
   minStart,
+  profileOptions,
   projects,
-  speakers,
   threads,
 }) => {
   const router = useRouter()
@@ -65,30 +66,31 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurrenceCadence, setRecurrenceCadence] = useState('weekly')
   const [sessionType, setSessionType] = useState('brownbag')
+  const [guestIDs, setGuestIDs] = useState<string[]>([])
+  const [guestQuery, setGuestQuery] = useState('')
+  const [showGuestResults, setShowGuestResults] = useState(false)
+  const [hostIDs, setHostIDs] = useState<string[]>(() =>
+    defaultHostID ? [String(defaultHostID)] : [],
+  )
+  const [hostQuery, setHostQuery] = useState('')
+  const [showHostResults, setShowHostResults] = useState(false)
   const [projectIDs, setProjectIDs] = useState<string[]>([])
   const [projectQuery, setProjectQuery] = useState('')
   const [showProjectResults, setShowProjectResults] = useState(false)
-  const [speakerIDs, setSpeakerIDs] = useState<string[]>(() =>
-    defaultSpeakerID ? [String(defaultSpeakerID)] : [],
-  )
-  const [speakerQuery, setSpeakerQuery] = useState(() => {
-    const selected = speakers.find((speaker) => String(speaker.id) === String(defaultSpeakerID))
-
-    return selected ? '' : ''
-  })
-  const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
   const [threadIDs, setThreadIDs] = useState<string[]>([])
   const [threadQuery, setThreadQuery] = useState('')
   const [showThreadResults, setShowThreadResults] = useState(false)
   const [visibility, setVisibility] = useState('public')
 
+  const filteredGuests = useRelationFilter(profileOptions, guestIDs, guestQuery)
+  const filteredHosts = useRelationFilter(profileOptions, hostIDs, hostQuery)
   const filteredProjects = useRelationFilter(projects, projectIDs, projectQuery)
-  const filteredSpeakers = useRelationFilter(speakers, speakerIDs, speakerQuery)
   const filteredThreads = useRelationFilter(threads, threadIDs, threadQuery)
 
+  const selectedGuests = useSelectedRelations(profileOptions, guestIDs)
+  const selectedHosts = useSelectedRelations(profileOptions, hostIDs)
   const selectedProjects = useSelectedRelations(projects, projectIDs)
-  const selectedSpeakers = useSelectedRelations(speakers, speakerIDs)
   const selectedThreads = useSelectedRelations(threads, threadIDs)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -103,13 +105,15 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       locationLabel: String(formData.get('locationLabel') || ''),
       recurrenceCadence: isRecurring ? recurrenceCadence : '',
       recurrenceUntil: isRecurring ? String(formData.get('recurrenceUntil') || '') : '',
+      guests: guestIDs,
+      hosts: hostIDs,
       relatedProjects: projectIDs,
       relatedThreads: threadIDs,
       sessionType,
       seriesKey: isRecurring ? String(formData.get('seriesKey') || '') : '',
       seriesTitle: isRecurring ? String(formData.get('seriesTitle') || '') : '',
-      speaker: speakerIDs[0] || '',
-      speakers: speakerIDs,
+      speaker: guestIDs[0] || hostIDs[0] || '',
+      speakers: guestIDs,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
       summary: String(formData.get('summary') || ''),
       syncDiscord,
@@ -200,25 +204,42 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             ))}
           </SegmentedGrid>
         </Field>
-        <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker/s">
+        <Field className="sm:col-span-2" htmlFor="hostSearch" label="Host(s)">
           <RelationTypeahead
-            emptyLabel="No speakers selected"
-            filteredOptions={filteredSpeakers}
-            inputID="speakerSearch"
-            noSelectionLabel="No speaker"
-            onAdd={(option) => setSpeakerIDs((current) => [...current, String(option.id)])}
-            onClear={() => setSpeakerIDs([])}
-            onQueryChange={setSpeakerQuery}
+            emptyLabel="No hosts selected"
+            filteredOptions={filteredHosts}
+            inputID="hostSearch"
+            noSelectionLabel="No host"
+            onAdd={(option) => setHostIDs((current) => [...current, String(option.id)])}
+            onClear={() => setHostIDs([])}
+            onQueryChange={setHostQuery}
             onRemove={(option) =>
-              setSpeakerIDs((current) =>
-                current.filter((speakerID) => speakerID !== String(option.id)),
-              )
+              setHostIDs((current) => current.filter((hostID) => hostID !== String(option.id)))
             }
-            onResultsOpenChange={setShowSpeakerResults}
-            placeholder="Search speaker"
-            query={speakerQuery}
-            selectedOptions={selectedSpeakers}
-            showResults={showSpeakerResults}
+            onResultsOpenChange={setShowHostResults}
+            placeholder="Search host"
+            query={hostQuery}
+            selectedOptions={selectedHosts}
+            showResults={showHostResults}
+          />
+        </Field>
+        <Field className="sm:col-span-2" htmlFor="guestSearch" label="Guest(s)">
+          <RelationTypeahead
+            emptyLabel="No guests selected"
+            filteredOptions={filteredGuests}
+            inputID="guestSearch"
+            noSelectionLabel="No guest"
+            onAdd={(option) => setGuestIDs((current) => [...current, String(option.id)])}
+            onClear={() => setGuestIDs([])}
+            onQueryChange={setGuestQuery}
+            onRemove={(option) =>
+              setGuestIDs((current) => current.filter((guestID) => guestID !== String(option.id)))
+            }
+            onResultsOpenChange={setShowGuestResults}
+            placeholder="Search guest"
+            query={guestQuery}
+            selectedOptions={selectedGuests}
+            showResults={showGuestResults}
           />
         </Field>
       </div>

@@ -9,7 +9,7 @@ import { validateSafeURL } from '@/utilities/safeURL'
 
 const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside'] as const
 const DURATIONS = [30, 60] as const
-const VISIBILITIES = ['public', 'authenticated', 'admin'] as const
+const VISIBILITIES = ['public', 'authenticated', 'member', 'admin'] as const
 const RECURRENCE_CADENCES = ['weekly', 'biweekly', 'monthly'] as const
 
 type SessionType = (typeof SESSION_TYPES)[number]
@@ -42,8 +42,11 @@ export async function POST(request: Request) {
   const visibility = enumValue<Visibility>(body?.visibility, VISIBILITIES) || 'public'
   const relatedProjects = numberArrayValue(body?.relatedProjects)
   const relatedThreads = numberArrayValue(body?.relatedThreads)
-  const speakers = numberArrayValue(body?.speakers)
-  const speaker = speakers[0] || numberValue(body?.speaker)
+  const hosts = numberArrayValue(body?.hosts)
+  const guests = numberArrayValue(body?.guests)
+  const speakers = guests.length ? guests : numberArrayValue(body?.speakers)
+  const relatedProfiles = uniqueNumbers([...hosts, ...speakers])
+  const speaker = speakers[0] || hosts[0] || numberValue(body?.speaker)
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
   const seriesKey = normalizeSeriesKey(body?.seriesKey)
@@ -130,7 +133,8 @@ export async function POST(request: Request) {
       joinURL: joinURL || undefined,
       locationLabel: locationLabel || undefined,
       publishedAt: new Date().toISOString(),
-      relatedProfiles: speakers.length ? speakers : undefined,
+      hostProfiles: hosts.length ? hosts : undefined,
+      relatedProfiles: relatedProfiles.length ? relatedProfiles : undefined,
       relatedProjects: relatedProjects.length ? relatedProjects : undefined,
       relatedThreads: relatedThreads.length ? relatedThreads : undefined,
       recurrenceCadence: recurrenceCadence || undefined,
@@ -234,6 +238,10 @@ const numberArrayValue = (value: unknown): number[] => {
     seen.add(parsed)
     return [parsed]
   })
+}
+
+const uniqueNumbers = (values: number[]): number[] => {
+  return [...new Set(values)]
 }
 
 const enumValue = <T extends string>(value: unknown, options: readonly T[]): T | null => {

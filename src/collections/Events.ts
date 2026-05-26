@@ -440,6 +440,10 @@ export const Events: CollectionConfig = {
           value: 'authenticated',
         },
         {
+          label: 'Members',
+          value: 'member',
+        },
+        {
           label: 'Public',
           value: 'public',
         },

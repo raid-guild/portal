@@ -234,9 +234,11 @@ async function verifyMemberOnlyProjectVisibility(
 ) {
   const memberOnlyProjectTitle = 'Member Only Project Spike'
   const memberOnlyProjectSlug = 'member-only-project-spike'
+  const memberOnlyEventTitle = 'Member Only Planning Session'
   const memberEmail = 'project-member@example.com'
   const contributorEmail = 'project-contributor@example.com'
   const password = 'ChangeMe123!'
+  const startsAt = new Date(Date.now() + 36 * 60 * 60 * 1000)
 
   const projectResponse = await adminPage.request.post('/api/projects', {
     data: {
@@ -258,6 +260,24 @@ async function verifyMemberOnlyProjectVisibility(
   })
 
   expect(projectResponse.status()).toBe(201)
+
+  const eventResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: memberOnlyEventTitle,
+      summary: 'A planning session that should only be visible to users with the member role.',
+      startsAt: startsAt.toISOString(),
+      endsAt: new Date(startsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      sessionType: 'workshop',
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(eventResponse.status()).toBe(201)
+  const eventBody = await eventResponse.json()
+  const memberOnlyEventID = eventBody.doc?.id || eventBody.id
+  expect(memberOnlyEventID).toBeTruthy()
 
   const memberResponse = await adminPage.request.post('/api/users', {
     data: {
@@ -285,6 +305,10 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(publicPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(0)
   const publicDetailResponse = await publicPage.goto(`/projects/${memberOnlyProjectSlug}`)
   expect(publicDetailResponse?.status()).toBe(404)
+  await publicPage.goto('/events')
+  await expect(publicPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
+  const publicEventDetailResponse = await publicPage.goto(`/events/${memberOnlyEventID}`)
+  expect(publicEventDetailResponse?.status()).toBe(404)
 
   const contributorContext = await browser.newContext()
   const contributorPage = await contributorContext.newPage()
@@ -299,6 +323,10 @@ async function verifyMemberOnlyProjectVisibility(
   )
   const contributorDetailResponse = await contributorPage.goto(`/projects/${memberOnlyProjectSlug}`)
   expect(contributorDetailResponse?.status()).toBe(404)
+  await contributorPage.goto('/events')
+  await expect(contributorPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
+  const contributorEventDetailResponse = await contributorPage.goto(`/events/${memberOnlyEventID}`)
+  expect(contributorEventDetailResponse?.status()).toBe(404)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -313,6 +341,10 @@ async function verifyMemberOnlyProjectVisibility(
   await memberPage.goto(`/projects/${memberOnlyProjectSlug}`)
   await expect(memberPage.getByRole('heading', { name: memberOnlyProjectTitle })).toBeVisible()
   await expect(memberPage.getByText('Member-only collaboration details')).toBeVisible()
+  await memberPage.goto('/events')
+  await expect(memberPage.getByText(memberOnlyEventTitle)).toBeVisible()
+  await memberPage.goto(`/events/${memberOnlyEventID}`)
+  await expect(memberPage.getByRole('heading', { name: memberOnlyEventTitle })).toBeVisible()
   await memberContext.close()
 }
 
@@ -460,6 +492,37 @@ async function verifySessionTypeCreation(page: Page) {
 
   await page.goto('/events')
   await expect(page.getByText('Playwright Weekly Series / Weekly')).toBeVisible()
+}
+
+async function verifyLiveSessionHighlight(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const startsAt = new Date(Date.now() - 5 * 60 * 1000)
+  const title = `Playwright Live Session ${suffix}`
+  const response = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      endsAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+      publishedAt: new Date().toISOString(),
+      sessionType: 'demo',
+      startsAt: startsAt.toISOString(),
+      summary: 'Regression coverage for the live session section.',
+      title,
+      visibility: 'public',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+
+  await publicPage.goto('/events')
+  await expect(
+    publicPage.locator('section').filter({ hasText: title }).locator('.portal-kicker', {
+      hasText: 'Live Now',
+    }),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('article').filter({ hasText: title })).toBeVisible()
+  await expect(
+    publicPage.getByRole('article').filter({ hasText: title }).getByText('Live now'),
+  ).toBeVisible()
 }
 
 async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
@@ -1055,6 +1118,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)
+  await verifyLiveSessionHighlight(page, publicPage)
   await verifyEventArtifactIngest(page, publicPage)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)

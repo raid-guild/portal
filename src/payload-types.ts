@@ -596,7 +596,7 @@ export interface Event {
   relatedProjects?: (number | Project)[] | null;
   relatedThreads?: (number | Thread)[] | null;
   relatedProfiles?: (number | Profile)[] | null;
-  visibility: 'authenticated' | 'public' | 'admin';
+  visibility: 'authenticated' | 'member' | 'public' | 'admin';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;

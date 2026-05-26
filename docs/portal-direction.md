@@ -170,9 +170,10 @@ and pitches. Events should stay focused on calendar visibility, joining, and
 light coordination rather than becoming a course or scheduling platform.
 
 The frontend session creation flow lives at `/events/new` for contributors and
-records the session type, start/end time, speaker, visibility, and optional
-Discord scheduled event sync state. Payload admin remains the canonical place
-for deeper editorial cleanup.
+records the session type, start/end time, host/guest profiles, visibility, light
+recurrence metadata, and optional Discord scheduled event sync state. Payload
+admin remains the canonical place for deeper editorial cleanup and past-session
+enrichment.
 
 Agents and server-to-server publishers should use `/api/events/create` when
 creating a future session that should attempt Discord scheduled event sync.

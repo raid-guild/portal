@@ -103,6 +103,8 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
 
 Expected behavior:
 
+- `visibility` may be `public`, `authenticated`, `member`, or `admin`. Use `member` only when confirmed members should see the session.
+
 - If Discord sync is configured and succeeds, Portal stores `discordScheduledEventID`, `discordEventURL`, `joinURL`, and `discordSyncStatus: synced`.
 - If Discord sync fails, Portal still creates the event and stores `discordSyncStatus: failed` with `discordSyncError`.
 - If `syncDiscord` is false, missing, or Discord env vars are absent, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.

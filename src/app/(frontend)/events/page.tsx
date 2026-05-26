@@ -55,8 +55,13 @@ export default async function EventsPage() {
   const user = await getCurrentUser()
   const events = await getEvents(user)
   const now = Date.now()
-  const upcoming = events.filter((event) => new Date(event.startsAt).getTime() >= now)
-  const past = events.filter((event) => new Date(event.startsAt).getTime() < now)
+  const live = events.filter((event) => isLiveEvent(event, now))
+  const upcoming = events.filter(
+    (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() >= now,
+  )
+  const past = events.filter(
+    (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() < now,
+  )
   const canManageSessions = canContributeContent(user)
 
   return (
@@ -70,12 +75,28 @@ export default async function EventsPage() {
             calendar so the next live moment is not buried in Discord.
           </p>
         </div>
-        {user ? (
+        {canManageSessions ? (
           <Link className="portal-admin-link" href="/events/new">
             Create session
           </Link>
         ) : null}
       </section>
+
+      {live.length ? (
+        <section className="mt-10 border border-primary/40 bg-primary/10 p-5">
+          <p className="portal-kicker">Live Now</p>
+          <div className="mt-5 grid gap-3">
+            {live.map((event) => (
+              <SessionRow
+                canManageSessions={canManageSessions}
+                event={event}
+                isLive
+                key={event.id}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-10">
         <h2 className="portal-heading">Upcoming Sessions</h2>
@@ -109,9 +130,10 @@ export const metadata: Metadata = {
   title: 'Sessions',
 }
 
-const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
+const SessionRow: React.FC<{ canManageSessions: boolean; event: Event; isLive?: boolean }> = ({
   canManageSessions,
   event,
+  isLive = false,
 }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
@@ -139,10 +161,15 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
         <p className="font-mono text-xs uppercase text-muted-foreground">{day}</p>
         <p className="font-display text-2xl font-bold leading-none text-foreground">{date}</p>
       </div>
-      <div className={`rounded-sm border p-5 ${sessionTypeStyles[sessionType]}`}>
+      <div
+        className={`rounded-sm border p-5 ${
+          isLive ? 'border-primary bg-primary/15' : sessionTypeStyles[sessionType]
+        }`}
+      >
         <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
+              {isLive ? <span className="portal-pill">Live now</span> : null}
               <span className="portal-pill">{sessionTypeLabels[sessionType]}</span>
               {event.seriesKey ? (
                 <span className="portal-pill">
@@ -260,6 +287,15 @@ const getCalendarFallbackURL = (event: Event): string | null => {
     startsAt: event.startsAt,
     title: event.title,
   })
+}
+
+const isLiveEvent = (event: Event, now: number): boolean => {
+  const startsAt = new Date(event.startsAt).getTime()
+  const endsAt = event.endsAt
+    ? new Date(event.endsAt).getTime()
+    : startsAt + 30 * 60 * 1000
+
+  return startsAt <= now && endsAt > now
 }
 
 const getEvents = async (user: Awaited<ReturnType<typeof getCurrentUser>>) => {

@@ -46,7 +46,7 @@ Key fields:
 - `participants`
 - `relatedProjects`
 - `links`
-- `visibility`
+- `visibility`: `public`, `authenticated`, `member`, `admin`
 - `_status`
 
 Rule: update existing threads before creating new ones.
@@ -84,6 +84,8 @@ Key fields:
 - `_status`
 
 Rule: sessions can be cohort-wide or scoped to one or more projects through `relatedProjects`.
+
+Rule: use `member` visibility for member-only sessions. Authenticated non-members should not see those events.
 
 Rule: direct `POST /api/events` creates only the Portal record. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
 
