@@ -16,14 +16,16 @@ export type RelationOption = {
 
 type SessionCreateFormProps = {
   canSyncDiscord: boolean
-  defaultSpeakerID?: number | string | null
+  defaultHostID?: number | string | null
   defaultStart: string
+  minStart: string
   projects: RelationOption[]
-  speakers: RelationOption[]
+  profileOptions: RelationOption[]
   threads: RelationOption[]
 }
 
 const sessionTypes = [
+  ['fireside', 'Fireside'],
   ['brownbag', 'Brownbag'],
   ['workshop', 'Workshop'],
   ['all-hands', 'All hands'],
@@ -38,46 +40,57 @@ const durations = [
 
 const visibilityOptions = [
   ['public', 'Public'],
-  ['authenticated', 'Members'],
+  ['authenticated', 'Portal'],
+  ['member', 'Members'],
+] as const
+
+const recurrenceCadences = [
+  ['weekly', 'Weekly'],
+  ['biweekly', 'Every 2 weeks'],
+  ['monthly', 'Monthly'],
 ] as const
 
 export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   canSyncDiscord,
-  defaultSpeakerID,
+  defaultHostID,
   defaultStart,
+  minStart,
+  profileOptions,
   projects,
-  speakers,
   threads,
 }) => {
   const router = useRouter()
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [durationMinutes, setDurationMinutes] = useState(30)
+  const [isRecurring, setIsRecurring] = useState(false)
+  const [recurrenceCadence, setRecurrenceCadence] = useState('weekly')
   const [sessionType, setSessionType] = useState('brownbag')
+  const [guestIDs, setGuestIDs] = useState<string[]>([])
+  const [guestQuery, setGuestQuery] = useState('')
+  const [showGuestResults, setShowGuestResults] = useState(false)
+  const [hostIDs, setHostIDs] = useState<string[]>(() =>
+    defaultHostID ? [String(defaultHostID)] : [],
+  )
+  const [hostQuery, setHostQuery] = useState('')
+  const [showHostResults, setShowHostResults] = useState(false)
   const [projectIDs, setProjectIDs] = useState<string[]>([])
   const [projectQuery, setProjectQuery] = useState('')
   const [showProjectResults, setShowProjectResults] = useState(false)
-  const [speakerIDs, setSpeakerIDs] = useState<string[]>(() =>
-    defaultSpeakerID ? [String(defaultSpeakerID)] : [],
-  )
-  const [speakerQuery, setSpeakerQuery] = useState(() => {
-    const selected = speakers.find((speaker) => String(speaker.id) === String(defaultSpeakerID))
-
-    return selected ? '' : ''
-  })
-  const [showSpeakerResults, setShowSpeakerResults] = useState(false)
   const [syncDiscord, setSyncDiscord] = useState(canSyncDiscord)
   const [threadIDs, setThreadIDs] = useState<string[]>([])
   const [threadQuery, setThreadQuery] = useState('')
   const [showThreadResults, setShowThreadResults] = useState(false)
   const [visibility, setVisibility] = useState('public')
 
+  const filteredGuests = useRelationFilter(profileOptions, guestIDs, guestQuery)
+  const filteredHosts = useRelationFilter(profileOptions, hostIDs, hostQuery)
   const filteredProjects = useRelationFilter(projects, projectIDs, projectQuery)
-  const filteredSpeakers = useRelationFilter(speakers, speakerIDs, speakerQuery)
   const filteredThreads = useRelationFilter(threads, threadIDs, threadQuery)
 
+  const selectedGuests = useSelectedRelations(profileOptions, guestIDs)
+  const selectedHosts = useSelectedRelations(profileOptions, hostIDs)
   const selectedProjects = useSelectedRelations(projects, projectIDs)
-  const selectedSpeakers = useSelectedRelations(speakers, speakerIDs)
   const selectedThreads = useSelectedRelations(threads, threadIDs)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -90,11 +103,17 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       durationMinutes,
       joinURL: String(formData.get('joinURL') || ''),
       locationLabel: String(formData.get('locationLabel') || ''),
+      recurrenceCadence: isRecurring ? recurrenceCadence : '',
+      recurrenceUntil: isRecurring ? String(formData.get('recurrenceUntil') || '') : '',
+      guests: guestIDs,
+      hosts: hostIDs,
       relatedProjects: projectIDs,
       relatedThreads: threadIDs,
       sessionType,
-      speaker: speakerIDs[0] || '',
-      speakers: speakerIDs,
+      seriesKey: isRecurring ? String(formData.get('seriesKey') || '') : '',
+      seriesTitle: isRecurring ? String(formData.get('seriesTitle') || '') : '',
+      speaker: guestIDs[0] || hostIDs[0] || '',
+      speakers: guestIDs,
       startsAt: toISODateTime(String(formData.get('startsAt') || '')),
       summary: String(formData.get('summary') || ''),
       syncDiscord,
@@ -143,6 +162,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
             defaultValue={defaultStart}
             id="startsAt"
+            min={minStart}
             name="startsAt"
             required
             type="datetime-local"
@@ -184,25 +204,42 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
             ))}
           </SegmentedGrid>
         </Field>
-        <Field className="sm:col-span-2" htmlFor="speakerSearch" label="Speaker/s">
+        <Field className="sm:col-span-2" htmlFor="hostSearch" label="Host(s)">
           <RelationTypeahead
-            emptyLabel="No speakers selected"
-            filteredOptions={filteredSpeakers}
-            inputID="speakerSearch"
-            noSelectionLabel="No speaker"
-            onAdd={(option) => setSpeakerIDs((current) => [...current, String(option.id)])}
-            onClear={() => setSpeakerIDs([])}
-            onQueryChange={setSpeakerQuery}
+            emptyLabel="No hosts selected"
+            filteredOptions={filteredHosts}
+            inputID="hostSearch"
+            noSelectionLabel="No host"
+            onAdd={(option) => setHostIDs((current) => [...current, String(option.id)])}
+            onClear={() => setHostIDs([])}
+            onQueryChange={setHostQuery}
             onRemove={(option) =>
-              setSpeakerIDs((current) =>
-                current.filter((speakerID) => speakerID !== String(option.id)),
-              )
+              setHostIDs((current) => current.filter((hostID) => hostID !== String(option.id)))
             }
-            onResultsOpenChange={setShowSpeakerResults}
-            placeholder="Search speaker"
-            query={speakerQuery}
-            selectedOptions={selectedSpeakers}
-            showResults={showSpeakerResults}
+            onResultsOpenChange={setShowHostResults}
+            placeholder="Search host"
+            query={hostQuery}
+            selectedOptions={selectedHosts}
+            showResults={showHostResults}
+          />
+        </Field>
+        <Field className="sm:col-span-2" htmlFor="guestSearch" label="Guest(s)">
+          <RelationTypeahead
+            emptyLabel="No guests selected"
+            filteredOptions={filteredGuests}
+            inputID="guestSearch"
+            noSelectionLabel="No guest"
+            onAdd={(option) => setGuestIDs((current) => [...current, String(option.id)])}
+            onClear={() => setGuestIDs([])}
+            onQueryChange={setGuestQuery}
+            onRemove={(option) =>
+              setGuestIDs((current) => current.filter((guestID) => guestID !== String(option.id)))
+            }
+            onResultsOpenChange={setShowGuestResults}
+            placeholder="Search guest"
+            query={guestQuery}
+            selectedOptions={selectedGuests}
+            showResults={showGuestResults}
           />
         </Field>
       </div>
@@ -279,6 +316,58 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               type="url"
             />
           </Field>
+          <div className="grid gap-4 border border-border bg-background/40 p-4 sm:col-span-2">
+            <label className="flex items-start gap-3 text-sm text-muted-foreground">
+              <input
+                checked={isRecurring}
+                className="mt-1 accent-primary"
+                onChange={(event) => setIsRecurring(event.target.checked)}
+                type="checkbox"
+              />
+              <span>Part of a recurring session series</span>
+            </label>
+            {isRecurring ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field htmlFor="seriesKey" label="Series key">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70"
+                    id="seriesKey"
+                    name="seriesKey"
+                    placeholder="weekly-all-hands"
+                    required={isRecurring}
+                  />
+                </Field>
+                <Field htmlFor="seriesTitle" label="Series title">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70"
+                    id="seriesTitle"
+                    name="seriesTitle"
+                    placeholder="Weekly All Hands"
+                  />
+                </Field>
+                <Field className="sm:col-span-2" label="Cadence">
+                  <SegmentedGrid className="grid-cols-1 sm:grid-cols-3">
+                    {recurrenceCadences.map(([value, label]) => (
+                      <SquareOption
+                        isSelected={recurrenceCadence === value}
+                        key={value}
+                        label={label}
+                        onClick={() => setRecurrenceCadence(value)}
+                      />
+                    ))}
+                  </SegmentedGrid>
+                </Field>
+                <Field htmlFor="recurrenceUntil" label="End date">
+                  <Input
+                    className="h-12 border-scroll-100/25 bg-background/70 font-mono text-xs uppercase accent-primary"
+                    id="recurrenceUntil"
+                    name="recurrenceUntil"
+                    type="date"
+                  />
+                </Field>
+              </div>
+            ) : null}
+          </div>
           <label className="flex items-start gap-3 text-sm text-muted-foreground sm:col-span-2">
             <input
               checked={syncDiscord}

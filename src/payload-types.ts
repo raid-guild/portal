@@ -477,8 +477,22 @@ export interface Post {
     };
     [k: string]: unknown;
   };
+  contentType?: ('article' | 'recap' | 'quote' | 'clip' | 'lesson' | 'announcement' | 'newsletter') | null;
+  artifactKind?: ('article' | 'embed' | 'note') | null;
+  sourceSession?: (number | null) | Event;
+  parentThread?: (number | null) | Thread;
   relatedPosts?: (number | Post)[] | null;
+  derivedFromPosts?: (number | Post)[] | null;
   categories?: (number | Category)[] | null;
+  wikiCandidate?: boolean | null;
+  wikiCandidateTopics?:
+    | {
+        topic: string;
+        id?: string | null;
+      }[]
+    | null;
+  sourceArtifactURL?: string | null;
+  sourceArtifactID?: string | null;
   meta?: {
     title?: string | null;
     /**
@@ -500,6 +514,146 @@ export interface Post {
   updatedAt: string;
   createdAt: string;
   _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  summary?: string | null;
+  sessionType: 'brownbag' | 'workshop' | 'all-hands' | 'demo' | 'pitch' | 'fireside';
+  speaker?: (number | null) | Profile;
+  /**
+   * Optional hosts or facilitators for interview-style sessions.
+   */
+  hostProfiles?: (number | Profile)[] | null;
+  /**
+   * Optional guests or speakers. Prefer this for multi-speaker sessions.
+   */
+  speakerProfiles?: (number | Profile)[] | null;
+  startsAt: string;
+  endsAt?: string | null;
+  locationLabel?: string | null;
+  joinURL?: string | null;
+  calendarURL?: string | null;
+  discordEventURL?: string | null;
+  discordScheduledEventID?: string | null;
+  discordSyncStatus?: ('not_configured' | 'synced' | 'failed') | null;
+  discordSyncError?: string | null;
+  recordingURL?: string | null;
+  transcriptArtifactURL?: string | null;
+  summaryArtifactURL?: string | null;
+  sourceArtifactURL?: string | null;
+  /**
+   * Prism artifact ID for the primary transcript, summary, or source bundle.
+   */
+  sourceArtifactID?: string | null;
+  sourceStatus?: ('scheduled' | 'recorded' | 'summarized' | 'processed' | 'archived') | null;
+  /**
+   * Stable key for lightweight recurring-session grouping, e.g. weekly-all-hands.
+   */
+  seriesKey?: string | null;
+  /**
+   * Display title for the recurring session group.
+   */
+  seriesTitle?: string | null;
+  /**
+   * Copied forward by agents/jobs when generating the next occurrence.
+   */
+  recurrenceCadence?: ('weekly' | 'biweekly' | 'monthly') | null;
+  /**
+   * Optional end date for recurrence generation.
+   */
+  recurrenceUntil?: string | null;
+  previousOccurrence?: (number | null) | Event;
+  nextOccurrence?: (number | null) | Event;
+  roleFocus?: ('designer' | 'pm' | 'devops' | 'founder' | 'developer' | 'operations' | 'other') | null;
+  practiceArea?: string | null;
+  themes?:
+    | {
+        theme: string;
+        id?: string | null;
+      }[]
+    | null;
+  wikiCandidate?: boolean | null;
+  wikiCandidateTopics?:
+    | {
+        topic: string;
+        id?: string | null;
+      }[]
+    | null;
+  linkedSocialPosts?:
+    | {
+        platform: string;
+        url: string;
+        label?: string | null;
+        publishedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  relatedProjects?: (number | Project)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  visibility: 'authenticated' | 'member' | 'public' | 'admin';
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profiles".
+ */
+export interface Profile {
+  id: number;
+  /**
+   * Blank users mark imported or legacy profiles as unclaimed.
+   */
+  user?: (number | null) | User;
+  /**
+   * Imported profiles can stay unclaimed until a matching account claims them.
+   */
+  claimStatus: 'unclaimed' | 'claimed';
+  /**
+   * Email from the legacy CRM used to match a new signup to this unclaimed profile.
+   */
+  claimEmail?: string | null;
+  claimedAt?: string | null;
+  /**
+   * Optional legacy CRM identifier for import reconciliation.
+   */
+  sourceCRMID?: string | null;
+  handle: string;
+  displayName: string;
+  bio: string;
+  avatar?: (number | null) | Media;
+  location?: string | null;
+  walletAddress?: string | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  contact?: {
+    email?: string | null;
+    discord?: string | null;
+    telegram?: string | null;
+    farcaster?: string | null;
+    /**
+     * X handle without the @ symbol.
+     */
+    x?: string | null;
+  };
+  profileSkills: (number | ProfileSkill)[];
+  profileRoles: (number | ProfileRole)[];
+  status: 'active' | 'inactive';
+  visibility: 'public' | 'authenticated' | 'private';
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -531,6 +685,263 @@ export interface User {
     | null;
   password?: string | null;
   collection: 'users';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profileSkills".
+ */
+export interface ProfileSkill {
+  id: number;
+  title: string;
+  category?: string | null;
+  description?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profileRoles".
+ */
+export interface ProfileRole {
+  id: number;
+  title: string;
+  type?: string | null;
+  group?: ('builder' | 'support') | null;
+  description?: string | null;
+  /**
+   * Static public asset path used by member-facing profile flows.
+   */
+  iconPath?: string | null;
+  icon?: (number | null) | Media;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  title: string;
+  summary: string;
+  description?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  projectStatus?: ('active' | 'building' | 'archived' | 'exploratory' | 'exploring' | 'shipping') | null;
+  visibility?: ('public' | 'authenticated' | 'member' | 'admin') | null;
+  projectKind?:
+    | (
+        | 'raidguild-project'
+        | 'client-artifact'
+        | 'internal-tool'
+        | 'reference-repo'
+        | 'rip'
+        | 'cohort-project'
+        | 'experiment'
+        | 'template'
+        | 'unknown'
+      )
+    | null;
+  reviewStatus?:
+    | (
+        | 'unreviewed'
+        | 'needs-review'
+        | 'in-review'
+        | 'needs-more-evidence'
+        | 'ready-for-prism'
+        | 'ready-for-cms'
+        | 'published'
+      )
+    | null;
+  confidence?: ('low' | 'medium' | 'high') | null;
+  historicalRelevance?: ('low' | 'medium' | 'high' | 'unknown') | null;
+  claimedBy?: (number | null) | Profile;
+  reviewedBy?: (number | null) | Profile;
+  reviewedAt?: string | null;
+  /**
+   * Best-known project start date. For imported archives, this usually comes from repo creation or earliest source evidence.
+   */
+  startedAt?: string | null;
+  /**
+   * Best-known launch, delivery, or public release date.
+   */
+  launchedAt?: string | null;
+  /**
+   * Best-known completion, sunset, or handoff date.
+   */
+  completedAt?: string | null;
+  currentState?:
+    | {
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  lastActiveAt?: string | null;
+  isFeatured?: boolean | null;
+  featuredFrom?: string | null;
+  featuredUntil?: string | null;
+  /**
+   * Higher values surface first when multiple projects are featured.
+   */
+  featuredPriority?: number | null;
+  primaryCTA?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  coverImage?: (number | null) | Media;
+  contributors?: (number | Profile)[] | null;
+  /**
+   * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
+   */
+  canonicalProject?: (number | null) | Project;
+  /**
+   * Related project records, component repos, companion artifacts, or follow-on work.
+   */
+  relatedProjects?: (number | Project)[] | null;
+  /**
+   * Why the current confidence level is justified.
+   */
+  confidenceRationale?: string | null;
+  openQuestions?:
+    | {
+        question: string;
+        status?: ('open' | 'answered' | 'not-applicable') | null;
+        answer?: string | null;
+        answeredBy?: (number | null) | Profile;
+        answeredAt?: string | null;
+        sourceURL?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Raw evidence used by importers and reviewers. Keep this separate from curated public links.
+   */
+  sourceEvidence?:
+    | {
+        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'website' | 'docs' | 'other';
+        label: string;
+        url?: string | null;
+        sourceID?: string | null;
+        confidence?: ('low' | 'medium' | 'high') | null;
+        notes?: string | null;
+        firstSeenAt?: string | null;
+        lastSeenAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Candidate people extracted from commits, Discord, or docs before they are promoted to contributors.
+   */
+  peopleEvidence?:
+    | {
+        handle: string;
+        role?: string | null;
+        profile?: (number | null) | Profile;
+        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'other';
+        sourceURL?: string | null;
+        confidence?: ('low' | 'medium' | 'high') | null;
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  profileSkills?: (number | ProfileSkill)[] | null;
+  activityItems?: (number | ActivityItem)[] | null;
+  threads?: (number | Thread)[] | null;
+  events?: (number | Event)[] | null;
+  resources?:
+    | {
+        label: string;
+        url: string;
+        resourceType?: ('link' | 'repo' | 'design' | 'doc' | 'calendar' | 'discord') | null;
+        id?: string | null;
+      }[]
+    | null;
+  contributionActions?:
+    | {
+        title: string;
+        description?: string | null;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "activityItems".
+ */
+export interface ActivityItem {
+  id: number;
+  title: string;
+  body?: string | null;
+  activityType: 'discussion' | 'decision' | 'project' | 'insight' | 'blocker' | 'event' | 'contribution';
+  happenedAt: string;
+  sourceLabel?: string | null;
+  sourceURL?: string | null;
+  relatedProject?: (number | null) | Project;
+  relatedThread?: (number | null) | Thread;
+  relatedEvent?: (number | null) | Event;
+  relatedProfiles?: (number | Profile)[] | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threads".
+ */
+export interface Thread {
+  id: number;
+  title: string;
+  summary: string;
+  threadStatus: 'active' | 'paused' | 'resolved' | 'archived';
+  lastActiveAt?: string | null;
+  participants?: (number | Profile)[] | null;
+  relatedProjects?: (number | Project)[] | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -731,344 +1142,6 @@ export interface Form {
     | null;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "activityItems".
- */
-export interface ActivityItem {
-  id: number;
-  title: string;
-  body?: string | null;
-  activityType: 'discussion' | 'decision' | 'project' | 'insight' | 'blocker' | 'event' | 'contribution';
-  happenedAt: string;
-  sourceLabel?: string | null;
-  sourceURL?: string | null;
-  relatedProject?: (number | null) | Project;
-  relatedThread?: (number | null) | Thread;
-  relatedEvent?: (number | null) | Event;
-  relatedProfiles?: (number | Profile)[] | null;
-  visibility: 'authenticated' | 'public' | 'admin';
-  publishedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "projects".
- */
-export interface Project {
-  id: number;
-  title: string;
-  summary: string;
-  description?: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  } | null;
-  projectStatus?: ('active' | 'building' | 'archived' | 'exploratory' | 'exploring' | 'shipping') | null;
-  visibility?: ('public' | 'authenticated' | 'member' | 'admin') | null;
-  projectKind?:
-    | (
-        | 'raidguild-project'
-        | 'client-artifact'
-        | 'internal-tool'
-        | 'reference-repo'
-        | 'rip'
-        | 'cohort-project'
-        | 'experiment'
-        | 'template'
-        | 'unknown'
-      )
-    | null;
-  reviewStatus?:
-    | (
-        | 'unreviewed'
-        | 'needs-review'
-        | 'in-review'
-        | 'needs-more-evidence'
-        | 'ready-for-prism'
-        | 'ready-for-cms'
-        | 'published'
-      )
-    | null;
-  confidence?: ('low' | 'medium' | 'high') | null;
-  historicalRelevance?: ('low' | 'medium' | 'high' | 'unknown') | null;
-  claimedBy?: (number | null) | Profile;
-  reviewedBy?: (number | null) | Profile;
-  reviewedAt?: string | null;
-  /**
-   * Best-known project start date. For imported archives, this usually comes from repo creation or earliest source evidence.
-   */
-  startedAt?: string | null;
-  /**
-   * Best-known launch, delivery, or public release date.
-   */
-  launchedAt?: string | null;
-  /**
-   * Best-known completion, sunset, or handoff date.
-   */
-  completedAt?: string | null;
-  currentState?:
-    | {
-        body: string;
-        id?: string | null;
-      }[]
-    | null;
-  lastActiveAt?: string | null;
-  isFeatured?: boolean | null;
-  featuredFrom?: string | null;
-  featuredUntil?: string | null;
-  /**
-   * Higher values surface first when multiple projects are featured.
-   */
-  featuredPriority?: number | null;
-  primaryCTA?: {
-    label?: string | null;
-    url?: string | null;
-  };
-  links?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  coverImage?: (number | null) | Media;
-  contributors?: (number | Profile)[] | null;
-  /**
-   * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
-   */
-  canonicalProject?: (number | null) | Project;
-  /**
-   * Related project records, component repos, companion artifacts, or follow-on work.
-   */
-  relatedProjects?: (number | Project)[] | null;
-  /**
-   * Why the current confidence level is justified.
-   */
-  confidenceRationale?: string | null;
-  openQuestions?:
-    | {
-        question: string;
-        status?: ('open' | 'answered' | 'not-applicable') | null;
-        answer?: string | null;
-        answeredBy?: (number | null) | Profile;
-        answeredAt?: string | null;
-        sourceURL?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Raw evidence used by importers and reviewers. Keep this separate from curated public links.
-   */
-  sourceEvidence?:
-    | {
-        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'website' | 'docs' | 'other';
-        label: string;
-        url?: string | null;
-        sourceID?: string | null;
-        confidence?: ('low' | 'medium' | 'high') | null;
-        notes?: string | null;
-        firstSeenAt?: string | null;
-        lastSeenAt?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Candidate people extracted from commits, Discord, or docs before they are promoted to contributors.
-   */
-  peopleEvidence?:
-    | {
-        handle: string;
-        role?: string | null;
-        profile?: (number | null) | Profile;
-        sourceType: 'github' | 'discord' | 'valhalla' | 'rip' | 'charmverse' | 'other';
-        sourceURL?: string | null;
-        confidence?: ('low' | 'medium' | 'high') | null;
-        notes?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  profileSkills?: (number | ProfileSkill)[] | null;
-  activityItems?: (number | ActivityItem)[] | null;
-  threads?: (number | Thread)[] | null;
-  events?: (number | Event)[] | null;
-  resources?:
-    | {
-        label: string;
-        url: string;
-        resourceType?: ('link' | 'repo' | 'design' | 'doc' | 'calendar' | 'discord') | null;
-        id?: string | null;
-      }[]
-    | null;
-  contributionActions?:
-    | {
-        title: string;
-        description?: string | null;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  publishedAt?: string | null;
-  slug?: string | null;
-  slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "profiles".
- */
-export interface Profile {
-  id: number;
-  /**
-   * Blank users mark imported or legacy profiles as unclaimed.
-   */
-  user?: (number | null) | User;
-  /**
-   * Imported profiles can stay unclaimed until a matching account claims them.
-   */
-  claimStatus: 'unclaimed' | 'claimed';
-  /**
-   * Email from the legacy CRM used to match a new signup to this unclaimed profile.
-   */
-  claimEmail?: string | null;
-  claimedAt?: string | null;
-  /**
-   * Optional legacy CRM identifier for import reconciliation.
-   */
-  sourceCRMID?: string | null;
-  handle: string;
-  displayName: string;
-  bio: string;
-  avatar?: (number | null) | Media;
-  location?: string | null;
-  walletAddress?: string | null;
-  links?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  contact?: {
-    email?: string | null;
-    discord?: string | null;
-    telegram?: string | null;
-    farcaster?: string | null;
-    /**
-     * X handle without the @ symbol.
-     */
-    x?: string | null;
-  };
-  profileSkills: (number | ProfileSkill)[];
-  profileRoles: (number | ProfileRole)[];
-  status: 'active' | 'inactive';
-  visibility: 'public' | 'authenticated' | 'private';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "profileSkills".
- */
-export interface ProfileSkill {
-  id: number;
-  title: string;
-  category?: string | null;
-  description?: string | null;
-  slug?: string | null;
-  slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "profileRoles".
- */
-export interface ProfileRole {
-  id: number;
-  title: string;
-  type?: string | null;
-  group?: ('builder' | 'support') | null;
-  description?: string | null;
-  /**
-   * Static public asset path used by member-facing profile flows.
-   */
-  iconPath?: string | null;
-  icon?: (number | null) | Media;
-  slug?: string | null;
-  slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "threads".
- */
-export interface Thread {
-  id: number;
-  title: string;
-  summary: string;
-  threadStatus: 'active' | 'paused' | 'resolved' | 'archived';
-  lastActiveAt?: string | null;
-  participants?: (number | Profile)[] | null;
-  relatedProjects?: (number | Project)[] | null;
-  links?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  visibility: 'authenticated' | 'public' | 'admin';
-  publishedAt?: string | null;
-  slug?: string | null;
-  slugLock?: boolean | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
- */
-export interface Event {
-  id: number;
-  title: string;
-  summary?: string | null;
-  sessionType: 'brownbag' | 'workshop' | 'all-hands' | 'demo' | 'pitch';
-  speaker?: (number | null) | Profile;
-  startsAt: string;
-  endsAt?: string | null;
-  locationLabel?: string | null;
-  joinURL?: string | null;
-  calendarURL?: string | null;
-  discordEventURL?: string | null;
-  discordScheduledEventID?: string | null;
-  discordSyncStatus?: ('not_configured' | 'synced' | 'failed') | null;
-  discordSyncError?: string | null;
-  relatedProjects?: (number | Project)[] | null;
-  relatedThreads?: (number | Thread)[] | null;
-  relatedProfiles?: (number | Profile)[] | null;
-  visibility: 'authenticated' | 'public' | 'admin';
-  publishedAt?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1607,8 +1680,22 @@ export interface FormBlockSelect<T extends boolean = true> {
 export interface PostsSelect<T extends boolean = true> {
   title?: T;
   content?: T;
+  contentType?: T;
+  artifactKind?: T;
+  sourceSession?: T;
+  parentThread?: T;
   relatedPosts?: T;
+  derivedFromPosts?: T;
   categories?: T;
+  wikiCandidate?: T;
+  wikiCandidateTopics?:
+    | T
+    | {
+        topic?: T;
+        id?: T;
+      };
+  sourceArtifactURL?: T;
+  sourceArtifactID?: T;
   meta?:
     | T
     | {
@@ -1712,6 +1799,8 @@ export interface EventsSelect<T extends boolean = true> {
   summary?: T;
   sessionType?: T;
   speaker?: T;
+  hostProfiles?: T;
+  speakerProfiles?: T;
   startsAt?: T;
   endsAt?: T;
   locationLabel?: T;
@@ -1721,6 +1810,42 @@ export interface EventsSelect<T extends boolean = true> {
   discordScheduledEventID?: T;
   discordSyncStatus?: T;
   discordSyncError?: T;
+  recordingURL?: T;
+  transcriptArtifactURL?: T;
+  summaryArtifactURL?: T;
+  sourceArtifactURL?: T;
+  sourceArtifactID?: T;
+  sourceStatus?: T;
+  seriesKey?: T;
+  seriesTitle?: T;
+  recurrenceCadence?: T;
+  recurrenceUntil?: T;
+  previousOccurrence?: T;
+  nextOccurrence?: T;
+  roleFocus?: T;
+  practiceArea?: T;
+  themes?:
+    | T
+    | {
+        theme?: T;
+        id?: T;
+      };
+  wikiCandidate?: T;
+  wikiCandidateTopics?:
+    | T
+    | {
+        topic?: T;
+        id?: T;
+      };
+  linkedSocialPosts?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        label?: T;
+        publishedAt?: T;
+        id?: T;
+      };
   relatedProjects?: T;
   relatedThreads?: T;
   relatedProfiles?: T;

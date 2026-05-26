@@ -31,6 +31,7 @@ const sessionTypeLabels: Record<SessionType, string> = {
   'all-hands': 'All hands',
   brownbag: 'Brownbag',
   demo: 'Demo',
+  fireside: 'Fireside',
   pitch: 'Pitch',
   workshop: 'Workshop',
 }
@@ -39,16 +40,28 @@ const sessionTypeStyles: Record<SessionType, string> = {
   'all-hands': 'border-moloch-500/30 bg-moloch-500/10',
   brownbag: 'border-guild-olive/30 bg-guild-olive/10',
   demo: 'border-success/30 bg-success/10',
+  fireside: 'border-primary/40 bg-primary/10',
   pitch: 'border-warning/30 bg-warning/10',
   workshop: 'border-scroll-200/30 bg-scroll-200/10',
+}
+
+const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, string> = {
+  biweekly: 'Every 2 weeks',
+  monthly: 'Monthly',
+  weekly: 'Weekly',
 }
 
 export default async function EventsPage() {
   const user = await getCurrentUser()
   const events = await getEvents(user)
   const now = Date.now()
-  const upcoming = events.filter((event) => new Date(event.startsAt).getTime() >= now)
-  const past = events.filter((event) => new Date(event.startsAt).getTime() < now)
+  const live = events.filter((event) => isLiveEvent(event, now))
+  const upcoming = events.filter(
+    (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() >= now,
+  )
+  const past = events.filter(
+    (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() < now,
+  )
   const canManageSessions = canContributeContent(user)
 
   return (
@@ -62,12 +75,28 @@ export default async function EventsPage() {
             calendar so the next live moment is not buried in Discord.
           </p>
         </div>
-        {user ? (
+        {canManageSessions ? (
           <Link className="portal-admin-link" href="/events/new">
             Create session
           </Link>
         ) : null}
       </section>
+
+      {live.length ? (
+        <section className="mt-10 border border-primary/40 bg-primary/10 p-5">
+          <p className="portal-kicker">Live Now</p>
+          <div className="mt-5 grid gap-3">
+            {live.map((event) => (
+              <SessionRow
+                canManageSessions={canManageSessions}
+                event={event}
+                isLive
+                key={event.id}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section className="mt-10">
         <h2 className="portal-heading">Upcoming Sessions</h2>
@@ -101,19 +130,26 @@ export const metadata: Metadata = {
   title: 'Sessions',
 }
 
-const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
+const SessionRow: React.FC<{ canManageSessions: boolean; event: Event; isLive?: boolean }> = ({
   canManageSessions,
   event,
+  isLive = false,
 }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
-  const speakers = relationDocs<Profile>(event.relatedProfiles)
+  const speakers = relationDocs<Profile>(event.speakerProfiles)
+  const hosts = relationDocs<Profile>(event.hostProfiles)
+  const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const speaker = typeof event.speaker === 'object' ? event.speaker : null
-  const hostNames = speakers.length
-    ? speakers.map((profile) => profile.displayName).filter(Boolean)
-    : speaker
-      ? [speaker.displayName].filter(Boolean)
-      : []
+  const hostNames = hosts.length
+    ? hosts.map((profile) => profile.displayName).filter(Boolean)
+    : speakers.length
+      ? speakers.map((profile) => profile.displayName).filter(Boolean)
+      : relatedProfiles.length
+        ? relatedProfiles.map((profile) => profile.displayName).filter(Boolean)
+        : speaker
+          ? [speaker.displayName].filter(Boolean)
+          : []
   const sessionType = event.sessionType || 'brownbag'
   const startsAt = new Date(event.startsAt)
   const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
@@ -125,21 +161,46 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
         <p className="font-mono text-xs uppercase text-muted-foreground">{day}</p>
         <p className="font-display text-2xl font-bold leading-none text-foreground">{date}</p>
       </div>
-      <div className={`rounded-sm border p-5 ${sessionTypeStyles[sessionType]}`}>
+      <div
+        className={`rounded-sm border p-5 ${
+          isLive ? 'border-primary bg-primary/15' : sessionTypeStyles[sessionType]
+        }`}
+      >
         <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
+              {isLive ? <span className="portal-pill">Live now</span> : null}
               <span className="portal-pill">{sessionTypeLabels[sessionType]}</span>
+              {event.seriesKey ? (
+                <span className="portal-pill">
+                  {event.seriesTitle || event.seriesKey}
+                  {event.recurrenceCadence
+                    ? ` / ${recurrenceCadenceLabels[event.recurrenceCadence]}`
+                    : ''}
+                </span>
+              ) : null}
               <span className="text-sm text-muted-foreground">
                 {formatDateTime(event.startsAt)}
               </span>
             </div>
-            <h3 className="mt-3 portal-heading-sm">{event.title}</h3>
+            <h3 className="mt-3 portal-heading-sm">
+              <Link className="transition-colors hover:text-primary" href={`/events/${event.id}`}>
+                {event.title}
+              </Link>
+            </h3>
             {hostNames.length ? (
-              <p className="mt-2 text-sm text-muted-foreground">Hosted by {hostNames.join(', ')}</p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                {event.sessionType === 'fireside' ? 'Featuring' : 'Hosted by'}{' '}
+                {hostNames.join(', ')}
+              </p>
             ) : null}
             {event.summary ? (
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
+            ) : null}
+            {event.sourceStatus && new Date(event.startsAt).getTime() < Date.now() ? (
+              <p className="mt-3 inline-flex border border-border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                {event.sourceStatus.replace('_', ' ')}
+              </p>
             ) : null}
             {event.locationLabel ? (
               <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
@@ -165,6 +226,9 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event }> = ({
             ) : null}
           </div>
           <div className="flex flex-wrap content-start gap-3 lg:justify-end">
+            <Link className="portal-link" href={`/events/${event.id}`}>
+              Details
+            </Link>
             <SafeLink href={event.joinURL} label="Join" />
             <SafeLink
               href={event.calendarURL || getCalendarFallbackURL(event)}
@@ -223,6 +287,15 @@ const getCalendarFallbackURL = (event: Event): string | null => {
     startsAt: event.startsAt,
     title: event.title,
   })
+}
+
+const isLiveEvent = (event: Event, now: number): boolean => {
+  const startsAt = new Date(event.startsAt).getTime()
+  const endsAt = event.endsAt
+    ? new Date(event.endsAt).getTime()
+    : startsAt + 30 * 60 * 1000
+
+  return startsAt <= now && endsAt > now
 }
 
 const getEvents = async (user: Awaited<ReturnType<typeof getCurrentUser>>) => {

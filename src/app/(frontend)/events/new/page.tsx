@@ -35,8 +35,8 @@ export default async function NewSessionPage() {
     )
   }
 
-  const [speakers, defaultProfile, projects, threads] = await Promise.all([
-    getSpeakerOptions(user),
+  const [profileOptions, defaultProfile, projects, threads] = await Promise.all([
+    getProfileOptions(user),
     getProfileForUser(user.id, user),
     getProjectOptions(user),
     getThreadOptions(user),
@@ -51,10 +51,11 @@ export default async function NewSessionPage() {
       </p>
       <SessionCreateForm
         canSyncDiscord={canCreateDiscordScheduledEvents()}
-        defaultSpeakerID={defaultProfile?.id}
+        defaultHostID={defaultProfile?.id}
         defaultStart={getDefaultStart()}
+        minStart={getMinimumStart()}
+        profileOptions={profileOptions}
         projects={projects}
-        speakers={speakers}
         threads={threads}
       />
     </main>
@@ -67,7 +68,7 @@ export const metadata: Metadata = {
 
 type CurrentUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>
 
-const getSpeakerOptions = async (user: CurrentUser) => {
+const getProfileOptions = async (user: CurrentUser) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'profiles',
@@ -163,6 +164,14 @@ const getDefaultStart = () => {
     date.setHours(date.getHours() + 1)
   }
 
+  const offset = date.getTimezoneOffset()
+  const local = new Date(date.getTime() - offset * 60 * 1000)
+
+  return local.toISOString().slice(0, 16)
+}
+
+const getMinimumStart = () => {
+  const date = new Date()
   const offset = date.getTimezoneOffset()
   const local = new Date(date.getTime() - offset * 60 * 1000)
 

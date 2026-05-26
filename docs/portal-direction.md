@@ -170,9 +170,23 @@ and pitches. Events should stay focused on calendar visibility, joining, and
 light coordination rather than becoming a course or scheduling platform.
 
 The frontend session creation flow lives at `/events/new` for contributors and
-records the session type, start/end time, speaker, visibility, and optional
-Discord scheduled event sync state. Payload admin remains the canonical place
-for deeper editorial cleanup.
+records the session type, start/end time, host/guest profiles, visibility, light
+recurrence metadata, and optional Discord scheduled event sync state. Payload
+admin remains the canonical place for deeper editorial cleanup and past-session
+enrichment.
+
+Agents and server-to-server publishers should use `/api/events/create` when
+creating a future session that should attempt Discord scheduled event sync.
+Direct Payload collection writes to `/api/events` are Portal-only writes and do
+not call Discord. This keeps imports, past-session enrichment, and admin cleanup
+from unexpectedly creating external Discord events.
+
+Prism recording/summary callbacks should use authenticated
+`/api/events/artifacts/ingest` requests from a Portal agent account. The endpoint
+matches an event by explicit `eventID` or Discord scheduled event ID and updates
+the event's recording/transcript/summary artifact fields. Unmatched callbacks
+should stay in the Prism workflow for human review rather than creating inferred
+sessions.
 
 Future daily participation should use a separate `dailyEngagements` module that
 creates `pointEvents` for simple once-per-day check-ins. Keep points as a ledger,

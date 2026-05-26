@@ -55,6 +55,10 @@ export const Events: CollectionConfig = {
           label: 'Pitch',
           value: 'pitch',
         },
+        {
+          label: 'Fireside',
+          value: 'fireside',
+        },
       ],
       required: true,
     },
@@ -64,6 +68,26 @@ export const Events: CollectionConfig = {
       admin: {
         position: 'sidebar',
       },
+      relationTo: 'profiles',
+    },
+    {
+      name: 'hostProfiles',
+      type: 'relationship',
+      admin: {
+        description: 'Optional hosts or facilitators for interview-style sessions.',
+        position: 'sidebar',
+      },
+      hasMany: true,
+      relationTo: 'profiles',
+    },
+    {
+      name: 'speakerProfiles',
+      type: 'relationship',
+      admin: {
+        description: 'Optional guests or speakers. Prefer this for multi-speaker sessions.',
+        position: 'sidebar',
+      },
+      hasMany: true,
       relationTo: 'profiles',
     },
     {
@@ -149,6 +173,243 @@ export const Events: CollectionConfig = {
       },
     },
     {
+      name: 'recordingURL',
+      type: 'text',
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
+      name: 'transcriptArtifactURL',
+      type: 'text',
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
+      name: 'summaryArtifactURL',
+      type: 'text',
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
+      name: 'sourceArtifactURL',
+      type: 'text',
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
+      name: 'sourceArtifactID',
+      type: 'text',
+      admin: {
+        description: 'Prism artifact ID for the primary transcript, summary, or source bundle.',
+      },
+    },
+    {
+      name: 'sourceStatus',
+      type: 'select',
+      admin: {
+        position: 'sidebar',
+      },
+      defaultValue: 'scheduled',
+      options: [
+        {
+          label: 'Scheduled',
+          value: 'scheduled',
+        },
+        {
+          label: 'Recorded',
+          value: 'recorded',
+        },
+        {
+          label: 'Summarized',
+          value: 'summarized',
+        },
+        {
+          label: 'Processed',
+          value: 'processed',
+        },
+        {
+          label: 'Archived',
+          value: 'archived',
+        },
+      ],
+    },
+    {
+      name: 'seriesKey',
+      type: 'text',
+      admin: {
+        description:
+          'Stable key for lightweight recurring-session grouping, e.g. weekly-all-hands.',
+        position: 'sidebar',
+      },
+      index: true,
+    },
+    {
+      name: 'seriesTitle',
+      type: 'text',
+      admin: {
+        description: 'Display title for the recurring session group.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'recurrenceCadence',
+      type: 'select',
+      admin: {
+        description: 'Copied forward by agents/jobs when generating the next occurrence.',
+        position: 'sidebar',
+      },
+      options: [
+        {
+          label: 'Weekly',
+          value: 'weekly',
+        },
+        {
+          label: 'Every other week',
+          value: 'biweekly',
+        },
+        {
+          label: 'Monthly',
+          value: 'monthly',
+        },
+      ],
+    },
+    {
+      name: 'recurrenceUntil',
+      type: 'date',
+      admin: {
+        date: {
+          pickerAppearance: 'dayOnly',
+        },
+        description: 'Optional end date for recurrence generation.',
+        position: 'sidebar',
+      },
+    },
+    {
+      name: 'previousOccurrence',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      filterOptions: ({ id }) => ({
+        id: {
+          not_in: [id],
+        },
+      }),
+      relationTo: 'events',
+    },
+    {
+      name: 'nextOccurrence',
+      type: 'relationship',
+      admin: {
+        position: 'sidebar',
+      },
+      filterOptions: ({ id }) => ({
+        id: {
+          not_in: [id],
+        },
+      }),
+      relationTo: 'events',
+    },
+    {
+      name: 'roleFocus',
+      type: 'select',
+      admin: {
+        position: 'sidebar',
+      },
+      options: [
+        {
+          label: 'Designer',
+          value: 'designer',
+        },
+        {
+          label: 'PM',
+          value: 'pm',
+        },
+        {
+          label: 'DevOps',
+          value: 'devops',
+        },
+        {
+          label: 'Founder',
+          value: 'founder',
+        },
+        {
+          label: 'Developer',
+          value: 'developer',
+        },
+        {
+          label: 'Operations',
+          value: 'operations',
+        },
+        {
+          label: 'Other',
+          value: 'other',
+        },
+      ],
+    },
+    {
+      name: 'practiceArea',
+      type: 'text',
+    },
+    {
+      name: 'themes',
+      type: 'array',
+      fields: [
+        {
+          name: 'theme',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+    {
+      name: 'wikiCandidate',
+      type: 'checkbox',
+      defaultValue: false,
+    },
+    {
+      name: 'wikiCandidateTopics',
+      type: 'array',
+      fields: [
+        {
+          name: 'topic',
+          type: 'text',
+          required: true,
+        },
+      ],
+    },
+    {
+      name: 'linkedSocialPosts',
+      type: 'array',
+      fields: [
+        {
+          name: 'platform',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value) =>
+            validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+        },
+        {
+          name: 'label',
+          type: 'text',
+        },
+        {
+          name: 'publishedAt',
+          type: 'date',
+          admin: {
+            date: {
+              pickerAppearance: 'dayAndTime',
+            },
+          },
+        },
+      ],
+    },
+    {
       name: 'relatedProjects',
       type: 'relationship',
       hasMany: true,
@@ -177,6 +438,10 @@ export const Events: CollectionConfig = {
         {
           label: 'Authenticated',
           value: 'authenticated',
+        },
+        {
+          label: 'Members',
+          value: 'member',
         },
         {
           label: 'Public',
