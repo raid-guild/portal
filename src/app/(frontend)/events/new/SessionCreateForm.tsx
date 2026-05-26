@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -62,6 +62,8 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const router = useRouter()
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [minimumStart, setMinimumStart] = useState(minStart)
+  const [startValue, setStartValue] = useState(defaultStart)
   const [durationMinutes, setDurationMinutes] = useState(30)
   const [isRecurring, setIsRecurring] = useState(false)
   const [recurrenceCadence, setRecurrenceCadence] = useState('weekly')
@@ -92,6 +94,11 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
   const selectedHosts = useSelectedRelations(profileOptions, hostIDs)
   const selectedProjects = useSelectedRelations(projects, projectIDs)
   const selectedThreads = useSelectedRelations(threads, threadIDs)
+
+  useEffect(() => {
+    setMinimumStart(getBrowserMinimumStart())
+    setStartValue(getBrowserDefaultStart())
+  }, [])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -160,12 +167,13 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
         <Field htmlFor="startsAt" label="Start time">
           <Input
             className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
-            defaultValue={defaultStart}
             id="startsAt"
-            min={minStart}
+            min={minimumStart}
             name="startsAt"
+            onChange={(event) => setStartValue(event.target.value)}
             required
             type="datetime-local"
+            value={startValue}
           />
         </Field>
         <Field label="Duration">
@@ -181,7 +189,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           </SegmentedGrid>
         </Field>
         <Field label="Visibility">
-          <SegmentedGrid>
+          <SegmentedGrid className="grid-cols-3">
             {visibilityOptions.map(([value, label]) => (
               <SquareOption
                 isSelected={visibility === value}
@@ -193,7 +201,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           </SegmentedGrid>
         </Field>
         <Field className="sm:col-span-2" label="Type">
-          <SegmentedGrid className="grid-cols-2 sm:grid-cols-5">
+          <SegmentedGrid className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-6">
             {sessionTypes.map(([value, label]) => (
               <SquareOption
                 isSelected={sessionType === value}
@@ -553,6 +561,31 @@ const useSelectedRelations = (options: RelationOption[], selectedIDs: string[]):
 
     return options.filter((option) => selected.has(String(option.id)))
   }, [options, selectedIDs])
+
+const getBrowserDefaultStart = (): string => {
+  const date = new Date()
+  date.setHours(date.getHours() + 1)
+  date.setMinutes(date.getMinutes() < 30 ? 30 : 0, 0, 0)
+
+  if (date.getMinutes() === 0) {
+    date.setHours(date.getHours() + 1)
+  }
+
+  return toDateTimeLocalValue(date)
+}
+
+const getBrowserMinimumStart = (): string => {
+  const date = new Date()
+  date.setSeconds(0, 0)
+
+  return toDateTimeLocalValue(date)
+}
+
+const toDateTimeLocalValue = (date: Date): string => {
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60 * 1000)
+
+  return local.toISOString().slice(0, 16)
+}
 
 const toISODateTime = (value: string): string => {
   if (!value) return ''
