@@ -152,7 +152,11 @@ Answers:
 - When should someone show up?
 - How can they join or add it to their own calendar?
 
-Events should prioritize practical calendar behavior: join link, calendar link, Discord event link, time, and related projects or threads.
+Events should prioritize practical calendar behavior: join link, calendar link,
+Discord event link, time, host/guest profiles, visibility, and related projects
+or threads. Use `member` visibility for sessions that should be readable by
+confirmed members but hidden from unauthenticated visitors and authenticated
+non-member contributors.
 
 Do not build complex native calendar behavior before basic external calendar links work.
 

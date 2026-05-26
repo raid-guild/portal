@@ -69,9 +69,9 @@
 - [x] Relate `projects` to activity items, threads, and relevant events.
 - [x] Render next-session and calendar CTAs on the Update Brief view.
 - [x] Render project-related events on project spike pages when present.
-- [x] Create `/events` as a Sessions page with join and add-to-calendar links.
+- [x] Create `/events` as a Sessions page with live, upcoming, and past sections plus join and add-to-calendar links.
 - [x] Create `/events/new` as a contributor-friendly session creation flow.
-- [x] Track session type, speaker, visibility, and optional Discord sync state on events.
+- [x] Track session type, host/guest profiles, member-aware visibility, optional recurrence metadata, and optional Discord sync state on events.
 - [x] Seed session-grounded activity, thread, and event records.
 - [x] Add e2e coverage for brief, project spike, thread, activity, and event visibility.
 

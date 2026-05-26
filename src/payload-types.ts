@@ -551,6 +551,24 @@ export interface Event {
    */
   sourceArtifactID?: string | null;
   sourceStatus?: ('scheduled' | 'recorded' | 'summarized' | 'processed' | 'archived') | null;
+  /**
+   * Stable key for lightweight recurring-session grouping, e.g. weekly-all-hands.
+   */
+  seriesKey?: string | null;
+  /**
+   * Display title for the recurring session group.
+   */
+  seriesTitle?: string | null;
+  /**
+   * Copied forward by agents/jobs when generating the next occurrence.
+   */
+  recurrenceCadence?: ('weekly' | 'biweekly' | 'monthly') | null;
+  /**
+   * Optional end date for recurrence generation.
+   */
+  recurrenceUntil?: string | null;
+  previousOccurrence?: (number | null) | Event;
+  nextOccurrence?: (number | null) | Event;
   roleFocus?: ('designer' | 'pm' | 'devops' | 'founder' | 'developer' | 'operations' | 'other') | null;
   practiceArea?: string | null;
   themes?:
@@ -578,7 +596,7 @@ export interface Event {
   relatedProjects?: (number | Project)[] | null;
   relatedThreads?: (number | Thread)[] | null;
   relatedProfiles?: (number | Profile)[] | null;
-  visibility: 'authenticated' | 'public' | 'admin';
+  visibility: 'authenticated' | 'member' | 'public' | 'admin';
   publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -1798,6 +1816,12 @@ export interface EventsSelect<T extends boolean = true> {
   sourceArtifactURL?: T;
   sourceArtifactID?: T;
   sourceStatus?: T;
+  seriesKey?: T;
+  seriesTitle?: T;
+  recurrenceCadence?: T;
+  recurrenceUntil?: T;
+  previousOccurrence?: T;
+  nextOccurrence?: T;
   roleFocus?: T;
   practiceArea?: T;
   themes?:

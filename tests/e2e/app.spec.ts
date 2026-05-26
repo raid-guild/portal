@@ -234,9 +234,11 @@ async function verifyMemberOnlyProjectVisibility(
 ) {
   const memberOnlyProjectTitle = 'Member Only Project Spike'
   const memberOnlyProjectSlug = 'member-only-project-spike'
+  const memberOnlyEventTitle = 'Member Only Planning Session'
   const memberEmail = 'project-member@example.com'
   const contributorEmail = 'project-contributor@example.com'
   const password = 'ChangeMe123!'
+  const startsAt = new Date(Date.now() + 36 * 60 * 60 * 1000)
 
   const projectResponse = await adminPage.request.post('/api/projects', {
     data: {
@@ -258,6 +260,24 @@ async function verifyMemberOnlyProjectVisibility(
   })
 
   expect(projectResponse.status()).toBe(201)
+
+  const eventResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: memberOnlyEventTitle,
+      summary: 'A planning session that should only be visible to users with the member role.',
+      startsAt: startsAt.toISOString(),
+      endsAt: new Date(startsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      sessionType: 'workshop',
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(eventResponse.status()).toBe(201)
+  const eventBody = await eventResponse.json()
+  const memberOnlyEventID = eventBody.doc?.id || eventBody.id
+  expect(memberOnlyEventID).toBeTruthy()
 
   const memberResponse = await adminPage.request.post('/api/users', {
     data: {
@@ -285,6 +305,10 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(publicPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(0)
   const publicDetailResponse = await publicPage.goto(`/projects/${memberOnlyProjectSlug}`)
   expect(publicDetailResponse?.status()).toBe(404)
+  await publicPage.goto('/events')
+  await expect(publicPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
+  const publicEventDetailResponse = await publicPage.goto(`/events/${memberOnlyEventID}`)
+  expect(publicEventDetailResponse?.status()).toBe(404)
 
   const contributorContext = await browser.newContext()
   const contributorPage = await contributorContext.newPage()
@@ -299,6 +323,10 @@ async function verifyMemberOnlyProjectVisibility(
   )
   const contributorDetailResponse = await contributorPage.goto(`/projects/${memberOnlyProjectSlug}`)
   expect(contributorDetailResponse?.status()).toBe(404)
+  await contributorPage.goto('/events')
+  await expect(contributorPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
+  const contributorEventDetailResponse = await contributorPage.goto(`/events/${memberOnlyEventID}`)
+  expect(contributorEventDetailResponse?.status()).toBe(404)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -313,6 +341,10 @@ async function verifyMemberOnlyProjectVisibility(
   await memberPage.goto(`/projects/${memberOnlyProjectSlug}`)
   await expect(memberPage.getByRole('heading', { name: memberOnlyProjectTitle })).toBeVisible()
   await expect(memberPage.getByText('Member-only collaboration details')).toBeVisible()
+  await memberPage.goto('/events')
+  await expect(memberPage.getByText(memberOnlyEventTitle)).toBeVisible()
+  await memberPage.goto(`/events/${memberOnlyEventID}`)
+  await expect(memberPage.getByRole('heading', { name: memberOnlyEventTitle })).toBeVisible()
   await memberContext.close()
 }
 
@@ -400,6 +432,13 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
 async function verifySessionTypeCreation(page: Page) {
   const sessionTypes = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside']
   const suffix = Date.now()
+  const profileResponse = await page.request.get(
+    '/api/profiles?where[handle][equals]=playwright-admin&limit=1',
+  )
+  expect(profileResponse.ok()).toBeTruthy()
+  const profileBody = await profileResponse.json()
+  const legacySpeakerID = profileBody.docs?.[0]?.id
+  expect(legacySpeakerID).toBeTruthy()
 
   for (const [index, sessionType] of sessionTypes.entries()) {
     const startsAt = new Date(Date.now() + (index + 2) * 60 * 60 * 1000).toISOString()
@@ -433,6 +472,141 @@ async function verifySessionTypeCreation(page: Page) {
 
     expect(cmsResponse.ok(), `${sessionType} CMS event creation should succeed`).toBeTruthy()
   }
+
+  const recurringStartsAt = new Date(Date.now() + 18 * 60 * 60 * 1000).toISOString()
+  const recurringResponse = await page.request.post('/api/events/create', {
+    data: {
+      durationMinutes: 60,
+      recurrenceCadence: 'weekly',
+      recurrenceUntil: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+      seriesKey: `playwright-weekly-${suffix}`,
+      seriesTitle: 'Playwright Weekly Series',
+      sessionType: 'workshop',
+      startsAt: recurringStartsAt,
+      summary: 'Regression coverage for recurring session metadata.',
+      syncDiscord: false,
+      title: `Playwright recurring session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+
+  expect(recurringResponse.ok(), 'recurring session creation should succeed').toBeTruthy()
+  const recurringBody = await recurringResponse.json()
+  const recurringEvent = recurringBody.event
+  expect(recurringEvent.seriesKey).toBe(`playwright-weekly-${suffix}`)
+  expect(recurringEvent.seriesTitle).toBe('Playwright Weekly Series')
+  expect(recurringEvent.recurrenceCadence).toBe('weekly')
+
+  const legacySpeakerStartsAt = new Date(Date.now() + 19 * 60 * 60 * 1000).toISOString()
+  const legacySpeakerResponse = await page.request.post('/api/events/create', {
+    data: {
+      durationMinutes: 30,
+      sessionType: 'brownbag',
+      speaker: legacySpeakerID,
+      startsAt: legacySpeakerStartsAt,
+      summary: 'Regression coverage for legacy speaker profile linkage.',
+      syncDiscord: false,
+      title: `Playwright legacy speaker session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(legacySpeakerResponse.ok(), 'legacy speaker session creation should succeed').toBeTruthy()
+  const legacySpeakerBody = await legacySpeakerResponse.json()
+  const relatedProfileIDs = (legacySpeakerBody.event.relatedProfiles || []).map(
+    (profile: number | { id: number }) => (typeof profile === 'number' ? profile : profile.id),
+  )
+  expect(relatedProfileIDs).toContain(legacySpeakerID)
+
+  await page.goto('/events')
+  await expect(page.getByText('Playwright Weekly Series / Weekly')).toBeVisible()
+}
+
+async function verifyLiveSessionHighlight(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const startsAt = new Date(Date.now() - 5 * 60 * 1000)
+  const title = `Playwright Live Session ${suffix}`
+  const response = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      endsAt: new Date(Date.now() + 25 * 60 * 1000).toISOString(),
+      publishedAt: new Date().toISOString(),
+      sessionType: 'demo',
+      startsAt: startsAt.toISOString(),
+      summary: 'Regression coverage for the live session section.',
+      title,
+      visibility: 'public',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+
+  await publicPage.goto('/events')
+  await expect(
+    publicPage.locator('section').filter({ hasText: title }).locator('.portal-kicker', {
+      hasText: 'Live Now',
+    }),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('article').filter({ hasText: title })).toBeVisible()
+  await expect(
+    publicPage.getByRole('article').filter({ hasText: title }).getByText('Live now'),
+  ).toBeVisible()
+}
+
+async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Playwright Artifact Event ${suffix}`
+  const discordScheduledEventID = `discord-event-${suffix}`
+  const startsAt = new Date(Date.now() + 20 * 60 * 60 * 1000)
+  const response = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      discordScheduledEventID,
+      endsAt: new Date(startsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      publishedAt: new Date().toISOString(),
+      sessionType: 'workshop',
+      startsAt: startsAt.toISOString(),
+      title,
+      visibility: 'public',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+
+  const unauthorizedResponse = await publicPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      discord: {
+        scheduledEventID: discordScheduledEventID,
+      },
+    },
+  })
+
+  expect(unauthorizedResponse.status()).toBe(401)
+
+  const ingestResponse = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      artifacts: {
+        artifactID: `artifact-${suffix}`,
+        recordingURL: 'https://example.com/recording',
+        summaryURL: 'https://example.com/summary',
+        transcriptURL: 'https://example.com/transcript',
+      },
+      discord: {
+        scheduledEventID: discordScheduledEventID,
+      },
+    },
+  })
+
+  expect(ingestResponse.ok()).toBeTruthy()
+  const ingestBody = await ingestResponse.json()
+  expect(ingestBody.matchedBy).toBe('discordScheduledEventID')
+  expect(ingestBody.event).toMatchObject({
+    recordingURL: 'https://example.com/recording',
+    sourceArtifactID: `artifact-${suffix}`,
+    sourceArtifactURL: 'https://example.com/summary',
+    sourceStatus: 'summarized',
+    summaryArtifactURL: 'https://example.com/summary',
+    transcriptArtifactURL: 'https://example.com/transcript',
+  })
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
@@ -971,6 +1145,8 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)
+  await verifyLiveSessionHighlight(page, publicPage)
+  await verifyEventArtifactIngest(page, publicPage)
   await verifyPortalSkillEndpoint(publicPage)
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)

@@ -46,7 +46,7 @@ Key fields:
 - `participants`
 - `relatedProjects`
 - `links`
-- `visibility`
+- `visibility`: `public`, `authenticated`, `member`, `admin`
 - `_status`
 
 Rule: update existing threads before creating new ones.
@@ -70,7 +70,13 @@ Key fields:
 - `discordSyncStatus`: `not_configured`, `synced`, `failed`
 - `discordSyncError`
 - `hostProfiles`
-- `speakerProfiles`
+- `speakerProfiles`: guest/speaker profiles; the `/api/events/create` payload uses `guests`
+- `seriesKey`
+- `seriesTitle`
+- `recurrenceCadence`: `weekly`, `biweekly`, `monthly`
+- `recurrenceUntil`
+- `previousOccurrence`
+- `nextOccurrence`
 - `relatedProjects`
 - `relatedThreads`
 - `relatedProfiles`
@@ -79,7 +85,13 @@ Key fields:
 
 Rule: sessions can be cohort-wide or scoped to one or more projects through `relatedProjects`.
 
+Rule: use `member` visibility for member-only sessions. Authenticated non-members should not see those events.
+
 Rule: direct `POST /api/events` creates only the Portal record. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
+
+Rule: recurring sessions are lightweight event metadata, not a separate collection. When generating the next occurrence, copy `seriesKey`, `seriesTitle`, `recurrenceCadence`, and `recurrenceUntil`, set `previousOccurrence` to the current event, then patch the current event's `nextOccurrence`.
+
+Rule: attach Prism recording/summary artifacts through authenticated `POST /api/events/artifacts/ingest`. Agent accounts may call it after login. Match by `eventID` when known or `discord.scheduledEventID` from the Discord adapter payload.
 
 ## projects
 

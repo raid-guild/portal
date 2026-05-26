@@ -9,11 +9,13 @@ import { validateSafeURL } from '@/utilities/safeURL'
 
 const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside'] as const
 const DURATIONS = [30, 60] as const
-const VISIBILITIES = ['public', 'authenticated', 'admin'] as const
+const VISIBILITIES = ['public', 'authenticated', 'member', 'admin'] as const
+const RECURRENCE_CADENCES = ['weekly', 'biweekly', 'monthly'] as const
 
 type SessionType = (typeof SESSION_TYPES)[number]
 type Duration = (typeof DURATIONS)[number]
 type Visibility = (typeof VISIBILITIES)[number]
+type RecurrenceCadence = (typeof RECURRENCE_CADENCES)[number]
 
 export async function POST(request: Request) {
   const payload = await getPayload({ config: configPromise })
@@ -40,10 +42,24 @@ export async function POST(request: Request) {
   const visibility = enumValue<Visibility>(body?.visibility, VISIBILITIES) || 'public'
   const relatedProjects = numberArrayValue(body?.relatedProjects)
   const relatedThreads = numberArrayValue(body?.relatedThreads)
-  const speakers = numberArrayValue(body?.speakers)
-  const speaker = speakers[0] || numberValue(body?.speaker)
+  const hosts = numberArrayValue(body?.hosts)
+  const guests = numberArrayValue(body?.guests)
+  const speakers = guests.length ? guests : numberArrayValue(body?.speakers)
+  const speaker = speakers[0] || hosts[0] || numberValue(body?.speaker)
+  const relatedProfiles = uniqueNumbers([
+    ...hosts,
+    ...speakers,
+    ...(speaker ? [speaker] : []),
+  ])
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
+  const seriesKey = normalizeSeriesKey(body?.seriesKey)
+  const seriesTitle = stringValue(body?.seriesTitle)
+  const recurrenceCadence = enumValue<RecurrenceCadence>(
+    body?.recurrenceCadence,
+    RECURRENCE_CADENCES,
+  )
+  const recurrenceUntil = stringValue(body?.recurrenceUntil)
   const syncDiscord = booleanValue(body?.syncDiscord)
 
   if (!title) {
@@ -69,11 +85,35 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Enter a valid join URL.' }, { status: 400 })
   }
 
+  const hasRecurrenceDetails = Boolean(
+    seriesKey || seriesTitle || recurrenceCadence || recurrenceUntil,
+  )
+
+  if (hasRecurrenceDetails && (!seriesKey || !recurrenceCadence)) {
+    return Response.json(
+      { message: 'Recurring sessions need a series key and cadence.' },
+      { status: 400 },
+    )
+  }
+
   const startsAtDate = new Date(startsAt)
 
   if (startsAtDate.getTime() <= Date.now()) {
     return Response.json(
       { message: 'Use Payload admin to add or enrich past sessions.' },
+      { status: 400 },
+    )
+  }
+
+  const recurrenceUntilDate = recurrenceUntil ? new Date(recurrenceUntil) : null
+
+  if (recurrenceUntil && (!recurrenceUntilDate || Number.isNaN(recurrenceUntilDate.getTime()))) {
+    return Response.json({ message: 'Enter a valid recurrence end date.' }, { status: 400 })
+  }
+
+  if (recurrenceUntilDate && recurrenceUntilDate.getTime() <= startsAtDate.getTime()) {
+    return Response.json(
+      { message: 'Recurrence end date must be after the session start time.' },
       { status: 400 },
     )
   }
@@ -97,10 +137,15 @@ export async function POST(request: Request) {
       joinURL: joinURL || undefined,
       locationLabel: locationLabel || undefined,
       publishedAt: new Date().toISOString(),
-      relatedProfiles: speakers.length ? speakers : undefined,
+      hostProfiles: hosts.length ? hosts : undefined,
+      relatedProfiles: relatedProfiles.length ? relatedProfiles : undefined,
       relatedProjects: relatedProjects.length ? relatedProjects : undefined,
       relatedThreads: relatedThreads.length ? relatedThreads : undefined,
+      recurrenceCadence: recurrenceCadence || undefined,
+      recurrenceUntil: recurrenceUntilDate ? recurrenceUntilDate.toISOString() : undefined,
       sessionType,
+      seriesKey: seriesKey || undefined,
+      seriesTitle: seriesTitle || undefined,
       speaker: speaker || undefined,
       speakerProfiles: speakers.length ? speakers : undefined,
       startsAt: startsAtDate.toISOString(),
@@ -199,6 +244,10 @@ const numberArrayValue = (value: unknown): number[] => {
   })
 }
 
+const uniqueNumbers = (values: number[]): number[] => {
+  return [...new Set(values)]
+}
+
 const enumValue = <T extends string>(value: unknown, options: readonly T[]): T | null => {
   return typeof value === 'string' && options.includes(value as T) ? (value as T) : null
 }
@@ -208,4 +257,15 @@ const booleanValue = (value: unknown): boolean => {
   if (typeof value === 'string') return value.trim().toLowerCase() === 'true'
 
   return false
+}
+
+const normalizeSeriesKey = (value: unknown): string => {
+  if (typeof value !== 'string') return ''
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80)
 }
