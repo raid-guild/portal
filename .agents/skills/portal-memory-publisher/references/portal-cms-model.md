@@ -70,7 +70,7 @@ Key fields:
 - `discordSyncStatus`: `not_configured`, `synced`, `failed`
 - `discordSyncError`
 - `hostProfiles`
-- `speakerProfiles`
+- `speakerProfiles`: guest/speaker profiles; the `/api/events/create` payload uses `guests`
 - `seriesKey`
 - `seriesTitle`
 - `recurrenceCadence`: `weekly`, `biweekly`, `monthly`

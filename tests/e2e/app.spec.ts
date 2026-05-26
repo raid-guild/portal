@@ -432,6 +432,13 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
 async function verifySessionTypeCreation(page: Page) {
   const sessionTypes = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside']
   const suffix = Date.now()
+  const profileResponse = await page.request.get(
+    '/api/profiles?where[handle][equals]=playwright-admin&limit=1',
+  )
+  expect(profileResponse.ok()).toBeTruthy()
+  const profileBody = await profileResponse.json()
+  const legacySpeakerID = profileBody.docs?.[0]?.id
+  expect(legacySpeakerID).toBeTruthy()
 
   for (const [index, sessionType] of sessionTypes.entries()) {
     const startsAt = new Date(Date.now() + (index + 2) * 60 * 60 * 1000).toISOString()
@@ -489,6 +496,26 @@ async function verifySessionTypeCreation(page: Page) {
   expect(recurringEvent.seriesKey).toBe(`playwright-weekly-${suffix}`)
   expect(recurringEvent.seriesTitle).toBe('Playwright Weekly Series')
   expect(recurringEvent.recurrenceCadence).toBe('weekly')
+
+  const legacySpeakerStartsAt = new Date(Date.now() + 19 * 60 * 60 * 1000).toISOString()
+  const legacySpeakerResponse = await page.request.post('/api/events/create', {
+    data: {
+      durationMinutes: 30,
+      sessionType: 'brownbag',
+      speaker: legacySpeakerID,
+      startsAt: legacySpeakerStartsAt,
+      summary: 'Regression coverage for legacy speaker profile linkage.',
+      syncDiscord: false,
+      title: `Playwright legacy speaker session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(legacySpeakerResponse.ok(), 'legacy speaker session creation should succeed').toBeTruthy()
+  const legacySpeakerBody = await legacySpeakerResponse.json()
+  const relatedProfileIDs = (legacySpeakerBody.event.relatedProfiles || []).map(
+    (profile: number | { id: number }) => (typeof profile === 'number' ? profile : profile.id),
+  )
+  expect(relatedProfileIDs).toContain(legacySpeakerID)
 
   await page.goto('/events')
   await expect(page.getByText('Playwright Weekly Series / Weekly')).toBeVisible()

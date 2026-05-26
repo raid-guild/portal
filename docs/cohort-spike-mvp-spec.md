@@ -355,7 +355,7 @@ Fields:
 - `startsAt`: date, required
 - `endsAt`: date, optional
 - `hostProfiles`: relationship to `profiles`, has many
-- `speakerProfiles`: relationship to `profiles`, has many
+- `speakerProfiles`: relationship to `profiles`, has many. This stores guest/speaker profiles from the frontend `guests` payload until the underlying Payload field is renamed.
 - `locationLabel`: text, optional
 - `joinURL`: text, optional safe URL
 - `calendarURL`: text, optional safe URL

@@ -45,8 +45,12 @@ export async function POST(request: Request) {
   const hosts = numberArrayValue(body?.hosts)
   const guests = numberArrayValue(body?.guests)
   const speakers = guests.length ? guests : numberArrayValue(body?.speakers)
-  const relatedProfiles = uniqueNumbers([...hosts, ...speakers])
   const speaker = speakers[0] || hosts[0] || numberValue(body?.speaker)
+  const relatedProfiles = uniqueNumbers([
+    ...hosts,
+    ...speakers,
+    ...(speaker ? [speaker] : []),
+  ])
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
   const seriesKey = normalizeSeriesKey(body?.seriesKey)
