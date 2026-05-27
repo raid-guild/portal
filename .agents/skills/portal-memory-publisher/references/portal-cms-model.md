@@ -117,6 +117,27 @@ Key fields:
 
 Rule: show project state and participation paths; do not model task management.
 
+## posts
+
+Purpose: reviewed editorial or distribution content derived from real source context.
+
+Key fields:
+
+- `title`
+- `slug`
+- `content`
+- `contentType`
+- `sourceSession`
+- `parentThread`
+- `derivedFrom`
+- `authors`
+- `categories`
+- `publishedAt`
+- `_status`
+
+Rule: agent-created posts should be drafts. Omit `publishedAt` unless an editor
+or admin is publishing the post.
+
 ## dailyBriefs
 
 Purpose: current snapshot assembled from real activity.

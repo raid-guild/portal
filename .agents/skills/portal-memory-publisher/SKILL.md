@@ -150,6 +150,27 @@ Matching order:
 
 The endpoint updates `recordingURL`, `transcriptArtifactURL`, `summaryArtifactURL`, `sourceArtifactURL`, `sourceArtifactID`, and `sourceStatus`. If no event matches, keep the artifact in the Prism workflow for human review rather than inventing a Portal event.
 
+## Post Draft Creation
+
+Agent-created posts are review drafts. When writing posts through `POST /api/posts`,
+send `_status: "draft"` or omit `_status`, and omit `publishedAt`. A `publishedAt`
+date does not publish the post; only an editor or admin should publish through
+Payload review.
+
+Do not use draft/autosave query params or version endpoints for normal agent
+post proposals. Use the canonical collection endpoint:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/posts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Draft title",
+    "slug": "draft-title",
+    "_status": "draft",
+    "content": { "root": { "type": "root", "children": [] } }
+  }'
+```
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.
