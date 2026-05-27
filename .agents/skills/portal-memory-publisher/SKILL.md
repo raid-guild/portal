@@ -171,6 +171,89 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/posts" \
   }'
 ```
 
+## Post Images
+
+Posts support two different image placements:
+
+- Header/card image: set `meta.image` to a Payload media ID. This image appears
+  in the post hero and archive cards, but not inline in the article body.
+- Inline article image: upload the image to Payload media, then insert a Lexical
+  `mediaBlock` node into `content.root.children`.
+
+Do not use Markdown image syntax in post content. The Portal renders Payload
+Lexical JSON, so `![alt](url)` will remain text or be ignored.
+
+When an agent generates or receives an image for a post:
+
+1. Upload the image to Payload media with multipart form data.
+2. Use the returned media record `id`.
+3. Set `meta.image` when the image is the cover/header image.
+4. Insert a `mediaBlock` when the image should appear inside the article body.
+
+Example inline media block inside `content.root.children`:
+
+```json
+{
+  "type": "block",
+  "fields": {
+    "blockType": "mediaBlock",
+    "media": 123
+  },
+  "format": "",
+  "version": 2
+}
+```
+
+Example post payload with both a header image and inline image:
+
+```json
+{
+  "title": "Draft title",
+  "slug": "draft-title",
+  "_status": "draft",
+  "meta": {
+    "image": 123
+  },
+  "content": {
+    "root": {
+      "type": "root",
+      "format": "",
+      "indent": 0,
+      "version": 1,
+      "children": [
+        {
+          "type": "paragraph",
+          "format": "",
+          "indent": 0,
+          "version": 1,
+          "children": [
+            {
+              "type": "text",
+              "text": "Intro text.",
+              "detail": 0,
+              "format": 0,
+              "mode": "normal",
+              "style": "",
+              "version": 1
+            }
+          ]
+        },
+        {
+          "type": "block",
+          "fields": {
+            "blockType": "mediaBlock",
+            "media": 123
+          },
+          "format": "",
+          "version": 2
+        }
+      ],
+      "direction": "ltr"
+    }
+  }
+}
+```
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.

@@ -132,11 +132,17 @@ Key fields:
 - `derivedFrom`
 - `authors`
 - `categories`
+- `meta.image`: upload relationship -> `media`; used for post hero/card image
+- inline images: Lexical `mediaBlock` nodes inside `content.root.children`
 - `publishedAt`
 - `_status`
 
 Rule: agent-created posts should be drafts. Omit `publishedAt` unless an editor
 or admin is publishing the post.
+
+Rule: use `meta.image` for the cover/header image. Use a Lexical `mediaBlock`
+with a Payload media ID for images that should appear inline in the article body.
+Markdown image syntax is not rendered as an inline image.
 
 ## dailyBriefs
 
