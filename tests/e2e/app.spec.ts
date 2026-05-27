@@ -47,6 +47,39 @@ async function fillVisiblePasswordFields(page: Page, value: string) {
   }
 }
 
+function lexicalContent(content: string) {
+  return {
+    root: {
+      children: [
+        {
+          children: [
+            {
+              detail: 0,
+              format: 0,
+              mode: 'normal',
+              style: '',
+              text: content,
+              type: 'text',
+              version: 1,
+            },
+          ],
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          textFormat: 0,
+          type: 'paragraph',
+          version: 1,
+        },
+      ],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  }
+}
+
 async function expectSeedButton(page: Page, timeout = 15000) {
   await expect(page.getByText(/without clearing existing CMS content/i)).toBeVisible({ timeout })
   await expect(page.getByRole('button', { name: /upsert portal starter content/i })).toBeVisible({
@@ -181,6 +214,45 @@ async function verifySeededPosts(page: Page) {
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
   }
+}
+
+async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const oldPostTitles = Array.from(
+    { length: 13 },
+    (_, index) => `Archive backfill ${index} ${suffix}`,
+  )
+  const latestTitle = `Latest public archive post ${suffix}`
+
+  for (const [index, title] of oldPostTitles.entries()) {
+    const response = await adminPage.request.post('/api/posts', {
+      data: {
+        _status: 'published',
+        content: lexicalContent(`Older archive post ${index}.`),
+        publishedAt: new Date(Date.UTC(2025, 0, index + 1, 12)).toISOString(),
+        slug: `archive-backfill-${index}-${suffix}`,
+        title,
+      },
+    })
+
+    expect(response.status(), `old archive post ${index} should be created`).toBe(201)
+  }
+
+  const latestResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Newest archive post.'),
+      publishedAt: new Date().toISOString(),
+      slug: `latest-public-archive-post-${suffix}`,
+      title: latestTitle,
+    },
+  })
+
+  expect(latestResponse.status()).toBe(201)
+
+  await publicPage.goto('/posts')
+  await expect(publicPage.getByRole('link', { name: latestTitle })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: oldPostTitles[0] })).toHaveCount(0)
 }
 
 async function verifyPublicHome(page: Page) {
@@ -1140,6 +1212,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
 
   await verifyPublicHome(publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
+  await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)

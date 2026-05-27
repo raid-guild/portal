@@ -18,6 +18,7 @@ export default async function Page() {
 
   const posts = await payload.find({
     collection: 'posts',
+    draft: false,
     depth: 1,
     limit: 12,
     overrideAccess: false,
@@ -26,6 +27,12 @@ export default async function Page() {
       slug: true,
       categories: true,
       meta: true,
+    },
+    sort: '-publishedAt',
+    where: {
+      _status: {
+        equals: 'published',
+      },
     },
   })
 
