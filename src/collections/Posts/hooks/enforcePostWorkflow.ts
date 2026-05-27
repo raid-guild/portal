@@ -15,6 +15,7 @@ export const enforcePostWorkflow: CollectionBeforeChangeHook = ({ data, operatio
   }
 
   nextData.authors = [req.user.id]
+  nextData.publishedAt = undefined
 
   if (nextData._status === 'published') {
     throw new Error('Only editors and admins can publish posts.')

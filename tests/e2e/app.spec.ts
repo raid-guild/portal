@@ -255,6 +255,62 @@ async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: 
   await expect(publicPage.getByRole('link', { name: oldPostTitles[0] })).toHaveCount(0)
 }
 
+async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Admin publish persistence ${suffix}`
+  const slug = `admin-publish-persistence-${suffix}`
+
+  const createResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'draft',
+      content: lexicalContent('This draft should stay published after using the admin publish action.'),
+      slug,
+      title,
+    },
+  })
+
+  expect(createResponse.status()).toBe(201)
+
+  const createdPostsResponse = await adminPage.request.get('/api/posts', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[slug][equals]': slug,
+    },
+  })
+
+  expect(createdPostsResponse.ok()).toBeTruthy()
+  const createdPostsBody = await createdPostsResponse.json()
+  const draftPost = createdPostsBody.docs[0]
+
+  expect(draftPost?.id).toBeTruthy()
+
+  await adminPage.goto(`/admin/collections/posts/${draftPost.id}`)
+  await expect(adminPage.getByText(/Status:\s*Draft/)).toBeVisible()
+
+  await adminPage.getByRole('button', { name: /publish changes/i }).click()
+  await expect(adminPage.getByText(/Status:\s*Published/)).toBeVisible({ timeout: 30000 })
+
+  await adminPage.reload()
+  await expect(adminPage.getByText(/Status:\s*Published/)).toBeVisible({ timeout: 30000 })
+
+  const publicApiResponse = await publicPage.request.get('/api/posts', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[slug][equals]': slug,
+      'where[_status][equals]': 'published',
+    },
+  })
+
+  expect(publicApiResponse.ok()).toBeTruthy()
+  const publicApiBody = await publicApiResponse.json()
+  expect(publicApiBody.docs).toHaveLength(1)
+
+  await publicPage.goto(`/posts/${slug}`)
+  await expect(publicPage.getByRole('heading', { exact: true, name: title })).toBeVisible()
+}
+
 async function verifyPublicHome(page: Page) {
   await page.goto('/')
   const header = page.locator('header').first()
@@ -1213,6 +1269,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicHome(publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
+  await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifySeededSessions(publicPage)
