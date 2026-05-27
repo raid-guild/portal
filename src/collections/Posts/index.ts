@@ -342,11 +342,7 @@ export const Posts: CollectionConfig<'posts'> = {
     beforeChange: [enforcePostWorkflow],
   },
   versions: {
-    drafts: {
-      autosave: {
-        interval: 100, // We set this interval for optimal live preview
-      },
-    },
+    drafts: true,
     maxPerDoc: 50,
   },
 }
