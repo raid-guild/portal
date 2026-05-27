@@ -31,10 +31,23 @@ export default async function Page({ params: paramsPromise }: Args) {
 
   const posts = await payload.find({
     collection: 'posts',
+    draft: false,
     depth: 1,
     limit: POSTS_PER_PAGE,
-    page: sanitizedPageNumber,
     overrideAccess: false,
+    page: sanitizedPageNumber,
+    select: {
+      title: true,
+      slug: true,
+      categories: true,
+      meta: true,
+    },
+    sort: '-publishedAt',
+    where: {
+      _status: {
+        equals: 'published',
+      },
+    },
   })
 
   return (
