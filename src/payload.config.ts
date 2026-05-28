@@ -9,6 +9,7 @@ import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { ActivityItems } from './collections/ActivityItems'
+import { Badges } from './collections/Badges'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
 import { DailyBriefs } from './collections/DailyBriefs'
@@ -17,6 +18,7 @@ import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { PointEvents } from './collections/PointEvents'
 import { Profiles } from './collections/Profiles'
+import { ProfileBadges } from './collections/ProfileBadges'
 import { ProfileRoles } from './collections/ProfileRoles'
 import { ProfileSkills } from './collections/ProfileSkills'
 import { Projects } from './collections/Projects'
@@ -110,6 +112,8 @@ export default buildConfig({
     PointEvents,
     Projects,
     Threads,
+    Badges,
+    ProfileBadges,
     Profiles,
     ProfileSkills,
     ProfileRoles,

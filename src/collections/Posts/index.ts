@@ -228,8 +228,8 @@ export const Posts: CollectionConfig<'posts'> = {
               name: 'visibility',
               type: 'select',
               access: {
-                create: ({ req: { user } }) => hasRole(user, ['admin', 'agent', 'member']),
-                update: ({ req: { user } }) => hasRole(user, ['admin', 'agent', 'member']),
+                create: ({ req: { user } }) => hasRole(user, ['admin', 'editor', 'agent']),
+                update: ({ req: { user } }) => hasRole(user, ['admin', 'editor', 'agent']),
               },
               admin: {
                 position: 'sidebar',

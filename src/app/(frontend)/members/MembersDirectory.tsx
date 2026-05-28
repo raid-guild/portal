@@ -6,6 +6,7 @@ import Link from 'next/link'
 
 import { Input } from '@/components/ui/input'
 import { toSafeURL } from '@/utilities/safeURL'
+import type { BadgeSummary } from './badgeData'
 
 type DirectoryTaxonomy = {
   id: number | string
@@ -15,6 +16,7 @@ type DirectoryTaxonomy = {
 export type DirectoryProfile = {
   authRoles: string[]
   avatarURL?: string | null
+  badges: BadgeSummary[]
   bio: string
   displayName: string
   handle: string
@@ -35,6 +37,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
   const [authRole, setAuthRole] = useState('all')
   const [profileRole, setProfileRole] = useState('all')
   const [profileSkill, setProfileSkill] = useState('all')
+  const [badge, setBadge] = useState('all')
   const [query, setQuery] = useState('')
 
   const profileRoleOptions = useMemo(() => {
@@ -43,6 +46,10 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
 
   const profileSkillOptions = useMemo(() => {
     return uniqueByTitle(profiles.flatMap((profile) => profile.profileSkills))
+  }, [profiles])
+
+  const badgeOptions = useMemo(() => {
+    return uniqueByTitle(profiles.flatMap((profile) => profile.badges))
   }, [profiles])
 
   const filteredProfiles = useMemo(() => {
@@ -56,12 +63,15 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
       const matchesProfileSkill =
         profileSkill === 'all' ||
         profile.profileSkills.some((skill) => String(skill.id) === profileSkill)
+      const matchesBadge =
+        badge === 'all' || profile.badges.some((profileBadge) => String(profileBadge.id) === badge)
 
       const searchable = [
         profile.displayName,
         profile.handle,
         profile.bio,
         ...profile.authRoles,
+        ...profile.badges.map((profileBadge) => profileBadge.title),
         ...profile.profileRoles.map((role) => role.title),
         ...profile.profileSkills.map((skill) => skill.title),
       ]
@@ -70,9 +80,11 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
 
       const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery)
 
-      return matchesAuthRole && matchesProfileRole && matchesProfileSkill && matchesQuery
+      return (
+        matchesAuthRole && matchesProfileRole && matchesProfileSkill && matchesBadge && matchesQuery
+      )
     })
-  }, [authRole, profileRole, profileSkill, profiles, query])
+  }, [authRole, badge, profileRole, profileSkill, profiles, query])
 
   if (!profiles.length) {
     return (
@@ -85,7 +97,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
 
   return (
     <>
-      <section className="mt-10 grid gap-3 portal-card lg:grid-cols-[1fr_12rem_12rem_12rem]">
+      <section className="mt-10 grid gap-3 portal-card lg:grid-cols-[1fr_12rem_12rem_12rem_12rem]">
         <label className="relative block">
           <span className="sr-only">Search members</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -130,6 +142,18 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
           ]}
           value={profileSkill}
         />
+        <DirectorySelect
+          label="Badge"
+          onChange={setBadge}
+          options={[
+            { label: 'All badges', value: 'all' },
+            ...badgeOptions.map((profileBadge) => ({
+              label: profileBadge.title,
+              value: String(profileBadge.id),
+            })),
+          ]}
+          value={badge}
+        />
       </section>
 
       <section className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -167,6 +191,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
               <p className="mt-4 line-clamp-4 text-sm leading-6 text-muted-foreground">
                 {profile.bio}
               </p>
+              <BadgePills badges={profile.badges} />
               <TaxonomyPills items={profile.profileRoles} />
               <TaxonomyPills items={profile.profileSkills} />
               {profile.links.length ? (
@@ -230,6 +255,23 @@ const TaxonomyPills: React.FC<{ items: DirectoryTaxonomy[] }> = ({ items }) => {
       {items.map((item) => (
         <span className="portal-pill" key={item.id}>
           {item.title}
+        </span>
+      ))}
+    </div>
+  )
+}
+
+const BadgePills: React.FC<{ badges: BadgeSummary[] }> = ({ badges }) => {
+  if (!badges.length) return null
+
+  return (
+    <div className="mt-4 flex flex-wrap gap-2">
+      {badges.slice(0, 4).map((badge) => (
+        <span
+          className="portal-pill border-primary/40 bg-primary/10 text-foreground"
+          key={badge.id}
+        >
+          {badge.title}
         </span>
       ))}
     </div>

@@ -61,6 +61,7 @@ The main portal surfaces are:
 ## Notes
 
 - [Portal direction](./portal-direction.md)
+- [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)

@@ -6,7 +6,7 @@
 - [x] Add reusable access helpers for admin/editor/contributor/member checks.
 - [x] Prevent non-editor users from publishing posts.
 - [x] Allow contributors to create draft posts through the API.
-- [x] Add public/authenticated/member/admin visibility to posts, with agent/member visibility support.
+- [x] Add public/authenticated/member/admin visibility to posts, with editor/admin review and agent draft visibility support.
 - [x] Restrict contributors to editing their own drafts.
 - [ ] Add tests for draft creation and publish blocking.
 
@@ -109,11 +109,27 @@
 - [ ] Add a narrow service endpoint for future automated awards.
 - [ ] Add admin reversal workflow notes and tests.
 
+## Phase 7A: Badges And Props Recognition
+
+- [x] Add `badges` collection for reusable durable recognition definitions.
+- [x] Add `profileBadges` collection for awarded profile badges, including multi-profile award batches.
+- [ ] Add `props` collection for stackable 1up recognition records.
+- [x] Keep badge and prop permissions separate from auth roles, profile roles, and point events.
+- [x] Add editor/admin badge management.
+- [x] Add admin/agent badge-award access.
+- [ ] Add admin-only 1up prop issuance after props are no longer deferred.
+- [x] Seed a small deterministic starter badge set.
+- [x] Add `/badges` catalog linked from the member directory.
+- [x] Show featured badges on member directory cards.
+- [x] Show badge shelf on member profile pages.
+- [x] Add member directory filtering by badge.
+- [x] Add e2e coverage for badge display, badge filtering, badge catalog counts, multi-profile agent awards, and visibility boundaries.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
 - [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
-- [ ] Badges and 1up props recognition. See `docs/badges-and-props-feature-spec.md`.
+- [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
 - [ ] Module/plugin registry.
