@@ -51,6 +51,14 @@ const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, s
   weekly: 'Weekly',
 }
 
+const sourceStatusLabels: Record<NonNullable<Event['sourceStatus']>, string> = {
+  archived: 'Archived',
+  processed: 'Processed',
+  recorded: 'Recorded',
+  scheduled: 'Scheduled',
+  summarized: 'Summarized',
+}
+
 export default async function EventsPage() {
   const user = await getCurrentUser()
   const events = await getEvents(user)
@@ -116,7 +124,12 @@ export default async function EventsPage() {
           <h2 className="portal-heading">Past Sessions</h2>
           <div className="mt-5 grid gap-3">
             {past.map((event) => (
-              <SessionRow canManageSessions={canManageSessions} event={event} key={event.id} />
+              <SessionRow
+                canManageSessions={canManageSessions}
+                event={event}
+                isPast
+                key={event.id}
+              />
             ))}
           </div>
         </section>
@@ -130,11 +143,12 @@ export const metadata: Metadata = {
   title: 'Sessions',
 }
 
-const SessionRow: React.FC<{ canManageSessions: boolean; event: Event; isLive?: boolean }> = ({
-  canManageSessions,
-  event,
-  isLive = false,
-}) => {
+const SessionRow: React.FC<{
+  canManageSessions: boolean
+  event: Event
+  isLive?: boolean
+  isPast?: boolean
+}> = ({ canManageSessions, event, isLive = false, isPast = false }) => {
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
   const speakers = relationDocs<Profile>(event.speakerProfiles)
@@ -197,9 +211,9 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event; isLive?: 
             {event.summary ? (
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
             ) : null}
-            {event.sourceStatus && new Date(event.startsAt).getTime() < Date.now() ? (
+            {event.sourceStatus && isPast ? (
               <p className="mt-3 inline-flex border border-border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
-                {event.sourceStatus.replace('_', ' ')}
+                Archive status: {sourceStatusLabels[event.sourceStatus]}
               </p>
             ) : null}
             {event.locationLabel ? (
@@ -227,14 +241,16 @@ const SessionRow: React.FC<{ canManageSessions: boolean; event: Event; isLive?: 
           </div>
           <div className="flex flex-wrap content-start gap-3 lg:justify-end">
             <Link className="portal-link" href={`/events/${event.id}`}>
-              Details
+              {isPast ? 'View archive' : 'Details'}
             </Link>
-            <SafeLink href={event.joinURL} label="Join" />
-            <SafeLink
-              href={event.calendarURL || getCalendarFallbackURL(event)}
-              label="Add to calendar"
-            />
-            <SafeLink href={event.discordEventURL} label="Discord event" />
+            {!isPast ? <SafeLink href={event.joinURL} label="Join" /> : null}
+            {!isPast ? (
+              <SafeLink
+                href={event.calendarURL || getCalendarFallbackURL(event)}
+                label="Add to calendar"
+              />
+            ) : null}
+            {!isPast ? <SafeLink href={event.discordEventURL} label="Discord event" /> : null}
           </div>
         </div>
       </div>
@@ -291,9 +307,7 @@ const getCalendarFallbackURL = (event: Event): string | null => {
 
 const isLiveEvent = (event: Event, now: number): boolean => {
   const startsAt = new Date(event.startsAt).getTime()
-  const endsAt = event.endsAt
-    ? new Date(event.endsAt).getTime()
-    : startsAt + 30 * 60 * 1000
+  const endsAt = event.endsAt ? new Date(event.endsAt).getTime() : startsAt + 30 * 60 * 1000
 
   return startsAt <= now && endsAt > now
 }

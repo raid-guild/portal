@@ -3,10 +3,15 @@ import { seedPortalContent } from '@/endpoints/seed/portal'
 import config from '@payload-config'
 import { headers } from 'next/headers'
 import { NextRequest } from 'next/server'
+import { isAdminSeedActionAllowed } from '@/utilities/adminSeed'
 
 export const maxDuration = 60 // This function can run for a maximum of 60 seconds
 
 export async function POST(req: NextRequest): Promise<Response> {
+  if (!isAdminSeedActionAllowed()) {
+    return new Response('Seed action disabled.', { status: 403 })
+  }
+
   const payload = await getPayload({ config })
   const requestHeaders = await headers()
 

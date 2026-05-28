@@ -3,12 +3,15 @@ import type { CollectionAfterChangeHook } from 'payload'
 import { revalidatePath } from 'next/cache'
 
 import type { Post } from '../../../payload-types'
+import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
-export const revalidatePost: CollectionAfterChangeHook<Post> = ({
-  doc,
-  previousDoc,
-  req: { payload },
-}) => {
+export const revalidatePost: CollectionAfterChangeHook<Post> = ({ doc, previousDoc, req }) => {
+  const { payload } = req
+
+  if (shouldSkipRevalidation(req)) {
+    return doc
+  }
+
   if (doc._status === 'published') {
     const path = `/posts/${doc.slug}`
 

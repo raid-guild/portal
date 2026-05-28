@@ -263,7 +263,9 @@ async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page)
   const createResponse = await adminPage.request.post('/api/posts', {
     data: {
       _status: 'draft',
-      content: lexicalContent('This draft should stay published after using the admin publish action.'),
+      content: lexicalContent(
+        'This draft should stay published after using the admin publish action.',
+      ),
       slug,
       title,
     },
@@ -577,6 +579,7 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   const publishedAt = new Date().toISOString()
   const publicTitle = `Public Fireside Detail ${suffix}`
   const authenticatedTitle = `Authenticated Fireside Detail ${suffix}`
+  const failedDiscordTitle = `Failed Discord Detail ${suffix}`
 
   const publicResponse = await adminPage.request.post('/api/events', {
     data: {
@@ -616,8 +619,28 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   const authenticatedEventID = authenticatedEventBody.doc?.id || authenticatedEventBody.id
   expect(authenticatedEventID).toBeTruthy()
 
+  const failedDiscordResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: failedDiscordTitle,
+      summary: 'A public session whose Discord sync failed during creation.',
+      startsAt: pastStart,
+      endsAt: pastEnd,
+      discordSyncError: JSON.stringify({ code: 50035, message: 'Invalid Form Body' }),
+      discordSyncStatus: 'failed',
+      sessionType: 'workshop',
+      visibility: 'public',
+      _status: 'published',
+      publishedAt,
+    },
+  })
+  expect(failedDiscordResponse.status()).toBe(201)
+  const failedDiscordEventBody = await failedDiscordResponse.json()
+  const failedDiscordEventID = failedDiscordEventBody.doc?.id || failedDiscordEventBody.id
+  expect(failedDiscordEventID).toBeTruthy()
+
   await publicPage.goto(`/events/${publicEventID}`)
   await expect(publicPage.getByRole('heading', { name: publicTitle })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Session Notes' })).toBeVisible()
   await expect(publicPage.getByText('Continue In The Portal')).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Source Material' })).toHaveCount(0)
 
@@ -627,12 +650,26 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
 
   await adminPage.goto(`/events/${publicEventID}`)
   await expect(adminPage.getByRole('heading', { name: publicTitle })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Session Notes' })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Source artifact' })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Derived Posts' })).toBeVisible()
+  await expect(adminPage.getByText('No published posts have been derived')).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Related Context' })).toBeVisible()
+  await expect(adminPage.getByText('No related projects or threads')).toBeVisible()
 
   await adminPage.goto(`/events/${authenticatedEventID}`)
   await expect(adminPage.getByRole('heading', { name: authenticatedTitle })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
+
+  await publicPage.goto(`/events/${failedDiscordEventID}`)
+  await expect(publicPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
+  await expect(publicPage.getByText('Discord Sync Failed', { exact: true })).toHaveCount(0)
+
+  await adminPage.goto(`/events/${failedDiscordEventID}`)
+  await expect(adminPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
+  await expect(adminPage.getByText('Discord Sync Failed', { exact: true })).toBeVisible()
+  await expect(adminPage.getByText('Invalid Form Body (50035)')).toBeVisible()
 }
 
 async function verifySessionTypeCreation(page: Page) {

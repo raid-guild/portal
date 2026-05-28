@@ -94,8 +94,7 @@ export const plugins: Plugin[] = [
   searchPlugin({
     collections: ['posts'],
     beforeSync: beforeSyncWithSearch,
-    skipSync: ({ req }) =>
-      process.env.DISABLE_SEARCH_SYNC === 'true' || Boolean(req.context.disableSearchSync),
+    skipSync: ({ req }) => req.context.disableSearchSync === true,
     searchOverrides: {
       admin: {
         hidden: hideFromNonEditors,
