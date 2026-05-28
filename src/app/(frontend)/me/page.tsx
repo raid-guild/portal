@@ -5,15 +5,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type {
-  Event,
-  Post,
-  Profile,
-  ProfileRole,
-  ProfileSkill,
-  Project,
-  User,
-} from '@/payload-types'
+import type { Event, Post, Profile, Project, User } from '@/payload-types'
 import { EmailVerificationCard } from '../_components/EmailVerificationCard'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -72,6 +64,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         <h2 className="mb-4 portal-heading">Profile wizard</h2>
         <ProfileWizardForm
           accountEmail={user.email}
+          accountUserID={user.id}
           claimableProfiles={profile ? [] : claimableProfiles}
           profile={profile}
           roles={roles}
@@ -116,18 +109,6 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         </div>
       </section>
 
-      <section className="mt-12 grid gap-8 lg:grid-cols-2">
-        <TaxonomyList
-          description="Skills are broad capabilities used for discovery and project matching."
-          items={skills}
-          title="Available Skills"
-        />
-        <TaxonomyList
-          description="Roles are RaidGuild identity markers. The profile flow should limit members to two."
-          items={roles}
-          title="Available Roles"
-        />
-      </section>
     </main>
   )
 }
@@ -177,33 +158,6 @@ const CreatedList: React.FC<{
       ) : (
         <p className="text-sm text-muted-foreground">Nothing created yet.</p>
       )}
-    </div>
-  </div>
-)
-
-const TaxonomyList: React.FC<{
-  description: string
-  items: ProfileRole[] | ProfileSkill[]
-  title: string
-}> = ({ description, items, title }) => (
-  <div>
-    <h2 className="portal-heading">{title}</h2>
-    <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
-    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-      {items.map((item) => (
-        <div className="portal-card" key={item.id}>
-          {'iconPath' in item && item.iconPath ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt="" className="mb-3 h-8 w-8" src={item.iconPath} />
-          ) : null}
-          <p className="font-medium">{item.title}</p>
-          {item.description ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-              {item.description}
-            </p>
-          ) : null}
-        </div>
-      ))}
     </div>
   </div>
 )

@@ -638,9 +638,7 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
 async function verifySessionTypeCreation(page: Page) {
   const sessionTypes = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside']
   const suffix = Date.now()
-  const profileResponse = await page.request.get(
-    '/api/profiles?where[handle][equals]=playwright-admin&limit=1',
-  )
+  const profileResponse = await page.request.get('/api/profiles?limit=1')
   expect(profileResponse.ok()).toBeTruthy()
   const profileBody = await profileResponse.json()
   const legacySpeakerID = profileBody.docs?.[0]?.id
@@ -1011,27 +1009,35 @@ async function verifyContributorAdminCreateAccess(page: Page) {
 }
 
 async function createProfileAndVerifyContributorCreateLinks(page: Page) {
+  const profileHandle = `playwright-admin-${Date.now()}`
+
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
   await fillFirst(page.getByLabel(/^display name$/i), 'Playwright Admin')
-  await fillFirst(page.getByLabel(/^handle$/i), 'playwright-admin')
+  await fillFirst(page.getByLabel(/^handle$/i), profileHandle)
   await fillFirst(
     page.getByLabel(/^bio$/i),
     'Testing member-facing profile creation and public directory display.',
   )
   await fillFirst(page.getByLabel(/^location$/i), 'Denver')
+  await page.getByRole('button', { name: /next/i }).click()
+
+  await page.getByLabel(/^Warrior$/i).check()
+  await page.getByRole('button', { name: /next/i }).click()
+
+  await page.getByLabel(/^Frontend Dev$/i).check()
+  await page.getByRole('button', { name: /next/i }).click()
+
   await fillFirst(page.getByLabel(/^website$/i), 'https://example.com')
   await fillFirst(page.getByLabel(/^x$/i), 'playwright')
-  await page.getByLabel(/^Warrior$/i).check()
-  await page.getByLabel(/^Frontend Dev$/i).check()
   await page.getByRole('button', { name: /save profile/i }).click()
   await expect(page.getByText('Profile saved.')).toBeVisible()
 
   await page.goto('/members')
   await expect(page.getByRole('link', { name: 'Playwright Admin' })).toBeVisible()
-  await expect(page.getByText('@playwright-admin')).toBeVisible()
+  await expect(page.getByText(`@${profileHandle}`)).toBeVisible()
   await page.getByRole('link', { name: 'Playwright Admin' }).click()
-  await expect(page).toHaveURL(/\/members\/playwright-admin/)
+  await expect(page).toHaveURL(new RegExp(`/members/${profileHandle}/?$`))
   await expect(page.getByRole('heading', { name: 'Playwright Admin' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Website' })).toBeVisible()
 

@@ -1,7 +1,7 @@
 'use client'
 
-import { Save } from 'lucide-react'
-import React, { useEffect, useMemo, useState } from 'react'
+import { ArrowLeft, ArrowRight, Save } from 'lucide-react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import type { Profile, ProfileRole, ProfileSkill } from '@/payload-types'
 import { Button } from '@/components/ui/button'
@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 
 type ProfileWizardFormProps = {
   accountEmail?: string | null
+  accountUserID: number | string
   claimableProfiles?: Profile[]
   profile?: Profile | null
   roles: ProfileRole[]
@@ -24,8 +25,37 @@ const selectedRoleIDs = (profile?: Profile | null) => selectedIDs(profile?.profi
 
 const selectedSkillIDs = (profile?: Profile | null) => selectedIDs(profile?.profileSkills)
 
+const relationID = (value: unknown) =>
+  String(typeof value === 'object' && value && 'id' in value ? value.id : value)
+
+const handleBelongsToAccount = async (handle: string, accountUserID: number | string) => {
+  const params = new URLSearchParams({
+    depth: '0',
+    limit: '1',
+  })
+  params.set('where[handle][equals]', handle)
+
+  const res = await fetch(`/api/profiles?${params.toString()}`, {
+    credentials: 'include',
+  })
+
+  if (!res.ok) return false
+
+  const json = await res.json().catch(() => null)
+  const duplicate = json?.docs?.[0]
+
+  return duplicate ? relationID(duplicate.user) === String(accountUserID) : false
+}
+
+const validationErrorFrom = (json: any) =>
+  json?.data?.errors?.[0] ||
+  json?.errors?.[0]?.data?.errors?.[0] ||
+  json?.errors?.[0] ||
+  null
+
 export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   accountEmail,
+  accountUserID,
   claimableProfiles = [],
   profile,
   roles,
@@ -36,7 +66,9 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   const [claimSuccess, setClaimSuccess] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [step, setStep] = useState(0)
   const [success, setSuccess] = useState<string | null>(null)
+  const isSubmittingRef = useRef(false)
   const initialRoleIDs = useMemo(() => selectedRoleIDs(profile), [profile])
   const initialSkillIDs = useMemo(() => selectedSkillIDs(profile), [profile])
 
@@ -89,6 +121,12 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 
   const submitProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    if (step !== profileSteps.length - 1) return
+
+    if (isSubmittingRef.current) return
+
+    isSubmittingRef.current = true
     setError(null)
     setSuccess(null)
     setIsLoading(true)
@@ -104,15 +142,30 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
       .getAll('profileSkills')
       .map((id) => Number(id))
       .filter(Number.isFinite)
+    const displayName = String(formData.get('displayName') || '').trim()
+    const handle = String(formData.get('handle') || '').trim()
+    const bio = String(formData.get('bio') || '').trim()
+
+    if (!displayName || !handle || !bio) {
+      setError('Add a display name, handle, and bio.')
+      setStep(0)
+      isSubmittingRef.current = false
+      setIsLoading(false)
+      return
+    }
 
     if (!roleIDs.length || !skillIDs.length) {
       setError('Choose at least one role and one skill.')
+      setStep(roleIDs.length ? 2 : 1)
+      isSubmittingRef.current = false
       setIsLoading(false)
       return
     }
 
     if (roleIDs.length > 2) {
       setError('Choose up to two profile roles.')
+      setStep(1)
+      isSubmittingRef.current = false
       setIsLoading(false)
       return
     }
@@ -160,7 +213,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 
       const body = {
         avatar,
-        bio: String(formData.get('bio') || '').trim(),
+        bio,
         contact: {
           discord: String(formData.get('discord') || '').trim(),
           email: String(formData.get('contactEmail') || '').trim(),
@@ -170,8 +223,8 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
             .trim()
             .replace(/^@/, ''),
         },
-        displayName: String(formData.get('displayName') || '').trim(),
-        handle: String(formData.get('handle') || '').trim(),
+        displayName,
+        handle,
         links,
         location: String(formData.get('location') || '').trim(),
         profileRoles: roleIDs,
@@ -191,13 +244,33 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 
       if (!res.ok) {
         const json = await res.json().catch(() => null)
-        throw new Error(json?.errors?.[0]?.message || json?.message || 'Unable to save profile.')
+        const validationError = validationErrorFrom(json)
+        const message = validationError?.message || json?.message || 'Unable to save profile.'
+        const path = validationError?.path
+        const isHandleError =
+          path === 'handle' ||
+          String(message).toLowerCase().includes('handle') ||
+          String(json?.message || '')
+            .toLowerCase()
+            .includes('handle')
+
+        if (
+          !profile &&
+          isHandleError &&
+          (await handleBelongsToAccount(handle, accountUserID))
+        ) {
+          setSuccess('Profile saved.')
+          return
+        }
+
+        throw new Error(message)
       }
 
       setSuccess('Profile saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save profile.')
     } finally {
+      isSubmittingRef.current = false
       setIsLoading(false)
     }
   }
@@ -238,9 +311,15 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
         </section>
       ) : null}
 
-      <form className="portal-panel" onSubmit={submitProfile}>
-        <div className="grid gap-8 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <div className="space-y-5">
+      <form className="portal-panel" noValidate onSubmit={submitProfile}>
+        <Stepper currentStep={step} />
+
+        <div className="mt-8">
+          <section className={step === 0 ? 'space-y-5' : 'hidden'}>
+            <div>
+              <p className="portal-kicker">Step 1</p>
+              <h3 className="portal-heading-sm">Public identity</h3>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="displayName">Display name</Label>
@@ -249,7 +328,6 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                   defaultValue={profile?.displayName || ''}
                   id="displayName"
                   name="displayName"
-                  required
                 />
               </div>
               <div>
@@ -259,7 +337,6 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                   defaultValue={profile?.handle || ''}
                   id="handle"
                   name="handle"
-                  required
                 />
               </div>
             </div>
@@ -271,7 +348,6 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                 defaultValue={profile?.bio || ''}
                 id="bio"
                 name="bio"
-                required
                 rows={4}
               />
             </div>
@@ -298,6 +374,58 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
               </div>
             </div>
 
+            <div>
+              <Label htmlFor="visibility">Visibility</Label>
+              <select
+                className={selectClassName}
+                defaultValue={profile?.visibility || 'public'}
+                id="visibility"
+                name="visibility"
+              >
+                <option value="public">Public</option>
+                <option value="authenticated">Authenticated</option>
+                <option value="private">Private</option>
+              </select>
+            </div>
+          </section>
+
+          <section className={step === 1 ? 'space-y-5' : 'hidden'}>
+            <div>
+              <p className="portal-kicker">Step 2</p>
+              <h3 className="portal-heading-sm">Choose profile roles</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Pick up to two roles that describe how people should understand your work in the
+                guild.
+              </p>
+            </div>
+            <TaxonomyPicker
+              defaultSelected={initialRoleIDs}
+              items={roles}
+              name="profileRoles"
+              maxSelected={2}
+            />
+          </section>
+
+          <section className={step === 2 ? 'space-y-5' : 'hidden'}>
+            <div>
+              <p className="portal-kicker">Step 3</p>
+              <h3 className="portal-heading-sm">Choose skills</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Select the capabilities you want to be found for in the member directory.
+              </p>
+            </div>
+            <TaxonomyPicker
+              defaultSelected={initialSkillIDs}
+              items={skills}
+              name="profileSkills"
+            />
+          </section>
+
+          <section className={step === 3 ? 'space-y-5' : 'hidden'}>
+            <div>
+              <p className="portal-kicker">Step 4</p>
+              <h3 className="portal-heading-sm">Links and contact</h3>
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
               <LinkInput label="Website" name="websiteURL" profile={profile} />
               <LinkInput label="GitHub" name="githubURL" profile={profile} />
@@ -335,49 +463,75 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                 />
               </div>
             </div>
-          </div>
-
-          <aside className="space-y-5">
-            <div>
-              <Label htmlFor="visibility">Visibility</Label>
-              <select
-                className={selectClassName}
-                defaultValue={profile?.visibility || 'public'}
-                id="visibility"
-                name="visibility"
-              >
-                <option value="public">Public</option>
-                <option value="authenticated">Authenticated</option>
-                <option value="private">Private</option>
-              </select>
-            </div>
-
-            <Checklist
-              defaultSelected={initialRoleIDs}
-              items={roles}
-              label="Profile roles"
-              name="profileRoles"
-            />
-            <Checklist
-              defaultSelected={initialSkillIDs}
-              items={skills}
-              label="Profile skills"
-              name="profileSkills"
-            />
-          </aside>
+          </section>
         </div>
 
         {error ? <p className="mt-5 text-sm text-destructive">{error}</p> : null}
         {success ? <p className="mt-5 text-sm text-muted-foreground">{success}</p> : null}
 
-        <Button className="mt-6" disabled={isLoading} type="submit">
-          {isLoading ? 'Saving...' : 'Save profile'}
-          {!isLoading ? <Save className="ml-2 h-4 w-4" /> : null}
-        </Button>
+        <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-5">
+          <Button
+            disabled={step === 0 || isLoading}
+            onClick={(event) => {
+              event.preventDefault()
+              setStep(step - 1)
+            }}
+            type="button"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          {step < profileSteps.length - 1 ? (
+            <Button
+              disabled={isLoading}
+              onClick={(event) => {
+                event.preventDefault()
+                setStep(step + 1)
+              }}
+              type="button"
+            >
+              Next
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          ) : (
+            <Button disabled={isLoading} type="submit">
+              {isLoading ? 'Saving...' : 'Save profile'}
+              {!isLoading ? <Save className="ml-2 h-4 w-4" /> : null}
+            </Button>
+          )}
+        </div>
       </form>
     </div>
   )
 }
+
+const profileSteps = ['Identity', 'Roles', 'Skills', 'Links'] as const
+
+const Stepper: React.FC<{ currentStep: number }> = ({ currentStep }) => (
+  <ol className="grid gap-2 sm:grid-cols-4">
+    {profileSteps.map((label, index) => {
+      const isActive = index === currentStep
+      const isComplete = index < currentStep
+
+      return (
+        <li
+          aria-current={isActive ? 'step' : undefined}
+          className={[
+            'border border-border px-3 py-3',
+            isActive ? 'bg-primary text-primary-foreground' : 'bg-card/25 text-muted-foreground',
+            isComplete ? 'border-primary text-foreground' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          key={label}
+        >
+          <p className="font-mono text-xs uppercase">Step {index + 1}</p>
+          <p className="mt-1 text-sm font-bold">{label}</p>
+        </li>
+      )
+    })}
+  </ol>
+)
 
 const LinkInput: React.FC<{ label: string; name: string; profile?: Profile | null }> = ({
   label,
@@ -400,25 +554,40 @@ const LinkInput: React.FC<{ label: string; name: string; profile?: Profile | nul
   )
 }
 
-const Checklist: React.FC<{
+const TaxonomyPicker: React.FC<{
   defaultSelected: Set<string>
-  items: { id: number | string; title: string }[]
-  label: string
+  items: (ProfileRole | ProfileSkill)[]
+  maxSelected?: number
   name: string
-}> = ({ defaultSelected, items, label, name }) => (
+}> = ({ defaultSelected, items, maxSelected, name }) => (
   <fieldset>
-    <legend className="text-sm font-medium">{label}</legend>
-    <div className="mt-3 max-h-56 space-y-2 overflow-auto border border-muted-foreground/30 bg-background/70 p-3">
+    <legend className="sr-only">{name}</legend>
+    {maxSelected ? (
+      <p className="mb-3 text-sm text-muted-foreground">Choose up to {maxSelected}.</p>
+    ) : null}
+    <div className="grid gap-3 md:grid-cols-2">
       {items.map((item) => (
-        <label className="flex items-start gap-2 text-sm leading-5" key={item.id}>
+        <label className="portal-card flex cursor-pointer items-start gap-3" key={item.id}>
           <input
+            aria-label={item.title}
             className="mt-1 accent-primary"
             defaultChecked={defaultSelected.has(String(item.id))}
             name={name}
             type="checkbox"
             value={item.id}
           />
-          <span>{item.title}</span>
+          <span>
+            {'iconPath' in item && item.iconPath ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img alt="" className="mb-3 h-8 w-8" src={item.iconPath} />
+            ) : null}
+            <span className="block font-bold">{item.title}</span>
+            {item.description ? (
+              <span className="mt-2 block text-sm leading-6 text-muted-foreground">
+                {item.description}
+              </span>
+            ) : null}
+          </span>
         </label>
       ))}
     </div>
