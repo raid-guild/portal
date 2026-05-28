@@ -1153,6 +1153,12 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(claimPage).toHaveURL(/\/dashboard/)
 
+  await claimPage.goto(`/members/${handle}`)
+  await expect(claimPage.getByRole('heading', { name: displayName })).toBeVisible()
+  await expect(claimPage.getByRole('heading', { name: 'Is this you?' })).toBeVisible()
+  await claimPage.getByRole('button', { name: 'Email claim link' }).click()
+  await expect(claimPage.getByText('Verification email sent.')).toBeVisible()
+
   await claimPage.goto('/me')
   await expect(claimPage.getByRole('heading', { name: 'Claim an existing profile' })).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
@@ -1162,9 +1168,6 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
     data: { profileID },
   })
   expect(unverifiedClaimResponse.status()).toBe(403)
-
-  await claimPage.getByRole('button', { name: 'Email claim link' }).click()
-  await expect(claimPage.getByText('Verification email sent.')).toBeVisible()
 
   const claimToken = signProfileClaimToken({
     email,

@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 import type { Event, Post, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { MemberProfileClaimCard } from './MemberProfileClaimCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +28,10 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
 
   const createdRecords = await getCreatedRecords(profile, user)
   const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
+  const profileUserID = typeof profile.user === 'object' ? profile.user?.id : profile.user
+  const canRequestClaim = Boolean(
+    user && profile.claimStatus === 'unclaimed' && !profileUserID,
+  )
   const roles = taxonomy(profile.profileRoles)
   const skills = taxonomy(profile.profileSkills)
 
@@ -77,6 +82,8 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
           </div>
         </aside>
       </section>
+
+      {canRequestClaim ? <MemberProfileClaimCard profileID={profile.id} /> : null}
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
         <Taxonomy title="Roles" values={roles} />
