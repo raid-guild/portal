@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { notFound, redirect } from 'next/navigation'
+import { notFound } from 'next/navigation'
 import React from 'react'
 
 import configPromise from '@payload-config'
@@ -20,15 +20,12 @@ type MemberProfilePageProps = {
 
 export default async function MemberProfilePage({ params }: MemberProfilePageProps) {
   const user = await getCurrentUser()
-
-  if (!user) redirect('/join')
-
   const { handle } = await params
-  const profile = await getProfile(handle)
+  const profile = await getProfile(handle, user)
 
   if (!profile) notFound()
 
-  const createdRecords = await getCreatedRecords(profile)
+  const createdRecords = await getCreatedRecords(profile, user)
   const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
   const roles = taxonomy(profile.profileRoles)
   const skills = taxonomy(profile.profileSkills)
@@ -128,9 +125,7 @@ const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }
     <div className="mt-4 space-y-3">
       {items.length ? (
         items.map((item) => (
-          <p className="text-sm font-medium" key={item.id}>
-            {item.title}
-          </p>
+          <RecordLink item={item} key={item.id} />
         ))
       ) : (
         <p className="text-sm text-muted-foreground">Nothing listed yet.</p>
@@ -139,7 +134,26 @@ const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }
   </div>
 )
 
-const getProfile = async (handle: string) => {
+const RecordLink: React.FC<{ item: Event | Post | Project }> = ({ item }) => {
+  const href =
+    'slug' in item && item.slug
+      ? 'projectStatus' in item
+        ? `/projects/${item.slug}`
+        : `/posts/${item.slug}`
+      : 'startsAt' in item
+        ? `/events/${item.id}`
+        : null
+
+  if (!href) return <p className="text-sm font-medium">{item.title}</p>
+
+  return (
+    <Link className="block text-sm font-medium hover:text-primary" href={href}>
+      {item.title}
+    </Link>
+  )
+}
+
+const getProfile = async (handle: string, user: Awaited<ReturnType<typeof getCurrentUser>>) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'profiles',
@@ -147,6 +161,7 @@ const getProfile = async (handle: string) => {
     limit: 1,
     overrideAccess: false,
     pagination: false,
+    user: user || undefined,
     where: {
       handle: {
         equals: handle,
@@ -157,7 +172,10 @@ const getProfile = async (handle: string) => {
   return result.docs[0] || null
 }
 
-const getCreatedRecords = async (profile: Profile) => {
+const getCreatedRecords = async (
+  profile: Profile,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+) => {
   const payload = await getPayload({ config: configPromise })
   const profileUser = typeof profile.user === 'object' ? profile.user : null
   const userID = profileUser?.id || profile.user
@@ -168,26 +186,46 @@ const getCreatedRecords = async (profile: Profile) => {
       collection: 'projects',
       depth: 0,
       limit: 6,
-      overrideAccess: true,
+      overrideAccess: false,
       pagination: false,
       sort: '-updatedAt',
+      user: user || undefined,
       where: {
-        contributors: {
-          in: [profile.id],
-        },
+        and: [
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+          {
+            contributors: {
+              in: [profile.id],
+            },
+          },
+        ],
       },
     }),
     payload.find({
       collection: 'events',
       depth: 0,
       limit: 6,
-      overrideAccess: true,
+      overrideAccess: false,
       pagination: false,
       sort: '-updatedAt',
+      user: user || undefined,
       where: {
-        relatedProfiles: {
-          in: [profile.id],
-        },
+        and: [
+          {
+            _status: {
+              equals: 'published',
+            },
+          },
+          {
+            relatedProfiles: {
+              in: [profile.id],
+            },
+          },
+        ],
       },
     }),
     hasUserID
@@ -195,13 +233,23 @@ const getCreatedRecords = async (profile: Profile) => {
           collection: 'posts',
           depth: 0,
           limit: 6,
-          overrideAccess: true,
+          overrideAccess: false,
           pagination: false,
           sort: '-updatedAt',
+          user: user || undefined,
           where: {
-            authors: {
-              in: [userID],
-            },
+            and: [
+              {
+                _status: {
+                  equals: 'published',
+                },
+              },
+              {
+                authors: {
+                  in: [userID],
+                },
+              },
+            ],
           },
         })
       : Promise.resolve({

@@ -340,7 +340,11 @@ async function verifySeededProjectSpike(page: Page) {
   await page.goto('/projects')
   await expect(page.getByRole('heading', { name: 'Active project spikes' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Cohort Project Spike Portal' })).toBeVisible()
-  await page.getByRole('link', { name: 'View project' }).click()
+  await page
+    .getByRole('article')
+    .filter({ hasText: 'Cohort Project Spike Portal' })
+    .getByRole('link', { name: 'View project' })
+    .click()
 
   await expect(page).toHaveURL(/\/projects\/cohort-project-spike-portal/)
   await expect(page.getByRole('heading', { name: 'Cohort Project Spike Portal' })).toBeVisible()
@@ -1286,6 +1290,139 @@ async function verifyLegacyMemberImport(adminPage: Page) {
   await expect(adminPage.getByRole('heading', { name: displayName })).toBeVisible()
 }
 
+async function verifyAnonymousPublicMemberProfile(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const displayName = `Public Profile ${suffix}`
+  const handle = `public-profile-${suffix}`
+  const privatePostTitle = `Private profile post ${suffix}`
+  const publicEventTitle = `Public profile session ${suffix}`
+  const publicPostTitle = `Public profile post ${suffix}`
+  const publicProjectTitle = `Public profile project ${suffix}`
+  const startsAt = new Date(Date.now() + 48 * 60 * 60 * 1000)
+
+  const userResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: `public-profile-${suffix}@example.com`,
+      name: displayName,
+      password: 'ChangeMe123!',
+      roles: ['member'],
+    },
+  })
+
+  expect(userResponse.status()).toBe(201)
+  const userBody = await userResponse.json()
+  const userID = userBody.doc?.id || userBody.id
+  const [rolesResponse, skillsResponse] = await Promise.all([
+    adminPage.request.get('/api/profileRoles', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(rolesResponse.ok()).toBeTruthy()
+  expect(skillsResponse.ok()).toBeTruthy()
+  const rolesBody = await rolesResponse.json()
+  const skillsBody = await skillsResponse.json()
+  const roleID = rolesBody.docs?.[0]?.id
+  const skillID = skillsBody.docs?.[0]?.id
+  expect(roleID).toBeTruthy()
+  expect(skillID).toBeTruthy()
+
+  const profileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'A public profile that anonymous visitors should be able to view.',
+      displayName,
+      handle,
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      user: userID,
+      visibility: 'public',
+    },
+  })
+
+  expect(profileResponse.status()).toBe(201)
+  const profileBody = await profileResponse.json()
+  const profileID = profileBody.doc?.id || profileBody.id
+
+  const projectResponse = await adminPage.request.post('/api/projects', {
+    data: {
+      title: publicProjectTitle,
+      summary: 'Public project associated with a member profile.',
+      contributors: [profileID],
+      currentState: [{ body: 'Visible on the anonymous profile page.' }],
+      lastActiveAt: new Date().toISOString(),
+      projectStatus: 'active',
+      publishedAt: new Date().toISOString(),
+      slug: `public-profile-project-${suffix}`,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(projectResponse.status()).toBe(201)
+
+  const eventResponse = await adminPage.request.post('/api/events', {
+    data: {
+      title: publicEventTitle,
+      summary: 'Public session associated with a member profile.',
+      startsAt: startsAt.toISOString(),
+      endsAt: new Date(startsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      relatedProfiles: [profileID],
+      sessionType: 'demo',
+      publishedAt: new Date().toISOString(),
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(eventResponse.status()).toBe(201)
+
+  const publicPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      title: publicPostTitle,
+      slug: `public-profile-post-${suffix}`,
+      authors: [userID],
+      content: lexicalContent('Public post associated with a member profile.'),
+      publishedAt: new Date().toISOString(),
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(publicPostResponse.status()).toBe(201)
+
+  const privatePostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      title: privatePostTitle,
+      slug: `private-profile-post-${suffix}`,
+      authors: [userID],
+      content: lexicalContent('Member-only post associated with a member profile.'),
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(privatePostResponse.status()).toBe(201)
+
+  const response = await publicPage.goto(`/members/${handle}`)
+  expect(response?.ok()).toBeTruthy()
+  await expect(publicPage.getByRole('heading', { name: displayName })).toBeVisible()
+  await expect(publicPage.getByText(publicProjectTitle)).toBeVisible()
+  await expect(publicPage.getByText(publicEventTitle)).toBeVisible()
+  await expect(publicPage.getByText(publicPostTitle)).toBeVisible()
+  await expect(publicPage.getByText(privatePostTitle)).toHaveCount(0)
+}
+
 async function verifyDashboardBrief(page: Page) {
   await page.goto('/')
   await expect(page.getByRole('link', { name: /New Page/i })).toHaveCount(0)
@@ -1341,6 +1478,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicPage = await publicContext.newPage()
 
   await verifyPublicHome(publicPage)
+  await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
