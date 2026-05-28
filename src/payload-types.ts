@@ -484,6 +484,7 @@ export interface Post {
   relatedPosts?: (number | Post)[] | null;
   derivedFromPosts?: (number | Post)[] | null;
   categories?: (number | Category)[] | null;
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
   wikiCandidate?: boolean | null;
   wikiCandidateTopics?:
     | {
@@ -1687,6 +1688,7 @@ export interface PostsSelect<T extends boolean = true> {
   relatedPosts?: T;
   derivedFromPosts?: T;
   categories?: T;
+  visibility?: T;
   wikiCandidate?: T;
   wikiCandidateTopics?:
     | T

@@ -6,6 +6,7 @@
 - [x] Add reusable access helpers for admin/editor/contributor/member checks.
 - [x] Prevent non-editor users from publishing posts.
 - [x] Allow contributors to create draft posts through the API.
+- [x] Add public/authenticated/member/admin visibility to posts, with agent/member visibility support.
 - [x] Restrict contributors to editing their own drafts.
 - [ ] Add tests for draft creation and publish blocking.
 

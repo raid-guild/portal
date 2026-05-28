@@ -9,8 +9,9 @@ import {
   lexicalEditor,
 } from '@payloadcms/richtext-lexical'
 
-import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
+import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { createPosts, deletePosts, updatePosts } from '@/access/posts'
+import { hasRole } from '@/access/roles'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
@@ -35,7 +36,7 @@ export const Posts: CollectionConfig<'posts'> = {
   access: {
     create: createPosts,
     delete: deletePosts,
-    read: authenticatedOrPublished,
+    read: readVisiblePortalContent,
     update: updatePosts,
   },
   // This config controls what's populated by default when a post is referenced
@@ -51,7 +52,7 @@ export const Posts: CollectionConfig<'posts'> = {
     },
   },
   admin: {
-    defaultColumns: ['title', 'slug', '_status', 'publishedAt', 'updatedAt'],
+    defaultColumns: ['title', 'slug', 'visibility', '_status', 'publishedAt', 'updatedAt'],
     livePreview: {
       url: ({ data }) => {
         const path = generatePreviewPath({
@@ -222,6 +223,37 @@ export const Posts: CollectionConfig<'posts'> = {
               },
               hasMany: true,
               relationTo: 'categories',
+            },
+            {
+              name: 'visibility',
+              type: 'select',
+              access: {
+                create: ({ req: { user } }) => hasRole(user, ['admin', 'agent', 'member']),
+                update: ({ req: { user } }) => hasRole(user, ['admin', 'agent', 'member']),
+              },
+              admin: {
+                position: 'sidebar',
+              },
+              defaultValue: 'public',
+              options: [
+                {
+                  label: 'Public',
+                  value: 'public',
+                },
+                {
+                  label: 'Authenticated',
+                  value: 'authenticated',
+                },
+                {
+                  label: 'Members',
+                  value: 'member',
+                },
+                {
+                  label: 'Admin only',
+                  value: 'admin',
+                },
+              ],
+              required: true,
             },
             {
               name: 'wikiCandidate',

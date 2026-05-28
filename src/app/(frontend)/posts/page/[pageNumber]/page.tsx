@@ -10,6 +10,12 @@ import React from 'react'
 import PageClient from './page.client'
 import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import {
+  getPostVisibilityQuery,
+  getPostVisibilityWhere,
+  normalizePostVisibilityFilter,
+  PostVisibilityFilterNav,
+} from '../../postVisibilityFilters'
 
 export const dynamic = 'force-dynamic'
 const POSTS_PER_PAGE = 12
@@ -18,12 +24,20 @@ type Args = {
   params: Promise<{
     pageNumber: string
   }>
+  searchParams?: Promise<{
+    visibility?: string | string[]
+  }>
 }
 
-export default async function Page({ params: paramsPromise }: Args) {
+export default async function Page({
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
+}: Args) {
   const { pageNumber } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
   const user = await getCurrentUser()
+  const searchParams = await searchParamsPromise
+  const visibility = normalizePostVisibilityFilter(searchParams, user)
 
   const sanitizedPageNumber = Number(pageNumber)
 
@@ -41,13 +55,11 @@ export default async function Page({ params: paramsPromise }: Args) {
       slug: true,
       categories: true,
       meta: true,
+      visibility: true,
     },
     sort: '-publishedAt',
-    where: {
-      _status: {
-        equals: 'published',
-      },
-    },
+    user: user || undefined,
+    where: getPostVisibilityWhere(visibility),
   })
 
   return (
@@ -67,6 +79,10 @@ export default async function Page({ params: paramsPromise }: Args) {
       </div>
 
       <div className="container mb-8">
+        <PostVisibilityFilterNav activeVisibility={visibility} user={user} />
+      </div>
+
+      <div className="container mb-8">
         <PageRange
           collection="posts"
           currentPage={posts.page}
@@ -79,7 +95,11 @@ export default async function Page({ params: paramsPromise }: Args) {
 
       <div className="container">
         {posts?.page && posts?.totalPages > 1 && (
-          <Pagination page={posts.page} totalPages={posts.totalPages} />
+          <Pagination
+            page={posts.page}
+            queryString={getPostVisibilityQuery(visibility)}
+            totalPages={posts.totalPages}
+          />
         )}
       </div>
     </div>

@@ -14,7 +14,10 @@ import type { Event, Post, Thread } from '@/payload-types'
 
 import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
+import { getCurrentUser } from '@/utilities/getCurrentUser'
 import PageClient from './page.client'
+
+export const dynamic = 'force-dynamic'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -44,7 +47,8 @@ type Args = {
 export default async function Post({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
   const url = '/posts/' + slug
-  const post = await queryPostBySlug({ slug })
+  const user = await getCurrentUser()
+  const post = await queryPostBySlug({ slug, user })
 
   if (!post) return <PayloadRedirects url={url} />
 
@@ -80,31 +84,41 @@ export default async function Post({ params: paramsPromise }: Args) {
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
-  const post = await queryPostBySlug({ slug })
+  const user = await getCurrentUser()
+  const post = await queryPostBySlug({ slug, user })
 
   return generateMeta({ doc: post })
 }
 
-const queryPostBySlug = cache(async ({ slug }: { slug: string }) => {
-  const { isEnabled: draft } = await draftMode()
+const queryPostBySlug = cache(
+  async ({
+    slug,
+    user,
+  }: {
+    slug: string
+    user: Awaited<ReturnType<typeof getCurrentUser>>
+  }) => {
+    const { isEnabled: draft } = await draftMode()
 
-  const payload = await getPayload({ config: configPromise })
+    const payload = await getPayload({ config: configPromise })
 
-  const result = await payload.find({
-    collection: 'posts',
-    draft,
-    limit: 1,
-    overrideAccess: draft,
-    pagination: false,
-    where: {
-      slug: {
-        equals: slug,
+    const result = await payload.find({
+      collection: 'posts',
+      draft,
+      limit: 1,
+      overrideAccess: draft,
+      pagination: false,
+      user: user || undefined,
+      where: {
+        slug: {
+          equals: slug,
+        },
       },
-    },
-  })
+    })
 
-  return result.docs?.[0] || null
-})
+    return result.docs?.[0] || null
+  },
+)
 
 const PostSourceContext: React.FC<{ post: Post }> = ({ post }) => {
   const sourceSession = typeof post.sourceSession === 'object' ? post.sourceSession : null

@@ -363,8 +363,11 @@ async function verifyMemberOnlyProjectVisibility(
   const memberOnlyProjectTitle = 'Member Only Project Spike'
   const memberOnlyProjectSlug = 'member-only-project-spike'
   const memberOnlyEventTitle = 'Member Only Planning Session'
+  const memberOnlyPostTitle = 'Member Only Field Note'
+  const memberOnlyPostSlug = 'member-only-field-note'
   const memberEmail = 'project-member@example.com'
   const contributorEmail = 'project-contributor@example.com'
+  const agentEmail = 'project-agent@example.com'
   const password = 'ChangeMe123!'
   const startsAt = new Date(Date.now() + 36 * 60 * 60 * 1000)
 
@@ -407,6 +410,19 @@ async function verifyMemberOnlyProjectVisibility(
   const memberOnlyEventID = eventBody.doc?.id || eventBody.id
   expect(memberOnlyEventID).toBeTruthy()
 
+  const postResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      title: memberOnlyPostTitle,
+      slug: memberOnlyPostSlug,
+      content: lexicalContent('Member-only post details are visible after member login.'),
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(postResponse.status()).toBe(201)
+
   const memberResponse = await adminPage.request.post('/api/users', {
     data: {
       email: memberEmail,
@@ -429,6 +445,17 @@ async function verifyMemberOnlyProjectVisibility(
 
   expect(contributorResponse.status()).toBe(201)
 
+  const agentResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: agentEmail,
+      name: 'Project Agent',
+      password,
+      roles: ['agent'],
+    },
+  })
+
+  expect(agentResponse.status()).toBe(201)
+
   await publicPage.goto('/projects')
   await expect(publicPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(0)
   const publicDetailResponse = await publicPage.goto(`/projects/${memberOnlyProjectSlug}`)
@@ -437,6 +464,10 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(publicPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const publicEventDetailResponse = await publicPage.goto(`/events/${memberOnlyEventID}`)
   expect(publicEventDetailResponse?.status()).toBe(404)
+  await publicPage.goto('/posts')
+  await expect(publicPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
+  const publicPostDetailResponse = await publicPage.goto(`/posts/${memberOnlyPostSlug}`)
+  expect(publicPostDetailResponse?.status()).toBe(404)
 
   const contributorContext = await browser.newContext()
   const contributorPage = await contributorContext.newPage()
@@ -455,6 +486,10 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const contributorEventDetailResponse = await contributorPage.goto(`/events/${memberOnlyEventID}`)
   expect(contributorEventDetailResponse?.status()).toBe(404)
+  await contributorPage.goto('/posts')
+  await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
+  const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
+  expect(contributorPostDetailResponse?.status()).toBe(404)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -473,7 +508,46 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(memberPage.getByText(memberOnlyEventTitle)).toBeVisible()
   await memberPage.goto(`/events/${memberOnlyEventID}`)
   await expect(memberPage.getByRole('heading', { name: memberOnlyEventTitle })).toBeVisible()
+  await memberPage.goto('/posts')
+  await expect(memberPage.getByRole('link', { name: memberOnlyPostTitle })).toBeVisible()
+  await expect(memberPage.getByRole('link', { name: 'Members' })).toBeVisible()
+  await memberPage.goto('/posts?visibility=member')
+  await expect(memberPage.getByRole('link', { name: memberOnlyPostTitle })).toBeVisible()
+  await memberPage.goto(`/posts/${memberOnlyPostSlug}`)
+  await expect(
+    memberPage.getByRole('heading', { exact: true, name: memberOnlyPostTitle }),
+  ).toBeVisible()
+  await expect(memberPage.getByText('Member-only post details')).toBeVisible()
   await memberContext.close()
+
+  const agentContext = await browser.newContext()
+  const agentPage = await agentContext.newPage()
+  await agentPage.goto('/login')
+  await fillFirst(agentPage.getByLabel(/^email$/i), agentEmail)
+  await fillFirst(agentPage.getByLabel(/^password$/i), password)
+  await agentPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(agentPage).toHaveURL(/\/dashboard/)
+  await agentPage.goto('/projects')
+  await expect(agentPage.getByRole('heading', { name: memberOnlyProjectTitle })).toBeVisible()
+  await agentPage.goto('/events')
+  await expect(agentPage.getByText(memberOnlyEventTitle)).toBeVisible()
+  await agentPage.goto('/posts?visibility=member')
+  await expect(agentPage.getByRole('link', { name: memberOnlyPostTitle })).toBeVisible()
+
+  const agentDraftResponse = await agentPage.request.post('/api/posts', {
+    data: {
+      title: 'Agent member visibility draft',
+      slug: 'agent-member-visibility-draft',
+      content: lexicalContent('Agent-authored member visibility draft.'),
+      visibility: 'member',
+    },
+  })
+
+  expect(agentDraftResponse.status()).toBe(201)
+  const agentDraftBody = await agentDraftResponse.json()
+  expect(agentDraftBody.doc?.visibility || agentDraftBody.visibility).toBe('member')
+  expect(agentDraftBody.doc?._status || agentDraftBody._status).toBe('draft')
+  await agentContext.close()
 }
 
 async function verifySeededSessions(page: Page) {
