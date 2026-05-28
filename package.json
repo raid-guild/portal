@@ -6,6 +6,10 @@
   "type": "module",
   "scripts": {
     "build": "payload generate:importmap && payload migrate && cross-env NODE_OPTIONS=--no-deprecation next build",
+    "db:reset:local": "node scripts/resetLocalDatabase.mjs",
+    "db:reset:local:migrate": "pnpm db:reset:local && pnpm payload migrate",
+    "db:reset:local:seed": "pnpm db:reset:local && pnpm payload migrate && pnpm db:seed:local",
+    "db:seed:local": "payload run scripts/seedLocalDatabase.ts",
     "deps:native": "corepack pnpm rebuild sharp esbuild",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && pnpm build && pnpm start",

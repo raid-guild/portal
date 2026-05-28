@@ -98,11 +98,14 @@ export const seed = async ({
   req: PayloadRequest
 }): Promise<void> => {
   const previousDisableSearchSync = process.env.DISABLE_SEARCH_SYNC
+  const previousDisableRevalidate = process.env.DISABLE_REVALIDATE
 
   try {
     const useLocalSeedMedia = process.env.USE_LOCAL_SEED_MEDIA === 'true'
     process.env.DISABLE_SEARCH_SYNC = 'true'
+    process.env.DISABLE_REVALIDATE = 'true'
     req.context.disableSearchSync = true
+    req.context.disableRevalidate = true
     payload.logger.info('Seeding database...')
 
     // we need to clear the media directory before seeding
@@ -719,11 +722,18 @@ export const seed = async ({
     throw error
   } finally {
     req.context.disableSearchSync = false
+    req.context.disableRevalidate = false
 
     if (previousDisableSearchSync === undefined) {
       delete process.env.DISABLE_SEARCH_SYNC
     } else {
       process.env.DISABLE_SEARCH_SYNC = previousDisableSearchSync
+    }
+
+    if (previousDisableRevalidate === undefined) {
+      delete process.env.DISABLE_REVALIDATE
+    } else {
+      process.env.DISABLE_REVALIDATE = previousDisableRevalidate
     }
   }
 }

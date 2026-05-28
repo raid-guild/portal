@@ -65,10 +65,13 @@ export const seedPortalContent = async ({
   req: PayloadRequest
 }): Promise<void> => {
   const previousDisableSearchSync = process.env.DISABLE_SEARCH_SYNC
+  const previousDisableRevalidate = process.env.DISABLE_REVALIDATE
 
   try {
     process.env.DISABLE_SEARCH_SYNC = 'true'
+    process.env.DISABLE_REVALIDATE = 'true'
     req.context.disableSearchSync = true
+    req.context.disableRevalidate = true
     payload.logger.info('Upserting portal starter content...')
 
     const [frontendSkill, projectManagerSkill, communitySkill] = await Promise.all([
@@ -510,10 +513,19 @@ export const seedPortalContent = async ({
 
     payload.logger.info('Portal starter content upserted successfully.')
   } finally {
+    req.context.disableSearchSync = false
+    req.context.disableRevalidate = false
+
     if (previousDisableSearchSync === undefined) {
       delete process.env.DISABLE_SEARCH_SYNC
     } else {
       process.env.DISABLE_SEARCH_SYNC = previousDisableSearchSync
+    }
+
+    if (previousDisableRevalidate === undefined) {
+      delete process.env.DISABLE_REVALIDATE
+    } else {
+      process.env.DISABLE_REVALIDATE = previousDisableRevalidate
     }
   }
 }

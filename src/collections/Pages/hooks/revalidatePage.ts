@@ -3,12 +3,15 @@ import type { CollectionAfterChangeHook } from 'payload'
 import { revalidatePath } from 'next/cache'
 
 import type { Page } from '../../../payload-types'
+import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
-export const revalidatePage: CollectionAfterChangeHook<Page> = ({
-  doc,
-  previousDoc,
-  req: { payload },
-}) => {
+export const revalidatePage: CollectionAfterChangeHook<Page> = ({ doc, previousDoc, req }) => {
+  const { payload } = req
+
+  if (shouldSkipRevalidation(req)) {
+    return doc
+  }
+
   if (doc._status === 'published') {
     const path = doc.slug === 'home' ? '/' : `/${doc.slug}`
 

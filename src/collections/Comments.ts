@@ -2,6 +2,7 @@ import { CollectionConfig } from 'payload'
 import { authenticated } from '../access/authenticated'
 import { hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
+import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
 export const Comments: CollectionConfig = {
   slug: 'comments',
@@ -29,6 +30,10 @@ export const Comments: CollectionConfig = {
   hooks: {
     afterChange: [
       async ({ doc, req, operation, previousDoc }) => {
+        if (shouldSkipRevalidation(req)) {
+          return doc
+        }
+
         // Revalidate the post page when a comment is approved or updated
         if (doc.post && (operation === 'update' || operation === 'create')) {
           try {

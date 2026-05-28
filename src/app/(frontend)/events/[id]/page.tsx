@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent } from '@/access/roles'
 import type { Event, Post, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -89,6 +90,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   if (!event) notFound()
 
   const canViewFullDetails = Boolean(user)
+  const canManageSessions = canContributeContent(user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
   const startsAt = new Date(event.startsAt)
   const isPast = startsAt.getTime() < Date.now()
@@ -110,6 +112,8 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     { href: event.transcriptArtifactURL, label: 'Transcript artifact' },
     { href: event.sourceArtifactURL, label: 'Source artifact' },
   ]
+  const hasSourceLinks = sourceLinks.some((link) => link.href)
+  const hasRelatedContext = Boolean(projects.length || threads.length)
   const socialLinks = event.linkedSocialPosts || []
   const wikiTopics = event.wikiCandidateTopics?.map((item) => item.topic).filter(Boolean) || []
 
@@ -134,7 +138,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
             <span className="text-sm text-muted-foreground">{event.visibility}</span>
           </div>
           <h1 className="portal-title mt-5">{event.title}</h1>
-          {event.summary ? (
+          {!isPast && event.summary ? (
             <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
               {event.summary}
             </p>
@@ -163,6 +167,95 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </aside>
       </section>
 
+      {canManageSessions && event.discordSyncStatus === 'failed' ? (
+        <DiscordSyncNotice error={event.discordSyncError} />
+      ) : null}
+
+      {!user ? <PortalSessionCTA eventID={event.id} /> : null}
+
+      {isPast && event.summary ? (
+        <Section title="Session Notes">
+          <p className="max-w-3xl text-base leading-7 text-muted-foreground">{event.summary}</p>
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && isPast ? (
+        <Section title="Source Material">
+          {hasSourceLinks ? (
+            <>
+              <div className="flex flex-wrap gap-3">
+                {sourceLinks.map((link) => (
+                  <SafeLink href={link.href} key={link.label} label={link.label} />
+                ))}
+              </div>
+              {event.sourceArtifactID ? (
+                <p className="mt-4 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
+                  Prism artifact: {event.sourceArtifactID}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <EmptyState text="No recording, transcript, summary, or source artifact has been attached yet." />
+          )}
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && (isPast || posts.length) ? (
+        <Section title="Derived Posts">
+          {posts.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {groupPosts(posts).map(([contentType, group]) => (
+                <div className="border border-border bg-card/20 p-5" key={contentType}>
+                  <p className="portal-kicker">{contentTypeLabels[contentType] || contentType}</p>
+                  <div className="mt-4 grid gap-3">
+                    {group.map((post) => (
+                      <Link
+                        className="portal-link text-base"
+                        href={`/posts/${post.slug}`}
+                        key={post.id}
+                      >
+                        {post.title}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState text="No published posts have been derived from this session yet." />
+          )}
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && (isPast || hasRelatedContext) ? (
+        <Section title="Related Context">
+          {hasRelatedContext ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {projects.length ? (
+                <RelationList
+                  items={projects.map((project) => ({
+                    href: project.slug ? `/projects/${project.slug}` : null,
+                    label: project.title,
+                  }))}
+                  title="Projects"
+                />
+              ) : null}
+              {threads.length ? (
+                <RelationList
+                  items={threads.map((thread) => ({
+                    href: null,
+                    label: thread.title,
+                  }))}
+                  title="Threads"
+                />
+              ) : null}
+            </div>
+          ) : (
+            <EmptyState text="No related projects or threads have been linked yet." />
+          )}
+        </Section>
+      ) : null}
+
       {displayProfiles.length ? (
         <Section title={event.sessionType === 'fireside' ? 'Guests And Hosts' : 'People'}>
           <div className="flex flex-wrap gap-2">
@@ -173,51 +266,11 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </Section>
       ) : null}
 
-      {!user ? <PortalSessionCTA eventID={event.id} /> : null}
-
       {canViewFullDetails && (event.previousOccurrence || event.nextOccurrence) ? (
         <Section title="Series Navigation">
           <div className="flex flex-wrap gap-3">
             <OccurrenceLink event={event.previousOccurrence} label="Previous session" />
             <OccurrenceLink event={event.nextOccurrence} label="Next session" />
-          </div>
-        </Section>
-      ) : null}
-
-      {canViewFullDetails && isPast && sourceLinks.some((link) => link.href) ? (
-        <Section title="Source Material">
-          <div className="flex flex-wrap gap-3">
-            {sourceLinks.map((link) => (
-              <SafeLink href={link.href} key={link.label} label={link.label} />
-            ))}
-          </div>
-          {event.sourceArtifactID ? (
-            <p className="mt-4 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
-              Prism artifact: {event.sourceArtifactID}
-            </p>
-          ) : null}
-        </Section>
-      ) : null}
-
-      {canViewFullDetails && posts.length ? (
-        <Section title="Derived Posts">
-          <div className="grid gap-4 md:grid-cols-2">
-            {groupPosts(posts).map(([contentType, group]) => (
-              <div className="border border-border bg-card/20 p-5" key={contentType}>
-                <p className="portal-kicker">{contentTypeLabels[contentType] || contentType}</p>
-                <div className="mt-4 grid gap-3">
-                  {group.map((post) => (
-                    <Link
-                      className="portal-link text-base"
-                      href={`/posts/${post.slug}`}
-                      key={post.id}
-                    >
-                      {post.title}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
           </div>
         </Section>
       ) : null}
@@ -237,31 +290,6 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
               This session has been marked as a wiki candidate.
             </p>
           )}
-        </Section>
-      ) : null}
-
-      {canViewFullDetails && (projects.length || threads.length) ? (
-        <Section title="Related Context">
-          <div className="grid gap-4 md:grid-cols-2">
-            {projects.length ? (
-              <RelationList
-                items={projects.map((project) => ({
-                  href: project.slug ? `/projects/${project.slug}` : null,
-                  label: project.title,
-                }))}
-                title="Projects"
-              />
-            ) : null}
-            {threads.length ? (
-              <RelationList
-                items={threads.map((thread) => ({
-                  href: null,
-                  label: thread.title,
-                }))}
-                title="Threads"
-              />
-            ) : null}
-          </div>
         </Section>
       ) : null}
 
@@ -297,6 +325,19 @@ const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ child
   <section className="mt-12">
     <h2 className="portal-heading">{title}</h2>
     <div className="mt-5">{children}</div>
+  </section>
+)
+
+const EmptyState: React.FC<{ text: string }> = ({ text }) => (
+  <p className="border border-dashed border-border bg-card/20 p-4 text-sm leading-6 text-muted-foreground">
+    {text}
+  </p>
+)
+
+const DiscordSyncNotice: React.FC<{ error?: string | null }> = ({ error }) => (
+  <section className="mt-8 border border-destructive/40 bg-destructive/10 p-4">
+    <p className="portal-kicker text-destructive">Discord Sync Failed</p>
+    <p className="mt-3 text-sm leading-6 text-destructive">{formatDiscordSyncError(error)}</p>
   </section>
 )
 
@@ -339,6 +380,19 @@ const SafeLink: React.FC<{ href?: string | null; label: string }> = ({ href, lab
       {label}
     </Link>
   )
+}
+
+const formatDiscordSyncError = (value?: string | null): string => {
+  if (!value) return 'No error details were returned.'
+
+  try {
+    const parsed = JSON.parse(value) as { code?: number | string; message?: string }
+    const message = parsed.message || value
+
+    return parsed.code ? `${message} (${parsed.code})` : message
+  } catch {
+    return value
+  }
 }
 
 const ProfileLink: React.FC<{ profile: Profile }> = ({ profile }) => {

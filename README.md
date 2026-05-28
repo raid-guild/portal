@@ -86,6 +86,39 @@ Use one-click deploy template:
 6. Build the project: `pnpm build` or `npm run build`
 7. Start the server: `pnpm start` or `npm run start`
 
+To reset a non-Docker local PostgreSQL database, set `DATABASE_URI` to a local
+host database in `.env`, then run:
+
+```bash
+corepack pnpm db:reset:local
+corepack pnpm payload migrate
+```
+
+The reset script refuses non-local database hosts and prompts for confirmation
+before dropping the database. Use `corepack pnpm db:reset:local:migrate` to
+reset and immediately run migrations.
+
+To seed local starter content for browser testing, run:
+
+```bash
+corepack pnpm db:seed:local
+```
+
+This upserts the portal starter content and ensures a local admin account exists:
+
+- email: `local-admin@example.com`
+- password: `password`
+
+It also creates a `local-admin` profile and two sessions hosted by that profile:
+
+- `Local Artifact Upload Test - Past Session`
+- `Local Host Planning Session - Future Session`
+
+Use `corepack pnpm db:reset:local:seed` for a fresh local reset, migration, and
+seed in one command. The seed script also refuses non-local database hosts.
+Pass `-- --skip-admin` to avoid creating the local admin account, or `-- --full`
+to run the older destructive full demo seed.
+
 ### Email, Password Resets, And Profile Claims
 
 Payload email delivery is optional in local development. Without `SENDGRID_API_KEY`, Payload writes email output to the server console.
