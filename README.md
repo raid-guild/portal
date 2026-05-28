@@ -139,9 +139,9 @@ The Playwright suite boots a fresh PostgreSQL container, builds the app from scr
 
 Before the first run, make sure Docker Desktop is running. The suite starts a fresh PostgreSQL container automatically.
 
-### Portal Starter Content
+### Local Portal Starter Content
 
-The admin dashboard seed action is non-destructive. It upserts the portal starter records by stable slugs or titles and does not clear existing CMS content. It may update existing starter records with the same identifiers.
+The admin dashboard seed action is for local/dev setup. It is hidden and blocked on hosted Railway/Vercel environments unless `ENABLE_ADMIN_SEED_ACTION=true` is explicitly set. Locally, it is non-destructive: it upserts the portal starter records by stable slugs or titles and does not clear existing CMS content. It may update existing starter records with the same identifiers.
 
 The older full reset seed remains in code for local reset workflows only; do not wire it to hosted production without an explicit database reset intent.
 
