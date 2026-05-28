@@ -1,5 +1,6 @@
 import type { CollectionSlug, Payload, PayloadRequest } from 'payload'
 
+import { badges } from './badges'
 import { dailyBrief } from './daily-brief'
 import { headingNode, lexicalRoot, paragraphNode, text } from './lexical'
 
@@ -134,6 +135,17 @@ export const seedPortalContent = async ({
         },
       }),
     ])
+
+    await Promise.all(
+      badges.map((badge) =>
+        upsert({
+          collection: 'badges',
+          match: { slug: badge.slug },
+          payload,
+          data: badge,
+        }),
+      ),
+    )
 
     const portalUpdatePost = await upsert({
       collection: 'posts',

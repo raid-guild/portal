@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
 import { dailyBrief } from './daily-brief'
+import { badges } from './badges'
 import { home } from './home'
 import { image2 } from './image-2'
 import { headingNode, lexicalRoot, paragraphNode, text } from './lexical'
@@ -14,6 +15,8 @@ import { profileSkills } from './profile-skills'
 
 const collections: CollectionSlug[] = [
   'activityItems',
+  'profileBadges',
+  'badges',
   'categories',
   'dailyBriefs',
   'events',
@@ -184,6 +187,17 @@ export const seed = async ({
         payload.create({
           collection: 'profileRoles',
           data: role,
+        }),
+      ),
+    )
+
+    payload.logger.info(`- Seeding badges...`)
+
+    await Promise.all(
+      badges.map((badge) =>
+        payload.create({
+          collection: 'badges',
+          data: badge,
         }),
       ),
     )

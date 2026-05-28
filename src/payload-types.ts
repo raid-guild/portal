@@ -75,6 +75,8 @@ export interface Config {
     pointEvents: PointEvent;
     projects: Project;
     threads: Thread;
+    badges: Badge;
+    profileBadges: ProfileBadge;
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
@@ -102,6 +104,8 @@ export interface Config {
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
     threads: ThreadsSelect<false> | ThreadsSelect<true>;
+    badges: BadgesSelect<false> | BadgesSelect<true>;
+    profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
@@ -1254,6 +1258,57 @@ export interface PointEvent {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges".
+ */
+export interface Badge {
+  id: number;
+  title: string;
+  description?: string | null;
+  category: 'cohort' | 'contribution' | 'craft' | 'community' | 'achievement';
+  artwork?: (number | null) | Media;
+  fallbackIcon?: ('award' | 'spark' | 'shield' | 'star' | 'users') | null;
+  /**
+   * Optional CSS color used for member-facing display accents.
+   */
+  accentColor?: string | null;
+  /**
+   * Optional CSS color used for member-facing display backgrounds.
+   */
+  backgroundColor?: string | null;
+  displayStyle: 'standard' | 'compact' | 'featured';
+  isRetired?: boolean | null;
+  sortOrder?: number | null;
+  visibility: 'public' | 'member';
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profileBadges".
+ */
+export interface ProfileBadge {
+  id: number;
+  /**
+   * Award this badge to one or more profiles.
+   */
+  profiles: (number | Profile)[];
+  badge: number | Badge;
+  awardedAt: string;
+  awardedByUser?: (number | null) | User;
+  source: 'admin' | 'agent' | 'cohort' | 'import' | 'system';
+  relatedProject?: (number | null) | Project;
+  relatedEvent?: (number | null) | Event;
+  relatedPost?: (number | null) | Post;
+  note?: string | null;
+  featured?: boolean | null;
+  visibility: 'public' | 'member' | 'private';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Private intake records for sponsor, bounty, project, and funding opportunities.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1448,6 +1503,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'threads';
         value: number | Thread;
+      } | null)
+    | ({
+        relationTo: 'badges';
+        value: number | Badge;
+      } | null)
+    | ({
+        relationTo: 'profileBadges';
+        value: number | ProfileBadge;
       } | null)
     | ({
         relationTo: 'profiles';
@@ -2013,6 +2076,46 @@ export interface ThreadsSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "badges_select".
+ */
+export interface BadgesSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  category?: T;
+  artwork?: T;
+  fallbackIcon?: T;
+  accentColor?: T;
+  backgroundColor?: T;
+  displayStyle?: T;
+  isRetired?: T;
+  sortOrder?: T;
+  visibility?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "profileBadges_select".
+ */
+export interface ProfileBadgesSelect<T extends boolean = true> {
+  profiles?: T;
+  badge?: T;
+  awardedAt?: T;
+  awardedByUser?: T;
+  source?: T;
+  relatedProject?: T;
+  relatedEvent?: T;
+  relatedPost?: T;
+  note?: T;
+  featured?: T;
+  visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
