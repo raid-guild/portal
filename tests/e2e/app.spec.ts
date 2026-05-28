@@ -374,6 +374,7 @@ async function verifyMemberOnlyProjectVisibility(
   const memberEmail = 'project-member@example.com'
   const contributorEmail = 'project-contributor@example.com'
   const agentEmail = 'project-agent@example.com'
+  const editorEmail = 'project-editor@example.com'
   const password = 'ChangeMe123!'
   const startsAt = new Date(Date.now() + 36 * 60 * 60 * 1000)
 
@@ -461,6 +462,17 @@ async function verifyMemberOnlyProjectVisibility(
   })
 
   expect(agentResponse.status()).toBe(201)
+
+  const editorResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: editorEmail,
+      name: 'Project Editor',
+      password,
+      roles: ['editor'],
+    },
+  })
+
+  expect(editorResponse.status()).toBe(201)
 
   await publicPage.goto('/projects')
   await expect(publicPage.getByRole('heading', { name: memberOnlyProjectTitle })).toHaveCount(0)
@@ -554,6 +566,177 @@ async function verifyMemberOnlyProjectVisibility(
   expect(agentDraftBody.doc?.visibility || agentDraftBody.visibility).toBe('member')
   expect(agentDraftBody.doc?._status || agentDraftBody._status).toBe('draft')
   await agentContext.close()
+
+  const editorContext = await browser.newContext()
+  const editorPage = await editorContext.newPage()
+  await editorPage.goto('/login')
+  await fillFirst(editorPage.getByLabel(/^email$/i), editorEmail)
+  await fillFirst(editorPage.getByLabel(/^password$/i), password)
+  await editorPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(editorPage).toHaveURL(/\/dashboard/)
+
+  const editorDraftResponse = await editorPage.request.post('/api/posts', {
+    data: {
+      title: 'Editor member visibility draft',
+      slug: 'editor-member-visibility-draft',
+      content: lexicalContent('Editor-authored member visibility draft.'),
+      visibility: 'member',
+      _status: 'draft',
+    },
+  })
+
+  expect(editorDraftResponse.status()).toBe(201)
+  const editorDraftBody = await editorDraftResponse.json()
+  expect(editorDraftBody.doc?.visibility || editorDraftBody.visibility).toBe('member')
+  expect(editorDraftBody.doc?._status || editorDraftBody._status).toBe('draft')
+  await editorContext.close()
+}
+
+async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
+  const suffix = Date.now()
+  const badgeTitle = `E2E Recognition ${suffix}`
+  const badgeSlug = `e2e-recognition-${suffix}`
+  const awardedNames = [`Badge Holder Alpha ${suffix}`, `Badge Holder Beta ${suffix}`]
+  const unbadgedName = `Badge Filter Control ${suffix}`
+  const password = 'ChangeMe123!'
+
+  const [rolesResponse, skillsResponse] = await Promise.all([
+    adminPage.request.get('/api/profileRoles', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(rolesResponse.ok()).toBeTruthy()
+  expect(skillsResponse.ok()).toBeTruthy()
+  const rolesBody = await rolesResponse.json()
+  const skillsBody = await skillsResponse.json()
+  const roleID = rolesBody.docs?.[0]?.id
+  const skillID = skillsBody.docs?.[0]?.id
+  expect(roleID).toBeTruthy()
+  expect(skillID).toBeTruthy()
+
+  const profileIDs: (number | string)[] = []
+
+  for (const displayName of [...awardedNames, unbadgedName]) {
+    const handle = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+    const userResponse = await adminPage.request.post('/api/users', {
+      data: {
+        email: `${handle}@example.com`,
+        name: displayName,
+        password,
+        roles: ['member'],
+      },
+    })
+
+    expect(userResponse.status()).toBe(201)
+    const userBody = await userResponse.json()
+    const userID = userBody.doc?.id || userBody.id
+    expect(userID).toBeTruthy()
+
+    const profileResponse = await adminPage.request.post('/api/profiles', {
+      data: {
+        bio: 'A profile used to verify badge display and badge filtering.',
+        displayName,
+        handle,
+        profileRoles: [roleID],
+        profileSkills: [skillID],
+        status: 'active',
+        user: userID,
+        visibility: 'public',
+      },
+    })
+
+    expect(profileResponse.status()).toBe(201)
+    const profileBody = await profileResponse.json()
+    const profileID = profileBody.doc?.id || profileBody.id
+    expect(profileID).toBeTruthy()
+
+    if (displayName !== unbadgedName) {
+      profileIDs.push(profileID)
+    }
+  }
+
+  const badgeResponse = await adminPage.request.post('/api/badges', {
+    data: {
+      title: badgeTitle,
+      slug: badgeSlug,
+      description: 'A deterministic badge for e2e recognition checks.',
+      category: 'contribution',
+      fallbackIcon: 'spark',
+      displayStyle: 'featured',
+      sortOrder: 5,
+      visibility: 'public',
+    },
+  })
+
+  expect(badgeResponse.status()).toBe(201)
+  const badgeBody = await badgeResponse.json()
+  const badgeID = badgeBody.doc?.id || badgeBody.id
+  expect(badgeID).toBeTruthy()
+
+  const agentResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: `badge-agent-${suffix}@example.com`,
+      name: `Badge Agent ${suffix}`,
+      password,
+      roles: ['agent'],
+    },
+  })
+
+  expect(agentResponse.status()).toBe(201)
+
+  const agentContext = await browser.newContext()
+  const agentPage = await agentContext.newPage()
+  await agentPage.goto('/login')
+  await fillFirst(agentPage.getByLabel(/^email$/i), `badge-agent-${suffix}@example.com`)
+  await fillFirst(agentPage.getByLabel(/^password$/i), password)
+  await agentPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(agentPage).toHaveURL(/\/dashboard/)
+
+  const awardResponse = await agentPage.request.post('/api/profileBadges', {
+    data: {
+      badge: badgeID,
+      featured: true,
+      note: 'Agent-issued batch badge award.',
+      profiles: profileIDs,
+      visibility: 'public',
+    },
+  })
+
+  expect(awardResponse.status()).toBe(201)
+  const awardBody = await awardResponse.json()
+  expect(awardBody.doc?.source || awardBody.source).toBe('agent')
+  expect(awardBody.doc?.profiles || awardBody.profiles).toHaveLength(2)
+  await agentContext.close()
+
+  await publicPage.goto('/badges')
+  await expect(publicPage.getByRole('heading', { name: 'Badges' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: badgeTitle })).toBeVisible()
+  await expect(publicPage.getByText('2 members have received this badge')).toBeVisible()
+
+  await adminPage.goto('/members')
+  await expect(adminPage.getByRole('link', { name: 'Browse badges' })).toHaveAttribute(
+    'href',
+    '/badges',
+  )
+  await adminPage.getByLabel('Badge').selectOption({ label: badgeTitle })
+  await expect(adminPage.getByRole('link', { name: awardedNames[0] })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: awardedNames[1] })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: unbadgedName })).toHaveCount(0)
+
+  await publicPage.goto(`/members/${awardedNames[0].toLowerCase().replace(/[^a-z0-9]+/g, '-')}`)
+  await expect(publicPage.getByRole('heading', { name: awardedNames[0] })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Badges' })).toBeVisible()
+  await expect(publicPage.getByText(badgeTitle)).toBeVisible()
 }
 
 async function verifySeededSessions(page: Page) {
@@ -1526,6 +1709,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicHome(publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
+  await verifyBadgesFeature(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)

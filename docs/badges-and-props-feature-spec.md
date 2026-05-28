@@ -110,8 +110,9 @@ visibility: public / member / private
 
 Default rule:
 
-- Admins and editors can award badges.
-- Members can choose featured badges from badges they already have.
+- Admins and agents can award badges to one or more profiles at a time.
+- Editors can manage and correct badge awards through Payload admin.
+- Featured badges are managed by editors/admins in the first slice.
 - Badges do not grant auth roles.
 
 Uniqueness can be handled by policy first. If duplicate awards become a problem,
@@ -262,6 +263,13 @@ Member list:
 - filter by badge
 - optionally sort or filter by recent 1up count after the signal is useful
 
+Badge catalog:
+
+- `/badges` lists visible badge definitions and recipient counts
+- link to `/badges` from `/members`
+- do not add badge catalog cards to the brief/dashboard until recognition becomes
+  part of the daily return loop
+
 Admin:
 
 - manage badge definitions
@@ -280,26 +288,157 @@ Recommended default:
 - Public users can read public aggregate prop counts.
 - Members can read member-visible badge and prop details.
 - Admins and editors can create and update badges.
-- Admins and editors can award badges.
+- Admins and agents can award badges to multiple profiles in one award record.
+- Editors can review and correct badge awards.
 - Admins can issue admin props.
 - Members may create peer props only after rate limits and moderation rules are
   in place.
 - Agents can create draft or pending-review props only.
 
-## First Implementation Slice
+## First Badge Slice
 
-Keep the first slice narrow:
+The first implemented slice is badges only. Props stay designed but deferred.
 
-1. Add `badges`, `profileBadges`, and `props` collections.
-2. Seed a small set of badges and the default `1up` prop kind.
-3. Allow admins/editors to award badges.
-4. Allow admins to issue 1up props.
-5. Show featured badges and aggregate 1up count on profile pages.
+1. Add `badges` and `profileBadges` collections.
+2. Seed a small set of badge definitions.
+3. Allow admins/agents to award badges to one or more profiles.
+4. Add `/badges` as a badge catalog linked from `/members`.
+5. Show awarded badges on member cards and profile pages.
 6. Add member list filtering by badge.
-7. Add e2e coverage for badge display, badge filtering, and admin-issued props.
+7. Add e2e coverage for badge display, badge filtering, badge catalog counts,
+   and agent-issued multi-profile badge awards.
 
-Defer peer props, agent-proposed props, prop campaigns, and leaderboard-like
-views until the core display behavior is useful.
+Defer all prop work, including admin 1up issuance, peer props, agent-proposed
+props, prop campaigns, aggregate 1up counts, and leaderboard-like views until
+the badge display behavior is useful.
+
+## Implementation Plan
+
+Build this as a feature module that relates to `profiles`, not as a permission
+or points-system extension. The first implementation should create durable
+recognition records, show them on profile surfaces, and leave automation and
+peer issuance behind explicit review gates.
+
+### 1. Data Model And Access
+
+Add collection configs for the badge slice:
+
+- `badges`: reusable badge definitions managed by editors and admins.
+- `profileBadges`: awarded badge instances related to one or more profiles.
+
+Future prop collection:
+
+- `props`: individual 1up recognition records related to profiles and optional
+  source context. Deferred.
+
+Access defaults:
+
+- `badges`: public/member read by visibility, editor/admin create and update,
+  admin delete.
+- `profileBadges`: public/member read by visibility, editor/admin create and
+  update, admin delete. Agents can create badge awards but cannot manage badge
+  definitions.
+- `props`: public/member aggregate-safe read by visibility and `active` status,
+  admin create and update, admin delete or hide. Deferred.
+
+Keep field-level admin-only access on review fields such as `reviewedByUser`,
+`reviewedAt`, and hidden/rejected notes if those are added. Do not let badges,
+profile badges, or props grant auth roles.
+
+### 2. Hooks And Validation
+
+Add hooks to keep badge authoring consistent:
+
+- Default `awardedAt` timestamps.
+- Default `awardedByUser` from `req.user`.
+- Default award `source` from the issuing role when it is not provided.
+
+Avoid uniqueness constraints at first unless duplicate awards become a real
+problem. If needed later, add a targeted uniqueness policy for
+`profile + badge`.
+
+Future prop hooks should default `issuedAt`, `issuedByUser`, and
+`reviewedByUser`, force admin-issued props to `active`, validate evidence URLs
+through the existing safe URL utility, and keep prop `amount` positive with
+`kind` fixed to `1up`.
+
+### 3. Seeds
+
+Seed only a small stable starter set:
+
+- `cohort-grad`
+- `portal-shipper`
+- `session-speaker`
+- `mentor`
+- `community-steward`
+
+Seed definitions, not broad awards. Add deterministic demo awards only inside
+tests unless product surfaces need standing examples.
+
+### 4. Profile Surfaces
+
+Extend `/members` and `/members/[handle]` after the collections exist:
+
+- Directory cards show awarded badge labels.
+- Profile detail shows a badge shelf.
+- Directory filtering includes badge once enough badge records exist.
+- `/badges` shows the badge catalog and recipient counts, linked from the member
+  directory rather than the brief.
+
+Use aggregate counts for future prop summary cards. Keep individual future prop
+rows for the detail view and admin audit, not as a social feed.
+
+### 5. Admin Workflow
+
+Use Payload admin first:
+
+- Editors/admins manage badge definitions.
+- Admins/agents award badges to one or more profiles.
+- Editors/admins review and correct badge awards.
+- Admin 1up prop issuance remains deferred.
+
+Do not add prop UI, agent-prop ingestion, or prop campaign collections in the
+badge implementation.
+
+### 6. Verification
+
+Add e2e coverage for:
+
+- Admin creates or uses a seeded badge and awards it to a profile.
+- The profile page displays the awarded badge.
+- Badge filtering returns the expected profile and excludes unrelated profiles.
+- The badge catalog shows recipient counts.
+- Agents can create one badge award for multiple profiles.
+- Public/member visibility rules hide member/private records appropriately.
+
+Run `corepack pnpm test:e2e` for the first implementation because it touches
+collections, auth/admin behavior, seeded data, routing, and rendering.
+
+## Implementation Checklist
+
+- [x] Add `badges` collection with visibility, category, display, and media
+  fields.
+- [x] Add badge access helpers for public/member visibility and editor/admin
+  management.
+- [x] Add `profileBadges` collection with profiles, badge, award source, context,
+  featured, and visibility fields.
+- [x] Add profile badge hooks for `awardedAt` and `awardedByUser` defaults.
+- [ ] Add `props` collection with recipient, issuer, source context, review
+  state, amount, kind, timestamps, and visibility fields.
+- [ ] Add prop hooks for `issuedAt`, `issuedByUser`, active admin issuance, and
+  safe evidence URL validation.
+- [x] Register badge collections in `payload.config.ts`.
+- [x] Generate badge migrations and Payload types.
+- [x] Seed the starter badge definitions deterministically.
+- [x] Add focused seed fixtures for badge display in e2e.
+- [x] Add `/badges` catalog linked from `/members`.
+- [x] Render featured badges on member directory cards.
+- [x] Render badge shelf on member profile pages.
+- [x] Add badge filtering to the member directory.
+- [x] Add e2e coverage for badge award display, badge filtering, catalog counts,
+  multi-profile agent awards, and visibility boundaries.
+- [x] Update `docs/portal-implementation-checklist.md` as checklist items land.
+- [x] Run `corepack pnpm test:e2e`.
 
 ## Open Questions
 

@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 import type { Event, Post, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { getBadgeSummariesByProfile, type BadgeSummary } from '../badgeData'
 import { MemberProfileClaimCard } from './MemberProfileClaimCard'
 
 export const dynamic = 'force-dynamic'
@@ -27,11 +28,10 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   if (!profile) notFound()
 
   const createdRecords = await getCreatedRecords(profile, user)
+  const badges = await getProfileBadges(profile.id, user)
   const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
   const profileUserID = typeof profile.user === 'object' ? profile.user?.id : profile.user
-  const canRequestClaim = Boolean(
-    user && profile.claimStatus === 'unclaimed' && !profileUserID,
-  )
+  const canRequestClaim = Boolean(user && profile.claimStatus === 'unclaimed' && !profileUserID)
   const roles = taxonomy(profile.profileRoles)
   const skills = taxonomy(profile.profileSkills)
 
@@ -86,6 +86,7 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
       {canRequestClaim ? <MemberProfileClaimCard profileID={profile.id} /> : null}
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <BadgeShelf badges={badges} />
         <Taxonomy title="Roles" values={roles} />
         <Taxonomy title="Skills" values={skills} />
       </section>
@@ -123,6 +124,31 @@ const Taxonomy: React.FC<{ title: string; values: string[] }> = ({ title, values
   </div>
 )
 
+const BadgeShelf: React.FC<{ badges: BadgeSummary[] }> = ({ badges }) => (
+  <div className="portal-panel lg:col-span-2">
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <h2 className="font-bold">Badges</h2>
+      <Link className="portal-link text-sm" href="/badges">
+        Browse badges
+      </Link>
+    </div>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {badges.length ? (
+        badges.map((badge) => (
+          <span
+            className="portal-pill border-primary/40 bg-primary/10 text-foreground"
+            key={badge.id}
+          >
+            {badge.title}
+          </span>
+        ))
+      ) : (
+        <p className="text-sm text-muted-foreground">No badges awarded yet.</p>
+      )}
+    </div>
+  </div>
+)
+
 const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }> = ({
   items,
   title,
@@ -131,9 +157,7 @@ const CreatedList: React.FC<{ items: (Event | Post | Project)[]; title: string }
     <h3 className="font-bold">{title}</h3>
     <div className="mt-4 space-y-3">
       {items.length ? (
-        items.map((item) => (
-          <RecordLink item={item} key={item.id} />
-        ))
+        items.map((item) => <RecordLink item={item} key={item.id} />)
       ) : (
         <p className="text-sm text-muted-foreground">Nothing listed yet.</p>
       )}
@@ -269,6 +293,20 @@ const getCreatedRecords = async (
     posts: posts.docs,
     projects: projects.docs,
   }
+}
+
+const getProfileBadges = async (
+  profileID: number | string,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+) => {
+  const payload = await getPayload({ config: configPromise })
+  const badgesByProfile = await getBadgeSummariesByProfile({
+    payload,
+    profileIDs: [profileID],
+    user,
+  })
+
+  return badgesByProfile.get(String(profileID)) || []
 }
 
 const taxonomy = (items?: unknown[] | null) =>

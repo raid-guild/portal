@@ -59,6 +59,9 @@ Profile roles belong on `profiles` through relationships to `profileRoles`.
 They describe how a member contributes and should be usable for discovery,
 filtering, and profile display. They must not grant permissions.
 
+See [Roles and capabilities](./roles-and-capabilities.md) for the current auth
+role matrix.
+
 ## Recommended Collections
 
 ### users
@@ -194,12 +197,12 @@ not profile state. See `docs/points-and-daily-engagement-feature-spec.md`.
 
 ## Publishing Flow
 
-The current API draft-post flow works, but permissions are too broad. The desired
-flow is:
+The editorial publishing flow is:
 
 - contributors can create draft posts through the API
 - contributors can edit their own drafts
-- editors and admins can review and publish
+- agents can set visibility on their own draft posts for automation workflows
+- editors and admins can review, set visibility, publish, and delete
 - public users can only read published content
 
 This applies to blog posts, project updates, session notes, and future editorial
