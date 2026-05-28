@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import React from 'react'
 
@@ -151,7 +152,9 @@ const CreatedList: React.FC<{
       {items.length ? (
         items.map((item) => (
           <article className="text-sm" key={item.id}>
-            <p className="font-medium">{item.title}</p>
+            <Link className="font-medium hover:text-primary" href={recordHref(item)}>
+              {item.title}
+            </Link>
             {'_status' in item ? <p className="portal-kicker">{item._status || 'draft'}</p> : null}
           </article>
         ))
@@ -161,6 +164,18 @@ const CreatedList: React.FC<{
     </div>
   </div>
 )
+
+const recordHref = (item: Event | Post | Project) => {
+  if ('startsAt' in item) return `/events/${item.id}`
+
+  const collection = 'projectStatus' in item ? 'projects' : 'posts'
+
+  if (item._status === 'published' && item.slug) {
+    return `/${collection}/${item.slug}`
+  }
+
+  return `/admin/collections/${collection}/${item.id}`
+}
 
 const getProfileForUser = async (userID: string | number) => {
   const payload = await getPayload({ config: configPromise })
