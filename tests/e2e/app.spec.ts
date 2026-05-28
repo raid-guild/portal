@@ -1788,10 +1788,58 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
 }
 
+async function verifyDailyVibeCheck(page: Page) {
+  await page.goto('/dashboard')
+  await expect(page.getByRole('heading', { name: 'Guild Points' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Vibe check' }).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('button', { name: /Learning/i }).click()
+  await page.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
+  await page.getByRole('button', { name: /Check in \+5/i }).click()
+
+  await expect(page.getByRole('button', { name: 'Vibe checked' })).toBeVisible()
+  await expect(page.getByText('Current streak: 1 day')).toBeVisible()
+  await expect(page.getByText('+5')).toBeVisible()
+  await expect(page.getByText('Daily vibe check')).toBeVisible()
+
+  const duplicateResponse = await page.request.post('/api/daily-engagements/check-in', {
+    data: {
+      vibe: 'raiding',
+    },
+  })
+  expect(duplicateResponse.ok()).toBeTruthy()
+  const duplicateBody = await duplicateResponse.json()
+  expect(duplicateBody).toMatchObject({
+    alreadyCheckedIn: true,
+    pointsAwarded: 0,
+  })
+
+  const pointEventsResponse = await page.request.get('/api/pointEvents', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[reason][equals]': 'Daily vibe check',
+      'where[status][equals]': 'valid',
+    },
+  })
+  expect(pointEventsResponse.ok()).toBeTruthy()
+  const pointEventsBody = await pointEventsResponse.json()
+  expect(pointEventsBody.docs).toHaveLength(1)
+  expect(pointEventsBody.docs[0]).toMatchObject({
+    amount: 5,
+    reason: 'Daily vibe check',
+    source: 'system',
+    status: 'valid',
+  })
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
+  await verifyDailyVibeCheck(page)
   await createProfileAndVerifyContributorCreateLinks(page)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)

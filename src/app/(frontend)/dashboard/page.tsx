@@ -7,6 +7,7 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { PortalDashboard } from '../_components/PortalShell'
+import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 export const dynamic = 'force-dynamic'
@@ -16,9 +17,18 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/join')
 
-  const [dailyBrief, profile, pointSummary, recentPosts, upcomingEvents, recentProjects] =
+  const [
+    dailyBrief,
+    dailyEngagementSummary,
+    profile,
+    pointSummary,
+    recentPosts,
+    upcomingEvents,
+    recentProjects,
+  ] =
     await Promise.all([
       getLatestDailyBrief(user),
+      getDailyEngagementSummary(user),
       getProfileForUser(user.id),
       getPointSummary(user),
       getRecentPosts(),
@@ -29,6 +39,7 @@ export default async function DashboardPage() {
   return (
     <PortalDashboard
       dailyBrief={dailyBrief}
+      dailyEngagementSummary={dailyEngagementSummary}
       pointEvents={pointSummary.events}
       pointsTotal={pointSummary.total}
       profile={profile}
@@ -201,4 +212,59 @@ const getPointSummary = async (user: User) => {
     events: result.docs.slice(0, 5),
     total: result.docs.reduce((sum, event) => sum + (event.amount || 0), 0),
   }
+}
+
+const getDailyEngagementSummary = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const today = engagementDateKey(normalizeEngagementDate())
+  const result = await payload.find({
+    collection: 'dailyEngagements',
+    depth: 0,
+    limit: 1000,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-engagementDate',
+    user,
+    where: {
+      and: [
+        {
+          user: {
+            equals: user.id,
+          },
+        },
+        {
+          status: {
+            equals: 'valid',
+          },
+        },
+      ],
+    },
+  })
+
+  const checkedDates = new Set(
+    result.docs
+      .map((engagement) => engagementDateKey(engagement.engagementDate))
+      .filter((date): date is string => Boolean(date)),
+  )
+  const todayEngagement = result.docs.find(
+    (engagement) => engagementDateKey(engagement.engagementDate) === today,
+  )
+
+  return {
+    currentStreak: getCurrentStreak(checkedDates),
+    hasCheckedInToday: Boolean(today && checkedDates.has(today)),
+    todayVibe: todayEngagement?.vibe || null,
+  }
+}
+
+const getCurrentStreak = (checkedDates: Set<string>) => {
+  let streak = 0
+  const cursor = new Date(normalizeEngagementDate())
+
+  while (checkedDates.has(cursor.toISOString().slice(0, 10))) {
+    streak += 1
+    cursor.setUTCDate(cursor.getUTCDate() - 1)
+  }
+
+  return streak
 }
