@@ -262,7 +262,7 @@ export const DailyEngagements: CollectionConfig = {
             checkedIn: true,
             commentApprovedAt: undefined,
             commentApprovedBy: undefined,
-            commentStatus: data.comment ? 'pending_review' : 'none',
+            commentStatus: data.comment ? 'approved' : 'none',
             engagementDate,
             pointEvent: undefined,
             profile: profileID || undefined,
@@ -277,7 +277,7 @@ export const DailyEngagements: CollectionConfig = {
         return {
           ...data,
           checkedIn: true,
-          commentStatus: data.comment ? data.commentStatus || 'pending_review' : 'none',
+          commentStatus: data.comment ? data.commentStatus || 'approved' : 'none',
           engagementDate,
           profile: profileID || undefined,
           status: data.status || 'valid',

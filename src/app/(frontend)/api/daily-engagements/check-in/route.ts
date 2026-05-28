@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   const profile = await getProfileForUser(payload, user.id)
   const dailyEngagementData = {
     checkedIn: true as const,
-    commentStatus: comment ? ('pending_review' as const) : ('none' as const),
+    commentStatus: comment ? ('approved' as const) : ('none' as const),
     engagementDate,
     status: 'valid' as const,
     vibe,
