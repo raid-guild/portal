@@ -1,7 +1,7 @@
 import type { CollectionConfig } from 'payload'
 
 import { awardBadges, deleteBadges, manageBadges, readVisibleBadges } from '@/access/badges'
-import { hideFromNonEditors, hasRole } from '@/access/roles'
+import { canEditContent, hideFromNonEditors, hasRole } from '@/access/roles'
 
 export const ProfileBadges: CollectionConfig = {
   slug: 'profileBadges',
@@ -138,6 +138,13 @@ export const ProfileBadges: CollectionConfig = {
       ({ data, req }) => {
         const nextData = {
           ...data,
+        }
+
+        if (hasRole(req.user, 'agent') && !canEditContent(req.user)) {
+          nextData.awardedByUser = req.user?.id
+          nextData.source = 'agent'
+
+          return nextData
         }
 
         if (!nextData.awardedByUser && req.user?.id) {

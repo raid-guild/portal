@@ -56,7 +56,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     ALTER TABLE "payload_locked_documents_rels" ADD COLUMN "profile_badges_id" integer;
 
     ALTER TABLE "badges" ADD CONSTRAINT "badges_artwork_id_media_id_fk" FOREIGN KEY ("artwork_id") REFERENCES "public"."media"("id") ON DELETE set null ON UPDATE no action;
-    ALTER TABLE "profile_badges" ADD CONSTRAINT "profile_badges_badge_id_badges_id_fk" FOREIGN KEY ("badge_id") REFERENCES "public"."badges"("id") ON DELETE set null ON UPDATE no action;
+    ALTER TABLE "profile_badges" ADD CONSTRAINT "profile_badges_badge_id_badges_id_fk" FOREIGN KEY ("badge_id") REFERENCES "public"."badges"("id") ON DELETE restrict ON UPDATE no action;
     ALTER TABLE "profile_badges" ADD CONSTRAINT "profile_badges_awarded_by_user_id_users_id_fk" FOREIGN KEY ("awarded_by_user_id") REFERENCES "public"."users"("id") ON DELETE set null ON UPDATE no action;
     ALTER TABLE "profile_badges" ADD CONSTRAINT "profile_badges_related_project_id_projects_id_fk" FOREIGN KEY ("related_project_id") REFERENCES "public"."projects"("id") ON DELETE set null ON UPDATE no action;
     ALTER TABLE "profile_badges" ADD CONSTRAINT "profile_badges_related_event_id_events_id_fk" FOREIGN KEY ("related_event_id") REFERENCES "public"."events"("id") ON DELETE set null ON UPDATE no action;

@@ -31,22 +31,32 @@ export const getBadgeSummariesByProfile = async ({
 
   if (!uniqueProfileIDs.length) return badgeMap
 
-  const result = await payload.find({
-    collection: 'profileBadges',
-    depth: 2,
-    limit: 100,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-featured,-awardedAt',
-    user: user || undefined,
-    where: {
-      profiles: {
-        in: uniqueProfileIDs,
-      },
-    },
-  })
+  const awards: BadgeAward[] = []
+  let page = 1
 
-  for (const award of result.docs as BadgeAward[]) {
+  while (true) {
+    const result = await payload.find({
+      collection: 'profileBadges',
+      depth: 2,
+      limit: 100,
+      overrideAccess: false,
+      page,
+      sort: '-featured,-awardedAt',
+      user: user || undefined,
+      where: {
+        profiles: {
+          in: uniqueProfileIDs,
+        },
+      },
+    })
+
+    awards.push(...(result.docs as BadgeAward[]))
+
+    if (!result.hasNextPage || !result.nextPage) break
+    page = result.nextPage
+  }
+
+  for (const award of awards) {
     const badge = normalizeBadge(award.badge)
     if (!badge) continue
 

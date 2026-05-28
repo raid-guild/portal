@@ -114,24 +114,31 @@ const getRecipientCounts = async ({
   const counts = new Map<string, number>()
   if (!badgeIDs.length) return counts
 
-  const awardResult = await payload.find({
-    collection: 'profileBadges',
-    depth: 0,
-    limit: 200,
-    overrideAccess: false,
-    pagination: false,
-    user: user || undefined,
-    where: {
-      badge: {
-        in: badgeIDs.map(String),
-      },
-    },
-  })
+  let page = 1
 
-  for (const award of awardResult.docs) {
-    const badgeID = String(award.badge)
-    const profiles = Array.isArray(award.profiles) ? award.profiles : []
-    counts.set(badgeID, (counts.get(badgeID) || 0) + profiles.length)
+  while (true) {
+    const awardResult = await payload.find({
+      collection: 'profileBadges',
+      depth: 0,
+      limit: 100,
+      overrideAccess: false,
+      page,
+      user: user || undefined,
+      where: {
+        badge: {
+          in: badgeIDs.map(String),
+        },
+      },
+    })
+
+    for (const award of awardResult.docs) {
+      const badgeID = String(award.badge)
+      const profiles = Array.isArray(award.profiles) ? award.profiles : []
+      counts.set(badgeID, (counts.get(badgeID) || 0) + profiles.length)
+    }
+
+    if (!awardResult.hasNextPage || !awardResult.nextPage) break
+    page = awardResult.nextPage
   }
 
   return counts
