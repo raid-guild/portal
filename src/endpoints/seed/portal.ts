@@ -64,12 +64,10 @@ export const seedPortalContent = async ({
   payload: Payload
   req: PayloadRequest
 }): Promise<void> => {
-  const previousDisableSearchSync = process.env.DISABLE_SEARCH_SYNC
-  const previousDisableRevalidate = process.env.DISABLE_REVALIDATE
+  const previousDisableSearchSync = req.context.disableSearchSync
+  const previousDisableRevalidate = req.context.disableRevalidate
 
   try {
-    process.env.DISABLE_SEARCH_SYNC = 'true'
-    process.env.DISABLE_REVALIDATE = 'true'
     req.context.disableSearchSync = true
     req.context.disableRevalidate = true
     payload.logger.info('Upserting portal starter content...')
@@ -301,8 +299,8 @@ export const seedPortalContent = async ({
         title: 'Cohort Project Spike Sync',
         summary:
           'Follow-up sync to review scaffolding, work ownership, and the first rendered brief/project surfaces.',
-        startsAt: '2026-05-13T17:00:00.000Z',
-        endsAt: '2026-05-13T18:00:00.000Z',
+        startsAt: '2026-06-03T17:00:00.000Z',
+        endsAt: '2026-06-03T18:00:00.000Z',
         sessionType: 'workshop',
         locationLabel: 'Discord #cohort-voice',
         joinURL: nextSessionJoinURL,
@@ -513,19 +511,7 @@ export const seedPortalContent = async ({
 
     payload.logger.info('Portal starter content upserted successfully.')
   } finally {
-    req.context.disableSearchSync = false
-    req.context.disableRevalidate = false
-
-    if (previousDisableSearchSync === undefined) {
-      delete process.env.DISABLE_SEARCH_SYNC
-    } else {
-      process.env.DISABLE_SEARCH_SYNC = previousDisableSearchSync
-    }
-
-    if (previousDisableRevalidate === undefined) {
-      delete process.env.DISABLE_REVALIDATE
-    } else {
-      process.env.DISABLE_REVALIDATE = previousDisableRevalidate
-    }
+    req.context.disableSearchSync = previousDisableSearchSync
+    req.context.disableRevalidate = previousDisableRevalidate
   }
 }

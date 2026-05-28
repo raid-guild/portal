@@ -586,11 +586,11 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
 
   await publicPage.goto(`/events/${failedDiscordEventID}`)
   await expect(publicPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
-  await expect(publicPage.getByText('Discord Sync Failed')).toHaveCount(0)
+  await expect(publicPage.getByText('Discord Sync Failed', { exact: true })).toHaveCount(0)
 
   await adminPage.goto(`/events/${failedDiscordEventID}`)
   await expect(adminPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
-  await expect(adminPage.getByText('Discord Sync Failed')).toBeVisible()
+  await expect(adminPage.getByText('Discord Sync Failed', { exact: true })).toBeVisible()
   await expect(adminPage.getByText('Invalid Form Body (50035)')).toBeVisible()
 }
 

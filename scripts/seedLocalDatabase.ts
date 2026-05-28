@@ -15,6 +15,9 @@ type ParsedArgs = {
 }
 
 const localHosts = new Set(['localhost', '127.0.0.1', '::1'])
+const localFixtureTimestamp = '2026-05-20T16:00:00.000Z'
+const localFixturePastStart = '2026-05-18T16:00:00.000Z'
+const localFixtureFutureStart = '2026-05-22T16:00:00.000Z'
 
 const args = parseArgs(process.argv.slice(2))
 
@@ -37,10 +40,9 @@ The script refuses non-local DATABASE_URI hosts.`)
 
 assertLocalDatabase()
 
-process.env.DISABLE_REVALIDATE = 'true'
-
 const payload = await getPayload({ config: configPromise })
 const req = await createLocalReq({}, payload)
+req.context.disableSearchSync = true
 req.context.disableRevalidate = true
 
 if (args.full) {
@@ -55,7 +57,10 @@ if (!args.skipAdmin) {
     name: args.adminName,
     password: args.adminPassword,
   })
-  await ensureLocalHostFixtures(localAdmin, args.adminEmail)
+
+  if (!args.full) {
+    await ensureLocalHostFixtures(localAdmin, args.adminEmail)
+  }
 }
 
 console.log(
@@ -68,6 +73,7 @@ console.log(
             password: args.adminPassword,
           },
       mode: args.full ? 'full' : 'portal',
+      sessionFixtures: args.full || args.skipAdmin ? 'skipped' : 'upserted',
       success: true,
     },
     null,
@@ -99,7 +105,7 @@ async function ensureLocalAdmin({
 
   const data = {
     email,
-    emailVerifiedAt: new Date().toISOString(),
+    emailVerifiedAt: localFixtureTimestamp,
     name,
     password,
     roles: ['admin'] satisfies NonNullable<User['roles']>,
@@ -151,7 +157,7 @@ async function ensureLocalHostFixtures(localAdmin: User, adminEmail: string) {
     {
       bio: 'Local admin host profile for testing session artifact uploads and relationship enrichment.',
       claimEmail: adminEmail,
-      claimedAt: new Date().toISOString(),
+      claimedAt: localFixtureTimestamp,
       claimStatus: 'claimed',
       contact: {
         email: adminEmail,
@@ -166,13 +172,8 @@ async function ensureLocalHostFixtures(localAdmin: User, adminEmail: string) {
     },
   )
 
-  const pastStart = new Date()
-  pastStart.setDate(pastStart.getDate() - 2)
-  pastStart.setHours(16, 0, 0, 0)
-
-  const futureStart = new Date()
-  futureStart.setDate(futureStart.getDate() + 2)
-  futureStart.setHours(16, 0, 0, 0)
+  const pastStart = new Date(localFixturePastStart)
+  const futureStart = new Date(localFixtureFutureStart)
 
   await Promise.all([
     upsertOne(

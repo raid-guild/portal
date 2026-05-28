@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canContributeContent } from '@/access/roles'
+import { canContributeContent, canEditContent } from '@/access/roles'
 import type { Event, Post, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -91,6 +91,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
   const canViewFullDetails = Boolean(user)
   const canManageSessions = canContributeContent(user)
+  const canViewDiscordSyncErrors = canEditContent(user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
   const startsAt = new Date(event.startsAt)
   const isPast = startsAt.getTime() < Date.now()
@@ -111,8 +112,12 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     { href: event.summaryArtifactURL, label: 'Summary artifact' },
     { href: event.transcriptArtifactURL, label: 'Transcript artifact' },
     { href: event.sourceArtifactURL, label: 'Source artifact' },
-  ]
-  const hasSourceLinks = sourceLinks.some((link) => link.href)
+  ].flatMap((link) => {
+    const safeURL = toSafeURL(link.href)
+
+    return safeURL ? [{ href: safeURL, label: link.label }] : []
+  })
+  const hasSourceLinks = sourceLinks.length > 0
   const hasRelatedContext = Boolean(projects.length || threads.length)
   const socialLinks = event.linkedSocialPosts || []
   const wikiTopics = event.wikiCandidateTopics?.map((item) => item.topic).filter(Boolean) || []
@@ -167,7 +172,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </aside>
       </section>
 
-      {canManageSessions && event.discordSyncStatus === 'failed' ? (
+      {canViewDiscordSyncErrors && event.discordSyncStatus === 'failed' ? (
         <DiscordSyncNotice error={event.discordSyncError} />
       ) : null}
 
