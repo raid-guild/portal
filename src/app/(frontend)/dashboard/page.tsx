@@ -217,43 +217,53 @@ const getPointSummary = async (user: User) => {
 const getDailyEngagementSummary = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const today = engagementDateKey(normalizeEngagementDate())
-  const result = await payload.find({
-    collection: 'dailyEngagements',
-    depth: 0,
-    limit: 1000,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-engagementDate',
-    user,
-    where: {
-      and: [
-        {
-          user: {
-            equals: user.id,
+  try {
+    const result = await payload.find({
+      collection: 'dailyEngagements',
+      depth: 0,
+      limit: 1000,
+      overrideAccess: false,
+      pagination: false,
+      sort: '-engagementDate',
+      user,
+      where: {
+        and: [
+          {
+            user: {
+              equals: user.id,
+            },
           },
-        },
-        {
-          status: {
-            equals: 'valid',
+          {
+            status: {
+              equals: 'valid',
+            },
           },
-        },
-      ],
-    },
-  })
+        ],
+      },
+    })
 
-  const checkedDates = new Set(
-    result.docs
-      .map((engagement) => engagementDateKey(engagement.engagementDate))
-      .filter((date): date is string => Boolean(date)),
-  )
-  const todayEngagement = result.docs.find(
-    (engagement) => engagementDateKey(engagement.engagementDate) === today,
-  )
+    const checkedDates = new Set(
+      result.docs
+        .map((engagement) => engagementDateKey(engagement.engagementDate))
+        .filter((date): date is string => Boolean(date)),
+    )
+    const todayEngagement = result.docs.find(
+      (engagement) => engagementDateKey(engagement.engagementDate) === today,
+    )
+
+    return {
+      currentStreak: getCurrentStreak(checkedDates),
+      hasCheckedInToday: Boolean(today && checkedDates.has(today)),
+      todayVibe: todayEngagement?.vibe || null,
+    }
+  } catch (err) {
+    console.warn('Unable to load daily engagement summary.', err)
+  }
 
   return {
-    currentStreak: getCurrentStreak(checkedDates),
-    hasCheckedInToday: Boolean(today && checkedDates.has(today)),
-    todayVibe: todayEngagement?.vibe || null,
+    currentStreak: 0,
+    hasCheckedInToday: false,
+    todayVibe: null,
   }
 }
 
