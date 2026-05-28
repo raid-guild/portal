@@ -331,6 +331,11 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   user,
 }) => {
   const hasProfile = Boolean(profile)
+  const vibeSummary = dailyEngagementSummary || {
+    currentStreak: 0,
+    hasCheckedInToday: false,
+    todayVibe: null,
+  }
   const briefActivityItems = dailyBrief ? relationDocs<ActivityItem>(dailyBrief.activityItems) : []
   const briefThreads = dailyBrief ? relationDocs<Thread>(dailyBrief.threads) : []
   const nextEvent =
@@ -383,15 +388,13 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </div>
           <p className="portal-heading">{pointsTotal}</p>
         </div>
-        {dailyEngagementSummary ? (
-          <div className="mt-5 border-y border-border py-4">
-            <VibeCheckButton
-              currentStreak={dailyEngagementSummary.currentStreak}
-              hasCheckedInToday={dailyEngagementSummary.hasCheckedInToday}
-              todayVibe={dailyEngagementSummary.todayVibe}
-            />
-          </div>
-        ) : null}
+        <div className="mt-5 border-y border-border py-4">
+          <VibeCheckButton
+            currentStreak={vibeSummary.currentStreak}
+            hasCheckedInToday={vibeSummary.hasCheckedInToday}
+            todayVibe={vibeSummary.todayVibe}
+          />
+        </div>
         <div className="mt-5 space-y-3">
           {pointEvents.length ? (
             pointEvents.map((event) => (

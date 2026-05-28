@@ -177,21 +177,22 @@ The check-in and the comment display state should be separate.
 - `pointEvent.status` controls whether the point award is valid.
 - `commentStatus` controls whether the optional comment can be shown.
 
-Points should be awarded immediately for a valid check-in. Admin approval should
-only affect whether the comment becomes visible on member or public surfaces.
-Rejecting, hiding, or leaving a comment pending should not remove the daily point
-unless an admin voids the whole engagement or reverses the point event.
+Points should be awarded immediately for a valid check-in. Comments should be
+approved by default so the first version stays lightweight. If a comment becomes
+an issue, admins can hide or reject the comment later. Rejecting or hiding a
+comment should not remove the daily point unless an admin voids the whole
+engagement or reverses the point event.
 
 Recommended comment defaults:
 
 ```txt
 no comment -> commentStatus: none
-with comment -> commentStatus: pending_review
+with comment -> commentStatus: approved
 ```
 
-Admins and editors can approve, hide, or reject comments. Public/member surfaces
-should only show comments where `commentStatus = approved`. Separate comment
-visibility can be added later if public and member display rules diverge.
+Admins and editors can hide or reject comments after the fact. Public/member
+surfaces should only show comments where `commentStatus = approved`. Separate
+comment visibility can be added later if public and member display rules diverge.
 
 Do not use daily engagement comments as a broad public feed in the first version.
 Admins may review comments in Payload for moderation, learning, or future product
@@ -287,9 +288,9 @@ Keep the first slice narrow:
 3. Create a `pointEvents` record worth 1 point after a valid check-in.
 4. Show a simple check-in card on the authenticated dashboard or `/me`.
 5. Show recent personal check-ins.
-6. Add an admin review state for optional comments.
+6. Add admin controls to hide or reject optional comments.
 7. Add e2e coverage for first check-in, duplicate prevention, point award, and
-   comment approval visibility.
+   comment visibility.
 
 Defer streaks, leaderboards, categories, configurable point amounts, and public
 engagement feeds.
