@@ -72,16 +72,28 @@ The session detail page is the hub for richer context:
 - join/calendar/Discord actions for upcoming sessions
 - guests, hosts, speakers, and related profiles
 - CTA for unauthenticated users to join or log in
+- session notes for past sessions
 - source material for past sessions when authenticated
+- artifacts from the session: recording, transcript, summary, source links, or
+  manually added links
 - related projects and threads
 - derived posts grouped by content type
 - wiki candidate topics
 - linked social posts
 - previous/next occurrence links
+- optional attendees/participants if there is a reliable source
 
 Unauthenticated users can see basic public session details. Authenticated users
 can see the fuller graph of relationships and source material. Do not build a
 full entitlement system yet.
+
+Past session pages should feel more like a useful archive than a calendar row.
+They should foreground what happened, what artifacts came out of the session,
+which projects or threads it connects to, and who was involved.
+
+Session comments should be flat for MVP. Do not add direct replies, nested
+threads, or Discord-style conversation structure yet. Reuse the existing comment
+approval pattern where possible.
 
 ## Data Model
 
@@ -133,6 +145,18 @@ Prism/source artifact fields:
 - `sourceStatus`: `scheduled`, `recorded`, `summarized`, `processed`,
   `archived`
 
+Past-session notes and artifact enrichment:
+
+- use `summary` for short visible session notes until a richer notes field is
+  needed
+- keep long transcripts and generated artifacts in Prism or external storage,
+  then link them from the session
+- manually associated project/thread/profile links should stay editable after
+  the session
+- attendee fields are not required for MVP; add them only when attendance has a
+  reliable source such as Discord, Prism, calendar data, or deliberate manual
+  curation
+
 Recurrence metadata:
 
 - `seriesKey`
@@ -172,6 +196,11 @@ The current user should default into hosts when their profile is available.
 
 Past-session enrichment should happen through Payload admin or API workflows, not
 the contributor-facing form.
+
+Hosts should eventually have a lightweight front-end edit path for sessions they
+hosted. The scope should be enrichment only: adding or correcting notes,
+artifacts, source links, and manually associated projects/threads. Admins and
+editors retain full control through Payload.
 
 ### API
 
@@ -304,6 +333,10 @@ Current product default should be open:
 - member-only sessions are supported by visibility, but avoid deeper entitlement
   logic until there is a concrete need
 
+Host edit access is not the same as broad event administration. A host should be
+able to enrich their own past session, but should not automatically gain global
+event publishing, deletion, user management, or Discord sync administration.
+
 ## Firesides And Content Derivation
 
 Firesides are sessions with `sessionType: fireside`.
@@ -340,6 +373,10 @@ Already implemented:
 
 Next MVP priorities:
 
+- make past session pages clearly show notes, artifacts, related projects, and
+  related threads
+- add flat comments to session detail pages with no direct replies
+- add host-facing edit affordances for past-session enrichment
 - improve session detail UX around source material and derived content
 - tighten mobile layout and scanning on list/detail pages
 - make Discord sync failures more visible to creators/admins
@@ -362,6 +399,12 @@ Next MVP priorities:
 
 - Should members be able to express intent to attend, or is add-to-calendar
   enough for MVP?
+- Should attendees be manually curated, imported from Discord/Prism, or omitted
+  until the source is reliable?
+- Should session comments inherit the session visibility, require login, or be
+  public on public sessions?
+- Which past-session fields can hosts edit directly versus requiring admin or
+  editor review?
 - Should all source material require authentication, even for public sessions?
 - Should member-only sessions show an unauthenticated teaser or a hard 404?
 - Should linked social posts live only on sessions or also on derived posts?
