@@ -289,6 +289,7 @@ export const seed = async ({
           description:
             'A seeded portal update for validating public post, comment, and moderation flows.',
         },
+        visibility: 'public',
         _status: 'published',
         publishedAt: '2026-05-11T17:34:47.664Z',
       },

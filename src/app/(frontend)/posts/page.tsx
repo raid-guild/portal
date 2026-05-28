@@ -9,12 +9,26 @@ import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import {
+  getPostVisibilityQuery,
+  getPostVisibilityWhere,
+  normalizePostVisibilityFilter,
+  PostVisibilityFilterNav,
+} from './postVisibilityFilters'
 
 export const dynamic = 'force-dynamic'
 
-export default async function Page() {
+type Args = {
+  searchParams?: Promise<{
+    visibility?: string | string[]
+  }>
+}
+
+export default async function Page({ searchParams: searchParamsPromise }: Args) {
   const payload = await getPayload({ config: configPromise })
   const user = await getCurrentUser()
+  const searchParams = await searchParamsPromise
+  const visibility = normalizePostVisibilityFilter(searchParams, user)
 
   const posts = await payload.find({
     collection: 'posts',
@@ -27,13 +41,11 @@ export default async function Page() {
       slug: true,
       categories: true,
       meta: true,
+      visibility: true,
     },
     sort: '-publishedAt',
-    where: {
-      _status: {
-        equals: 'published',
-      },
-    },
+    user: user || undefined,
+    where: getPostVisibilityWhere(visibility),
   })
 
   return (
@@ -53,6 +65,10 @@ export default async function Page() {
       </div>
 
       <div className="container mb-8">
+        <PostVisibilityFilterNav activeVisibility={visibility} user={user} />
+      </div>
+
+      <div className="container mb-8">
         <PageRange
           collection="posts"
           currentPage={posts.page}
@@ -65,7 +81,11 @@ export default async function Page() {
 
       <div className="container">
         {posts.totalPages > 1 && posts.page && (
-          <Pagination page={posts.page} totalPages={posts.totalPages} />
+          <Pagination
+            page={posts.page}
+            queryString={getPostVisibilityQuery(visibility)}
+            totalPages={posts.totalPages}
+          />
         )}
       </div>
     </div>

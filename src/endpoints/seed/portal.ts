@@ -151,6 +151,7 @@ export const seedPortalContent = async ({
         meta: {
           description: 'A portal update for validating public post, comment, and moderation flows.',
         },
+        visibility: 'public',
         _status: 'published',
         publishedAt,
       },

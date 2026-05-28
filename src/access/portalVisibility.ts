@@ -11,7 +11,7 @@ const publishedOnly: Where = {
 export const readVisiblePortalContent: Access = ({ req: { user } }) => {
   if (canEditContent(user)) return true
 
-  if (hasRole(user, 'member')) {
+  if (hasRole(user, ['member', 'agent'])) {
     return {
       and: [
         publishedOnly,

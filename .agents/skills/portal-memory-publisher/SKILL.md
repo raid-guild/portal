@@ -157,6 +157,10 @@ send `_status: "draft"` or omit `_status`, and omit `publishedAt`. A `publishedA
 date does not publish the post; only an editor or admin should publish through
 Payload review.
 
+Posts support `visibility`: `public`, `authenticated`, `member`, or `admin`.
+Agent accounts may set visibility and may read member-visible content, but they
+must not use `member` unless the source material is meant for confirmed members.
+
 Do not use draft/autosave query params or version endpoints for normal agent
 post proposals. Use the canonical collection endpoint:
 
@@ -166,6 +170,7 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/posts" \
   -d '{
     "title": "Draft title",
     "slug": "draft-title",
+    "visibility": "public",
     "_status": "draft",
     "content": { "root": { "type": "root", "children": [] } }
   }'
