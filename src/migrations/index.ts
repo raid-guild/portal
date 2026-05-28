@@ -21,6 +21,7 @@ import * as migration_20260522_120000_fireside_content_flow from './20260522_120
 import * as migration_20260526_120000_event_recurrence_fields from './20260526_120000_event_recurrence_fields'
 import * as migration_20260526_130000_event_member_visibility from './20260526_130000_event_member_visibility'
 import * as migration_20260528_120000_post_visibility from './20260528_120000_post_visibility'
+import * as migration_20260528_130000_daily_engagements from './20260528_130000_daily_engagements'
 import * as migration_20260528_200654_badges from './20260528_200654_badges'
 
 export const migrations = [
@@ -138,6 +139,11 @@ export const migrations = [
     up: migration_20260528_120000_post_visibility.up,
     down: migration_20260528_120000_post_visibility.down,
     name: '20260528_120000_post_visibility',
+  },
+  {
+    up: migration_20260528_130000_daily_engagements.up,
+    down: migration_20260528_130000_daily_engagements.down,
+    name: '20260528_130000_daily_engagements',
   },
   {
     up: migration_20260528_200654_badges.up,

@@ -5,8 +5,9 @@
 Future feature module. Keep this out of the MVP until the portal needs a simple
 daily participation loop.
 
-The first version should be intentionally small: a member checks a box, may leave
-an optional comment, and receives a default point award once per day.
+The first version should be intentionally small: a member completes a daily vibe
+check, may leave an optional comment, and receives a default point award once per
+day.
 
 ## Product Intent
 
@@ -60,8 +61,8 @@ profile: relationship -> profiles, required
 user: relationship -> users, required
 engagementDate: date, required
 checkedIn: checkbox, required, default true
+vibe: raiding / ripping / meeting / learning / vibing / blocked / resting
 comment: textarea
-commentVisibility: private / member / public
 commentStatus: none / pending_review / approved / hidden / rejected
 commentApprovedBy: relationship -> users
 commentApprovedAt: date
@@ -87,7 +88,7 @@ timezone and document it in the UI.
 Start with a fixed award:
 
 ```txt
-daily check-in = 1 point
+daily vibe check = 5 points
 ```
 
 The value can be configurable later, but the first version should avoid multiple
@@ -121,7 +122,16 @@ do not create another point event.
 Authenticated member-facing surface:
 
 ```txt
-[ ] I checked in today
+Choose today's vibe:
+
+⚔️ Raiding
+🔥 Ripping
+🗣️ Meeting
+🔎 Learning
+🌊 Vibing
+🧱 Blocked
+💤 Resting
+
 Optional comment
 Submit
 ```
@@ -130,7 +140,7 @@ After submit:
 
 ```txt
 Checked in today
-+1 point
++5 points
 ```
 
 If the user included a comment:
@@ -158,6 +168,8 @@ Examples:
 - "Joined the weekly session."
 - "Reviewed the portal project spec."
 - "Caught up on the latest brief."
+- "Feeling heads-down today."
+- "Blocked and could use another set of eyes."
 
 The check-in and the comment display state should be separate.
 
@@ -175,12 +187,11 @@ Recommended comment defaults:
 ```txt
 no comment -> commentStatus: none
 with comment -> commentStatus: pending_review
-commentVisibility -> member
 ```
 
 Admins and editors can approve, hide, or reject comments. Public/member surfaces
-should only show comments where `commentStatus = approved` and visibility allows
-the current viewer.
+should only show comments where `commentStatus = approved`. Separate comment
+visibility can be added later if public and member display rules diverge.
 
 Do not use daily engagement comments as a broad public feed in the first version.
 Admins may review comments in Payload for moderation, learning, or future product

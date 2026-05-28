@@ -1,12 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
-import { adminsOnly, ownPointEventsOrAdmin } from '@/access/pointEvents'
+import { adminsOnly, adminsOrApprovedAgents, ownPointEventsOrAdmin } from '@/access/pointEvents'
 import { hideFromNonEditors } from '@/access/roles'
 
 export const PointEvents: CollectionConfig = {
   slug: 'pointEvents',
   access: {
-    create: adminsOnly,
+    create: adminsOrApprovedAgents,
     delete: adminsOnly,
     read: ownPointEventsOrAdmin,
     update: adminsOnly,
@@ -126,6 +126,11 @@ export const PointEvents: CollectionConfig = {
       name: 'relatedDailyBrief',
       type: 'relationship',
       relationTo: 'dailyBriefs',
+    },
+    {
+      name: 'relatedDailyEngagement',
+      type: 'relationship',
+      relationTo: 'dailyEngagements',
     },
   ],
   hooks: {
