@@ -291,9 +291,13 @@ Payload shape:
 If no matching session exists, Prism should keep the artifact in its workflow for
 human review. It should not invent a Portal session.
 
-## Recurring Sessions
+## Recurring Session Templates
 
-MVP recurrence uses copied metadata between normal event records.
+MVP recurrence is not a full internal scheduler. Portal should provide a
+template surface that agents, Prism workflows, or external APIs can use to create
+the next meeting in a predictable way.
+
+Use copied metadata between normal event records:
 
 Use:
 
@@ -308,9 +312,14 @@ Expected workflow:
 
 1. A root/current session has series metadata.
 2. After the meeting ends, Prism or an agent workflow may process artifacts.
-3. The workflow can create the next event by copying series metadata forward.
+3. The workflow can create the next event through the Portal API by copying
+   series metadata forward and applying a new start/end time.
 4. The new event sets `previousOccurrence` to the current event.
 5. The current event gets patched with `nextOccurrence`.
+
+Portal's responsibility is to store the template metadata, expose it through the
+session record/API, and allow a caller to create the next meeting from that
+metadata. Portal should not run a background recurrence scheduler for MVP.
 
 Portal should not add a separate recurrence collection yet. Add one only if
 series-level ownership, attendance, permissions, templates, or analytics become
