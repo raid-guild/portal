@@ -1,19 +1,12 @@
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import React from 'react'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type {
-  Event,
-  Post,
-  Profile,
-  ProfileRole,
-  ProfileSkill,
-  Project,
-  User,
-} from '@/payload-types'
+import type { Event, Post, Profile, Project, User } from '@/payload-types'
 import { EmailVerificationCard } from '../_components/EmailVerificationCard'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -72,6 +65,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         <h2 className="mb-4 portal-heading">Profile wizard</h2>
         <ProfileWizardForm
           accountEmail={user.email}
+          accountUserID={user.id}
           claimableProfiles={profile ? [] : claimableProfiles}
           profile={profile}
           roles={roles}
@@ -116,18 +110,6 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         </div>
       </section>
 
-      <section className="mt-12 grid gap-8 lg:grid-cols-2">
-        <TaxonomyList
-          description="Skills are broad capabilities used for discovery and project matching."
-          items={skills}
-          title="Available Skills"
-        />
-        <TaxonomyList
-          description="Roles are RaidGuild identity markers. The profile flow should limit members to two."
-          items={roles}
-          title="Available Roles"
-        />
-      </section>
     </main>
   )
 }
@@ -170,7 +152,9 @@ const CreatedList: React.FC<{
       {items.length ? (
         items.map((item) => (
           <article className="text-sm" key={item.id}>
-            <p className="font-medium">{item.title}</p>
+            <Link className="font-medium hover:text-primary" href={recordHref(item)}>
+              {item.title}
+            </Link>
             {'_status' in item ? <p className="portal-kicker">{item._status || 'draft'}</p> : null}
           </article>
         ))
@@ -181,32 +165,17 @@ const CreatedList: React.FC<{
   </div>
 )
 
-const TaxonomyList: React.FC<{
-  description: string
-  items: ProfileRole[] | ProfileSkill[]
-  title: string
-}> = ({ description, items, title }) => (
-  <div>
-    <h2 className="portal-heading">{title}</h2>
-    <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
-    <div className="mt-6 grid gap-3 sm:grid-cols-2">
-      {items.map((item) => (
-        <div className="portal-card" key={item.id}>
-          {'iconPath' in item && item.iconPath ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img alt="" className="mb-3 h-8 w-8" src={item.iconPath} />
-          ) : null}
-          <p className="font-medium">{item.title}</p>
-          {item.description ? (
-            <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
-              {item.description}
-            </p>
-          ) : null}
-        </div>
-      ))}
-    </div>
-  </div>
-)
+const recordHref = (item: Event | Post | Project) => {
+  if ('startsAt' in item) return `/events/${item.id}`
+
+  const collection = 'projectStatus' in item ? 'projects' : 'posts'
+
+  if (item._status === 'published' && item.slug) {
+    return `/${collection}/${item.slug}`
+  }
+
+  return `/admin/collections/${collection}/${item.id}`
+}
 
 const getProfileForUser = async (userID: string | number) => {
   const payload = await getPayload({ config: configPromise })
