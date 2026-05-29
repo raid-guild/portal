@@ -685,6 +685,19 @@ async function verifyMemberOnlyProjectVisibility(
 
   expect(postResponse.status()).toBe(201)
 
+  const moduleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'Member Only Module',
+      slug: 'member-only-module',
+      summary: 'A module that should only be visible to users with the member role.',
+      status: 'active',
+      visibility: 'member',
+      enabled: true,
+    },
+  })
+
+  expect(moduleResponse.status()).toBe(201)
+
   const memberResponse = await adminPage.request.post('/api/users', {
     data: {
       email: memberEmail,
@@ -763,6 +776,8 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
   expect(contributorPostDetailResponse?.status()).toBe(404)
+  await contributorPage.goto('/modules')
+  await expect(contributorPage.getByText('Member Only Module')).toHaveCount(0)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -791,6 +806,8 @@ async function verifyMemberOnlyProjectVisibility(
     memberPage.getByRole('heading', { exact: true, name: memberOnlyPostTitle }),
   ).toBeVisible()
   await expect(memberPage.getByText('Member-only post details')).toBeVisible()
+  await memberPage.goto('/modules')
+  await expect(memberPage.getByText('Member Only Module')).toBeVisible()
   await memberContext.close()
 
   const agentContext = await browser.newContext()
@@ -2061,6 +2078,45 @@ async function verifyDashboardBrief(page: Page) {
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Public Posts' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Modules' })).toBeVisible()
+}
+
+async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
+  const archivedModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'Archived E2E Module',
+      slug: 'archived-e2e-module',
+      summary: 'An enabled archived module should not appear on the member-facing index.',
+      status: 'archived',
+      visibility: 'authenticated',
+      enabled: true,
+    },
+  })
+  expect(archivedModuleResponse.status()).toBe(201)
+
+  await publicPage.goto('/modules')
+  await expect(publicPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Join to access modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Log in' })).toBeVisible()
+  await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
+
+  const publicModulesResponse = await publicPage.request.get('/api/modules')
+  if (publicModulesResponse.ok()) {
+    const publicModulesBody = await publicModulesResponse.json()
+    expect(publicModulesBody.docs).toHaveLength(0)
+  } else {
+    expect(publicModulesResponse.status()).toBeGreaterThanOrEqual(400)
+  }
+
+  await adminPage.goto('/modules')
+  await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
+  await expect(adminPage.getByText('Bounty Board')).toBeVisible()
+  await expect(adminPage.getByText('Leaderboard')).toBeVisible()
+  await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
+  await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(0)
 }
 
 async function verifyDailyVibeCheck(page: Page) {
@@ -2602,6 +2658,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
+  await verifyModulesFeature(page, publicPage)
   await verifyPublicHome(publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)

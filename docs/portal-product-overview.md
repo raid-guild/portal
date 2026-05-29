@@ -44,6 +44,7 @@ or generic AI content feed.
 - `/members/[handle]`: public/member profile page with projects, sessions,
   posts, and badges.
 - `/badges`: recognition catalog.
+- `/modules`: optional and experimental Portal modules.
 - `/inbox`: personal notifications and digest updates.
 - `/me`: private profile, account, notification preferences, and personal portal
   jump links.
@@ -60,9 +61,12 @@ or generic AI content feed.
 Feature modules should stay separate when they have their own lifecycle or
 workflow:
 
+- `Modules`: registry and boundary for optional product capabilities.
 - `Badges`: durable recognition shown on profiles and member lists.
 - `Notifications`: user-scoped inbox records, reminders, and digest delivery.
 - `Daily Engagements`: lightweight check-ins and point ledger events.
+- `Infinite Wiki`: reviewed, source-backed knowledge pages generated from
+  community memory and portal records.
 - `Contribution Requests`: lightweight asks for help surfaced from projects and
   sessions without becoming tasks or assignments.
 
@@ -114,9 +118,13 @@ Notification operations are documented in
 - [Roles and capabilities](./roles-and-capabilities.md): permission model.
 - [Notifications feature spec](./notifications-feature-spec.md): inbox,
   reminders, digests, and email delivery.
+- [Modules feature spec](./modules-feature-spec.md): experimental module
+  registry, CMS grouping, and dependency boundaries.
 - [Contribution requests feature spec](./contribution-requests-feature-spec.md):
   request records, project/session display, and future board/comment options.
 - [Badges and props feature spec](./badges-and-props-feature-spec.md):
   recognition model.
+- [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md):
+  source-backed knowledge graph and review workflow.
 - [Implementation checklist](./portal-implementation-checklist.md): execution
   tracker, not the primary product narrative.

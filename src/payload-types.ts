@@ -79,6 +79,7 @@ export interface Config {
     threads: Thread;
     badges: Badge;
     profileBadges: ProfileBadge;
+    modules: Module;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
     profiles: Profile;
@@ -112,6 +113,7 @@ export interface Config {
     threads: ThreadsSelect<false> | ThreadsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
@@ -1395,6 +1397,72 @@ export interface ProfileBadge {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  name: string;
+  summary: string;
+  status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  /**
+   * Enabled modules are listed on member-facing module surfaces.
+   */
+  enabled?: boolean | null;
+  featured?: boolean | null;
+  sortOrder?: number | null;
+  /**
+   * Member-facing route when the module has a usable surface.
+   */
+  entryRoute?: string | null;
+  /**
+   * Optional admin route for managing module-owned records.
+   */
+  adminRoute?: string | null;
+  /**
+   * Spec, docs, or planning link for this module.
+   */
+  specURL?: string | null;
+  /**
+   * Optional implementation repository or PR link.
+   */
+  repositoryURL?: string | null;
+  /**
+   * Profiles stewarding or championing this module.
+   */
+  owners?: (number | Profile)[] | null;
+  /**
+   * Primary project that produced or maintains this module.
+   */
+  sourceProject?: (number | null) | Project;
+  relatedProjects?: (number | Project)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Payload collection slugs owned by this module.
+   */
+  ownedCollections?:
+    | {
+        collectionSlug: string;
+        id?: string | null;
+      }[]
+    | null;
+  corePrimitiveRelationships?:
+    | {
+        primitive: 'brief' | 'project' | 'thread' | 'activityItem' | 'event' | 'profile' | 'post';
+        id?: string | null;
+      }[]
+    | null;
+  graduationCriteria?: string | null;
+  riskNotes?: string | null;
+  lastReviewedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "notifications".
  */
 export interface Notification {
@@ -1684,6 +1752,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'profileBadges';
         value: number | ProfileBadge;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
       } | null)
     | ({
         relationTo: 'notifications';
@@ -2343,6 +2415,47 @@ export interface ProfileBadgesSelect<T extends boolean = true> {
   note?: T;
   featured?: T;
   visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  name?: T;
+  summary?: T;
+  status?: T;
+  visibility?: T;
+  enabled?: T;
+  featured?: T;
+  sortOrder?: T;
+  entryRoute?: T;
+  adminRoute?: T;
+  specURL?: T;
+  repositoryURL?: T;
+  owners?: T;
+  sourceProject?: T;
+  relatedProjects?: T;
+  relatedThreads?: T;
+  relatedProfiles?: T;
+  ownedCollections?:
+    | T
+    | {
+        collectionSlug?: T;
+        id?: T;
+      };
+  corePrimitiveRelationships?:
+    | T
+    | {
+        primitive?: T;
+        id?: T;
+      };
+  graduationCriteria?: T;
+  riskNotes?: T;
+  lastReviewedAt?: T;
+  slug?: T;
+  slugLock?: T;
   updatedAt?: T;
   createdAt?: T;
 }

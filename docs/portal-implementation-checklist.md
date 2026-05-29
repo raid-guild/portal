@@ -170,12 +170,52 @@
 - [ ] Add session/project comment surfaces when the UX calls for them.
 - [ ] Add direct notifications only after recipient intent is clear.
 - [ ] Add a `projectMemberships` feature module only if project involvement
-  needs join requests, active/past state, followers, filtering, or history.
+      needs join requests, active/past state, followers, filtering, or history.
+
+## Phase 8: Modules
+
+- [x] Decide whether first version uses only documented module conventions or a
+      `modules` registry collection.
+- [x] Add `modules` collection with status, owner, route, related project,
+      related primitives, and graduation criteria fields.
+- [x] Add `/modules` discovery page for visible enabled modules.
+- [x] Add unauthenticated `/modules` teaser with join/login CTAs.
+- [x] Add dashboard entry point for modules.
+- [ ] Add optional `/modules/[slug]` detail route if module cards need more
+      context.
+- [x] Add Payload admin grouping guidance: core primitives in `Portal`,
+      module-owned collections in `Modules`.
+- [x] Ensure core routes render without module-owned collections or enabled
+      module records.
+- [x] Add e2e coverage for module visibility and module cards without entry
+      routes.
+
+## Phase 9: Infinite Wiki
+
+- [ ] Add `wikiPages` collection with source audit fields.
+- [ ] Put `wikiPages` in the Payload admin `Modules` group.
+- [ ] Link Infinite Wiki to the module registry or documented module convention.
+- [ ] Add wiki page access rules for reviewed status and visibility.
+- [ ] Add `/wiki` index for published pages.
+- [ ] Add `/wiki/[slug]` detail route with related portal context and sources.
+- [ ] Add possible-topic rendering without presenting possible pages as
+      canonical.
+- [ ] Add admin/editor review workflow for generated drafts.
+- [ ] Add Prism-backed generation endpoint or admin action for generated drafts.
+- [ ] Record source queries, source artifacts, prompt version, model, and
+      confidence for every generated page.
+- [ ] Add refresh proposal workflow without silently overwriting reviewed
+      content.
+- [ ] Add e2e coverage for status, visibility, source rendering, and draft
+      review boundaries.
 
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
+- [ ] Bounty board module. See `docs/modules-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
+- [x] Module registry and `/modules` discovery surface. See `docs/modules-feature-spec.md`.
+- [ ] Infinite Wiki generation and review. See `docs/infinite-wiki-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
 - [ ] Module/plugin registry.
