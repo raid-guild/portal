@@ -254,7 +254,7 @@ export const Notifications: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ data, operation, req }) => {
+      ({ context, data, operation, req }) => {
         const nextData = {
           ...data,
         }
@@ -269,7 +269,11 @@ export const Notifications: CollectionConfig = {
           if (!nextData.archivedAt) nextData.archivedAt = now
         }
 
-        if (operation === 'update' && !canEditContent(req.user)) {
+        if (
+          operation === 'update' &&
+          !context.allowNotificationSystemUpdate &&
+          !canEditContent(req.user)
+        ) {
           const readableUpdate: Record<string, unknown> = {}
 
           if (nextData.status) readableUpdate.status = nextData.status

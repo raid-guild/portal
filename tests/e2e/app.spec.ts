@@ -2056,6 +2056,120 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     priority: 'high',
     title: `${reminderEventTitle} starts in 1 hour`,
   })
+
+  const emailDispatchUnauthorizedResponse = await page.request.post(
+    '/api/notifications/email/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(emailDispatchUnauthorizedResponse.status()).toBe(401)
+
+  const emailNotificationTitle = `E2E Email Notification ${hookSuffix}`
+  const emailNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic pending email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: emailNotificationTitle,
+      type: 'system',
+    },
+  })
+  expect(emailNotificationResponse.status()).toBe(201)
+  const emailNotificationBody = await emailNotificationResponse.json()
+  const emailNotificationID = emailNotificationBody.doc?.id || emailNotificationBody.id
+
+  const skippedEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(skippedEmailDispatchResponse.ok()).toBeTruthy()
+  const skippedEmailDispatchBody = await skippedEmailDispatchResponse.json()
+  expect(skippedEmailDispatchBody.result).toMatchObject({
+    processed: 1,
+    skipped: 1,
+  })
+  const skippedEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${emailNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(skippedEmailNotificationResponse.ok()).toBeTruthy()
+  const skippedEmailNotificationBody = await skippedEmailNotificationResponse.json()
+  expect(skippedEmailNotificationBody.emailStatus).toBe('skipped')
+
+  const verifiedEmail = `notification-dispatch-${hookSuffix}@example.com`
+  const verifiedUserResponse = await page.request.post('/api/users', {
+    data: {
+      email: verifiedEmail,
+      emailVerifiedAt: new Date().toISOString(),
+      name: `Notification Dispatch ${hookSuffix}`,
+      password: 'ChangeMe123!',
+      roles: ['member'],
+    },
+  })
+  expect(verifiedUserResponse.status()).toBe(201)
+  const verifiedUserBody = await verifiedUserResponse.json()
+  const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
+  const sendableNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic sendable email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: verifiedUserID,
+      status: 'unread',
+      title: `E2E Sendable Email Notification ${hookSuffix}`,
+      type: 'system',
+    },
+  })
+  expect(sendableNotificationResponse.status()).toBe(201)
+  const sendableNotificationBody = await sendableNotificationResponse.json()
+  const sendableNotificationID = sendableNotificationBody.doc?.id || sendableNotificationBody.id
+  const sentEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(sentEmailDispatchResponse.ok()).toBeTruthy()
+  const sentEmailDispatchBody = await sentEmailDispatchResponse.json()
+  expect(sentEmailDispatchBody.result).toMatchObject({
+    processed: 1,
+    sent: 1,
+  })
+  const sentEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${sendableNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(sentEmailNotificationResponse.ok()).toBeTruthy()
+  const sentEmailNotificationBody = await sentEmailNotificationResponse.json()
+  expect(sentEmailNotificationBody).toMatchObject({
+    emailStatus: 'sent',
+  })
+  expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
 }
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {

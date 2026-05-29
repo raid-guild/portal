@@ -376,6 +376,37 @@ event:123:reminder:24h:user:456
 event:123:reminder:1h:user:456
 ```
 
+### Email Dispatch
+
+Run from an external cron or task runner after notification creation jobs. The
+portal should send only existing notification intent records and should not let
+content hooks send email directly.
+
+Endpoint:
+
+```txt
+POST /api/notifications/email/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+```
+
+Default behavior:
+
+- find `notifications` where `deliveryChannel` is `email` and `emailStatus` is
+  `pending`
+- re-check that the recipient has an email and `emailVerifiedAt`
+- send through Payload email, backed by SendGrid when configured
+- mark each notification `sent`, `failed`, or `skipped`
+- keep retry behavior explicit by leaving failed records visible in Payload
+
+Optional request body:
+
+```json
+{
+  "limit": 50,
+  "dryRun": false
+}
+```
+
 ### Activity Digests
 
 Run daily or weekly depending on preference.
