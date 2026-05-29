@@ -21,7 +21,7 @@ export async function POST(request: Request) {
   }
 
   const since = dateValue(body?.since)
-  const until = dateValue(body?.until) || new Date()
+  const until = body?.until ? dateValue(body.until) : new Date()
 
   if (body?.since && !since) {
     return Response.json({ message: 'Enter a valid since timestamp.' }, { status: 400 })
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     limit: numberValue(body?.limit) || 100,
     req: { payload } as PayloadRequest,
     since: since || undefined,
-    until,
+    until: until || undefined,
   })
 
   return Response.json(result)

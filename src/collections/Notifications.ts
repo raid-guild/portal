@@ -7,6 +7,7 @@ import {
   updateOwnNotificationsOrEditor,
 } from '@/access/notifications'
 import { canEditContent, hideFromNonEditors } from '@/access/roles'
+import { validateSafeURL } from '@/utilities/safeURL'
 
 export const Notifications: CollectionConfig = {
   slug: 'notifications',
@@ -225,6 +226,8 @@ export const Notifications: CollectionConfig = {
     {
       name: 'actionURL',
       type: 'text',
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: true, protocols: ['http:', 'https:'] }),
     },
     {
       name: 'relatedEvent',

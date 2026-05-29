@@ -2231,6 +2231,19 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     1,
   )
 
+  const invalidWeeklyDigestResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidWeeklyDigestResponse.status()).toBe(400)
+
   const activityDigestUnauthorizedResponse = await page.request.post(
     '/api/notifications/digests/activity/run',
     {
@@ -2240,6 +2253,40 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     },
   )
   expect(activityDigestUnauthorizedResponse.status()).toBe(401)
+
+  const preferenceResponse = await page.request.get('/api/notificationPreferences', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[user][equals]': String(userID),
+    },
+  })
+  expect(preferenceResponse.ok()).toBeTruthy()
+  const preferenceBody = await preferenceResponse.json()
+  const preferenceID = preferenceBody.docs?.[0]?.id
+  expect(preferenceID).toBeTruthy()
+  const activityPreferenceResponse = await page.request.patch(
+    `/api/notificationPreferences/${preferenceID}`,
+    {
+      data: {
+        activityDigestFrequency: 'daily',
+      },
+    },
+  )
+  expect(activityPreferenceResponse.ok()).toBeTruthy()
+
+  const invalidActivityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidActivityDigestResponse.status()).toBe(400)
 
   const activityDigestResponse = await page.request.post(
     '/api/notifications/digests/activity/run',

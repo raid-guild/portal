@@ -60,7 +60,7 @@ const userCanReceiveVisibility = (user: User, visibility?: Visibility | null) =>
   if (!visibility || visibility === 'admin' || visibility === 'private') return false
   if (visibility === 'public' || visibility === 'authenticated') return isHumanUser(user)
 
-  return isHumanUser(user) && hasAnyRole(user, ['admin', 'editor', 'contributor', 'member'])
+  return isHumanUser(user) && hasAnyRole(user, ['admin', 'editor', 'member'])
 }
 
 export const createNotificationForUser = async ({
@@ -180,7 +180,7 @@ const getDeliveryChannel = async ({
 const getActivityDigestChannel = (
   preferences: NotificationPreference | null,
 ): ChannelPreference => {
-  if (preferences?.activityDigestFrequency === 'none') return 'muted'
+  if (preferences?.activityDigestFrequency !== 'daily') return 'muted'
 
   return DEFAULT_PREFERENCES.activityDigest
 }

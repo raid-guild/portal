@@ -11,6 +11,7 @@ export const createBadgeAwardedNotifications: CollectionAfterChangeHook<ProfileB
 }) => {
   if (context.skipNotificationHooks) return doc
   if (operation !== 'create') return doc
+  if (doc.visibility === 'private') return doc
 
   try {
     const badge = await getBadge({ badge: doc.badge, req })
