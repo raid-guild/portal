@@ -343,7 +343,7 @@ export const seedPortalContent = async ({
           featured: true,
           sortOrder: 10,
           specURL:
-            'https://github.com/raid-guild/portal/blob/staging/docs/infinite-wiki-feature-spec.md',
+            'https://github.com/raid-guild/portal/blob/main/docs/infinite-wiki-feature-spec.md',
           sourceProject: cohortProject.id,
           relatedProjects: [cohortProject.id],
           relatedThreads: [projectObjectThread.id],

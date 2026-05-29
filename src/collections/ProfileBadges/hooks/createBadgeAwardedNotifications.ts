@@ -13,13 +13,13 @@ export const createBadgeAwardedNotifications: CollectionAfterChangeHook<ProfileB
   if (operation !== 'create') return doc
   if (doc.visibility === 'private') return doc
 
-  try {
-    const badge = await getBadge({ badge: doc.badge, req })
-    const profileIDs = Array.isArray(doc.profiles)
-      ? doc.profiles.map(getRelationshipID).filter((id): id is number | string => Boolean(id))
-      : []
+  const badge = await getBadge({ badge: doc.badge, req })
+  const profileIDs = Array.isArray(doc.profiles)
+    ? doc.profiles.map(getRelationshipID).filter((id): id is number | string => Boolean(id))
+    : []
 
-    for (const profileID of profileIDs) {
+  for (const profileID of profileIDs) {
+    try {
       const profile = await req.payload.findByID({
         id: profileID,
         collection: 'profiles',
@@ -54,13 +54,14 @@ export const createBadgeAwardedNotifications: CollectionAfterChangeHook<ProfileB
         req,
         user,
       })
+    } catch (error) {
+      req.payload.logger.warn({
+        err: error,
+        msg: 'Failed to create badge awarded notification for profile.',
+        profileBadgeID: doc.id,
+        profileID,
+      })
     }
-  } catch (error) {
-    req.payload.logger.warn({
-      err: error,
-      msg: 'Failed to create badge awarded notifications.',
-      profileBadgeID: doc.id,
-    })
   }
 
   return doc

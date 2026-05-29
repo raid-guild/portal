@@ -73,7 +73,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     CREATE INDEX "notifications_recipient_idx" ON "notifications" USING btree ("recipient_id");
     CREATE INDEX "notifications_status_idx" ON "notifications" USING btree ("status");
     CREATE INDEX "notifications_type_idx" ON "notifications" USING btree ("type");
-    CREATE INDEX "notifications_dedupe_key_idx" ON "notifications" USING btree ("dedupe_key");
+    CREATE UNIQUE INDEX "notifications_dedupe_key_idx" ON "notifications" USING btree ("dedupe_key") WHERE "dedupe_key" IS NOT NULL;
     CREATE INDEX "notifications_email_status_idx" ON "notifications" USING btree ("email_status");
     CREATE INDEX "notifications_related_event_idx" ON "notifications" USING btree ("related_event_id");
     CREATE INDEX "notifications_related_brief_idx" ON "notifications" USING btree ("related_brief_id");

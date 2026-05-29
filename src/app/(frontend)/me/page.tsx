@@ -449,12 +449,9 @@ const getBadgeCount = async (user: User) => {
   if (!profile?.id) return 0
 
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
+  const result = await payload.count({
     collection: 'profileBadges',
-    depth: 0,
-    limit: 100,
     overrideAccess: false,
-    pagination: false,
     user,
     where: {
       profiles: {
@@ -463,7 +460,7 @@ const getBadgeCount = async (user: User) => {
     },
   })
 
-  return result.docs.length
+  return result.totalDocs
 }
 
 const getCreatedRecords = async (user: User, profile?: Profile | null) => {

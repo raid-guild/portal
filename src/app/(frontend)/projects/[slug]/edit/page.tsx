@@ -28,9 +28,8 @@ export default async function EditProjectPage({ params: paramsPromise }: Args) {
   if (!user) redirect('/login')
 
   const { slug = '' } = await paramsPromise
-  const [project, formData, currentProfileID] = await Promise.all([
+  const [project, currentProfileID] = await Promise.all([
     getProjectBySlugForManagement({ slug, user }),
-    getProjectManagementFormData(user),
     getProfileIDForUser(user.id, user),
   ])
 
@@ -53,6 +52,8 @@ export default async function EditProjectPage({ params: paramsPromise }: Args) {
       </main>
     )
   }
+
+  const formData = await getProjectManagementFormData(user)
 
   return (
     <main className="container max-w-4xl pb-24 pt-12">

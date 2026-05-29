@@ -111,7 +111,7 @@ export const NotificationPreferences: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [
-      ({ data, req }) => {
+      ({ data, operation, originalDoc, req }) => {
         if (!req.user?.id) return data
 
         if (!canEditContent(req.user)) {
@@ -123,10 +123,23 @@ export const NotificationPreferences: CollectionConfig = {
 
         return {
           ...data,
-          user: data?.user || req.user.id,
+          user:
+            data?.user ||
+            (operation === 'update' ? getRelationshipID(originalDoc?.user) : req.user.id),
         }
       },
     ],
   },
   timestamps: true,
+}
+
+const getRelationshipID = (value: unknown) => {
+  if (typeof value === 'number' || typeof value === 'string') return value
+  if (value && typeof value === 'object' && 'id' in value) {
+    const id = (value as { id?: number | string }).id
+
+    return typeof id === 'number' || typeof id === 'string' ? id : undefined
+  }
+
+  return undefined
 }

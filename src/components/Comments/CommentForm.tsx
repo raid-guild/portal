@@ -11,10 +11,17 @@ type CommentParent = {
   value: number | string
 }
 
-const CommentForm: React.FC<{ parent?: CommentParent; postId: number | string }> = ({
-  parent,
-  postId,
-}) => {
+type CommentFormProps =
+  | {
+      parent?: never
+      postId: number | string
+    }
+  | {
+      parent: CommentParent
+      postId?: never
+    }
+
+const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
   const commentParent = parent || { relationTo: 'posts' as const, value: postId }
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')

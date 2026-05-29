@@ -27,12 +27,17 @@ export async function POST(request: Request) {
 
   const payload = await getPayload({ config: configPromise })
   const windows = parseWindows(body?.windows)
-  const lookaheadMinutes = numberValue(body?.lookaheadMinutes) || 15
+  const lookaheadMinutes =
+    body?.lookaheadMinutes === undefined ? 15 : numberValue(body.lookaheadMinutes)
   const dryRun = body?.dryRun === true
   const now = stringValue(body?.now)
 
   if (now && Number.isNaN(new Date(now).getTime())) {
     return Response.json({ message: 'Enter a valid now timestamp.' }, { status: 400 })
+  }
+
+  if (lookaheadMinutes === null) {
+    return Response.json({ message: 'Enter a valid positive lookahead.' }, { status: 400 })
   }
 
   const result = await createEventReminderNotifications({

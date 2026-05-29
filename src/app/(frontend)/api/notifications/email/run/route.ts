@@ -23,10 +23,16 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Invalid notification task secret.' }, { status: 401 })
   }
 
+  const limit = body?.limit === undefined ? 50 : numberValue(body.limit)
+
+  if (limit === null) {
+    return Response.json({ message: 'Enter a valid positive limit.' }, { status: 400 })
+  }
+
   const payload = await getPayload({ config: configPromise })
   const result = await dispatchNotificationEmails({
     dryRun: body?.dryRun === true,
-    limit: numberValue(body?.limit) || 50,
+    limit,
     req: { payload } as PayloadRequest,
   })
 

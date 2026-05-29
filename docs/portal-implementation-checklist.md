@@ -214,7 +214,6 @@
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
 - [ ] Bounty board module. See `docs/modules-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
-- [x] Module registry and `/modules` discovery surface. See `docs/modules-feature-spec.md`.
 - [ ] Infinite Wiki generation and review. See `docs/infinite-wiki-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.

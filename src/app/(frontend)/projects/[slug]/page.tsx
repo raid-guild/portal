@@ -66,7 +66,7 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
   const activityItems = mergeByID(
     relationDocs<ActivityItem>(project.activityItems),
     await getActivityItemsForProject(project.id, user),
-  )
+  ).sort((a, b) => new Date(b.happenedAt || 0).getTime() - new Date(a.happenedAt || 0).getTime())
   const contributionRequests = await getOpenContributionRequestsForProject(project.id, user)
   const threads = relationDocs<Thread>(project.threads)
   const events = relationDocs<Event>(project.events)

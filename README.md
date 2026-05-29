@@ -41,8 +41,8 @@
 # RaidGuild Portal
 
 This repo powers the RaidGuild Portal: a CMS-backed surface for briefs,
-projects, threads, activity, sessions, profiles, recognition, notifications, and
-contributor workflows.
+projects, threads, activity, sessions, profiles, recognition, contribution
+requests, modules, notifications, and contributor workflows.
 
 Start with:
 

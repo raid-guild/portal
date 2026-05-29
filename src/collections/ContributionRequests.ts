@@ -4,8 +4,8 @@ import {
   canPublishProjectContributionRequest,
   getRelationshipID,
   manageProjectContributionRequests,
+  readContributionRequests,
 } from '@/access/projectStewards'
-import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { canContributeContent, contentContributors, hasRole } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -15,7 +15,7 @@ export const ContributionRequests: CollectionConfig = {
   access: {
     create: ({ req: { user } }) => canContributeContent(user) || hasRole(user, 'member'),
     delete: contentContributors,
-    read: readVisiblePortalContent,
+    read: readContributionRequests,
     update: manageProjectContributionRequests,
   },
   admin: {

@@ -91,20 +91,42 @@ export const createNotificationForUser = async ({
 
   if (existing.docs.length) return existing.docs[0]
 
-  return req.payload.create({
-    collection: 'notifications',
-    data: {
-      ...data,
-      actionURL: normalizeActionURL(data.actionURL),
-      dedupeKey,
-      deliveryChannel: channel,
-      emailStatus: channel === 'email' ? 'pending' : 'none',
-      recipient: user.id,
-      status: 'unread',
-    },
-    overrideAccess: true,
-    req,
-  })
+  try {
+    return await req.payload.create({
+      collection: 'notifications',
+      data: {
+        ...data,
+        actionURL: normalizeActionURL(data.actionURL),
+        dedupeKey,
+        deliveryChannel: channel,
+        emailStatus: channel === 'email' ? 'pending' : 'none',
+        recipient: user.id,
+        status: 'unread',
+      },
+      overrideAccess: true,
+      req,
+    })
+  } catch (error) {
+    if (!isDuplicateKeyError(error)) throw error
+
+    const duplicate = await req.payload.find({
+      collection: 'notifications',
+      depth: 0,
+      limit: 1,
+      overrideAccess: true,
+      pagination: false,
+      req,
+      where: {
+        dedupeKey: {
+          equals: dedupeKey,
+        },
+      },
+    })
+
+    if (duplicate.docs[0]) return duplicate.docs[0]
+
+    throw error
+  }
 }
 
 export const createNotificationsForEligibleUsers = async ({
@@ -222,8 +244,19 @@ const normalizeActionURL = (url?: null | string) => {
     const parsed = new URL(url)
     const serverURL = new URL(getServerSideURL())
 
-    return parsed.origin === serverURL.origin ? `${parsed.pathname}${parsed.search}` : url
+    if (parsed.origin === serverURL.origin) return `${parsed.pathname}${parsed.search}`
+    if (parsed.protocol === 'http:' || parsed.protocol === 'https:') return parsed.toString()
+
+    return undefined
   } catch {
-    return url
+    return undefined
   }
+}
+
+const isDuplicateKeyError = (error: unknown) => {
+  if (!error || typeof error !== 'object') return false
+
+  const maybeError = error as { code?: string; message?: string }
+
+  return maybeError.code === '23505' || Boolean(maybeError.message?.includes('duplicate key'))
 }

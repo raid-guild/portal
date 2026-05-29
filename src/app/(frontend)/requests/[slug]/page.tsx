@@ -192,10 +192,7 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
         </Section>
       ) : null}
 
-      <Comments
-        parent={{ relationTo: 'contributionRequests', value: request.id }}
-        postId={request.id}
-      />
+      <Comments parent={{ relationTo: 'contributionRequests', value: request.id }} />
     </main>
   )
 }

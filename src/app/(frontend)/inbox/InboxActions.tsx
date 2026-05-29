@@ -10,10 +10,12 @@ type InboxActionsProps = {
 }
 
 export const InboxActions: React.FC<InboxActionsProps> = ({ archived, notificationID, unread }) => {
+  const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [status, setStatus] = useState(archived ? 'archived' : unread ? 'unread' : 'read')
 
   const updateStatus = async (nextStatus: 'archived' | 'read') => {
+    setError('')
     setIsLoading(true)
 
     try {
@@ -28,7 +30,12 @@ export const InboxActions: React.FC<InboxActionsProps> = ({ archived, notificati
 
       if (res.ok) {
         setStatus(nextStatus)
+      } else {
+        const data = (await res.json().catch(() => null)) as { message?: string } | null
+        setError(data?.message || `Unable to update notification ${notificationID}.`)
       }
+    } catch {
+      setError(`Unable to update notification ${notificationID}.`)
     } finally {
       setIsLoading(false)
     }
@@ -60,6 +67,7 @@ export const InboxActions: React.FC<InboxActionsProps> = ({ archived, notificati
         <Archive className="h-4 w-4" />
         Archive
       </button>
+      {error ? <p className="basis-full text-sm text-destructive">{error}</p> : null}
     </div>
   )
 }

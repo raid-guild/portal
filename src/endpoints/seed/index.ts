@@ -18,6 +18,9 @@ const collections: CollectionSlug[] = [
   'profileBadges',
   'badges',
   'modules',
+  'notifications',
+  'notificationPreferences',
+  'contributionRequests',
   'categories',
   'dailyBriefs',
   'events',
@@ -512,7 +515,7 @@ export const seed = async ({
           featured: true,
           sortOrder: 10,
           specURL:
-            'https://github.com/raid-guild/portal/blob/staging/docs/infinite-wiki-feature-spec.md',
+            'https://github.com/raid-guild/portal/blob/main/docs/infinite-wiki-feature-spec.md',
           owners: [demoProfile.id],
           sourceProject: cohortProject.id,
           relatedProjects: [cohortProject.id],

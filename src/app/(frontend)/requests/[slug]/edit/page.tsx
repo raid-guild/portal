@@ -27,10 +27,7 @@ export default async function EditContributionRequestPage({ params: paramsPromis
   if (!user) redirect('/login')
 
   const { slug = '' } = await paramsPromise
-  const [request, formData] = await Promise.all([
-    getContributionRequestBySlugForForm({ slug, user }),
-    getContributionRequestFormData(user),
-  ])
+  const request = await getContributionRequestBySlugForForm({ slug, user })
 
   if (!request) notFound()
 
@@ -48,6 +45,8 @@ export default async function EditContributionRequestPage({ params: paramsPromis
       </main>
     )
   }
+
+  const formData = await getContributionRequestFormData(user)
 
   return (
     <main className="container max-w-4xl pb-24 pt-12">

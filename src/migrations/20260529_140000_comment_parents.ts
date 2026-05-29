@@ -45,8 +45,12 @@ export async function down({ db }: MigrateDownArgs): Promise<void> {
       AND "comments_rels"."path" = 'parent'
       AND "comments_rels"."posts_id" IS NOT NULL;
 
-    DELETE FROM "comments"
-    WHERE "post_id" IS NULL;
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM "comments" WHERE "post_id" IS NULL) THEN
+        RAISE EXCEPTION 'Cannot roll back comment parent migration while non-post comments exist.';
+      END IF;
+    END $$;
 
     ALTER TABLE "comments" ALTER COLUMN "post_id" SET NOT NULL;
 

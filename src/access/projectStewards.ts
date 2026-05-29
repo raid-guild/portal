@@ -77,6 +77,26 @@ export const manageProjectContributionRequests: Access = async ({ req }) => {
   }
 }
 
+export const readContributionRequests: Access = async ({ req }) => {
+  if (canEditContent(req.user)) return true
+
+  const visibleWhere = getVisibleContributionRequestWhere(req.user)
+  const profileIDs = await getProfileIDsForUser(req)
+
+  if (!profileIDs.length) return visibleWhere
+
+  return {
+    or: [
+      visibleWhere,
+      {
+        owner: {
+          in: profileIDs,
+        },
+      },
+    ],
+  }
+}
+
 export const canPublishProjectContributionRequest = async ({
   projectID,
   req,
@@ -160,3 +180,48 @@ const projectWhere = (projectIDs: (number | string)[]): Where => ({
     in: projectIDs,
   },
 })
+
+const publishedOnly: Where = {
+  _status: {
+    equals: 'published',
+  },
+}
+
+const getVisibleContributionRequestWhere = (user: Parameters<typeof hasRole>[0]): Where => {
+  if (hasRole(user, ['member', 'agent'])) {
+    return {
+      and: [
+        publishedOnly,
+        {
+          visibility: {
+            not_equals: 'admin',
+          },
+        },
+      ],
+    }
+  }
+
+  if (user) {
+    return {
+      and: [
+        publishedOnly,
+        {
+          visibility: {
+            in: ['public', 'authenticated'],
+          },
+        },
+      ],
+    }
+  }
+
+  return {
+    and: [
+      publishedOnly,
+      {
+        visibility: {
+          equals: 'public',
+        },
+      },
+    ],
+  }
+}

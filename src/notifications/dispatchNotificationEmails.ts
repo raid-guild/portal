@@ -27,7 +27,6 @@ export const dispatchNotificationEmails = async ({
     depth: 1,
     limit: normalizedLimit,
     overrideAccess: true,
-    pagination: false,
     req,
     sort: 'createdAt',
     where: {

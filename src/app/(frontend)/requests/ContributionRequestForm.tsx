@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -175,8 +175,9 @@ export const ContributionRequestForm: React.FC<Props> = ({
       const data = await response.json()
       const doc = data.doc || data
       const slug = doc.slug || initialValue?.slug
+      const isPublished = doc._status === 'published'
 
-      if (effectiveCanPublish && slug) {
+      if (isPublished && slug) {
         router.push(`/requests/${slug}`)
       } else if (project) {
         const selectedProject = projects.find((option) => String(option.id) === project)
@@ -495,73 +496,124 @@ export const RelationTypeahead: React.FC<{
   selectedOptions,
   showResults,
 }) => (
-  <div className="relative">
-    <div className="mb-2 flex min-h-10 flex-wrap gap-2">
-      {selectedOptions.length ? (
-        selectedOptions.map((option) => (
+  <RelationTypeaheadInner
+    emptyLabel={emptyLabel}
+    filteredOptions={filteredOptions}
+    inputID={inputID}
+    maxSelected={maxSelected}
+    noSelectionLabel={noSelectionLabel}
+    onAdd={onAdd}
+    onClear={onClear}
+    onQueryChange={onQueryChange}
+    onRemove={onRemove}
+    onResultsOpenChange={onResultsOpenChange}
+    placeholder={placeholder}
+    query={query}
+    selectedOptions={selectedOptions}
+    showResults={showResults}
+  />
+)
+
+const RelationTypeaheadInner: React.FC<React.ComponentProps<typeof RelationTypeahead>> = ({
+  emptyLabel,
+  filteredOptions,
+  inputID,
+  maxSelected,
+  noSelectionLabel,
+  onAdd,
+  onClear,
+  onQueryChange,
+  onRemove,
+  onResultsOpenChange,
+  placeholder,
+  query,
+  selectedOptions,
+  showResults,
+}) => {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  const handleBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const nextTarget = event.relatedTarget
+
+    if (nextTarget instanceof Node && containerRef.current?.contains(nextTarget)) {
+      return
+    }
+
+    window.setTimeout(() => {
+      if (containerRef.current?.contains(document.activeElement)) return
+      onResultsOpenChange(false)
+    }, 120)
+  }
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <div className="mb-2 flex min-h-10 flex-wrap gap-2">
+        {selectedOptions.length ? (
+          selectedOptions.map((option) => (
+            <button
+              className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+              key={option.id}
+              onClick={() => onRemove(option)}
+              type="button"
+            >
+              {option.label} x
+            </button>
+          ))
+        ) : (
+          <p className="flex items-center text-sm text-muted-foreground">{emptyLabel}</p>
+        )}
+      </div>
+      <Input
+        autoComplete="off"
+        className="h-12 border-scroll-100/25 bg-card/35"
+        disabled={Boolean(maxSelected && selectedOptions.length >= maxSelected)}
+        id={inputID}
+        onBlur={handleBlur}
+        onChange={(event) => {
+          onQueryChange(event.target.value)
+          onResultsOpenChange(true)
+        }}
+        onFocus={() => onResultsOpenChange(true)}
+        placeholder={placeholder}
+        value={query}
+      />
+      {showResults ? (
+        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
           <button
-            className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-            key={option.id}
-            onClick={() => onRemove(option)}
-            type="button"
-          >
-            {option.label} x
-          </button>
-        ))
-      ) : (
-        <p className="flex items-center text-sm text-muted-foreground">{emptyLabel}</p>
-      )}
-    </div>
-    <Input
-      autoComplete="off"
-      className="h-12 border-scroll-100/25 bg-card/35"
-      disabled={Boolean(maxSelected && selectedOptions.length >= maxSelected)}
-      id={inputID}
-      onBlur={() => window.setTimeout(() => onResultsOpenChange(false), 120)}
-      onChange={(event) => {
-        onQueryChange(event.target.value)
-        onResultsOpenChange(true)
-      }}
-      onFocus={() => onResultsOpenChange(true)}
-      placeholder={placeholder}
-      value={query}
-    />
-    {showResults ? (
-      <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
-        <button
-          className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
-          onMouseDown={(event) => event.preventDefault()}
-          onClick={() => {
-            onClear()
-            onQueryChange('')
-            onResultsOpenChange(false)
-          }}
-          type="button"
-        >
-          {noSelectionLabel}
-        </button>
-        {filteredOptions.map((option) => (
-          <button
-            className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
-            key={option.id}
+            className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
-              onAdd(option)
+              onClear()
               onQueryChange('')
-              onResultsOpenChange(!maxSelected || selectedOptions.length + 1 < maxSelected)
+              onResultsOpenChange(false)
             }}
             type="button"
           >
-            {option.label}
+            {noSelectionLabel}
           </button>
-        ))}
-        {!filteredOptions.length ? (
-          <p className="px-3 py-3 text-sm text-muted-foreground">No matching results.</p>
-        ) : null}
-      </div>
-    ) : null}
-  </div>
-)
+          {filteredOptions.map((option) => (
+            <button
+              className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
+              key={option.id}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                onAdd(option)
+                onQueryChange('')
+                onResultsOpenChange(!maxSelected || selectedOptions.length + 1 < maxSelected)
+              }}
+              type="button"
+            >
+              {option.label}
+            </button>
+          ))}
+          {!filteredOptions.length ? (
+            <p className="px-3 py-3 text-sm text-muted-foreground">No matching results.</p>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
+  )
+}
 
 export const SegmentedGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,

@@ -22,6 +22,7 @@ export async function POST(request: Request) {
 
   const since = dateValue(body?.since)
   const until = body?.until ? dateValue(body.until) : new Date()
+  const limit = body?.limit === undefined ? 100 : numberValue(body.limit)
 
   if (body?.since && !since) {
     return Response.json({ message: 'Enter a valid since timestamp.' }, { status: 400 })
@@ -31,10 +32,14 @@ export async function POST(request: Request) {
     return Response.json({ message: 'Enter a valid until timestamp.' }, { status: 400 })
   }
 
+  if (limit === null) {
+    return Response.json({ message: 'Enter a valid positive limit.' }, { status: 400 })
+  }
+
   const payload = await getPayload({ config: configPromise })
   const result = await createWeeklyDigestNotifications({
     dryRun: body?.dryRun === true,
-    limit: numberValue(body?.limit) || 100,
+    limit,
     req: { payload } as PayloadRequest,
     since: since || undefined,
     until: until || undefined,

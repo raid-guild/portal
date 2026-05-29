@@ -4,14 +4,21 @@ import configPromise from '@payload-config'
 import type { Comment } from '../../payload-types'
 import CommentForm from './CommentForm'
 
-type Props = {
-  parent?: {
-    relationTo: 'contributionRequests' | 'events' | 'posts' | 'projects'
-    value: number | string
-  }
-  postId: number | string
-  className?: string
+type CommentParent = {
+  relationTo: 'contributionRequests' | 'events' | 'posts' | 'projects'
+  value: number | string
 }
+
+type Props = { className?: string } & (
+  | {
+      parent?: never
+      postId: number | string
+    }
+  | {
+      parent: CommentParent
+      postId?: never
+    }
+)
 
 export const Comments: React.FC<Props> = async ({ parent, postId, className }) => {
   const commentParent = parent || { relationTo: 'posts' as const, value: postId }
@@ -54,7 +61,7 @@ export const Comments: React.FC<Props> = async ({ parent, postId, className }) =
       </div>
 
       {/* Comment form */}
-      <CommentForm parent={commentParent} postId={postId} />
+      <CommentForm parent={commentParent} />
     </div>
   )
 }

@@ -73,7 +73,7 @@ export const summarizeDigest = (digest: UserNotificationDigest) => {
     countLabel(digest.counts.briefs, 'new brief'),
     countLabel(digest.counts.activityItems, 'activity update'),
     countLabel(digest.counts.projects, 'active project'),
-    countLabel(digest.counts.badges, 'badge received'),
+    countLabel(digest.counts.badges, 'badge received', 'badges received'),
   ].filter(Boolean)
 
   return parts.length
@@ -340,8 +340,8 @@ const getBadges = async ({
   })
 }
 
-const countLabel = (count: number, label: string) => {
+const countLabel = (count: number, label: string, pluralLabel?: string) => {
   if (!count) return ''
 
-  return `${count} ${label}${count === 1 ? '' : 's'}`
+  return `${count} ${count === 1 ? label : pluralLabel || `${label}s`}`
 }
