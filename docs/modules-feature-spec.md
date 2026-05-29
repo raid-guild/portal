@@ -79,6 +79,8 @@ Module: Infinite Wiki
 
 - A module registry model or documented convention.
 - A member-facing `/modules` page listing enabled or visible modules.
+- A dashboard entry point for modules, such as a compact "Explore modules" link
+  or a small module card.
 - Optional module detail pages at `/modules/[slug]`.
 - Module status labels: `idea`, `prototype`, `experimental`, `active`,
   `graduated`, `archived`.
@@ -104,6 +106,13 @@ Route:
 ```txt
 /modules
 ```
+
+Initial exposure should be lightweight:
+
+- Add a link or compact card from `/dashboard` to `/modules`.
+- Keep modules out of the primary navigation until there are enough active
+  modules to justify it.
+- Keep module-specific routes discoverable from `/modules` first.
 
 The modules index should be a discovery surface, not a marketing page.
 

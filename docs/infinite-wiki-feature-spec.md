@@ -120,8 +120,8 @@ or member account flows.
 - Public `/wiki` index of published pages.
 - Public/authenticated `/wiki/[slug]` page detail route.
 - Admin/editor page creation and publication through Payload admin.
-- Related portal primitives: posts, projects, threads, events, profiles, and
-  activity items.
+- Wiki-owned relationships to portal primitives: posts, projects, threads,
+  events, profiles, and activity items.
 - Source audit fields for Prism artifacts, knowledge docs, and source queries.
 - Possible topics stored on the page and rendered as non-canonical links.
 - Manual generated draft creation through admin/agent workflow before any public
@@ -133,6 +133,8 @@ or member account flows.
 - Public inline edits.
 - Topic aliases and redirects unless they become necessary.
 - Backlink graph visualization.
+- Adding wiki relationship fields directly to events/sessions, projects, posts,
+  or threads.
 - Merge/rename workflows.
 - Automated refresh scheduling.
 - Comments or talk pages.
@@ -156,12 +158,15 @@ protected route later:
 ```
 
 Do not add wiki links to the primary navigation until there are enough reviewed
-pages to make the section useful. Early entry points can be contextual:
+pages to make the section useful. Early entry points should come through the
+module surface and search:
 
-- related wiki pages on project pages
-- related wiki pages on session pages
-- "Learn more" links in briefs or posts
+- `/modules` listing for Infinite Wiki while it is experimental
+- a dashboard module card or "Explore modules" link
 - search results
+
+Contextual links from projects, sessions, posts, or briefs can be added later
+after the wiki proves useful and the relationship direction is clear.
 
 ## Page Experience
 
@@ -469,9 +474,13 @@ Wiki pages should link out to these primitives, not replace them.
 
 Recommended relationship behavior:
 
-- A project can show related wiki pages as background context.
-- A session can show related wiki pages as prep or follow-up reading.
-- A post can cite or explain a wiki page.
+- First version: `wikiPages` can reference related projects, events/sessions,
+  posts, threads, profiles, and activity items from the wiki page side.
+- Do not add `relatedWikiPages` fields to events/sessions, projects, posts, or
+  threads in the first version.
+- Later: projects or sessions can show related wiki pages as background context
+  if members actually use the wiki for prep or follow-up.
+- Later: posts can cite or explain a wiki page when editorial workflows need it.
 - A brief can highlight newly published or refreshed pages.
 - Activity items can record that a wiki page was generated, reviewed, or
   published.
@@ -544,8 +553,9 @@ Operational metrics:
 - [ ] Add admin columns for status, visibility, confidence, and review dates.
 - [ ] Add `/wiki` index for published pages.
 - [ ] Add `/wiki/[slug]` detail route with source and related-context sections.
-- [ ] Add related wiki page fields to projects, events, posts, and threads only
-      if the UI needs them.
+- [ ] Keep first-version relationships owned by `wikiPages`; do not add wiki
+      relationship fields directly to projects, events/sessions, posts, or
+      threads.
 - [ ] Add a protected generation endpoint or admin action that creates generated
       drafts.
 - [ ] Record source queries and source references on every generated page.
