@@ -68,4 +68,6 @@ The main portal surfaces are:
 - [Sessions MVP spec](./sessions-mvp-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)
+- [Modules feature spec](./modules-feature-spec.md)
+- [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)

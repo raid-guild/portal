@@ -248,6 +248,20 @@ Examples:
 
 Modules are allowed, but they should not blur the core model. A module should attach to core primitives through explicit relationships instead of stuffing unrelated behavior into `projects`, `profiles`, or `dailyBriefs`.
 
+Module-owned Payload collections should be grouped separately from core
+primitive collections:
+
+```ts
+admin: {
+  group: 'Modules',
+}
+```
+
+Core primitive collections remain in the `Portal` admin group. Core routes and
+collections must not require optional modules to exist. A disabled or deferred
+module should remove its own entry points while leaving `/`, `/dashboard`,
+`/me`, `/members`, `/projects`, `/events`, `/posts`, and `/inbox` functional.
+
 ### Module Decision Rule
 
 Before building a module, decide which category it belongs to:

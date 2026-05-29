@@ -8,6 +8,10 @@ content pipeline from interviews, memory artifacts, and reviewed source material
 This module should make community knowledge explorable without becoming a generic
 AI content feed, a handbook dump, or an unreviewed auto-publishing system.
 
+Infinite Wiki should be treated as a Portal module, not a core primitive. See
+[Modules feature spec](./modules-feature-spec.md) for module registry, CMS
+grouping, and dependency boundary rules.
+
 ## Product Intent
 
 The infinite wiki turns real community memory into a growing, source-backed
@@ -65,7 +69,7 @@ The portal should distinguish between:
 - `source link`: Prism artifact, source document, post, project, session, or
   external reference.
 
-## Why A Separate Primitive
+## Why A Separate Module Collection
 
 Wiki pages should be their own collection rather than a post type.
 
@@ -89,6 +93,11 @@ Wiki pages are evergreen topic nodes:
 
 `Post` can link to a wiki page and can be used as a source, but it should not own
 the wiki lifecycle.
+
+The collection should belong to the Payload admin `Modules` group. Core Portal
+routes must not require `wikiPages` to exist, and disabling or deferring Infinite
+Wiki should not break briefs, projects, profiles, events, posts, notifications,
+or member account flows.
 
 ## Non-Goals
 
@@ -222,6 +231,14 @@ lastGeneratedAt: date
 lastReviewedAt: date
 reviewedBy: relationship -> users
 publishedAt: date
+```
+
+Recommended admin grouping:
+
+```ts
+admin: {
+  group: 'Modules',
+}
 ```
 
 Recommended admin columns:

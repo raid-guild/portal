@@ -142,9 +142,27 @@
 - [x] Document recommended external cron calls for notifications.
 - [x] Improve notification admin list columns/search for delivery triage.
 
-## Phase 8: Infinite Wiki
+## Phase 8: Modules
+
+- [ ] Decide whether first version uses only documented module conventions or a
+      `modules` registry collection.
+- [ ] If using a registry, add `modules` collection with status, owner, route,
+      related project, related primitives, and graduation criteria fields.
+- [ ] Add `/modules` discovery page for visible enabled modules.
+- [ ] Add optional `/modules/[slug]` detail route if module cards need more
+      context.
+- [ ] Add Payload admin grouping guidance: core primitives in `Portal`,
+      module-owned collections in `Modules`.
+- [ ] Ensure core routes render without module-owned collections or enabled
+      module records.
+- [ ] Add e2e coverage for module visibility, disabled modules, and links to
+      module entry routes if a registry collection is implemented.
+
+## Phase 9: Infinite Wiki
 
 - [ ] Add `wikiPages` collection with source audit fields.
+- [ ] Put `wikiPages` in the Payload admin `Modules` group.
+- [ ] Link Infinite Wiki to the module registry or documented module convention.
 - [ ] Add wiki page access rules for reviewed status and visibility.
 - [ ] Add `/wiki` index for published pages.
 - [ ] Add `/wiki/[slug]` detail route with related portal context and sources.
@@ -164,6 +182,7 @@
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
 - [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
+- [ ] Module registry and `/modules` discovery surface. See `docs/modules-feature-spec.md`.
 - [ ] Infinite Wiki generation and review. See `docs/infinite-wiki-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
