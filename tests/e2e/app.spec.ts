@@ -437,7 +437,9 @@ async function verifyContributionRequests(adminPage: Page, browser: Browser, pub
   await publicPage.goto(`/projects/${project.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
-  await expect(publicPage.getByText('Good first contribution', { exact: true }).first()).toBeVisible()
+  await expect(
+    publicPage.getByText('Good first contribution', { exact: true }).first(),
+  ).toBeVisible()
 
   await publicPage.goto(`/events/${event.id}`)
   await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
@@ -590,6 +592,22 @@ async function verifyContributionRequests(adminPage: Page, browser: Browser, pub
     },
   })
   expect(stewardRequestResponse.status()).toBe(201)
+
+  await stewardPage.goto(`/projects/${stewardProjectSlug}`)
+  await stewardPage.getByRole('link', { name: 'Manage project' }).click()
+  await expect(stewardPage).toHaveURL(new RegExp(`/projects/${stewardProjectSlug}/edit`))
+  await fillFirst(
+    stewardPage.getByLabel('Summary'),
+    'A project maintained by a member steward through the frontend.',
+  )
+  await fillFirst(stewardPage.getByLabel('Primary CTA label'), 'Open steward notes')
+  await fillFirst(stewardPage.getByLabel('Primary CTA URL'), 'https://example.com/steward-notes')
+  await stewardPage.getByRole('button', { name: 'Save project' }).click()
+  await expect(stewardPage).toHaveURL(new RegExp(`/projects/${stewardProjectSlug}`))
+  await expect(stewardPage.getByRole('link', { name: 'Open steward notes' })).toBeVisible()
+
+  await stewardPage.goto(`/requests/new?project=${stewardProjectID}`)
+  await expect(stewardPage.getByLabel('Publish immediately')).toBeChecked()
   await stewardContext.close()
 
   await publicPage.goto(`/projects/${stewardProjectSlug}`)

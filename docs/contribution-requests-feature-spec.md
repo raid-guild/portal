@@ -118,6 +118,8 @@ Recommended default:
 - Members and contributors can create draft requests.
 - Agents, editors, and admins can publish and archive requests.
 - Project stewards can publish and archive requests connected to their project.
+- Project stewards see publish controls in the friendly request form when the
+  selected project is one they steward.
 - A dedicated owner-only draft workspace is deferred; first-slice draft review
   still leans on Payload admin and trusted agent/editor workflows.
 
@@ -130,6 +132,9 @@ Start with project-local display:
 
 - Project detail page shows open related contribution requests.
 - Request cards show status, type, skills, owner, and response action.
+- Project stewards can manage the project presentation surface from the frontend
+  and then create or update project-scoped requests without going through the
+  Payload admin UI.
 
 Also support session/event-local display:
 

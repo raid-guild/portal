@@ -8,15 +8,17 @@ import type { RequestRelationOption } from './ContributionRequestForm'
 type CurrentUser = User
 
 export const getContributionRequestFormData = async (user: CurrentUser) => {
-  const [profiles, currentProfile, projects, events, threads, posts, skills] = await Promise.all([
-    getProfileOptions(user),
-    getProfileForUser(user.id, user),
-    getProjectOptions(user),
-    getEventOptions(user),
-    getThreadOptions(user),
-    getPostOptions(user),
-    getSkillOptions(user),
-  ])
+  const [profiles, currentProfile, projects, events, threads, posts, skills, stewardedProjectIDs] =
+    await Promise.all([
+      getProfileOptions(user),
+      getProfileForUser(user.id, user),
+      getProjectOptions(user),
+      getEventOptions(user),
+      getThreadOptions(user),
+      getPostOptions(user),
+      getSkillOptions(user),
+      getStewardedProjectIDsForUser(user),
+    ])
 
   return {
     currentProfile,
@@ -24,6 +26,7 @@ export const getContributionRequestFormData = async (user: CurrentUser) => {
     posts,
     profiles,
     projects,
+    stewardedProjectIDs,
     skills,
     threads,
   }
@@ -118,6 +121,28 @@ const getProfileForUser = async (userID: string | number, user: CurrentUser) => 
   })
 
   return result.docs[0] || null
+}
+
+const getStewardedProjectIDsForUser = async (user: CurrentUser): Promise<(number | string)[]> => {
+  const profile = await getProfileForUser(user.id, user)
+
+  if (!profile) return []
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'projects',
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      stewards: {
+        in: [profile.id],
+      },
+    },
+  })
+
+  return result.docs.map((project) => project.id)
 }
 
 const getProjectOptions = async (user: CurrentUser): Promise<RequestRelationOption[]> => {
@@ -236,13 +261,12 @@ const getSkillOptions = async (user: CurrentUser): Promise<RequestRelationOption
   }))
 }
 
-const relationID = <T extends { id: number }>(
-  item?: number | T | null,
-): number | string | null => {
+const relationID = <T extends { id: number }>(item?: number | T | null): number | string | null => {
   if (!item) return null
 
   return typeof item === 'object' ? item.id : item
 }
 
-const relationIDs = <T extends { id: number }>(items?: (number | T)[] | null): (number | string)[] =>
-  items?.map((item) => (typeof item === 'object' ? item.id : item)) || []
+const relationIDs = <T extends { id: number }>(
+  items?: (number | T)[] | null,
+): (number | string)[] => items?.map((item) => (typeof item === 'object' ? item.id : item)) || []

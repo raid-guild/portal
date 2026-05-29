@@ -164,6 +164,11 @@ the presentation surface and can keep requests, activity, links, and related
 context accurate. Projects should not become tasks, milestones, assignments, or
 PM workflow records.
 
+Frontend steward management should expose only the fields needed to keep that
+surface useful: title, summary, status, visibility, primary CTA, contributors,
+resources, links, related projects, related sessions, and related threads. Deeper
+review/evidence fields stay in the CMS/admin or agent workflow.
+
 Requests for help should use the lightweight `contributionRequests` feature
 module when they need independent status, visibility, relationships, API access,
 or cross-portal discovery. Project pages can surface open related requests, but

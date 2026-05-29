@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -44,6 +44,7 @@ type Props = {
   posts: RequestRelationOption[]
   profiles: RequestRelationOption[]
   projects: RequestRelationOption[]
+  stewardedProjectIDs?: (number | string)[]
   skills: RequestRelationOption[]
   threads: RequestRelationOption[]
 }
@@ -81,6 +82,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
   posts,
   profiles,
   projects,
+  stewardedProjectIDs = [],
   skills,
   threads,
 }) => {
@@ -107,7 +109,15 @@ export const ContributionRequestForm: React.FC<Props> = ({
   const [requestStatus, setRequestStatus] = useState(initialValue?.requestStatus || 'open')
   const [requestType, setRequestType] = useState(initialValue?.requestType || 'help_wanted')
   const [visibility, setVisibility] = useState(initialValue?.visibility || 'public')
-  const [publishNow, setPublishNow] = useState(canPublish)
+  const effectiveCanPublish =
+    canPublish || isSelectedProjectStewarded(projectID[0], stewardedProjectIDs)
+  const [publishNow, setPublishNow] = useState(effectiveCanPublish)
+
+  useEffect(() => {
+    if (mode === 'create' && effectiveCanPublish) {
+      setPublishNow(true)
+    }
+  }, [effectiveCanPublish, mode])
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -132,7 +142,9 @@ export const ContributionRequestForm: React.FC<Props> = ({
       summary: String(formData.get('summary') || ''),
       title: String(formData.get('title') || ''),
       visibility,
-      ...(mode === 'create' ? { _status: canPublish && publishNow ? 'published' : 'draft' } : {}),
+      ...(mode === 'create'
+        ? { _status: effectiveCanPublish && publishNow ? 'published' : 'draft' }
+        : {}),
     }
 
     if (!owner) {
@@ -164,7 +176,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
       const doc = data.doc || data
       const slug = doc.slug || initialValue?.slug
 
-      if (canPublish && slug) {
+      if (effectiveCanPublish && slug) {
         router.push(`/requests/${slug}`)
       } else if (project) {
         const selectedProject = projects.find((option) => String(option.id) === project)
@@ -399,7 +411,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
         </div>
       </details>
 
-      {canPublish && mode === 'create' ? (
+      {effectiveCanPublish && mode === 'create' ? (
         <label className="flex items-start gap-3 text-sm text-muted-foreground">
           <input
             checked={publishNow}
@@ -417,7 +429,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
         <Button className="h-12 w-full sm:w-auto" disabled={isSubmitting} type="submit">
           {isSubmitting ? 'Saving...' : mode === 'create' ? 'Create request' : 'Save request'}
         </Button>
-        {!canPublish && mode === 'create' ? (
+        {!effectiveCanPublish && mode === 'create' ? (
           <p className="mt-3 text-sm text-muted-foreground">
             Contributor requests are saved as drafts for editor review.
           </p>
@@ -427,7 +439,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
   )
 }
 
-const Field: React.FC<{
+export const Field: React.FC<{
   children: React.ReactNode
   className?: string
   htmlFor?: string
@@ -444,16 +456,15 @@ const Field: React.FC<{
   </div>
 )
 
-const RelationField: React.FC<React.ComponentProps<typeof RelationTypeahead> & { label: string }> = ({
-  label,
-  ...props
-}) => (
+export const RelationField: React.FC<
+  React.ComponentProps<typeof RelationTypeahead> & { label: string }
+> = ({ label, ...props }) => (
   <Field htmlFor={props.inputID} label={label}>
     <RelationTypeahead {...props} />
   </Field>
 )
 
-const RelationTypeahead: React.FC<{
+export const RelationTypeahead: React.FC<{
   emptyLabel: string
   filteredOptions: RequestRelationOption[]
   inputID: string
@@ -552,12 +563,12 @@ const RelationTypeahead: React.FC<{
   </div>
 )
 
-const SegmentedGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
+export const SegmentedGrid: React.FC<{ children: React.ReactNode; className?: string }> = ({
   children,
   className,
 }) => <div className={cn('grid grid-cols-2 gap-2', className)}>{children}</div>
 
-const SquareOption: React.FC<{
+export const SquareOption: React.FC<{
   isSelected: boolean
   label: string
   onClick: () => void
@@ -577,7 +588,7 @@ const SquareOption: React.FC<{
   </button>
 )
 
-const useRelationFilter = (
+export const useRelationFilter = (
   options: RequestRelationOption[],
   selectedIDs: string[],
   query: string,
@@ -593,7 +604,7 @@ const useRelationFilter = (
     return matches.slice(0, 8)
   }, [options, query, selectedIDs])
 
-const useSelectedRelations = (
+export const useSelectedRelations = (
   options: RequestRelationOption[],
   selectedIDs: string[],
 ): RequestRelationOption[] =>
@@ -608,4 +619,13 @@ const toIDs = (value?: (number | string)[] | number | string | null): string[] =
   if (Array.isArray(value)) return value.map(String)
 
   return [String(value)]
+}
+
+const isSelectedProjectStewarded = (
+  selectedProjectID: string | undefined,
+  stewardedProjectIDs: (number | string)[],
+) => {
+  if (!selectedProjectID) return false
+
+  return stewardedProjectIDs.map(String).includes(selectedProjectID)
 }

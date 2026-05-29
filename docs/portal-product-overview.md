@@ -72,6 +72,11 @@ requests/activity. Contributors remain the people visibly involved or credited;
 stewardship is accountability for the presentation surface, not assignment
 workflow.
 
+Project steward management should stay focused on the presentation layer:
+summary, public status, contributors, related sessions/threads/projects,
+resources, links, and project-scoped requests. It should not introduce tasks,
+assignees, sprint state, or a project-management workflow.
+
 ## Product Principles
 
 - Real over polished.

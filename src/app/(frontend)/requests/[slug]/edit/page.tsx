@@ -64,6 +64,7 @@ export default async function EditContributionRequestPage({ params: paramsPromis
         posts={formData.posts}
         profiles={formData.profiles}
         projects={formData.projects}
+        stewardedProjectIDs={formData.stewardedProjectIDs}
         skills={formData.skills}
         threads={formData.threads}
       />
@@ -85,5 +86,4 @@ const canEditContributionRequests = (
 
 const canPublishContributionRequests = (
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
-) =>
-  canEditContent(user) || hasRole(user, 'agent')
+) => canEditContent(user) || hasRole(user, 'agent')

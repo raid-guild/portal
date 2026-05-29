@@ -21,6 +21,7 @@ import type {
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { getProfileIDForUser, isProjectStewardProfile } from '../formData'
 
 export const dynamic = 'force-dynamic'
 
@@ -55,7 +56,10 @@ const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): 
 export default async function ProjectPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
   const user = await getCurrentUser()
-  const project = await queryProjectBySlug({ slug, user })
+  const [project, currentProfileID] = await Promise.all([
+    queryProjectBySlug({ slug, user }),
+    user ? getProfileIDForUser(user.id, user) : Promise.resolve(null),
+  ])
 
   if (!project) notFound()
 
@@ -70,6 +74,9 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
   const contributors = relationDocs<Profile>(project.contributors)
   const skills = relationDocs<ProfileSkill>(project.profileSkills)
   const canCreateRequests = canContributeContent(user) || hasRole(user, 'member')
+  const canManageProject =
+    canContributeContent(user) ||
+    (user ? isProjectStewardProfile(project, currentProfileID) : false)
 
   return (
     <main className="container pb-24 pt-12">
@@ -95,6 +102,14 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
               </span>
             ))}
           </div>
+          {canManageProject ? (
+            <Link
+              className="portal-admin-link mt-6 inline-flex"
+              href={`/projects/${project.slug}/edit`}
+            >
+              Manage project
+            </Link>
+          ) : null}
         </div>
         <aside className="portal-panel text-sm">
           <p className="font-bold">Project state</p>

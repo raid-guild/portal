@@ -160,6 +160,10 @@
   admins can publish.
 - [x] Add project stewards so project owners can maintain project context and
   publish project-scoped requests.
+- [x] Add frontend project management for stewards to update public project
+  context, contributors, related records, and external links.
+- [x] Let project stewards publish project-scoped requests from the friendly
+  request form.
 - [x] Add e2e coverage for request creation, project display, session display,
   and detail page rendering.
 - [ ] Add a global request board when enough real requests exist.
