@@ -1,7 +1,7 @@
 # Portal Documentation
 
-This directory captures planning notes and implementation checklists for evolving this
-Payload boilerplate into the RaidGuild Portal.
+This directory captures product direction, feature specs, contributor guidance,
+and implementation checklists for the RaidGuild Portal.
 
 ## Portal Mental Model
 
@@ -60,6 +60,7 @@ The main portal surfaces are:
 
 ## Notes
 
+- [Product overview](./portal-product-overview.md)
 - [Portal direction](./portal-direction.md)
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
