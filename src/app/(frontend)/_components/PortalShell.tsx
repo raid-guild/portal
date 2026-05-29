@@ -361,7 +361,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <DashboardLink href="/members" icon={<Users className="h-5 w-5" />} label="Members" />
         <DashboardLink
           href="/projects"
