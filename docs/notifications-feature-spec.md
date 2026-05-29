@@ -11,6 +11,7 @@ This spec covers product notifications for:
 - new and upcoming sessions
 - newly published daily or weekly briefs
 - activity digests
+- weekly portal digests for existing users
 - personal portal events such as badges, profile claims, or later project
   follow events
 
@@ -76,6 +77,7 @@ event_published
 event_reminder
 brief_published
 activity_digest
+weekly_digest
 badge_awarded
 profile_claim
 system
@@ -87,6 +89,7 @@ Examples:
 - `event_reminder`: A visible session starts soon.
 - `brief_published`: A daily or weekly brief was published.
 - `activity_digest`: A grouped summary of recent activity items.
+- `weekly_digest`: A weekly portal digest for an existing user.
 - `badge_awarded`: A badge was issued to the user profile.
 - `profile_claim`: A profile claim was approved or needs action.
 - `system`: Account or portal notices that do not belong to another type.
@@ -125,6 +128,7 @@ relatedActivityItem: relationship -> activityItems
 relatedProject: relationship -> projects
 relatedThread: relationship -> threads
 relatedBadgeAward: relationship -> profileBadges
+metadata: json
 createdAt
 updatedAt
 ```
@@ -164,6 +168,7 @@ sessionAnnouncements: in_app / email / muted
 sessionReminders: in_app / email / muted
 briefs: in_app / email / muted
 activityDigestFrequency: none / daily / weekly
+weeklyDigest: in_app / email / muted
 badgeAwards: in_app / email / muted
 updatedAt
 createdAt
@@ -171,6 +176,11 @@ createdAt
 
 A separate collection is preferred over adding many fields to `users` because
 preferences are likely to grow and may need their own admin workflow.
+
+Email preferences require a verified account email. Users without a verified
+email can still receive in-app notifications and use the inbox. The preference
+UI should disable email choices and point them to email verification until
+`emailVerifiedAt` is set.
 
 ### Notification Deliveries
 
@@ -211,7 +221,7 @@ Recommended pattern:
 
 1. A collection hook detects a meaningful state transition.
 2. The hook creates one or more `notifications` records with dedupe keys.
-3. Dashboard and API surfaces read from `notifications`.
+3. Inbox, dashboard, and API surfaces read from `notifications`.
 4. A dispatcher sends email for pending email notifications.
 5. Scheduled jobs create reminders and digests.
 
@@ -284,6 +294,40 @@ Behavior:
   award
 - link to the member profile page
 
+## Session Relevance
+
+Notifications should not own RSVP, attendance, or session participation state.
+Those concepts belong to the sessions model or a future session participation
+feature.
+
+The first notifications version can use broad visible-session announcements and
+reminders. More targeted session notifications should wait until the sessions
+rework settles around user intent and attendance.
+
+Future relevance signals:
+
+- interested: user clicked Interested, Remind me, or similar
+- attending: user RSVP'd or opted into a session reminder
+- attended: user checked in, joined, or was marked present
+- hosted or spoke: user profile is related through host or speaker fields
+- followed context: user follows a related project or thread later
+
+Possible future collection:
+
+```txt
+eventParticipants
+  event -> events
+  user -> users
+  profile -> profiles
+  status: interested / attending / attended / skipped
+  source: self / admin / discord / check_in
+  reminderPreference: default / muted / email
+```
+
+Notification behavior can then target users who showed interest, attended, or
+follow related context. Until that exists, avoid creating a parallel session
+state model inside notifications.
+
 ## Scheduled Jobs
 
 Some notifications are time-based and should not live only in collection hooks.
@@ -316,6 +360,69 @@ one `activity_digest` notification per recipient.
 Avoid creating per-activity notifications unless a future feature introduces a
 strong relevance model such as following a project or thread.
 
+### Weekly Portal Digest
+
+Run weekly for existing users who have not muted weekly digests. This is a
+product notification, not a general newsletter campaign.
+
+Inputs can include:
+
+- latest weekly brief
+- new or upcoming sessions
+- sessions with new summaries, recordings, or artifacts
+- notable activity items
+- active projects and threads
+- badges or recognition
+- user-specific updates such as badges received or sessions they showed
+  interest in
+
+Output one `weekly_digest` notification per recipient. The notification can use
+`metadata` to store grouped counts and section summaries, for example:
+
+```txt
+2 upcoming sessions
+1 new weekly brief
+4 project and activity updates
+1 badge received
+```
+
+If email is enabled and verified, the same notification can become a weekly
+digest email. If email is not verified or not enabled, it should remain in-app
+only.
+
+Do not send weekly digests to early signup lists, unclaimed profile emails, or
+other email-only audiences.
+
+## Coalesced User Updates
+
+The portal may need a server utility before it needs a public API endpoint.
+
+Recommended utility:
+
+```txt
+getUserNotificationDigest(user, since)
+```
+
+This utility should coalesce user-visible updates across portal primitives:
+
+- briefs
+- events
+- activity items
+- projects
+- threads
+- badges
+- point or daily engagement signals when relevant
+
+Use it from:
+
+- `/dashboard` for a high-level current-state summary
+- weekly digest generation
+- future `/inbox` digest detail views
+- a later API endpoint only if another client needs it
+
+Prefer one high-level digest notification for low-urgency activity over many
+small one-off notifications.
+
 ## Eligibility And Visibility
 
 Recipients must be existing `users`. Notification creation should not create
@@ -331,29 +438,89 @@ Visibility rules should mirror the source content:
 
 When in doubt, create fewer notifications.
 
-## Dashboard Experience
+## Inbox And Dashboard Experience
 
-Initial dashboard scope:
+Initial inbox scope:
 
-- show latest unread notifications in a compact dashboard panel
-- show an unread count in account navigation later
+- add an Inbox item to the top-right profile dropdown
+- show an unread count badge when there are unread notifications
+- route to `/inbox` for the full notification history
 - allow mark read
 - allow archive
-- link to a notification management page when the list grows
+- group digest notifications clearly instead of expanding every low-priority
+  update into its own row
 
 Recommended routes:
 
 ```txt
+/inbox
 /dashboard
-/notifications
 /me
 ```
 
-Use `/dashboard` for the lightweight notification panel, `/notifications` for
-the full inbox/history, and `/me` for notification preferences.
+Use `/inbox` as the user-facing notification center, backed by the
+`notifications` collection. Use `/dashboard` for brief-first portal state and
+optional lightweight notification or digest summaries. Use `/me` for
+notification preferences.
 
-The notification panel should support the portal's brief-first dashboard instead
-of competing with it. It should not become a general task inbox.
+The dashboard should not become the notification center. Notifications should
+support the portal's brief-first dashboard instead of competing with it.
+
+## Me Page Experience
+
+Notification preferences belong on `/me`, but not inside the profile wizard.
+They are private account settings, not public profile completeness.
+
+Recommended `/me` structure:
+
+```txt
+Summary/status strip
+Profile section
+Account section
+Notifications section
+Activity section
+```
+
+The page can use anchor sections or a sticky section nav before moving to true
+tabs. Suggested anchors:
+
+```txt
+/me#profile
+/me#account
+/me#notifications
+/me#activity
+```
+
+Add a compact personal portal panel near the top of `/me` with jump-off points:
+
+- Inbox
+- Dashboard
+- Daily check-in
+- Badges
+- Public profile, when a profile exists
+
+The daily check-in link should point to `/dashboard` unless that workflow grows
+into its own route.
+
+Notification preferences should use compact rows and segmented controls:
+
+- Session announcements: In-app / Email / Off
+- Session reminders: In-app / Email / Off
+- Briefs: In-app / Email / Off
+- Weekly digest: In-app / Email / Off
+- Activity digest: Off / Daily / Weekly
+- Badge awards: In-app / Email / Off
+
+If the account email is not verified, keep in-app options enabled and disable
+email choices with a verify-email prompt.
+
+Later dashboard scope:
+
+- show latest unread notifications in a compact dashboard panel if it helps
+  users notice important activity
+- allow mark read
+- allow archive
+- link to `/inbox`
 
 ## Email Delivery
 
@@ -366,8 +533,12 @@ first version, send only transactional, user-specific product email:
 - session reminder for a user who enabled reminders
 - badge awarded to that user's profile
 - brief notification for a user who enabled brief emails
+- weekly digest for a verified existing user who enabled weekly digest email
 
 Do not send broad launch announcements or campaign email from this module.
+Weekly digest email is allowed only for existing portal users and should respect
+the same verification, preference, suppression, and audit rules as other product
+notification email.
 
 Recommended delivery flow:
 
@@ -399,7 +570,7 @@ Disallowed early agent behavior:
 
 ## Open Questions
 
-- Should notification preferences require verified email before email delivery?
+- Should in-app notification preferences default to on for all existing users?
 - Should member-only notifications include contributors, or only `member` role
   users?
 - Should admins be able to send a manual notification to selected users from
@@ -407,5 +578,9 @@ Disallowed early agent behavior:
 - Should event reminders default to in-app only until email preferences exist?
 - Do we need a first-class unsubscribe token for product notification email, or
   can it live behind authenticated `/me` preferences initially?
-- Should activity digests be generated from `dailyBriefs`, `activityItems`, or
-  both?
+- Should activity and weekly digests be generated from `dailyBriefs`,
+  `activityItems`, or both?
+- Should the user-facing route be permanently `/inbox`, or should
+  `/notifications` exist as an alias?
+- Which session rework fields should become the canonical interested,
+  attending, and attended signals?
