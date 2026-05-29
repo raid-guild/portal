@@ -16,6 +16,7 @@ import {
 } from '@/access/dailyBriefs'
 import { canEditContent } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { createBriefPublishedNotifications } from './hooks/createBriefPublishedNotifications'
 import { enforceDailyBriefWorkflow } from './hooks/enforceDailyBriefWorkflow'
 
 export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
@@ -322,6 +323,7 @@ export const DailyBriefs: CollectionConfig<'dailyBriefs'> = {
     },
   ],
   hooks: {
+    afterChange: [createBriefPublishedNotifications],
     beforeChange: [enforceDailyBriefWorkflow],
   },
   versions: {

@@ -776,6 +776,25 @@ async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage
   expect(awardBody.doc?.source || awardBody.source).toBe('agent')
   expect(String(awardedByUserID)).toBe(String(agentID))
   expect(awardBody.doc?.profiles || awardBody.profiles).toHaveLength(2)
+  const awardID = awardBody.doc?.id || awardBody.id
+  expect(awardID).toBeTruthy()
+
+  const badgeNotificationsResponse = await adminPage.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[relatedBadgeAward][equals]': String(awardID),
+      'where[type][equals]': 'badge_awarded',
+    },
+  })
+  expect(badgeNotificationsResponse.ok()).toBeTruthy()
+  const badgeNotificationsBody = await badgeNotificationsResponse.json()
+  expect(badgeNotificationsBody.docs).toHaveLength(2)
+  expect(badgeNotificationsBody.docs?.[0]).toMatchObject({
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `Badge awarded: ${badgeTitle}`,
+  })
 
   const memberAwardResponse = await agentPage.request.post('/api/profileBadges', {
     data: {
@@ -1843,6 +1862,25 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   const userID = meBody.user?.id
   expect(userID).toBeTruthy()
 
+  const existingNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '100',
+      'where[recipient][equals]': String(userID),
+      'where[status][equals]': 'unread',
+    },
+  })
+  expect(existingNotificationsResponse.ok()).toBeTruthy()
+  const existingNotificationsBody = await existingNotificationsResponse.json()
+  for (const notification of existingNotificationsBody.docs || []) {
+    const archiveResponse = await page.request.patch(`/api/notifications/${notification.id}`, {
+      data: {
+        status: 'archived',
+      },
+    })
+    expect(archiveResponse.ok()).toBeTruthy()
+  }
+
   const notificationTitle = `E2E Inbox Notice ${Date.now()}`
   const notificationResponse = await page.request.post('/api/notifications', {
     data: {
@@ -1888,6 +1926,78 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   ).toBeVisible()
   await page.getByRole('button', { name: 'Save preferences' }).click()
   await expect(page.getByText('Preferences saved.')).toBeVisible()
+
+  const hookSuffix = Date.now()
+  const hookEventTitle = `E2E Hook Session ${hookSuffix}`
+  const hookEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(Date.now() + 27 * 60 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString(),
+      summary: 'A published session that should create an inbox notification.',
+      title: hookEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(hookEventResponse.status()).toBe(201)
+  const hookEventBody = await hookEventResponse.json()
+  const hookEventID = hookEventBody.doc?.id || hookEventBody.id
+  const hookEventNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(hookEventID),
+      'where[type][equals]': 'event_published',
+    },
+  })
+  expect(hookEventNotificationsResponse.ok()).toBeTruthy()
+  const hookEventNotificationsBody = await hookEventNotificationsResponse.json()
+  expect(hookEventNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${hookEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New session: ${hookEventTitle}`,
+  })
+
+  const hookBriefTitle = `E2E Hook Brief ${hookSuffix}`
+  const hookBriefResponse = await page.request.post('/api/dailyBriefs', {
+    data: {
+      briefDate: new Date().toISOString(),
+      briefType: 'weekly',
+      sections: [
+        {
+          body: 'Notification hook coverage for a published brief.',
+          heading: 'Hook coverage',
+        },
+      ],
+      summary: 'A published brief that should create an inbox notification.',
+      title: hookBriefTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(hookBriefResponse.status()).toBe(201)
+  const hookBriefBody = await hookBriefResponse.json()
+  const hookBriefID = hookBriefBody.doc?.id || hookBriefBody.id
+  const hookBriefNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedBrief][equals]': String(hookBriefID),
+      'where[type][equals]': 'brief_published',
+    },
+  })
+  expect(hookBriefNotificationsResponse.ok()).toBeTruthy()
+  const hookBriefNotificationsBody = await hookBriefNotificationsResponse.json()
+  expect(hookBriefNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New weekly brief: ${hookBriefTitle}`,
+  })
 }
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {

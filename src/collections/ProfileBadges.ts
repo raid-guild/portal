@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { awardBadges, deleteBadges, manageBadges, readVisibleBadges } from '@/access/badges'
 import { canEditContent, hideFromNonEditors, hasRole } from '@/access/roles'
+import { createBadgeAwardedNotifications } from './ProfileBadges/hooks/createBadgeAwardedNotifications'
 
 export const ProfileBadges: CollectionConfig = {
   slug: 'profileBadges',
@@ -134,6 +135,7 @@ export const ProfileBadges: CollectionConfig = {
     },
   ],
   hooks: {
+    afterChange: [createBadgeAwardedNotifications],
     beforeValidate: [
       ({ data, req }) => {
         const nextData = {

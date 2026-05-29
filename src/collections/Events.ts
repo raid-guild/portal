@@ -3,6 +3,7 @@ import type { CollectionConfig } from 'payload'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { createEventPublishedNotifications } from './Events/hooks/createEventPublishedNotifications'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -472,6 +473,9 @@ export const Events: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    afterChange: [createEventPublishedNotifications],
+  },
   versions: {
     drafts: true,
     maxPerDoc: 25,
