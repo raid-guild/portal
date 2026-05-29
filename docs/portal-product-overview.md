@@ -61,6 +61,8 @@ workflow:
 - `Badges`: durable recognition shown on profiles and member lists.
 - `Notifications`: user-scoped inbox records, reminders, and digest delivery.
 - `Daily Engagements`: lightweight check-ins and point ledger events.
+- `Infinite Wiki`: reviewed, source-backed knowledge pages generated from
+  community memory and portal records.
 
 ## Product Principles
 
@@ -101,5 +103,7 @@ Notification operations are documented in
   reminders, digests, and email delivery.
 - [Badges and props feature spec](./badges-and-props-feature-spec.md):
   recognition model.
+- [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md):
+  source-backed knowledge graph and review workflow.
 - [Implementation checklist](./portal-implementation-checklist.md): execution
   tracker, not the primary product narrative.

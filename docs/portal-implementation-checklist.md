@@ -142,11 +142,29 @@
 - [x] Document recommended external cron calls for notifications.
 - [x] Improve notification admin list columns/search for delivery triage.
 
+## Phase 8: Infinite Wiki
+
+- [ ] Add `wikiPages` collection with source audit fields.
+- [ ] Add wiki page access rules for reviewed status and visibility.
+- [ ] Add `/wiki` index for published pages.
+- [ ] Add `/wiki/[slug]` detail route with related portal context and sources.
+- [ ] Add possible-topic rendering without presenting possible pages as
+      canonical.
+- [ ] Add admin/editor review workflow for generated drafts.
+- [ ] Add Prism-backed generation endpoint or admin action for generated drafts.
+- [ ] Record source queries, source artifacts, prompt version, model, and
+      confidence for every generated page.
+- [ ] Add refresh proposal workflow without silently overwriting reviewed
+      content.
+- [ ] Add e2e coverage for status, visibility, source rendering, and draft
+      review boundaries.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
 - [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
+- [ ] Infinite Wiki generation and review. See `docs/infinite-wiki-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
 - [ ] Module/plugin registry.
