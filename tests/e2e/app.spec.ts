@@ -6,7 +6,6 @@ import {
   adminPassword,
   agentRegistrationSecret,
   commentText,
-  notificationTaskSecret,
   payloadSecret,
   seededPosts,
   targetPost,
@@ -2029,7 +2028,7 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
       windows: ['1h'],
     },
     headers: {
-      authorization: `Bearer ${notificationTaskSecret}`,
+      authorization: `Bearer ${agentRegistrationSecret}`,
     },
   })
   expect(reminderResponse.ok()).toBeTruthy()

@@ -15,7 +15,6 @@ export const payloadSecret = process.env.PAYLOAD_SECRET ?? 'playwright-secret'
 export const adminEmail = 'admin@example.com'
 export const adminPassword = 'ChangeMe123!'
 export const agentRegistrationSecret = 'playwright-agent-registration-secret'
-export const notificationTaskSecret = 'playwright-notification-task-secret'
 export const commentText = 'Playwright public comment awaiting approval.'
 export const seededPosts = [
   {

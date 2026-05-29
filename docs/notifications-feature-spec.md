@@ -342,7 +342,7 @@ Endpoint:
 
 ```txt
 POST /api/notifications/reminders/run
-Authorization: Bearer $NOTIFICATION_TASK_SECRET
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
 ```
 
 Default behavior:

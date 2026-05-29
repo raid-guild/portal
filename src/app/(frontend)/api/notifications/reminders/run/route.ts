@@ -10,7 +10,7 @@ import {
 const REMINDER_WINDOWS = ['24h', '1h'] as const
 
 export async function POST(request: Request) {
-  const configuredSecret = process.env.NOTIFICATION_TASK_SECRET
+  const configuredSecret = process.env.AGENT_REGISTRATION_SECRET
 
   if (!configuredSecret) {
     return Response.json({ message: 'Notification task endpoint is not enabled.' }, { status: 404 })
