@@ -240,13 +240,16 @@ A feature module is a bounded capability that may introduce its own collections,
 Examples:
 
 - bounty board
+- leaderboard
 - project phases
 - resource library
 - calendar subscription
 - agent template registry
-- contribution points automation
 
 Modules are allowed, but they should not blur the core model. A module should attach to core primitives through explicit relationships instead of stuffing unrelated behavior into `projects`, `profiles`, or `dailyBriefs`.
+
+The `modules` collection is the registry for module discovery and status. It is
+core Portal infrastructure and belongs in the `Portal` Payload admin group.
 
 Module-owned Payload collections should be grouped separately from core
 primitive collections:
@@ -257,10 +260,50 @@ admin: {
 }
 ```
 
+Examples:
+
+- `modules` -> `Portal`
+- future `wikiPages` -> `Modules`
+- future `bounties` -> `Modules`
+
 Core primitive collections remain in the `Portal` admin group. Core routes and
 collections must not require optional modules to exist. A disabled or deferred
 module should remove its own entry points while leaving `/`, `/dashboard`,
 `/me`, `/members`, `/projects`, `/events`, `/posts`, and `/inbox` functional.
+
+### Module Surface Rules
+
+Use `/modules` as the member-facing discovery and status surface for optional
+Portal capabilities.
+
+Do:
+
+- add or update a `modules` registry record when a module needs member-facing
+  discovery
+- link to `/modules` from the dashboard rather than primary navigation while
+  modules are still experimental
+- use `entryRoute` for the module's actual product surface
+- keep module details authenticated unless the module explicitly needs a public
+  surface
+
+Avoid:
+
+- forcing feature implementation routes under `/modules`
+- adding module fields directly to core primitives before the module proves the
+  relationship is needed
+- treating `enabled` as a complete runtime feature flag
+
+Good route examples:
+
+```txt
+/modules        -> module discovery and status
+/wiki           -> Infinite Wiki product surface
+/bounty-board   -> Bounty Board product surface
+/leaderboard    -> Leaderboard product surface
+```
+
+Avoid route patterns like `/modules/bounty-board` unless the page is a module
+detail page, not the feature itself.
 
 ### Module Decision Rule
 
@@ -295,14 +338,18 @@ Every module should be described before implementation:
 Module name:
 Problem:
 Primary user:
+Status:
 Core primitive relationships:
 New collections:
 New fields on existing collections:
-Routes or UI surfaces:
+Entry route:
+Admin route:
+Registry visibility:
 Permissions:
 Seed data:
 E2E coverage:
 Deferred behavior:
+Graduation criteria:
 ```
 
 Keep the proposal short. The goal is to prevent accidental platform sprawl, not create a planning tax.
