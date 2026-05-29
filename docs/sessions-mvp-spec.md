@@ -93,7 +93,9 @@ which projects or threads it connects to, and who was involved.
 
 Session comments should be flat for MVP. Do not add direct replies, nested
 threads, or Discord-style conversation structure yet. Reuse the existing comment
-approval pattern where possible.
+approval pattern where possible. The shared comments model now supports events
+as parent records, but the session detail comment surface should still be added
+intentionally when the archive UX is ready for it.
 
 ## Data Model
 
@@ -384,7 +386,8 @@ Next MVP priorities:
 
 - make past session pages clearly show notes, artifacts, related projects, and
   related threads
-- add flat comments to session detail pages with no direct replies
+- add the existing flat comments component to session detail pages with no
+  direct replies
 - add host-facing edit affordances for past-session enrichment
 - improve session detail UX around source material and derived content
 - tighten mobile layout and scanning on list/detail pages

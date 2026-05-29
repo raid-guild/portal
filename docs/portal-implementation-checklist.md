@@ -142,6 +142,36 @@
 - [x] Document recommended external cron calls for notifications.
 - [x] Improve notification admin list columns/search for delivery triage.
 
+## Phase 7C: Contribution Requests
+
+- [x] Add `contributionRequests` collection for lightweight, discoverable asks.
+- [x] Relate requests to owner profiles, optional projects, related sessions,
+  threads, posts, profiles, and useful skills.
+- [x] Reuse portal visibility rules for public, authenticated, member, and admin
+  requests.
+- [x] Show open related requests on project detail pages.
+- [x] Show open related requests on session detail pages.
+- [x] Add `/requests/[slug]` detail pages.
+- [x] Extend comments to support posts, sessions, projects, and contribution
+  requests as parent records.
+- [x] Show flat comments on contribution request detail pages.
+- [x] Add friendly create/edit routes for contribution requests.
+- [x] Let members and contributors draft requests while agents, editors, and
+  admins can publish.
+- [x] Add project stewards so project owners can maintain project context and
+  publish project-scoped requests.
+- [x] Add frontend project management for stewards to update public project
+  context, contributors, related records, and external links.
+- [x] Let project stewards publish project-scoped requests from the friendly
+  request form.
+- [x] Add e2e coverage for request creation, project display, session display,
+  and detail page rendering.
+- [ ] Add a global request board when enough real requests exist.
+- [ ] Add session/project comment surfaces when the UX calls for them.
+- [ ] Add direct notifications only after recipient intent is clear.
+- [ ] Add a `projectMemberships` feature module only if project involvement
+      needs join requests, active/past state, followers, filtering, or history.
+
 ## Phase 8: Modules
 
 - [x] Decide whether first version uses only documented module conventions or a
@@ -182,7 +212,6 @@
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
-- [ ] Contribution requests core flow. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Bounty board module. See `docs/modules-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
 - [x] Module registry and `/modules` discovery surface. See `docs/modules-feature-spec.md`.

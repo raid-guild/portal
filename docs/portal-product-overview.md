@@ -38,6 +38,8 @@ or generic AI content feed.
 - `/events`: upcoming and past sessions.
 - `/events/[id]`: session details, join/calendar actions, artifacts, and related
   context.
+- `/requests/[slug]`: focused contribution request detail page for a clear ask
+  connected to a project, session, thread, post, or profile.
 - `/members`: contributor discovery.
 - `/members/[handle]`: public/member profile page with projects, sessions,
   posts, and badges.
@@ -65,6 +67,19 @@ workflow:
 - `Daily Engagements`: lightweight check-ins and point ledger events.
 - `Infinite Wiki`: reviewed, source-backed knowledge pages generated from
   community memory and portal records.
+- `Contribution Requests`: lightweight asks for help surfaced from projects and
+  sessions without becoming tasks or assignments.
+
+Projects can have profile-based stewards. Stewards are responsible for keeping a
+project page accurate, attaching relevant context, and managing project-scoped
+requests/activity. Contributors remain the people visibly involved or credited;
+stewardship is accountability for the presentation surface, not assignment
+workflow.
+
+Project steward management should stay focused on the presentation layer:
+summary, public status, contributors, related sessions/threads/projects,
+resources, links, and project-scoped requests. It should not introduce tasks,
+assignees, sprint state, or a project-management workflow.
 
 ## Product Principles
 
@@ -105,6 +120,8 @@ Notification operations are documented in
   reminders, digests, and email delivery.
 - [Modules feature spec](./modules-feature-spec.md): experimental module
   registry, CMS grouping, and dependency boundaries.
+- [Contribution requests feature spec](./contribution-requests-feature-spec.md):
+  request records, project/session display, and future board/comment options.
 - [Badges and props feature spec](./badges-and-props-feature-spec.md):
   recognition model.
 - [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md):

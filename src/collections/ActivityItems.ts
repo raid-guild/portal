@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { createProjectActivityItems, manageProjectActivityItems } from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -7,10 +8,10 @@ import { validateSafeURL } from '@/utilities/safeURL'
 export const ActivityItems: CollectionConfig = {
   slug: 'activityItems',
   access: {
-    create: contentContributors,
-    delete: contentContributors,
+    create: createProjectActivityItems,
+    delete: manageProjectActivityItems,
     read: readVisiblePortalContent,
-    update: contentContributors,
+    update: manageProjectActivityItems,
   },
   admin: {
     defaultColumns: ['title', 'activityType', 'happenedAt', '_status', 'updatedAt'],
