@@ -10,6 +10,7 @@ import type { Event, Post, Profile, Project, User } from '@/payload-types'
 import { EmailVerificationCard } from '../_components/EmailVerificationCard'
 import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
+import { ProfileAvatarCard } from './ProfileAvatarCard'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 export const dynamic = 'force-dynamic'
@@ -66,6 +67,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
             Manage your public identity, avatar, links, skills, roles, and visibility without
             entering Payload Admin.
           </p>
+          <ProfileAvatarCard profile={profile} />
         </div>
         <div className="space-y-4">
           <EmailVerificationCard email={user.email} emailVerifiedAt={user.emailVerifiedAt} />
