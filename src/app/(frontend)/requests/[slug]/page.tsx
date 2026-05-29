@@ -6,6 +6,7 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent, hasRole } from '@/access/roles'
 import { Comments } from '@/components/Comments'
 import type {
   ContributionRequest,
@@ -63,6 +64,7 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
   const profiles = relationDocs<Profile>(request.relatedProfiles)
   const skills = relationDocs<ProfileSkill>(request.profileSkills)
   const responseURL = toSafeURL(request.responseURL)
+  const canEditRequest = canContributeContent(user) || hasRole(user, 'member')
 
   return (
     <main className="container pb-24 pt-12">
@@ -114,6 +116,11 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
               target={responseURL.startsWith('http') ? '_blank' : undefined}
             >
               Respond
+            </Link>
+          ) : null}
+          {canEditRequest && request.slug ? (
+            <Link className="portal-link mt-4 inline-block" href={`/requests/${request.slug}/edit`}>
+              Edit request
             </Link>
           ) : null}
         </aside>

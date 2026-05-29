@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canContributeContent, canEditContent } from '@/access/roles'
+import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type { ContributionRequest, Event, Post, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
@@ -93,6 +93,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const canViewFullDetails = Boolean(user)
   const canManageSessions = canContributeContent(user)
   const canViewDiscordSyncErrors = canEditContent(user)
+  const canCreateRequests = canManageSessions || hasRole(user, 'member')
   const contributionRequests = await getOpenContributionRequestsForEvent(event.id, user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
   const startsAt = new Date(event.startsAt)
@@ -188,6 +189,14 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
       {canViewFullDetails || contributionRequests.length ? (
         <Section title="Contribution Requests">
+          {canCreateRequests ? (
+            <Link
+              className="portal-admin-link mb-4 inline-flex"
+              href={`/requests/new?event=${event.id}`}
+            >
+              Create follow-up request
+            </Link>
+          ) : null}
           {contributionRequests.length ? (
             <div className="grid gap-4 md:grid-cols-2">
               {contributionRequests.map((request) => (

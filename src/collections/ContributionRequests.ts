@@ -1,17 +1,17 @@
 import type { CollectionConfig } from 'payload'
 
 import { readVisiblePortalContent } from '@/access/portalVisibility'
-import { canEditContent, contentContributors } from '@/access/roles'
+import { canContributeContent, canEditContent, contentContributors, hasRole } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
 
 export const ContributionRequests: CollectionConfig = {
   slug: 'contributionRequests',
   access: {
-    create: contentContributors,
+    create: ({ req: { user } }) => canContributeContent(user) || hasRole(user, 'member'),
     delete: contentContributors,
     read: readVisiblePortalContent,
-    update: contentContributors,
+    update: ({ req: { user } }) => canContributeContent(user) || hasRole(user, 'member'),
   },
   admin: {
     defaultColumns: ['title', 'requestType', 'requestStatus', 'project', 'visibility', '_status'],
@@ -225,7 +225,7 @@ export const ContributionRequests: CollectionConfig = {
     beforeChange: [
       ({ data, operation, req }) => {
         if (!req.user) return data
-        if (canEditContent(req.user)) return data
+        if (canEditContent(req.user) || hasRole(req.user, 'agent')) return data
 
         const nextData = {
           ...data,
@@ -238,11 +238,11 @@ export const ContributionRequests: CollectionConfig = {
         nextData.publishedAt = undefined
 
         if (nextData._status === 'published') {
-          throw new Error('Only editors and admins can publish contribution requests.')
+          throw new Error('Only editors, admins, and agents can publish contribution requests.')
         }
 
         if (nextData.requestStatus === 'archived') {
-          throw new Error('Only editors and admins can archive contribution requests.')
+          throw new Error('Only editors, admins, and agents can archive contribution requests.')
         }
 
         return nextData

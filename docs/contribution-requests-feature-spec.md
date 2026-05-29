@@ -113,10 +113,10 @@ Recommended default:
 - Public users can read published public requests.
 - Authenticated users can read authenticated requests.
 - Members can read member-only requests.
-- Contributors, agents, editors, and admins can create draft requests.
-- Editors and admins can publish and archive requests.
-- Owners can update their own draft or open requests if they retain contributor
-  access.
+- Members and contributors can create draft requests.
+- Agents, editors, and admins can publish and archive requests.
+- A dedicated owner-only draft workspace is deferred; first-slice draft review
+  still leans on Payload admin and trusted agent/editor workflows.
 
 Use the same visibility semantics as `projects` so project and request access do
 not diverge.
@@ -214,8 +214,9 @@ contributionRequest:{id}:status:{status}:user:{id}
 ```
 
 Agents may propose contribution requests from meeting notes or memory, but they
-should not silently notify broad audiences. Agent-created requests should start
-as drafts or reviewable proposals unless explicitly approved by an editor/admin.
+should not silently notify broad audiences. Agent-created requests may publish
+when the agent workflow is explicitly trusted for that source; otherwise they
+should start as drafts or reviewable proposals.
 
 ## Relationship To Projects
 
@@ -273,6 +274,7 @@ The first slice is intentionally narrow:
 7. Add a simple request detail page at `/requests/[slug]`.
 8. Add e2e coverage for request creation, project display, session/event
    display, and detail rendering.
+9. Add friendly create/edit routes for contribution requests.
 
 Defer the global board and direct request notifications until there are enough
 real requests and enough recipient intent to justify them.
@@ -280,8 +282,8 @@ real requests and enough recipient intent to justify them.
 ## Open Questions
 
 - Should the first route be `/requests`, `/contribute`, or project-local only?
-- Should members be allowed to publish their own requests, or only draft them for
-  editor review?
+- Should member-owned drafts get a dedicated "my drafts" workspace, or should
+  draft review stay in Payload admin for now?
 - Should response happen in comments, Discord, GitHub, or an external link?
 - Do paid bounties need separate approval, budget, and completion semantics?
 - Should requests be created manually first, or generated from meeting notes as

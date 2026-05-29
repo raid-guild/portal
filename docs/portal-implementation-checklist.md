@@ -155,6 +155,9 @@
 - [x] Extend comments to support posts, sessions, projects, and contribution
   requests as parent records.
 - [x] Show flat comments on contribution request detail pages.
+- [x] Add friendly create/edit routes for contribution requests.
+- [x] Let members and contributors draft requests while agents, editors, and
+  admins can publish.
 - [x] Add e2e coverage for request creation, project display, session display,
   and detail page rendering.
 - [ ] Add a global request board when enough real requests exist.

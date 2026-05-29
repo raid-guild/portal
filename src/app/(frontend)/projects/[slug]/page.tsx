@@ -6,6 +6,7 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent, hasRole } from '@/access/roles'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
@@ -64,6 +65,7 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
   const events = relationDocs<Event>(project.events)
   const contributors = relationDocs<Profile>(project.contributors)
   const skills = relationDocs<ProfileSkill>(project.profileSkills)
+  const canCreateRequests = canContributeContent(user) || hasRole(user, 'member')
 
   return (
     <main className="container pb-24 pt-12">
@@ -167,6 +169,14 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
         <div className="space-y-6">
           <Section title="Contribution Requests">
+            {canCreateRequests ? (
+              <Link
+                className="portal-admin-link mb-4 inline-flex"
+                href={`/requests/new?project=${project.id}`}
+              >
+                Create request
+              </Link>
+            ) : null}
             {contributionRequests.length ? (
               <div className="space-y-3">
                 {contributionRequests.map((request) => (
