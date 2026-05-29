@@ -125,6 +125,23 @@
 - [x] Add member directory filtering by badge.
 - [x] Add e2e coverage for badge display, badge filtering, badge catalog counts, multi-profile agent awards, and visibility boundaries.
 
+## Phase 7B: Notifications
+
+- [x] Add `notifications` collection for user-scoped in-app notification records.
+- [x] Add `notificationPreferences` collection for account-level notification controls.
+- [x] Add `/inbox` route for notification history with mark-read and archive actions.
+- [x] Add Inbox entry and unread count to the top-right account menu.
+- [x] Add `/me` notification preferences and personal portal jump links.
+- [x] Keep email delivery gated behind verified account email in the UI.
+- [x] Add notification creation hooks for published briefs, visible sessions, and badge awards.
+- [x] Add cron-callable session reminder endpoint for external task runners.
+- [x] Add email dispatcher for verified, opted-in product notifications.
+- [x] Add coalesced user update utility for weekly digest generation.
+- [x] Add weekly digest endpoint for external task runners.
+- [x] Add daily activity digest endpoint for external task runners.
+- [x] Document recommended external cron calls for notifications.
+- [x] Improve notification admin list columns/search for delivery triage.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.

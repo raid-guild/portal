@@ -23,6 +23,7 @@ import * as migration_20260526_130000_event_member_visibility from './20260526_1
 import * as migration_20260528_120000_post_visibility from './20260528_120000_post_visibility'
 import * as migration_20260528_130000_daily_engagements from './20260528_130000_daily_engagements'
 import * as migration_20260528_200654_badges from './20260528_200654_badges'
+import * as migration_20260529_120000_notifications from './20260529_120000_notifications'
 
 export const migrations = [
   {
@@ -149,5 +150,10 @@ export const migrations = [
     up: migration_20260528_200654_badges.up,
     down: migration_20260528_200654_badges.down,
     name: '20260528_200654_badges',
+  },
+  {
+    up: migration_20260529_120000_notifications.up,
+    down: migration_20260529_120000_notifications.down,
+    name: '20260529_120000_notifications',
   },
 ]

@@ -776,6 +776,25 @@ async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage
   expect(awardBody.doc?.source || awardBody.source).toBe('agent')
   expect(String(awardedByUserID)).toBe(String(agentID))
   expect(awardBody.doc?.profiles || awardBody.profiles).toHaveLength(2)
+  const awardID = awardBody.doc?.id || awardBody.id
+  expect(awardID).toBeTruthy()
+
+  const badgeNotificationsResponse = await adminPage.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[relatedBadgeAward][equals]': String(awardID),
+      'where[type][equals]': 'badge_awarded',
+    },
+  })
+  expect(badgeNotificationsResponse.ok()).toBeTruthy()
+  const badgeNotificationsBody = await badgeNotificationsResponse.json()
+  expect(badgeNotificationsBody.docs).toHaveLength(2)
+  expect(badgeNotificationsBody.docs?.[0]).toMatchObject({
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `Badge awarded: ${badgeTitle}`,
+  })
 
   const memberAwardResponse = await agentPage.request.post('/api/profileBadges', {
     data: {
@@ -1762,6 +1781,7 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('link', { name: 'My Profile' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Open account menu' }).click()
   await expect(page.getByRole('menuitem', { name: 'My profile' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Inbox' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -1835,11 +1855,481 @@ async function verifyDailyVibeCheck(page: Page) {
   })
 }
 
+async function verifyInboxAndNotificationPreferences(page: Page) {
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const meBody = await meResponse.json()
+  const userID = meBody.user?.id
+  expect(userID).toBeTruthy()
+
+  const existingNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '100',
+      'where[recipient][equals]': String(userID),
+      'where[status][equals]': 'unread',
+    },
+  })
+  expect(existingNotificationsResponse.ok()).toBeTruthy()
+  const existingNotificationsBody = await existingNotificationsResponse.json()
+  for (const notification of existingNotificationsBody.docs || []) {
+    const archiveResponse = await page.request.patch(`/api/notifications/${notification.id}`, {
+      data: {
+        status: 'archived',
+      },
+    })
+    expect(archiveResponse.ok()).toBeTruthy()
+  }
+
+  const notificationTitle = `E2E Inbox Notice ${Date.now()}`
+  const notificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open dashboard',
+      actionURL: '/dashboard',
+      body: 'A deterministic notification for inbox e2e coverage.',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: notificationTitle,
+      type: 'system',
+    },
+  })
+  expect(notificationResponse.status()).toBe(201)
+
+  await page.goto('/dashboard')
+  await page.getByRole('button', { name: 'Open account menu' }).click()
+  const inboxItem = page.getByRole('menuitem', { name: /Inbox/ })
+  await expect(inboxItem).toBeVisible()
+  await expect(inboxItem).toContainText('1')
+  await inboxItem.click()
+
+  await expect(page).toHaveURL(/\/inbox/)
+  await expect(page.getByRole('heading', { exact: true, name: 'Inbox' })).toBeVisible()
+  await expect(page.getByText(notificationTitle)).toBeVisible()
+  await expect(page.getByText('A deterministic notification for inbox e2e coverage.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open dashboard' })).toHaveAttribute(
+    'href',
+    '/dashboard',
+  )
+  await page.getByRole('button', { name: 'Mark read' }).click()
+  await expect(page.getByRole('button', { name: 'Mark read' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Archive' }).click()
+  await expect(page.getByText('Archived')).toBeVisible()
+
+  await page.goto('/me#notifications')
+  await expect(page.getByRole('heading', { name: 'Notification preferences' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Inbox/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Daily check-in/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Badges/ })).toBeVisible()
+  await expect(
+    page.getByText(/Verify your account email to enable email notifications/i),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save preferences' }).click()
+  await expect(page.getByText('Preferences saved.')).toBeVisible()
+
+  const hookSuffix = Date.now()
+  const hookEventTitle = `E2E Hook Session ${hookSuffix}`
+  const hookEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(Date.now() + 27 * 60 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString(),
+      summary: 'A published session that should create an inbox notification.',
+      title: hookEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(hookEventResponse.status()).toBe(201)
+  const hookEventBody = await hookEventResponse.json()
+  const hookEventID = hookEventBody.doc?.id || hookEventBody.id
+  const hookEventNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(hookEventID),
+      'where[type][equals]': 'event_published',
+    },
+  })
+  expect(hookEventNotificationsResponse.ok()).toBeTruthy()
+  const hookEventNotificationsBody = await hookEventNotificationsResponse.json()
+  expect(hookEventNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${hookEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New session: ${hookEventTitle}`,
+  })
+
+  const hookBriefTitle = `E2E Hook Brief ${hookSuffix}`
+  const hookBriefResponse = await page.request.post('/api/dailyBriefs', {
+    data: {
+      briefDate: new Date().toISOString(),
+      briefType: 'weekly',
+      sections: [
+        {
+          body: 'Notification hook coverage for a published brief.',
+          heading: 'Hook coverage',
+        },
+      ],
+      summary: 'A published brief that should create an inbox notification.',
+      title: hookBriefTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(hookBriefResponse.status()).toBe(201)
+  const hookBriefBody = await hookBriefResponse.json()
+  const hookBriefID = hookBriefBody.doc?.id || hookBriefBody.id
+  const hookBriefNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedBrief][equals]': String(hookBriefID),
+      'where[type][equals]': 'brief_published',
+    },
+  })
+  expect(hookBriefNotificationsResponse.ok()).toBeTruthy()
+  const hookBriefNotificationsBody = await hookBriefNotificationsResponse.json()
+  expect(hookBriefNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New weekly brief: ${hookBriefTitle}`,
+  })
+
+  const reminderUnauthorizedResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      dryRun: true,
+    },
+  })
+  expect(reminderUnauthorizedResponse.status()).toBe(401)
+
+  const reminderEventTitle = `E2E Reminder Session ${hookSuffix}`
+  const reminderStartsAt = new Date(Date.now() + 65 * 60 * 1000)
+  const reminderEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(reminderStartsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: reminderStartsAt.toISOString(),
+      summary: 'A session that should receive a one-hour reminder notification.',
+      title: reminderEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(reminderEventResponse.status()).toBe(201)
+  const reminderEventBody = await reminderEventResponse.json()
+  const reminderEventID = reminderEventBody.doc?.id || reminderEventBody.id
+  const reminderResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      lookaheadMinutes: 15,
+      windows: ['1h'],
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(reminderResponse.ok()).toBeTruthy()
+  const reminderBody = await reminderResponse.json()
+  expect(reminderBody.results?.[0]).toMatchObject({
+    eventsMatched: 1,
+    window: '1h',
+  })
+
+  const reminderNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(reminderEventID),
+      'where[type][equals]': 'event_reminder',
+    },
+  })
+  expect(reminderNotificationsResponse.ok()).toBeTruthy()
+  const reminderNotificationsBody = await reminderNotificationsResponse.json()
+  expect(reminderNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${reminderEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    priority: 'high',
+    title: `${reminderEventTitle} starts in 1 hour`,
+  })
+
+  const emailDispatchUnauthorizedResponse = await page.request.post(
+    '/api/notifications/email/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(emailDispatchUnauthorizedResponse.status()).toBe(401)
+
+  const emailNotificationTitle = `E2E Email Notification ${hookSuffix}`
+  const emailNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic pending email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: emailNotificationTitle,
+      type: 'system',
+    },
+  })
+  expect(emailNotificationResponse.status()).toBe(201)
+  const emailNotificationBody = await emailNotificationResponse.json()
+  const emailNotificationID = emailNotificationBody.doc?.id || emailNotificationBody.id
+
+  const skippedEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(skippedEmailDispatchResponse.ok()).toBeTruthy()
+  const skippedEmailDispatchBody = await skippedEmailDispatchResponse.json()
+  expect(skippedEmailDispatchBody.result).toMatchObject({
+    processed: 1,
+    skipped: 1,
+  })
+  const skippedEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${emailNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(skippedEmailNotificationResponse.ok()).toBeTruthy()
+  const skippedEmailNotificationBody = await skippedEmailNotificationResponse.json()
+  expect(skippedEmailNotificationBody.emailStatus).toBe('skipped')
+
+  const verifiedEmail = `notification-dispatch-${hookSuffix}@example.com`
+  const verifiedUserResponse = await page.request.post('/api/users', {
+    data: {
+      email: verifiedEmail,
+      emailVerifiedAt: new Date().toISOString(),
+      name: `Notification Dispatch ${hookSuffix}`,
+      password: 'ChangeMe123!',
+      roles: ['member'],
+    },
+  })
+  expect(verifiedUserResponse.status()).toBe(201)
+  const verifiedUserBody = await verifiedUserResponse.json()
+  const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
+  const sendableNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic sendable email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: verifiedUserID,
+      status: 'unread',
+      title: `E2E Sendable Email Notification ${hookSuffix}`,
+      type: 'system',
+    },
+  })
+  expect(sendableNotificationResponse.status()).toBe(201)
+  const sendableNotificationBody = await sendableNotificationResponse.json()
+  const sendableNotificationID = sendableNotificationBody.doc?.id || sendableNotificationBody.id
+  const sentEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(sentEmailDispatchResponse.ok()).toBeTruthy()
+  const sentEmailDispatchBody = await sentEmailDispatchResponse.json()
+  expect(sentEmailDispatchBody.result).toMatchObject({
+    processed: 1,
+    sent: 1,
+  })
+  const sentEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${sendableNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(sentEmailNotificationResponse.ok()).toBeTruthy()
+  const sentEmailNotificationBody = await sentEmailNotificationResponse.json()
+  expect(sentEmailNotificationBody).toMatchObject({
+    emailStatus: 'sent',
+  })
+  expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
+
+  const digestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(digestUnauthorizedResponse.status()).toBe(401)
+
+  const digestActivityTitle = `E2E Digest Activity ${hookSuffix}`
+  const digestSince = new Date(Date.now() - 60 * 60 * 1000)
+  const digestUntil = new Date(Date.now() + 60 * 60 * 1000)
+  const digestActivityResponse = await page.request.post('/api/activityItems', {
+    data: {
+      activityType: 'insight',
+      body: 'A deterministic activity item for weekly digest coverage.',
+      happenedAt: new Date().toISOString(),
+      title: digestActivityTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(digestActivityResponse.status()).toBe(201)
+
+  const digestResponse = await page.request.post('/api/notifications/digests/weekly/run', {
+    data: {
+      limit: 20,
+      since: digestSince.toISOString(),
+      until: digestUntil.toISOString(),
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(digestResponse.ok()).toBeTruthy()
+  const digestBody = await digestResponse.json()
+  expect(digestBody.created).toBeGreaterThanOrEqual(1)
+
+  const digestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'weekly_digest',
+    },
+  })
+  expect(digestNotificationsResponse.ok()).toBeTruthy()
+  const digestNotificationsBody = await digestNotificationsResponse.json()
+  expect(digestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your weekly RaidGuild portal digest',
+  })
+  expect(digestNotificationsBody.docs?.[0]?.body).toContain('activity update')
+  expect(digestNotificationsBody.docs?.[0]?.metadata?.counts?.activityItems).toBeGreaterThanOrEqual(
+    1,
+  )
+
+  const invalidWeeklyDigestResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidWeeklyDigestResponse.status()).toBe(400)
+
+  const activityDigestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(activityDigestUnauthorizedResponse.status()).toBe(401)
+
+  const preferenceResponse = await page.request.get('/api/notificationPreferences', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[user][equals]': String(userID),
+    },
+  })
+  expect(preferenceResponse.ok()).toBeTruthy()
+  const preferenceBody = await preferenceResponse.json()
+  const preferenceID = preferenceBody.docs?.[0]?.id
+  expect(preferenceID).toBeTruthy()
+  const activityPreferenceResponse = await page.request.patch(
+    `/api/notificationPreferences/${preferenceID}`,
+    {
+      data: {
+        activityDigestFrequency: 'daily',
+      },
+    },
+  )
+  expect(activityPreferenceResponse.ok()).toBeTruthy()
+
+  const invalidActivityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidActivityDigestResponse.status()).toBe(400)
+
+  const activityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        limit: 20,
+        since: digestSince.toISOString(),
+        until: digestUntil.toISOString(),
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(activityDigestResponse.ok()).toBeTruthy()
+  const activityDigestBody = await activityDigestResponse.json()
+  expect(activityDigestBody.created).toBeGreaterThanOrEqual(1)
+
+  const activityDigestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'activity_digest',
+    },
+  })
+  expect(activityDigestNotificationsResponse.ok()).toBeTruthy()
+  const activityDigestNotificationsBody = await activityDigestNotificationsResponse.json()
+  expect(activityDigestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your RaidGuild activity digest',
+  })
+  expect(activityDigestNotificationsBody.docs?.[0]?.metadata?.count).toBeGreaterThanOrEqual(1)
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page)
+  await verifyInboxAndNotificationPreferences(page)
   await createProfileAndVerifyContributorCreateLinks(page)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)
