@@ -36,7 +36,8 @@ Core primitives model the community:
 Modules model product capabilities:
 
 - Infinite Wiki
-- Contribution Requests
+- Bounty Board
+- Leaderboard
 - Calendar Subscription
 - Agent Template Registry
 - Resource Library
@@ -77,11 +78,10 @@ Module: Infinite Wiki
 
 ### Ship First
 
-- A module registry model or documented convention.
+- A `modules` registry collection.
 - A member-facing `/modules` page listing enabled or visible modules.
 - A dashboard entry point for modules, such as a compact "Explore modules" link
   or a small module card.
-- Optional module detail pages at `/modules/[slug]`.
 - Module status labels: `idea`, `prototype`, `experimental`, `active`,
   `graduated`, `archived`.
 - Module ownership fields for champion/editor/admin stewardship.
@@ -94,6 +94,7 @@ Module: Infinite Wiki
 - Runtime module installation.
 - Module package manifests.
 - Per-member module enablement.
+- Module detail pages at `/modules/[slug]`.
 - Automated graduation workflows.
 - Module-specific notification subscriptions.
 - Module ratings, comments, or public proposals.
@@ -113,6 +114,11 @@ Initial exposure should be lightweight:
 - Keep modules out of the primary navigation until there are enough active
   modules to justify it.
 - Keep module-specific routes discoverable from `/modules` first.
+- Show unauthenticated visitors a teaser with join/login CTAs, but keep module
+  details authenticated.
+- Let each module own the simplest product route for its experience, such as
+  `/wiki`, `/bounty-board`, or `/leaderboard`. Do not force feature routes under
+  `/modules`.
 
 The modules index should be a discovery surface, not a marketing page.
 
@@ -137,19 +143,10 @@ Each module card should show:
 Module detail pages can be added when a module needs more context than a card
 can hold.
 
-## CMS Model Options
+## CMS Model
 
-### Option A: Documented Convention First
-
-Start with docs and explicit per-feature specs. Each module spec must define its
-own collection grouping, routes, relationships, access rules, and graduation
-criteria.
-
-This is enough when there are only one or two experimental modules.
-
-### Option B: `modules` Collection
-
-Add a registry collection when modules need to be managed in the CMS.
+Modules are managed in Payload so the dashboard and `/modules` page can be
+updated without code changes.
 
 Collection slug:
 
@@ -174,8 +171,8 @@ relatedProjects: relationship -> projects, many
 relatedThreads: relationship -> threads, many
 relatedEvents: relationship -> events, many
 relatedProfiles: relationship -> profiles, many
-owners: relationship -> users or profiles, many
-corePrimitiveRelationships: select or array
+owners: relationship -> profiles, many
+corePrimitiveRelationships: array
 enabled: checkbox
 featured: checkbox
 graduationCriteria: textarea
@@ -194,8 +191,11 @@ sourceProject
 updatedAt
 ```
 
-Use this option when the Portal has enough modules that `/modules` should be
-CMS-managed instead of hard-coded.
+`enabled` means the module is listed on member-facing module surfaces. It is not
+a complete runtime feature flag.
+
+`entryRoute` should point to the module's actual product surface. It does not
+need to be nested under `/modules`.
 
 ## Payload Admin Grouping
 
@@ -212,12 +212,11 @@ admin: {
 Examples:
 
 - `wikiPages` -> `Modules`
-- `contributionRequests` -> `Modules`
-- `moduleDefinitions` or `modules` -> `Modules`
+- future `bounties` -> `Modules`
 
 Shared infrastructure collections can stay in `Portal` when they are used by
 core flows as well as modules. Examples: notifications, badges, point events,
-profiles.
+profiles, and the `modules` registry itself.
 
 ## Dependency Rules
 
@@ -304,10 +303,5 @@ module is stable, supported, and visible from core surfaces.
 
 ## Open Questions
 
-- Should the first version create a real `modules` collection, or use a
-  documented convention until more than one module needs a surfaced registry?
-- Should `/modules` show public modules to unauthenticated visitors, or start
-  authenticated/member-only?
-- Should module owners be Payload users, profiles, or both?
 - Should module activity create `ActivityItem` records automatically, or only
   when an editor publishes a module update?

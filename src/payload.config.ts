@@ -16,6 +16,7 @@ import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
 import { Media } from './collections/Media'
+import { Modules } from './collections/Modules'
 import { NotificationPreferences } from './collections/NotificationPreferences'
 import { Notifications } from './collections/Notifications'
 import { Pages } from './collections/Pages'
@@ -118,6 +119,7 @@ export default buildConfig({
     Threads,
     Badges,
     ProfileBadges,
+    Modules,
     Notifications,
     NotificationPreferences,
     Profiles,

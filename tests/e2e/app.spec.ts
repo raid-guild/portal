@@ -1806,6 +1806,32 @@ async function verifyDashboardBrief(page: Page) {
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Public Posts' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Modules' })).toBeVisible()
+}
+
+async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
+  await publicPage.goto('/modules')
+  await expect(publicPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Join to access modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Log in' })).toBeVisible()
+  await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
+
+  const publicModulesResponse = await publicPage.request.get('/api/modules')
+  if (publicModulesResponse.ok()) {
+    const publicModulesBody = await publicModulesResponse.json()
+    expect(publicModulesBody.docs).toHaveLength(0)
+  } else {
+    expect(publicModulesResponse.status()).toBeGreaterThanOrEqual(400)
+  }
+
+  await adminPage.goto('/modules')
+  await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
+  await expect(adminPage.getByText('Bounty Board')).toBeVisible()
+  await expect(adminPage.getByText('Leaderboard')).toBeVisible()
+  await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(0)
 }
 
 async function verifyDailyVibeCheck(page: Page) {
@@ -2347,6 +2373,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
+  await verifyModulesFeature(page, publicPage)
   await verifyPublicHome(publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
