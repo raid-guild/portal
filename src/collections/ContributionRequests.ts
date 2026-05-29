@@ -242,6 +242,16 @@ export const ContributionRequests: CollectionConfig = {
           ...data,
         }
 
+        const isPublishedUpdate =
+          operation === 'update' &&
+          (originalDoc?._status === 'published' || nextData._status === 'published')
+
+        if (isPublishedUpdate) {
+          throw new Error(
+            'Only editors, admins, agents, and project stewards can update published contribution requests.',
+          )
+        }
+
         if (operation === 'create') {
           nextData._status = 'draft'
         }
@@ -249,11 +259,15 @@ export const ContributionRequests: CollectionConfig = {
         nextData.publishedAt = undefined
 
         if (nextData._status === 'published') {
-          throw new Error('Only editors, admins, and agents can publish contribution requests.')
+          throw new Error(
+            'Only editors, admins, agents, and project stewards can publish contribution requests.',
+          )
         }
 
         if (nextData.requestStatus === 'archived') {
-          throw new Error('Only editors, admins, and agents can archive contribution requests.')
+          throw new Error(
+            'Only editors, admins, agents, and project stewards can archive contribution requests.',
+          )
         }
 
         return nextData

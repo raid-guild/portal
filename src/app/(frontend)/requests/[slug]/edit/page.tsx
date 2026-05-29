@@ -2,11 +2,12 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 
-import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { canEditContent, hasRole } from '@/access/roles'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 import { ContributionRequestForm } from '../../ContributionRequestForm'
 import {
+  canManageContributionRequest,
   getContributionRequestBySlugForForm,
   getContributionRequestFormData,
   toRequestFormValue,
@@ -25,21 +26,6 @@ export default async function EditContributionRequestPage({ params: paramsPromis
 
   if (!user) redirect('/login')
 
-  if (!canEditContributionRequests(user)) {
-    return (
-      <main className="container pb-24 pt-12">
-        <p className="portal-kicker">Contribution Requests</p>
-        <h1 className="portal-title mt-4">Edit request</h1>
-        <p className="mt-5 max-w-2xl text-muted-foreground">
-          Your account does not have permission to edit contribution requests.
-        </p>
-        <Link className="portal-link mt-8 inline-flex" href="/projects">
-          Back to projects
-        </Link>
-      </main>
-    )
-  }
-
   const { slug = '' } = await paramsPromise
   const [request, formData] = await Promise.all([
     getContributionRequestBySlugForForm({ slug, user }),
@@ -47,6 +33,21 @@ export default async function EditContributionRequestPage({ params: paramsPromis
   ])
 
   if (!request) notFound()
+
+  if (!(await canManageContributionRequest(user, request))) {
+    return (
+      <main className="container pb-24 pt-12">
+        <p className="portal-kicker">Contribution Requests</p>
+        <h1 className="portal-title mt-4">Edit request</h1>
+        <p className="mt-5 max-w-2xl text-muted-foreground">
+          Your account does not have permission to edit this contribution request.
+        </p>
+        <Link className="portal-link mt-8 inline-flex" href={`/requests/${slug}`}>
+          Back to request
+        </Link>
+      </main>
+    )
+  }
 
   return (
     <main className="container max-w-4xl pb-24 pt-12">
@@ -79,10 +80,6 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
     title: `Edit ${slug}`,
   }
 }
-
-const canEditContributionRequests = (
-  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
-) => canContributeContent(user) || hasRole(user, 'member')
 
 const canPublishContributionRequests = (
   user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,

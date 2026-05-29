@@ -18,7 +18,7 @@ export const updateProjectsAsContributorOrSteward: Access = async ({ req }) => {
   }
 }
 
-export const manageProjectActivityItems: Access = async ({ data, req }) => {
+export const createProjectActivityItems: Access = async ({ data, req }) => {
   if (canContributeContent(req.user)) return true
 
   const projectIDs = await getStewardedProjectIDs(req)
@@ -31,6 +31,16 @@ export const manageProjectActivityItems: Access = async ({ data, req }) => {
     return projectIDs.map(String).includes(String(requestedProjectID))
   }
 
+  return false
+}
+
+export const manageProjectActivityItems: Access = async ({ req }) => {
+  if (canContributeContent(req.user)) return true
+
+  const projectIDs = await getStewardedProjectIDs(req)
+
+  if (!projectIDs.length) return false
+
   return {
     relatedProject: {
       in: projectIDs,
@@ -38,20 +48,33 @@ export const manageProjectActivityItems: Access = async ({ data, req }) => {
   }
 }
 
-export const manageProjectContributionRequests: Access = async ({ data, req }) => {
-  if (canContributeContent(req.user) || hasRole(req.user, 'member')) return true
+export const manageProjectContributionRequests: Access = async ({ req }) => {
+  if (canContributeContent(req.user)) return true
 
-  const projectIDs = await getStewardedProjectIDs(req)
+  const [profileIDs, projectIDs] = await Promise.all([
+    getProfileIDsForUser(req),
+    getStewardedProjectIDs(req),
+  ])
 
-  if (!projectIDs.length) return false
+  const or: Where[] = []
 
-  const requestedProjectID = getRelationshipID(data?.project)
-
-  if (requestedProjectID) {
-    return projectIDs.map(String).includes(String(requestedProjectID))
+  if (profileIDs.length) {
+    or.push({
+      owner: {
+        in: profileIDs,
+      },
+    })
   }
 
-  return projectWhere(projectIDs)
+  if (projectIDs.length) {
+    or.push(projectWhere(projectIDs))
+  }
+
+  if (!or.length) return false
+
+  return {
+    or,
+  }
 }
 
 export const canPublishProjectContributionRequest = async ({
@@ -113,7 +136,7 @@ export const getRelationshipID = (value: RelationshipValue): number | string | u
   return undefined
 }
 
-const getProfileIDsForUser = async (req: PayloadRequest): Promise<(number | string)[]> => {
+export const getProfileIDsForUser = async (req: PayloadRequest): Promise<(number | string)[]> => {
   if (!req.user?.id) return []
 
   const profiles = await req.payload.find({

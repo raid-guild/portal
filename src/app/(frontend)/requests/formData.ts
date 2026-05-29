@@ -1,6 +1,7 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent } from '@/access/roles'
 import type { ContributionRequest, User } from '@/payload-types'
 
 import type { RequestRelationOption } from './ContributionRequestForm'
@@ -75,6 +76,29 @@ export const toRequestFormValue = (request: ContributionRequest) => ({
   title: request.title,
   visibility: request.visibility,
 })
+
+export const canManageContributionRequest = async (
+  user: CurrentUser | null,
+  request: ContributionRequest,
+): Promise<boolean> => {
+  if (!user) return false
+  if (canContributeContent(user)) return true
+
+  const [currentProfile, stewardedProjectIDs] = await Promise.all([
+    getProfileForUser(user.id, user),
+    getStewardedProjectIDsForUser(user),
+  ])
+
+  const projectID = relationID(request.project)
+
+  if (projectID && stewardedProjectIDs.map(String).includes(String(projectID))) return true
+
+  if (request._status === 'published') return false
+
+  return Boolean(
+    currentProfile?.id && String(relationID(request.owner)) === String(currentProfile.id),
+  )
+}
 
 const getProfileOptions = async (user: CurrentUser): Promise<RequestRelationOption[]> => {
   const payload = await getPayload({ config: configPromise })

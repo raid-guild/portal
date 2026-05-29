@@ -38,6 +38,18 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
+    UPDATE "comments"
+    SET "post_id" = "comments_rels"."posts_id"
+    FROM "comments_rels"
+    WHERE "comments"."id" = "comments_rels"."parent_id"
+      AND "comments_rels"."path" = 'parent'
+      AND "comments_rels"."posts_id" IS NOT NULL;
+
+    DELETE FROM "comments"
+    WHERE "post_id" IS NULL;
+
+    ALTER TABLE "comments" ALTER COLUMN "post_id" SET NOT NULL;
+
     DROP INDEX IF EXISTS "comments_rels_contribution_requests_id_idx";
     DROP INDEX IF EXISTS "comments_rels_projects_id_idx";
     DROP INDEX IF EXISTS "comments_rels_events_id_idx";

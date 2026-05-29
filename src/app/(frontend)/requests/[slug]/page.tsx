@@ -6,7 +6,6 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canContributeContent, hasRole } from '@/access/roles'
 import { Comments } from '@/components/Comments'
 import type {
   ContributionRequest,
@@ -20,6 +19,7 @@ import type {
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { canManageContributionRequest } from '../formData'
 
 export const dynamic = 'force-dynamic'
 
@@ -64,11 +64,14 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
   const profiles = relationDocs<Profile>(request.relatedProfiles)
   const skills = relationDocs<ProfileSkill>(request.profileSkills)
   const responseURL = toSafeURL(request.responseURL)
-  const canEditRequest = canContributeContent(user) || hasRole(user, 'member')
+  const canEditRequest = await canManageContributionRequest(user, request)
 
   return (
     <main className="container pb-24 pt-12">
-      <Link className="portal-link" href={project?.slug ? `/projects/${project.slug}` : '/projects'}>
+      <Link
+        className="portal-link"
+        href={project?.slug ? `/projects/${project.slug}` : '/projects'}
+      >
         Back to projects
       </Link>
 
