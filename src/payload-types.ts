@@ -71,6 +71,7 @@ export interface Config {
     posts: Post;
     activityItems: ActivityItem;
     dailyBriefs: DailyBrief;
+    dailyEngagements: DailyEngagement;
     events: Event;
     pointEvents: PointEvent;
     projects: Project;
@@ -100,6 +101,7 @@ export interface Config {
     posts: PostsSelect<false> | PostsSelect<true>;
     activityItems: ActivityItemsSelect<false> | ActivityItemsSelect<true>;
     dailyBriefs: DailyBriefsSelect<false> | DailyBriefsSelect<true>;
+    dailyEngagements: DailyEngagementsSelect<false> | DailyEngagementsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
@@ -1239,6 +1241,33 @@ export interface DailyBrief {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dailyEngagements".
+ */
+export interface DailyEngagement {
+  id: number;
+  user: number | User;
+  profile?: (number | null) | Profile;
+  /**
+   * Normalized UTC day for once-per-day check-ins.
+   */
+  engagementDate: string;
+  vibe: 'raiding' | 'ripping' | 'meeting' | 'learning' | 'vibing' | 'blocked' | 'resting';
+  checkedIn: boolean;
+  /**
+   * Optional member note. Review status controls whether this can be displayed.
+   */
+  comment?: string | null;
+  commentStatus: 'none' | 'pending_review' | 'approved' | 'hidden' | 'rejected';
+  commentApprovedBy?: (number | null) | User;
+  commentApprovedAt?: string | null;
+  status: 'valid' | 'void';
+  voidReason?: string | null;
+  pointEvent?: (number | null) | PointEvent;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "pointEvents".
  */
 export interface PointEvent {
@@ -1254,6 +1283,7 @@ export interface PointEvent {
   relatedProject?: (number | null) | Project;
   relatedPost?: (number | null) | Post;
   relatedDailyBrief?: (number | null) | DailyBrief;
+  relatedDailyEngagement?: (number | null) | DailyEngagement;
   updatedAt: string;
   createdAt: string;
 }
@@ -1487,6 +1517,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'dailyBriefs';
         value: number | DailyBrief;
+      } | null)
+    | ({
+        relationTo: 'dailyEngagements';
+        value: number | DailyEngagement;
       } | null)
     | ({
         relationTo: 'events';
@@ -1857,6 +1891,26 @@ export interface DailyBriefsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "dailyEngagements_select".
+ */
+export interface DailyEngagementsSelect<T extends boolean = true> {
+  user?: T;
+  profile?: T;
+  engagementDate?: T;
+  vibe?: T;
+  checkedIn?: T;
+  comment?: T;
+  commentStatus?: T;
+  commentApprovedBy?: T;
+  commentApprovedAt?: T;
+  status?: T;
+  voidReason?: T;
+  pointEvent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
@@ -1936,6 +1990,7 @@ export interface PointEventsSelect<T extends boolean = true> {
   relatedProject?: T;
   relatedPost?: T;
   relatedDailyBrief?: T;
+  relatedDailyEngagement?: T;
   updatedAt?: T;
   createdAt?: T;
 }

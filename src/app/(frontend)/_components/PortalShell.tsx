@@ -24,6 +24,7 @@ import type {
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { toSafeURL } from '@/utilities/safeURL'
+import { VibeCheckButton } from './VibeCheckButton'
 
 type PortalHomeProps = {
   posts?: Post[]
@@ -34,6 +35,11 @@ type PortalHomeProps = {
 
 type DashboardProps = {
   dailyBrief?: DailyBrief | null
+  dailyEngagementSummary?: {
+    currentStreak: number
+    hasCheckedInToday: boolean
+    todayVibe?: string | null
+  }
   upcomingEvents?: Event[]
   pointEvents?: PointEvent[]
   pointsTotal?: number
@@ -315,6 +321,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
 
 export const PortalDashboard: React.FC<DashboardProps> = ({
   dailyBrief,
+  dailyEngagementSummary,
   upcomingEvents = [],
   pointEvents = [],
   pointsTotal = 0,
@@ -324,6 +331,11 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   user,
 }) => {
   const hasProfile = Boolean(profile)
+  const vibeSummary = dailyEngagementSummary || {
+    currentStreak: 0,
+    hasCheckedInToday: false,
+    todayVibe: null,
+  }
   const briefActivityItems = dailyBrief ? relationDocs<ActivityItem>(dailyBrief.activityItems) : []
   const briefThreads = dailyBrief ? relationDocs<Thread>(dailyBrief.threads) : []
   const nextEvent =
@@ -371,10 +383,17 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               <h2 className="portal-heading-sm">Guild Points</h2>
             </div>
             <p className="mt-2 text-sm text-muted-foreground">
-              Admin-issued contribution signal for future portal gamification.
+              Contribution signal for portal participation, publishing, sessions, and admin awards.
             </p>
           </div>
           <p className="portal-heading">{pointsTotal}</p>
+        </div>
+        <div className="mt-5 border-y border-border py-4">
+          <VibeCheckButton
+            currentStreak={vibeSummary.currentStreak}
+            hasCheckedInToday={vibeSummary.hasCheckedInToday}
+            todayVibe={vibeSummary.todayVibe}
+          />
         </div>
         <div className="mt-5 space-y-3">
           {pointEvents.length ? (

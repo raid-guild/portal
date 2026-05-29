@@ -13,6 +13,7 @@ import { Badges } from './collections/Badges'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
 import { DailyBriefs } from './collections/DailyBriefs'
+import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
@@ -108,6 +109,7 @@ export default buildConfig({
     Posts,
     ActivityItems,
     DailyBriefs,
+    DailyEngagements,
     Events,
     PointEvents,
     Projects,
