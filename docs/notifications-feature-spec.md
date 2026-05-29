@@ -419,8 +419,35 @@ strong relevance model such as following a project or thread.
 
 ### Weekly Portal Digest
 
-Run weekly for existing users who have not muted weekly digests. This is a
-product notification, not a general newsletter campaign.
+Run weekly from an external cron or task runner for existing users who have not
+muted weekly digests. This is a product notification, not a general newsletter
+campaign.
+
+Endpoint:
+
+```txt
+POST /api/notifications/digests/weekly/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+```
+
+Default behavior:
+
+- use the last seven days when `since` is omitted
+- create one `weekly_digest` notification per eligible user
+- skip users with no visible updates in the digest window
+- store grouped counts and item summaries in `metadata`
+- rely on notification dedupe keys for safe retries
+
+Optional request body:
+
+```json
+{
+  "since": "2026-05-22T00:00:00.000Z",
+  "until": "2026-05-29T00:00:00.000Z",
+  "limit": 100,
+  "dryRun": false
+}
+```
 
 Inputs can include:
 

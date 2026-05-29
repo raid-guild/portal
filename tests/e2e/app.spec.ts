@@ -2170,6 +2170,66 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     emailStatus: 'sent',
   })
   expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
+
+  const digestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(digestUnauthorizedResponse.status()).toBe(401)
+
+  const digestActivityTitle = `E2E Digest Activity ${hookSuffix}`
+  const digestSince = new Date(Date.now() - 60 * 60 * 1000)
+  const digestUntil = new Date(Date.now() + 60 * 60 * 1000)
+  const digestActivityResponse = await page.request.post('/api/activityItems', {
+    data: {
+      activityType: 'insight',
+      body: 'A deterministic activity item for weekly digest coverage.',
+      happenedAt: new Date().toISOString(),
+      title: digestActivityTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(digestActivityResponse.status()).toBe(201)
+
+  const digestResponse = await page.request.post('/api/notifications/digests/weekly/run', {
+    data: {
+      limit: 20,
+      since: digestSince.toISOString(),
+      until: digestUntil.toISOString(),
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(digestResponse.ok()).toBeTruthy()
+  const digestBody = await digestResponse.json()
+  expect(digestBody.created).toBeGreaterThanOrEqual(1)
+
+  const digestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'weekly_digest',
+    },
+  })
+  expect(digestNotificationsResponse.ok()).toBeTruthy()
+  const digestNotificationsBody = await digestNotificationsResponse.json()
+  expect(digestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your weekly RaidGuild portal digest',
+  })
+  expect(digestNotificationsBody.docs?.[0]?.body).toContain('activity update')
+  expect(digestNotificationsBody.docs?.[0]?.metadata?.counts?.activityItems).toBeGreaterThanOrEqual(
+    1,
+  )
 }
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
