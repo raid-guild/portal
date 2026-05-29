@@ -24,6 +24,8 @@ import * as migration_20260528_120000_post_visibility from './20260528_120000_po
 import * as migration_20260528_130000_daily_engagements from './20260528_130000_daily_engagements'
 import * as migration_20260528_200654_badges from './20260528_200654_badges'
 import * as migration_20260529_120000_notifications from './20260529_120000_notifications'
+import * as migration_20260529_130000_contribution_requests from './20260529_130000_contribution_requests'
+import * as migration_20260529_140000_comment_parents from './20260529_140000_comment_parents'
 
 export const migrations = [
   {
@@ -155,5 +157,15 @@ export const migrations = [
     up: migration_20260529_120000_notifications.up,
     down: migration_20260529_120000_notifications.down,
     name: '20260529_120000_notifications',
+  },
+  {
+    up: migration_20260529_130000_contribution_requests.up,
+    down: migration_20260529_130000_contribution_requests.down,
+    name: '20260529_130000_contribution_requests',
+  },
+  {
+    up: migration_20260529_140000_comment_parents.up,
+    down: migration_20260529_140000_comment_parents.down,
+    name: '20260529_140000_comment_parents',
   },
 ]

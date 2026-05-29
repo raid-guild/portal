@@ -7,8 +7,8 @@ import { shouldSkipRevalidation } from '@/utilities/revalidation'
 export const Comments: CollectionConfig = {
   slug: 'comments',
   admin: {
-    defaultColumns: ['content', 'author', 'post', 'isApproved', 'createdAt'],
-    description: 'Comments submitted by visitors on blog posts',
+    defaultColumns: ['content', 'author', 'parent', 'isApproved', 'createdAt'],
+    description: 'Flat comments submitted by visitors on portal content',
     hidden: hideFromNonEditors,
   },
   access: {
@@ -34,21 +34,31 @@ export const Comments: CollectionConfig = {
           return doc
         }
 
-        // Revalidate the post page when a comment is approved or updated
-        if (doc.post && (operation === 'update' || operation === 'create')) {
+        if (doc.parent && (operation === 'update' || operation === 'create')) {
           try {
-            const post = await req.payload.findByID({
-              collection: 'posts',
-              id: typeof doc.post === 'object' ? doc.post.id : doc.post,
+            const parent =
+              typeof doc.parent === 'object' && 'relationTo' in doc.parent && 'value' in doc.parent
+                ? doc.parent
+                : null
+
+            if (!parent) return doc
+
+            const relationTo = parent.relationTo
+            const value = parent.value
+            const id = typeof value === 'object' ? value.id : value
+            const parentDoc = await req.payload.findByID({
+              collection: relationTo,
+              id,
             })
 
-            if (post?.slug) {
-              const path = `/posts/${post.slug}`
-              req.payload.logger.info(`Revalidating post at path: ${path}`)
+            const path = getParentPath(relationTo, parentDoc)
+
+            if (path) {
+              req.payload.logger.info(`Revalidating comment parent at path: ${path}`)
               revalidatePath(path)
             }
           } catch (error) {
-            req.payload.logger.error('Error revalidating post after comment change:', error)
+            req.payload.logger.error('Error revalidating comment parent after comment change:', error)
           }
         }
         return doc
@@ -84,11 +94,11 @@ export const Comments: CollectionConfig = {
       ],
     },
     {
-      name: 'post',
+      name: 'parent',
       type: 'relationship',
-      relationTo: 'posts',
-      required: true,
       hasMany: false,
+      relationTo: ['posts', 'events', 'projects', 'contributionRequests'],
+      required: true,
       admin: {
         position: 'sidebar',
       },
@@ -124,4 +134,23 @@ export const Comments: CollectionConfig = {
     },
   ],
   timestamps: true,
+}
+
+const getParentPath = (
+  relationTo: 'contributionRequests' | 'events' | 'posts' | 'projects',
+  doc: Record<string, unknown> | null | undefined,
+): string | null => {
+  if (!doc) return null
+
+  if (relationTo === 'events') {
+    return typeof doc.id === 'number' || typeof doc.id === 'string' ? `/events/${doc.id}` : null
+  }
+
+  if (typeof doc.slug !== 'string' || !doc.slug) return null
+
+  if (relationTo === 'contributionRequests') return `/requests/${doc.slug}`
+  if (relationTo === 'posts') return `/posts/${doc.slug}`
+  if (relationTo === 'projects') return `/projects/${doc.slug}`
+
+  return null
 }

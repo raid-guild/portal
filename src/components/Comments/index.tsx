@@ -5,17 +5,25 @@ import type { Comment } from '../../payload-types'
 import CommentForm from './CommentForm'
 
 type Props = {
+  parent?: {
+    relationTo: 'contributionRequests' | 'events' | 'posts' | 'projects'
+    value: number | string
+  }
   postId: number | string
   className?: string
 }
 
-export const Comments: React.FC<Props> = async ({ postId, className }) => {
+export const Comments: React.FC<Props> = async ({ parent, postId, className }) => {
+  const commentParent = parent || { relationTo: 'posts' as const, value: postId }
   const payload = await getPayload({ config: configPromise })
   const { docs: comments } = await payload.find({
     collection: 'comments',
     where: {
-      post: {
-        equals: postId,
+      'parent.relationTo': {
+        equals: commentParent.relationTo,
+      },
+      'parent.value': {
+        equals: commentParent.value,
       },
       isApproved: {
         equals: true,
@@ -46,7 +54,7 @@ export const Comments: React.FC<Props> = async ({ postId, className }) => {
       </div>
 
       {/* Comment form */}
-      <CommentForm postId={postId} />
+      <CommentForm parent={commentParent} postId={postId} />
     </div>
   )
 }

@@ -75,6 +75,7 @@ export interface Config {
     events: Event;
     pointEvents: PointEvent;
     projects: Project;
+    contributionRequests: ContributionRequest;
     threads: Thread;
     badges: Badge;
     profileBadges: ProfileBadge;
@@ -107,6 +108,7 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    contributionRequests: ContributionRequestsSelect<false> | ContributionRequestsSelect<true>;
     threads: ThreadsSelect<false> | ThreadsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
@@ -823,6 +825,10 @@ export interface Project {
       }[]
     | null;
   coverImage?: (number | null) | Media;
+  /**
+   * Profiles responsible for keeping this project surface accurate and managing related requests/activity.
+   */
+  stewards?: (number | Profile)[] | null;
   contributors?: (number | Profile)[] | null;
   /**
    * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
@@ -1293,6 +1299,51 @@ export interface PointEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributionRequests".
+ */
+export interface ContributionRequest {
+  id: number;
+  title: string;
+  summary: string;
+  /**
+   * Longer context, constraints, and response instructions for the ask.
+   */
+  body?: string | null;
+  requestStatus: 'open' | 'in_discussion' | 'filled' | 'paused' | 'archived';
+  requestType: 'good_first_contribution' | 'help_wanted' | 'review' | 'feedback' | 'collaborator' | 'resource';
+  owner: number | Profile;
+  /**
+   * Primary project context for project-local display.
+   */
+  project?: (number | null) | Project;
+  /**
+   * Sessions or events this request came from or should display on.
+   */
+  relatedEvents?: (number | Event)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedPosts?: (number | Post)[] | null;
+  /**
+   * People who provide context, are referenced, or may be useful contacts.
+   */
+  relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Skills or roles that would help with this request.
+   */
+  profileSkills?: (number | ProfileSkill)[] | null;
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  /**
+   * Where someone should respond, such as Discord, GitHub, or a form.
+   */
+  responseURL?: string | null;
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "badges".
  */
 export interface Badge {
@@ -1452,7 +1503,7 @@ export interface SponsorInquiry {
   createdAt: string;
 }
 /**
- * Comments submitted by visitors on blog posts
+ * Flat comments submitted by visitors on portal content
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "comments".
@@ -1464,7 +1515,23 @@ export interface Comment {
     name: string;
     email: string;
   };
-  post: number | Post;
+  parent:
+    | {
+        relationTo: 'posts';
+        value: number | Post;
+      }
+    | {
+        relationTo: 'events';
+        value: number | Event;
+      }
+    | {
+        relationTo: 'projects';
+        value: number | Project;
+      }
+    | {
+        relationTo: 'contributionRequests';
+        value: number | ContributionRequest;
+      };
   /**
    * Comments must be approved before they appear publicly
    */
@@ -1601,6 +1668,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'projects';
         value: number | Project;
+      } | null)
+    | ({
+        relationTo: 'contributionRequests';
+        value: number | ContributionRequest;
       } | null)
     | ({
         relationTo: 'threads';
@@ -2115,6 +2186,7 @@ export interface ProjectsSelect<T extends boolean = true> {
         id?: T;
       };
   coverImage?: T;
+  stewards?: T;
   contributors?: T;
   canonicalProject?: T;
   relatedProjects?: T;
@@ -2175,6 +2247,32 @@ export interface ProjectsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  publishedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributionRequests_select".
+ */
+export interface ContributionRequestsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  body?: T;
+  requestStatus?: T;
+  requestType?: T;
+  owner?: T;
+  project?: T;
+  relatedEvents?: T;
+  relatedThreads?: T;
+  relatedPosts?: T;
+  relatedProfiles?: T;
+  profileSkills?: T;
+  visibility?: T;
+  responseURL?: T;
   publishedAt?: T;
   slug?: T;
   slugLock?: T;
@@ -2527,7 +2625,7 @@ export interface CommentsSelect<T extends boolean = true> {
         name?: T;
         email?: T;
       };
-  post?: T;
+  parent?: T;
   isApproved?: T;
   publishedAt?: T;
   updatedAt?: T;

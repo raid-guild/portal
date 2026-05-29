@@ -12,6 +12,7 @@ import { ActivityItems } from './collections/ActivityItems'
 import { Badges } from './collections/Badges'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
+import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
@@ -115,6 +116,7 @@ export default buildConfig({
     Events,
     PointEvents,
     Projects,
+    ContributionRequests,
     Threads,
     Badges,
     ProfileBadges,
