@@ -2,7 +2,22 @@ import type { Access, Where } from 'payload'
 
 import { canEditContent, hasRole, isAdmin } from './roles'
 
-const enabledNonAdmin: Where = {
+const enabledAuthenticated: Where = {
+  and: [
+    {
+      enabled: {
+        equals: true,
+      },
+    },
+    {
+      visibility: {
+        in: ['public', 'authenticated'],
+      },
+    },
+  ],
+}
+
+const enabledMember: Where = {
   and: [
     {
       enabled: {
@@ -19,7 +34,8 @@ const enabledNonAdmin: Where = {
 
 export const readVisibleModules: Access = ({ req: { user } }) => {
   if (canEditContent(user)) return true
-  if (hasRole(user, ['contributor', 'member', 'agent'])) return enabledNonAdmin
+  if (hasRole(user, ['member', 'agent'])) return enabledMember
+  if (user) return enabledAuthenticated
 
   return false
 }

@@ -193,9 +193,18 @@ const getModules = async (user: NonNullable<Awaited<ReturnType<typeof getCurrent
     sort: 'sortOrder,name',
     user,
     where: {
-      enabled: {
-        equals: true,
-      },
+      and: [
+        {
+          enabled: {
+            equals: true,
+          },
+        },
+        {
+          status: {
+            not_equals: 'archived',
+          },
+        },
+      ],
     },
   })
 
