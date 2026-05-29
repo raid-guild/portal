@@ -6,6 +6,7 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { Comments } from '@/components/Comments'
 import type {
   ContributionRequest,
   Event,
@@ -180,6 +181,11 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
           </div>
         </Section>
       ) : null}
+
+      <Comments
+        parent={{ relationTo: 'contributionRequests', value: request.id }}
+        postId={request.id}
+      />
     </main>
   )
 }

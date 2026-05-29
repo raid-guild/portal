@@ -41,7 +41,8 @@ Contribution requests are distinct from existing primitives:
   or lightweight calls for help after a live gathering.
 
 This collection is now used for independent status, visibility, API access, and
-project/session-local display. Comments, request-specific notifications, and a
+project/session-local display. Flat comments can attach directly to contribution
+requests through the shared comments model. Request-specific notifications and a
 dedicated board/list view remain deferred.
 
 ## Non-Goals
@@ -101,9 +102,9 @@ clarifying questions, lightweight offers to help, and follow-up notes. Comments
 should not carry status, ownership, skills, visibility, or canonical request
 details.
 
-Use flat comments only in the first version. Do not add comment replies,
-threaded discussions, or assignment semantics. If discussion becomes complex,
-link out to Discord, GitHub, or another tool through `responseURL`.
+Use flat comments only. Do not add comment replies, threaded discussions, or
+assignment semantics. If discussion becomes complex, link out to Discord,
+GitHub, or another tool through `responseURL`.
 
 ## Access Model
 
@@ -273,10 +274,8 @@ The first slice is intentionally narrow:
 8. Add e2e coverage for request creation, project display, session/event
    display, and detail rendering.
 
-Defer the global board, flat comments, and direct request notifications until
-there are enough real requests and enough recipient intent to justify them. The
-current comments model is post-specific, so request comments should wait until
-comments support a broader relationship model.
+Defer the global board and direct request notifications until there are enough
+real requests and enough recipient intent to justify them.
 
 ## Open Questions
 

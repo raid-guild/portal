@@ -1499,7 +1499,7 @@ export interface SponsorInquiry {
   createdAt: string;
 }
 /**
- * Comments submitted by visitors on blog posts
+ * Flat comments submitted by visitors on portal content
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "comments".
@@ -1511,7 +1511,23 @@ export interface Comment {
     name: string;
     email: string;
   };
-  post: number | Post;
+  parent:
+    | {
+        relationTo: 'posts';
+        value: number | Post;
+      }
+    | {
+        relationTo: 'events';
+        value: number | Event;
+      }
+    | {
+        relationTo: 'projects';
+        value: number | Project;
+      }
+    | {
+        relationTo: 'contributionRequests';
+        value: number | ContributionRequest;
+      };
   /**
    * Comments must be approved before they appear publicly
    */
@@ -2604,7 +2620,7 @@ export interface CommentsSelect<T extends boolean = true> {
         name?: T;
         email?: T;
       };
-  post?: T;
+  parent?: T;
   isApproved?: T;
   publishedAt?: T;
   updatedAt?: T;

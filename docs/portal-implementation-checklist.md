@@ -152,10 +152,13 @@
 - [x] Show open related requests on project detail pages.
 - [x] Show open related requests on session detail pages.
 - [x] Add `/requests/[slug]` detail pages.
+- [x] Extend comments to support posts, sessions, projects, and contribution
+  requests as parent records.
+- [x] Show flat comments on contribution request detail pages.
 - [x] Add e2e coverage for request creation, project display, session display,
   and detail page rendering.
 - [ ] Add a global request board when enough real requests exist.
-- [ ] Add flat comments once comments support non-post relationships.
+- [ ] Add session/project comment surfaces when the UX calls for them.
 - [ ] Add direct notifications only after recipient intent is clear.
 
 ## Deferred

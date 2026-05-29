@@ -430,6 +430,9 @@ async function verifyContributionRequests(adminPage: Page, publicPage: Page) {
   })
 
   expect(requestResponse.status()).toBe(201)
+  const requestBody = await requestResponse.json()
+  const requestID = requestBody.doc?.id || requestBody.id
+  expect(requestID).toBeTruthy()
 
   await publicPage.goto(`/projects/${project.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
@@ -445,6 +448,29 @@ async function verifyContributionRequests(adminPage: Page, publicPage: Page) {
   await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Useful Skills' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Respond' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+
+  const commentContent = `Request comment ${suffix}`
+  const commentResponse = await adminPage.request.post('/api/comments', {
+    data: {
+      author: {
+        email: `request-comment-${suffix}@example.com`,
+        name: 'Request Commenter',
+      },
+      content: commentContent,
+      isApproved: true,
+      parent: {
+        relationTo: 'contributionRequests',
+        value: requestID,
+      },
+      publishedAt: new Date().toISOString(),
+    },
+  })
+
+  expect(commentResponse.status()).toBe(201)
+
+  await publicPage.goto(`/requests/${slug}`)
+  await expect(publicPage.getByText(commentContent)).toBeVisible()
 }
 
 async function verifyMemberOnlyProjectVisibility(
