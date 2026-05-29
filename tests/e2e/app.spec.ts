@@ -6,6 +6,7 @@ import {
   adminPassword,
   agentRegistrationSecret,
   commentText,
+  notificationTaskSecret,
   payloadSecret,
   seededPosts,
   targetPost,
@@ -1997,6 +1998,64 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     deliveryChannel: 'in_app',
     emailStatus: 'none',
     title: `New weekly brief: ${hookBriefTitle}`,
+  })
+
+  const reminderUnauthorizedResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      dryRun: true,
+    },
+  })
+  expect(reminderUnauthorizedResponse.status()).toBe(401)
+
+  const reminderEventTitle = `E2E Reminder Session ${hookSuffix}`
+  const reminderStartsAt = new Date(Date.now() + 65 * 60 * 1000)
+  const reminderEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(reminderStartsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: reminderStartsAt.toISOString(),
+      summary: 'A session that should receive a one-hour reminder notification.',
+      title: reminderEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(reminderEventResponse.status()).toBe(201)
+  const reminderEventBody = await reminderEventResponse.json()
+  const reminderEventID = reminderEventBody.doc?.id || reminderEventBody.id
+  const reminderResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      lookaheadMinutes: 15,
+      windows: ['1h'],
+    },
+    headers: {
+      authorization: `Bearer ${notificationTaskSecret}`,
+    },
+  })
+  expect(reminderResponse.ok()).toBeTruthy()
+  const reminderBody = await reminderResponse.json()
+  expect(reminderBody.results?.[0]).toMatchObject({
+    eventsMatched: 1,
+    window: '1h',
+  })
+
+  const reminderNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(reminderEventID),
+      'where[type][equals]': 'event_reminder',
+    },
+  })
+  expect(reminderNotificationsResponse.ok()).toBeTruthy()
+  const reminderNotificationsBody = await reminderNotificationsResponse.json()
+  expect(reminderNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${reminderEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    priority: 'high',
+    title: `${reminderEventTitle} starts in 1 hour`,
   })
 }
 

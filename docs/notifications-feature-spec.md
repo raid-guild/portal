@@ -334,7 +334,33 @@ Some notifications are time-based and should not live only in collection hooks.
 
 ### Session Reminders
 
-Run on a schedule, for example every 15 minutes.
+Run from an external cron or task runner, for example every 15 minutes. The
+portal should expose a small authenticated endpoint and should not own a task
+scheduler.
+
+Endpoint:
+
+```txt
+POST /api/notifications/reminders/run
+Authorization: Bearer $NOTIFICATION_TASK_SECRET
+```
+
+Default behavior:
+
+- scan both `24h` and `1h` reminder windows
+- use a 15 minute lookahead window
+- create notifications only; email delivery remains a separate dispatcher step
+- allow retries by relying on dedupe keys
+
+Optional request body:
+
+```json
+{
+  "windows": ["24h", "1h"],
+  "lookaheadMinutes": 15,
+  "dryRun": false
+}
+```
 
 Find published visible events starting soon:
 

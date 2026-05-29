@@ -134,7 +134,8 @@
 - [x] Add `/me` notification preferences and personal portal jump links.
 - [x] Keep email delivery gated behind verified account email in the UI.
 - [x] Add notification creation hooks for published briefs, visible sessions, and badge awards.
-- [ ] Add scheduled digest/reminder job.
+- [x] Add cron-callable session reminder endpoint for external task runners.
+- [ ] Add scheduled digest endpoint for external task runners.
 - [ ] Add email dispatcher for verified, opted-in product notifications.
 - [ ] Add coalesced user update utility for weekly digest generation.
 

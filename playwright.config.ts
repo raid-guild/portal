@@ -4,6 +4,7 @@ import {
   agentRegistrationSecret,
   baseURL,
   databaseURL,
+  notificationTaskSecret,
   payloadSecret,
   port,
 } from './tests/e2e/env'
@@ -41,6 +42,7 @@ export default defineConfig({
       PAYLOAD_SECRET: payloadSecret,
       NEXT_PUBLIC_SERVER_URL: baseURL,
       AGENT_REGISTRATION_SECRET: agentRegistrationSecret,
+      NOTIFICATION_TASK_SECRET: notificationTaskSecret,
     },
     timeout: 180000,
   },
