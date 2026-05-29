@@ -411,6 +411,33 @@ Optional request body:
 
 Run daily or weekly depending on preference.
 
+Endpoint:
+
+```txt
+POST /api/notifications/digests/activity/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+```
+
+Default behavior:
+
+- use the last 24 hours when `since` is omitted
+- create one `activity_digest` notification per eligible user
+- include visible `activityItems` only
+- skip users with no visible activity in the digest window
+- respect `activityDigestFrequency`; `none` mutes this digest
+- rely on notification dedupe keys for safe retries
+
+Optional request body:
+
+```json
+{
+  "since": "2026-05-28T00:00:00.000Z",
+  "until": "2026-05-29T00:00:00.000Z",
+  "limit": 100,
+  "dryRun": false
+}
+```
+
 Find recent visible `activityItems`, group them into a short digest, and create
 one `activity_digest` notification per recipient.
 
@@ -473,6 +500,38 @@ Output one `weekly_digest` notification per recipient. The notification can use
 If email is enabled and verified, the same notification can become a weekly
 digest email. If email is not verified or not enabled, it should remain in-app
 only.
+
+## Operations
+
+External cron or task runners should call the notification endpoints with
+explicit periods where relevant.
+
+Recommended baseline:
+
+```txt
+Every 15 minutes:
+POST /api/notifications/reminders/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+{ "windows": ["24h", "1h"], "lookaheadMinutes": 15 }
+
+Every 5 minutes:
+POST /api/notifications/email/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+{ "limit": 50 }
+
+Daily, after the UTC day closes:
+POST /api/notifications/digests/activity/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+{ "since": "<start-of-day>", "until": "<end-of-day>", "limit": 100 }
+
+Weekly, after the UTC week closes:
+POST /api/notifications/digests/weekly/run
+Authorization: Bearer $AGENT_REGISTRATION_SECRET
+{ "since": "<start-of-week>", "until": "<end-of-week>", "limit": 100 }
+```
+
+Run the email dispatcher after digest jobs if email delivery should happen
+soon after digest records are created.
 
 Do not send weekly digests to early signup lists, unclaimed profile emails, or
 other email-only audiences.

@@ -138,7 +138,9 @@
 - [x] Add email dispatcher for verified, opted-in product notifications.
 - [x] Add coalesced user update utility for weekly digest generation.
 - [x] Add weekly digest endpoint for external task runners.
-- [ ] Add daily activity digest endpoint for external task runners.
+- [x] Add daily activity digest endpoint for external task runners.
+- [x] Document recommended external cron calls for notifications.
+- [x] Improve notification admin list columns/search for delivery triage.
 
 ## Deferred
 

@@ -8,6 +8,7 @@ type ChannelPreference = 'email' | 'in_app' | 'muted'
 type PreferenceKey =
   | 'badgeAwards'
   | 'briefs'
+  | 'activityDigest'
   | 'sessionAnnouncements'
   | 'sessionReminders'
   | 'weeklyDigest'
@@ -47,6 +48,7 @@ type CreateNotificationsForEligibleUsersArgs = {
 }
 
 const DEFAULT_PREFERENCES: Record<PreferenceKey, ChannelPreference> = {
+  activityDigest: 'in_app',
   badgeAwards: 'in_app',
   briefs: 'in_app',
   sessionAnnouncements: 'in_app',
@@ -165,11 +167,22 @@ const getDeliveryChannel = async ({
   user: User
 }): Promise<ChannelPreference> => {
   const preferences = await getPreferences({ req, userID: user.id })
-  const preferredChannel = preferences?.[preferenceKey] || DEFAULT_PREFERENCES[preferenceKey]
+  const preferredChannel =
+    preferenceKey === 'activityDigest'
+      ? getActivityDigestChannel(preferences)
+      : preferences?.[preferenceKey] || DEFAULT_PREFERENCES[preferenceKey]
 
   if (preferredChannel !== 'email') return preferredChannel
 
   return preferences?.emailEnabled && user.emailVerifiedAt ? 'email' : 'in_app'
+}
+
+const getActivityDigestChannel = (
+  preferences: NotificationPreference | null,
+): ChannelPreference => {
+  if (preferences?.activityDigestFrequency === 'none') return 'muted'
+
+  return DEFAULT_PREFERENCES.activityDigest
 }
 
 const getPreferences = async ({

@@ -2230,6 +2230,51 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   expect(digestNotificationsBody.docs?.[0]?.metadata?.counts?.activityItems).toBeGreaterThanOrEqual(
     1,
   )
+
+  const activityDigestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(activityDigestUnauthorizedResponse.status()).toBe(401)
+
+  const activityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        limit: 20,
+        since: digestSince.toISOString(),
+        until: digestUntil.toISOString(),
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(activityDigestResponse.ok()).toBeTruthy()
+  const activityDigestBody = await activityDigestResponse.json()
+  expect(activityDigestBody.created).toBeGreaterThanOrEqual(1)
+
+  const activityDigestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'activity_digest',
+    },
+  })
+  expect(activityDigestNotificationsResponse.ok()).toBeTruthy()
+  const activityDigestNotificationsBody = await activityDigestNotificationsResponse.json()
+  expect(activityDigestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your RaidGuild activity digest',
+  })
+  expect(activityDigestNotificationsBody.docs?.[0]?.metadata?.count).toBeGreaterThanOrEqual(1)
 }
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {

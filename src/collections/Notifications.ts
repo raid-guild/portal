@@ -17,9 +17,18 @@ export const Notifications: CollectionConfig = {
     update: updateOwnNotificationsOrEditor,
   },
   admin: {
-    defaultColumns: ['recipient', 'title', 'type', 'status', 'priority', 'createdAt'],
+    defaultColumns: [
+      'recipient',
+      'title',
+      'type',
+      'status',
+      'deliveryChannel',
+      'emailStatus',
+      'createdAt',
+    ],
     group: 'Portal',
     hidden: hideFromNonEditors,
+    listSearchableFields: ['title', 'body', 'dedupeKey', 'emailError'],
     useAsTitle: 'title',
   },
   fields: [
