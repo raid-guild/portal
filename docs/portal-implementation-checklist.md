@@ -142,10 +142,25 @@
 - [x] Document recommended external cron calls for notifications.
 - [x] Improve notification admin list columns/search for delivery triage.
 
+## Phase 7C: Contribution Requests
+
+- [x] Add `contributionRequests` collection for lightweight, discoverable asks.
+- [x] Relate requests to owner profiles, optional projects, related sessions,
+  threads, posts, profiles, and useful skills.
+- [x] Reuse portal visibility rules for public, authenticated, member, and admin
+  requests.
+- [x] Show open related requests on project detail pages.
+- [x] Show open related requests on session detail pages.
+- [x] Add `/requests/[slug]` detail pages.
+- [x] Add e2e coverage for request creation, project display, session display,
+  and detail page rendering.
+- [ ] Add a global request board when enough real requests exist.
+- [ ] Add flat comments once comments support non-post relationships.
+- [ ] Add direct notifications only after recipient intent is clear.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
-- [ ] Contribution requests / bounty system. See `docs/contribution-requests-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.

@@ -361,6 +361,92 @@ async function verifySeededProjectSpike(page: Page) {
   await expect(page.getByText('Render the Update Brief')).toBeVisible()
 }
 
+async function verifyContributionRequests(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Good first contribution ${suffix}`
+  const slug = `good-first-contribution-${suffix}`
+
+  const [projectResponse, eventResponse, profileResponse, skillResponse] = await Promise.all([
+    adminPage.request.get('/api/projects', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[slug][equals]': 'cohort-project-spike-portal',
+      },
+    }),
+    adminPage.request.get('/api/events', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[title][equals]': 'Cohort Project Spike Sync',
+      },
+    }),
+    adminPage.request.get('/api/profiles', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(projectResponse.ok()).toBeTruthy()
+  expect(eventResponse.ok()).toBeTruthy()
+  expect(profileResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+
+  const project = (await projectResponse.json()).docs?.[0]
+  const event = (await eventResponse.json()).docs?.[0]
+  const profile = (await profileResponse.json()).docs?.[0]
+  const skill = (await skillResponse.json()).docs?.[0]
+
+  expect(project?.id).toBeTruthy()
+  expect(event?.id).toBeTruthy()
+  expect(profile?.id).toBeTruthy()
+  expect(skill?.id).toBeTruthy()
+
+  const requestResponse = await adminPage.request.post('/api/contributionRequests', {
+    data: {
+      title,
+      slug,
+      summary: 'Help polish a small, well-scoped portal contribution.',
+      body: 'This should be visible from the linked project, session, and request detail page.',
+      owner: profile.id,
+      project: project.id,
+      profileSkills: [skill.id],
+      relatedEvents: [event.id],
+      requestStatus: 'open',
+      requestType: 'good_first_contribution',
+      responseURL: `/projects/${project.slug}`,
+      publishedAt: new Date().toISOString(),
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(requestResponse.status()).toBe(201)
+
+  await publicPage.goto(`/projects/${project.slug}`)
+  await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(publicPage.getByText('Good first contribution', { exact: true }).first()).toBeVisible()
+
+  await publicPage.goto(`/events/${event.id}`)
+  await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+
+  const detailResponse = await publicPage.goto(`/requests/${slug}`)
+  expect(detailResponse?.ok()).toBeTruthy()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Useful Skills' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Respond' })).toBeVisible()
+}
+
 async function verifyMemberOnlyProjectVisibility(
   adminPage: Page,
   browser: Browser,
@@ -2355,6 +2441,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
+  await verifyContributionRequests(page, publicPage)
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)

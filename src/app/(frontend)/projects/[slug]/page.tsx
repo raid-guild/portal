@@ -6,8 +6,10 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
+  ContributionRequest,
   Event,
   Media,
   Profile,
@@ -57,6 +59,7 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
   if (!project) notFound()
 
   const activityItems = relationDocs<ActivityItem>(project.activityItems)
+  const contributionRequests = await getOpenContributionRequestsForProject(project.id, user)
   const threads = relationDocs<Thread>(project.threads)
   const events = relationDocs<Event>(project.events)
   const contributors = relationDocs<Profile>(project.contributors)
@@ -163,6 +166,20 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
         </div>
 
         <div className="space-y-6">
+          <Section title="Contribution Requests">
+            {contributionRequests.length ? (
+              <div className="space-y-3">
+                {contributionRequests.map((request) => (
+                  <ContributionRequestCard key={request.id} request={request} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No open contribution requests are linked yet.
+              </p>
+            )}
+          </Section>
+
           <Section title="Next Sessions">
             {events.length ? (
               <div className="space-y-3">
@@ -337,3 +354,41 @@ const queryProjectBySlug = cache(async ({ slug, user }: { slug: string; user: Us
 
   return result.docs[0] || null
 })
+
+const getOpenContributionRequestsForProject = async (
+  projectID: number,
+  user: User | null,
+): Promise<ContributionRequest[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'contributionRequests',
+    depth: 2,
+    draft: false,
+    limit: 10,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-publishedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          requestStatus: {
+            equals: 'open',
+          },
+        },
+        {
+          project: {
+            equals: projectID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
