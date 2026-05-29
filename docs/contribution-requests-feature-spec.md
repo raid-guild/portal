@@ -244,6 +244,18 @@ Contribution requests should answer:
 - Who should respond?
 - What context does the helper need?
 
+Project involvement stays simple in the first slice:
+
+- `stewards` are accountable for keeping the project surface accurate.
+- `contributors` are the public credit/involvement list.
+- `contributionRequests` are the lightweight way to invite help or signal a good
+  next contribution.
+
+Do not add formal project membership, join requests, followers, active/past
+member state, or project-local roles until the portal needs lifecycle, filtering,
+history, or explicit request-to-join behavior. If that becomes necessary, add a
+separate `projectMemberships` feature module instead of overloading projects.
+
 ## Relationship To Sessions / Events
 
 Sessions can create very natural contribution requests because they already

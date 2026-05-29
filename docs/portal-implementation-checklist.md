@@ -169,6 +169,8 @@
 - [ ] Add a global request board when enough real requests exist.
 - [ ] Add session/project comment surfaces when the UX calls for them.
 - [ ] Add direct notifications only after recipient intent is clear.
+- [ ] Add a `projectMemberships` feature module only if project involvement
+  needs join requests, active/past state, followers, filtering, or history.
 
 ## Deferred
 
