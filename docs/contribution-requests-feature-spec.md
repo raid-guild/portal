@@ -37,6 +37,8 @@ Contribution requests are distinct from existing primitives:
   should not be the operational record.
 - `Project` can surface its own requests, but requests may also relate to
   sessions/events, posts, threads, profiles, or multiple contexts.
+- Project stewards can manage requests connected to their project because they
+  carry the local context for the ask.
 - `Event` can produce session-specific follow-ups, host asks, artifact requests,
   or lightweight calls for help after a live gathering.
 
@@ -115,6 +117,7 @@ Recommended default:
 - Members can read member-only requests.
 - Members and contributors can create draft requests.
 - Agents, editors, and admins can publish and archive requests.
+- Project stewards can publish and archive requests connected to their project.
 - A dedicated owner-only draft workspace is deferred; first-slice draft review
   still leans on Payload admin and trusted agent/editor workflows.
 

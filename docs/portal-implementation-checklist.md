@@ -158,6 +158,8 @@
 - [x] Add friendly create/edit routes for contribution requests.
 - [x] Let members and contributors draft requests while agents, editors, and
   admins can publish.
+- [x] Add project stewards so project owners can maintain project context and
+  publish project-scoped requests.
 - [x] Add e2e coverage for request creation, project display, session display,
   and detail page rendering.
 - [ ] Add a global request board when enough real requests exist.

@@ -59,10 +59,14 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
   if (!project) notFound()
 
-  const activityItems = relationDocs<ActivityItem>(project.activityItems)
+  const activityItems = mergeByID(
+    relationDocs<ActivityItem>(project.activityItems),
+    await getActivityItemsForProject(project.id, user),
+  )
   const contributionRequests = await getOpenContributionRequestsForProject(project.id, user)
   const threads = relationDocs<Thread>(project.threads)
   const events = relationDocs<Event>(project.events)
+  const stewards = relationDocs<Profile>(project.stewards)
   const contributors = relationDocs<Profile>(project.contributors)
   const skills = relationDocs<ProfileSkill>(project.profileSkills)
   const canCreateRequests = canContributeContent(user) || hasRole(user, 'member')
@@ -104,6 +108,17 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
                 {contributors.map((profile) => profile.displayName).join(', ')}
               </p>
             </div>
+          ) : null}
+          {stewards.length ? (
+            <div className="mt-5">
+              <p className="font-medium">Stewards</p>
+              <p className="mt-2 text-muted-foreground">
+                {stewards.map((profile) => profile.displayName).join(', ')}
+              </p>
+            </div>
+          ) : null}
+          {!stewards.length && user ? (
+            <p className="mt-5 text-xs text-muted-foreground">No steward is assigned yet.</p>
           ) : null}
           <ActionLink action={project.primaryCTA} className="mt-5 block" />
         </aside>
@@ -401,4 +416,50 @@ const getOpenContributionRequestsForProject = async (
   })
 
   return result.docs
+}
+
+const getActivityItemsForProject = async (
+  projectID: number,
+  user: User | null,
+): Promise<ActivityItem[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'activityItems',
+    depth: 0,
+    draft: false,
+    limit: 20,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-happenedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          relatedProject: {
+            equals: projectID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const mergeByID = <T extends { id: number }>(primary: T[], secondary: T[]): T[] => {
+  const seen = new Set<number>()
+  const merged: T[] = []
+
+  for (const item of [...primary, ...secondary]) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    merged.push(item)
+  }
+
+  return merged
 }

@@ -66,6 +66,12 @@ workflow:
 - `Contribution Requests`: lightweight asks for help surfaced from projects and
   sessions without becoming tasks or assignments.
 
+Projects can have profile-based stewards. Stewards are responsible for keeping a
+project page accurate, attaching relevant context, and managing project-scoped
+requests/activity. Contributors remain the people visibly involved or credited;
+stewardship is accountability for the presentation surface, not assignment
+workflow.
+
 ## Product Principles
 
 - Real over polished.

@@ -825,6 +825,10 @@ export interface Project {
       }[]
     | null;
   coverImage?: (number | null) | Media;
+  /**
+   * Profiles responsible for keeping this project surface accurate and managing related requests/activity.
+   */
+  stewards?: (number | Profile)[] | null;
   contributors?: (number | Profile)[] | null;
   /**
    * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
@@ -2182,6 +2186,7 @@ export interface ProjectsSelect<T extends boolean = true> {
         id?: T;
       };
   coverImage?: T;
+  stewards?: T;
   contributors?: T;
   canonicalProject?: T;
   relatedProjects?: T;

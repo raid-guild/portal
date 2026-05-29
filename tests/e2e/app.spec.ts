@@ -361,7 +361,7 @@ async function verifySeededProjectSpike(page: Page) {
   await expect(page.getByText('Render the Update Brief')).toBeVisible()
 }
 
-async function verifyContributionRequests(adminPage: Page, publicPage: Page) {
+async function verifyContributionRequests(adminPage: Page, browser: Browser, publicPage: Page) {
   const suffix = Date.now()
   const title = `Good first contribution ${suffix}`
   const slug = `good-first-contribution-${suffix}`
@@ -471,6 +471,131 @@ async function verifyContributionRequests(adminPage: Page, publicPage: Page) {
 
   await publicPage.goto(`/requests/${slug}`)
   await expect(publicPage.getByText(commentContent)).toBeVisible()
+
+  const stewardPassword = 'ChangeMe123!'
+  const stewardEmail = `project-steward-${suffix}@example.com`
+  const stewardDisplayName = `Project Steward ${suffix}`
+  const stewardHandle = `project-steward-${suffix}`
+  const stewardProjectTitle = `Stewarded Project ${suffix}`
+  const stewardProjectSlug = `stewarded-project-${suffix}`
+  const stewardActivityTitle = `Steward activity ${suffix}`
+  const stewardRequestTitle = `Steward request ${suffix}`
+  const stewardRequestSlug = `steward-request-${suffix}`
+
+  const roleResponse = await adminPage.request.get('/api/profileRoles', {
+    params: {
+      depth: '0',
+      limit: '1',
+    },
+  })
+  expect(roleResponse.ok()).toBeTruthy()
+  const roleID = (await roleResponse.json()).docs?.[0]?.id
+  expect(roleID).toBeTruthy()
+
+  const stewardUserResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: stewardEmail,
+      name: stewardDisplayName,
+      password: stewardPassword,
+      roles: ['member'],
+    },
+  })
+  expect(stewardUserResponse.status()).toBe(201)
+  const stewardUser = await stewardUserResponse.json()
+  const stewardUserID = stewardUser.doc?.id || stewardUser.id
+
+  const stewardProfileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'A member profile stewarding a project surface.',
+      displayName: stewardDisplayName,
+      handle: stewardHandle,
+      profileRoles: [roleID],
+      profileSkills: [skill.id],
+      status: 'active',
+      user: stewardUserID,
+      visibility: 'public',
+    },
+  })
+  expect(stewardProfileResponse.status()).toBe(201)
+  const stewardProfile = await stewardProfileResponse.json()
+  const stewardProfileID = stewardProfile.doc?.id || stewardProfile.id
+
+  const stewardProjectResponse = await adminPage.request.post('/api/projects', {
+    data: {
+      title: stewardProjectTitle,
+      summary: 'A project maintained by a member steward.',
+      lastActiveAt: new Date().toISOString(),
+      projectStatus: 'active',
+      publishedAt: new Date().toISOString(),
+      slug: stewardProjectSlug,
+      stewards: [stewardProfileID],
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardProjectResponse.status()).toBe(201)
+  const stewardProject = await stewardProjectResponse.json()
+  const stewardProjectID = stewardProject.doc?.id || stewardProject.id
+
+  const stewardContext = await browser.newContext()
+  const stewardPage = await stewardContext.newPage()
+  await stewardPage.goto('/login')
+  await fillFirst(stewardPage.getByLabel(/^email$/i), stewardEmail)
+  await fillFirst(stewardPage.getByLabel(/^password$/i), stewardPassword)
+  await stewardPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(stewardPage).toHaveURL(/\/dashboard/)
+
+  const stewardProjectPatchResponse = await stewardPage.request.patch(
+    `/api/projects/${stewardProjectID}`,
+    {
+      data: {
+        contributors: [stewardProfileID],
+        resources: [
+          {
+            label: 'Steward notes',
+            resourceType: 'doc',
+            url: 'https://example.com/steward-notes',
+          },
+        ],
+      },
+    },
+  )
+  expect(stewardProjectPatchResponse.status()).toBe(200)
+
+  const stewardActivityResponse = await stewardPage.request.post('/api/activityItems', {
+    data: {
+      activityType: 'contribution',
+      body: 'The project steward attached a factual update.',
+      happenedAt: new Date().toISOString(),
+      relatedProject: stewardProjectID,
+      title: stewardActivityTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardActivityResponse.status()).toBe(201)
+
+  const stewardRequestResponse = await stewardPage.request.post('/api/contributionRequests', {
+    data: {
+      title: stewardRequestTitle,
+      slug: stewardRequestSlug,
+      summary: 'A project steward can publish a project-scoped request.',
+      body: 'This request is tied to a stewarded project.',
+      owner: stewardProfileID,
+      project: stewardProjectID,
+      requestStatus: 'open',
+      requestType: 'help_wanted',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardRequestResponse.status()).toBe(201)
+  await stewardContext.close()
+
+  await publicPage.goto(`/projects/${stewardProjectSlug}`)
+  await expect(publicPage.getByText(stewardDisplayName).first()).toBeVisible()
+  await expect(publicPage.getByText(stewardActivityTitle)).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: stewardRequestTitle })).toBeVisible()
 }
 
 async function verifyMemberOnlyProjectVisibility(
@@ -2467,7 +2592,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
-  await verifyContributionRequests(page, publicPage)
+  await verifyContributionRequests(page, browser, publicPage)
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)

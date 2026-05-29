@@ -1,7 +1,12 @@
 import type { CollectionConfig } from 'payload'
 
+import {
+  canPublishProjectContributionRequest,
+  getRelationshipID,
+  manageProjectContributionRequests,
+} from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
-import { canContributeContent, canEditContent, contentContributors, hasRole } from '@/access/roles'
+import { canContributeContent, contentContributors, hasRole } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
 
@@ -11,7 +16,7 @@ export const ContributionRequests: CollectionConfig = {
     create: ({ req: { user } }) => canContributeContent(user) || hasRole(user, 'member'),
     delete: contentContributors,
     read: readVisiblePortalContent,
-    update: ({ req: { user } }) => canContributeContent(user) || hasRole(user, 'member'),
+    update: manageProjectContributionRequests,
   },
   admin: {
     defaultColumns: ['title', 'requestType', 'requestStatus', 'project', 'visibility', '_status'],
@@ -223,9 +228,15 @@ export const ContributionRequests: CollectionConfig = {
   ],
   hooks: {
     beforeChange: [
-      ({ data, operation, req }) => {
+      async ({ data, operation, originalDoc, req }) => {
         if (!req.user) return data
-        if (canEditContent(req.user) || hasRole(req.user, 'agent')) return data
+        const projectID = getRelationshipID(data.project) || getRelationshipID(originalDoc?.project)
+        const canPublish = await canPublishProjectContributionRequest({
+          projectID,
+          req,
+        })
+
+        if (canPublish) return data
 
         const nextData = {
           ...data,
