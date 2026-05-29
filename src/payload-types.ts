@@ -78,6 +78,8 @@ export interface Config {
     threads: Thread;
     badges: Badge;
     profileBadges: ProfileBadge;
+    notifications: Notification;
+    notificationPreferences: NotificationPreference;
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
@@ -108,6 +110,8 @@ export interface Config {
     threads: ThreadsSelect<false> | ThreadsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
@@ -1339,6 +1343,70 @@ export interface ProfileBadge {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  recipient: number | User;
+  title: string;
+  body?: string | null;
+  type:
+    | 'event_published'
+    | 'event_reminder'
+    | 'brief_published'
+    | 'activity_digest'
+    | 'weekly_digest'
+    | 'badge_awarded'
+    | 'profile_claim'
+    | 'system';
+  status: 'unread' | 'read' | 'archived';
+  priority: 'normal' | 'high';
+  deliveryChannel: 'in_app' | 'email';
+  emailStatus: 'none' | 'pending' | 'sent' | 'failed' | 'skipped';
+  emailError?: string | null;
+  readAt?: string | null;
+  archivedAt?: string | null;
+  emailedAt?: string | null;
+  dedupeKey?: string | null;
+  actionLabel?: string | null;
+  actionURL?: string | null;
+  relatedEvent?: (number | null) | Event;
+  relatedBrief?: (number | null) | DailyBrief;
+  relatedActivityItem?: (number | null) | ActivityItem;
+  relatedProject?: (number | null) | Project;
+  relatedThread?: (number | null) | Thread;
+  relatedBadgeAward?: (number | null) | ProfileBadge;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notificationPreferences".
+ */
+export interface NotificationPreference {
+  id: number;
+  user: number | User;
+  emailEnabled?: boolean | null;
+  sessionAnnouncements: 'in_app' | 'email' | 'muted';
+  sessionReminders: 'in_app' | 'email' | 'muted';
+  briefs: 'in_app' | 'email' | 'muted';
+  activityDigestFrequency: 'none' | 'daily' | 'weekly';
+  weeklyDigest: 'in_app' | 'email' | 'muted';
+  badgeAwards: 'in_app' | 'email' | 'muted';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Private intake records for sponsor, bounty, project, and funding opportunities.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1545,6 +1613,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'profileBadges';
         value: number | ProfileBadge;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'notificationPreferences';
+        value: number | NotificationPreference;
       } | null)
     | ({
         relationTo: 'profiles';
@@ -2169,6 +2245,52 @@ export interface ProfileBadgesSelect<T extends boolean = true> {
   note?: T;
   featured?: T;
   visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  recipient?: T;
+  title?: T;
+  body?: T;
+  type?: T;
+  status?: T;
+  priority?: T;
+  deliveryChannel?: T;
+  emailStatus?: T;
+  emailError?: T;
+  readAt?: T;
+  archivedAt?: T;
+  emailedAt?: T;
+  dedupeKey?: T;
+  actionLabel?: T;
+  actionURL?: T;
+  relatedEvent?: T;
+  relatedBrief?: T;
+  relatedActivityItem?: T;
+  relatedProject?: T;
+  relatedThread?: T;
+  relatedBadgeAward?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notificationPreferences_select".
+ */
+export interface NotificationPreferencesSelect<T extends boolean = true> {
+  user?: T;
+  emailEnabled?: T;
+  sessionAnnouncements?: T;
+  sessionReminders?: T;
+  briefs?: T;
+  activityDigestFrequency?: T;
+  weeklyDigest?: T;
+  badgeAwards?: T;
   updatedAt?: T;
   createdAt?: T;
 }

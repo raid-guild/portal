@@ -1762,6 +1762,7 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('link', { name: 'My Profile' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Open account menu' }).click()
   await expect(page.getByRole('menuitem', { name: 'My profile' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Inbox' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -1835,11 +1836,66 @@ async function verifyDailyVibeCheck(page: Page) {
   })
 }
 
+async function verifyInboxAndNotificationPreferences(page: Page) {
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const meBody = await meResponse.json()
+  const userID = meBody.user?.id
+  expect(userID).toBeTruthy()
+
+  const notificationTitle = `E2E Inbox Notice ${Date.now()}`
+  const notificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open dashboard',
+      actionURL: '/dashboard',
+      body: 'A deterministic notification for inbox e2e coverage.',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: notificationTitle,
+      type: 'system',
+    },
+  })
+  expect(notificationResponse.status()).toBe(201)
+
+  await page.goto('/dashboard')
+  await page.getByRole('button', { name: 'Open account menu' }).click()
+  const inboxItem = page.getByRole('menuitem', { name: /Inbox/ })
+  await expect(inboxItem).toBeVisible()
+  await expect(inboxItem).toContainText('1')
+  await inboxItem.click()
+
+  await expect(page).toHaveURL(/\/inbox/)
+  await expect(page.getByRole('heading', { exact: true, name: 'Inbox' })).toBeVisible()
+  await expect(page.getByText(notificationTitle)).toBeVisible()
+  await expect(page.getByText('A deterministic notification for inbox e2e coverage.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open dashboard' })).toHaveAttribute(
+    'href',
+    '/dashboard',
+  )
+  await page.getByRole('button', { name: 'Mark read' }).click()
+  await expect(page.getByRole('button', { name: 'Mark read' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Archive' }).click()
+  await expect(page.getByText('Archived')).toBeVisible()
+
+  await page.goto('/me#notifications')
+  await expect(page.getByRole('heading', { name: 'Notification preferences' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Inbox/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Daily check-in/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Badges/ })).toBeVisible()
+  await expect(
+    page.getByText(/Verify your account email to enable email notifications/i),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save preferences' }).click()
+  await expect(page.getByText('Preferences saved.')).toBeVisible()
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page)
+  await verifyInboxAndNotificationPreferences(page)
   await createProfileAndVerifyContributorCreateLinks(page)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)

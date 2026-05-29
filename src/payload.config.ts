@@ -16,6 +16,8 @@ import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
 import { Media } from './collections/Media'
+import { NotificationPreferences } from './collections/NotificationPreferences'
+import { Notifications } from './collections/Notifications'
 import { Pages } from './collections/Pages'
 import { PointEvents } from './collections/PointEvents'
 import { Profiles } from './collections/Profiles'
@@ -116,6 +118,8 @@ export default buildConfig({
     Threads,
     Badges,
     ProfileBadges,
+    Notifications,
+    NotificationPreferences,
     Profiles,
     ProfileSkills,
     ProfileRoles,
