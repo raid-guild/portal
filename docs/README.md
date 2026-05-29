@@ -67,6 +67,7 @@ The main portal surfaces are:
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
+- [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)
 - [Modules feature spec](./modules-feature-spec.md)
 - [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md)
