@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canContributeContent, canEditContent } from '@/access/roles'
-import type { Event, Post, Profile, Project, Thread } from '@/payload-types'
+import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
+import type { ContributionRequest, Event, Post, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -92,6 +93,8 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const canViewFullDetails = Boolean(user)
   const canManageSessions = canContributeContent(user)
   const canViewDiscordSyncErrors = canEditContent(user)
+  const canCreateRequests = canManageSessions || hasRole(user, 'member')
+  const contributionRequests = await getOpenContributionRequestsForEvent(event.id, user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
   const startsAt = new Date(event.startsAt)
   const isPast = startsAt.getTime() < Date.now()
@@ -181,6 +184,28 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
       {isPast && event.summary ? (
         <Section title="Session Notes">
           <p className="max-w-3xl text-base leading-7 text-muted-foreground">{event.summary}</p>
+        </Section>
+      ) : null}
+
+      {canViewFullDetails || contributionRequests.length ? (
+        <Section title="Contribution Requests">
+          {canCreateRequests ? (
+            <Link
+              className="portal-admin-link mb-4 inline-flex"
+              href={`/requests/new?event=${event.id}`}
+            >
+              Create follow-up request
+            </Link>
+          ) : null}
+          {contributionRequests.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {contributionRequests.map((request) => (
+                <ContributionRequestCard key={request.id} request={request} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState text="No open follow-up requests have been linked to this session yet." />
+          )}
         </Section>
       ) : null}
 
@@ -510,6 +535,44 @@ const getDerivedPosts = async (
         {
           sourceSession: {
             equals: eventID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getOpenContributionRequestsForEvent = async (
+  eventID: number,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+): Promise<ContributionRequest[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'contributionRequests',
+    depth: 2,
+    draft: false,
+    limit: 10,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-publishedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          requestStatus: {
+            equals: 'open',
+          },
+        },
+        {
+          relatedEvents: {
+            in: [eventID],
           },
         },
       ],

@@ -75,9 +75,13 @@ export interface Config {
     events: Event;
     pointEvents: PointEvent;
     projects: Project;
+    contributionRequests: ContributionRequest;
     threads: Thread;
     badges: Badge;
     profileBadges: ProfileBadge;
+    modules: Module;
+    notifications: Notification;
+    notificationPreferences: NotificationPreference;
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
@@ -105,9 +109,13 @@ export interface Config {
     events: EventsSelect<false> | EventsSelect<true>;
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
+    contributionRequests: ContributionRequestsSelect<false> | ContributionRequestsSelect<true>;
     threads: ThreadsSelect<false> | ThreadsSelect<true>;
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
+    modules: ModulesSelect<false> | ModulesSelect<true>;
+    notifications: NotificationsSelect<false> | NotificationsSelect<true>;
+    notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
@@ -819,6 +827,10 @@ export interface Project {
       }[]
     | null;
   coverImage?: (number | null) | Media;
+  /**
+   * Profiles responsible for keeping this project surface accurate and managing related requests/activity.
+   */
+  stewards?: (number | Profile)[] | null;
   contributors?: (number | Profile)[] | null;
   /**
    * Use when this record is a repo, artifact, or duplicate that belongs under a primary project.
@@ -1289,6 +1301,51 @@ export interface PointEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributionRequests".
+ */
+export interface ContributionRequest {
+  id: number;
+  title: string;
+  summary: string;
+  /**
+   * Longer context, constraints, and response instructions for the ask.
+   */
+  body?: string | null;
+  requestStatus: 'open' | 'in_discussion' | 'filled' | 'paused' | 'archived';
+  requestType: 'good_first_contribution' | 'help_wanted' | 'review' | 'feedback' | 'collaborator' | 'resource';
+  owner: number | Profile;
+  /**
+   * Primary project context for project-local display.
+   */
+  project?: (number | null) | Project;
+  /**
+   * Sessions or events this request came from or should display on.
+   */
+  relatedEvents?: (number | Event)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedPosts?: (number | Post)[] | null;
+  /**
+   * People who provide context, are referenced, or may be useful contacts.
+   */
+  relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Skills or roles that would help with this request.
+   */
+  profileSkills?: (number | ProfileSkill)[] | null;
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  /**
+   * Where someone should respond, such as Discord, GitHub, or a form.
+   */
+  responseURL?: string | null;
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "badges".
  */
 export interface Badge {
@@ -1339,6 +1396,136 @@ export interface ProfileBadge {
   createdAt: string;
 }
 /**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules".
+ */
+export interface Module {
+  id: number;
+  name: string;
+  summary: string;
+  status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  /**
+   * Enabled modules are listed on member-facing module surfaces.
+   */
+  enabled?: boolean | null;
+  featured?: boolean | null;
+  sortOrder?: number | null;
+  /**
+   * Member-facing route when the module has a usable surface.
+   */
+  entryRoute?: string | null;
+  /**
+   * Optional admin route for managing module-owned records.
+   */
+  adminRoute?: string | null;
+  /**
+   * Spec, docs, or planning link for this module.
+   */
+  specURL?: string | null;
+  /**
+   * Optional implementation repository or PR link.
+   */
+  repositoryURL?: string | null;
+  /**
+   * Profiles stewarding or championing this module.
+   */
+  owners?: (number | Profile)[] | null;
+  /**
+   * Primary project that produced or maintains this module.
+   */
+  sourceProject?: (number | null) | Project;
+  relatedProjects?: (number | Project)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Payload collection slugs owned by this module.
+   */
+  ownedCollections?:
+    | {
+        collectionSlug: string;
+        id?: string | null;
+      }[]
+    | null;
+  corePrimitiveRelationships?:
+    | {
+        primitive: 'brief' | 'project' | 'thread' | 'activityItem' | 'event' | 'profile' | 'post';
+        id?: string | null;
+      }[]
+    | null;
+  graduationCriteria?: string | null;
+  riskNotes?: string | null;
+  lastReviewedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications".
+ */
+export interface Notification {
+  id: number;
+  recipient: number | User;
+  title: string;
+  body?: string | null;
+  type:
+    | 'event_published'
+    | 'event_reminder'
+    | 'brief_published'
+    | 'activity_digest'
+    | 'weekly_digest'
+    | 'badge_awarded'
+    | 'profile_claim'
+    | 'system';
+  status: 'unread' | 'read' | 'archived';
+  priority: 'normal' | 'high';
+  deliveryChannel: 'in_app' | 'email';
+  emailStatus: 'none' | 'pending' | 'sent' | 'failed' | 'skipped';
+  emailError?: string | null;
+  readAt?: string | null;
+  archivedAt?: string | null;
+  emailedAt?: string | null;
+  dedupeKey?: string | null;
+  actionLabel?: string | null;
+  actionURL?: string | null;
+  relatedEvent?: (number | null) | Event;
+  relatedBrief?: (number | null) | DailyBrief;
+  relatedActivityItem?: (number | null) | ActivityItem;
+  relatedProject?: (number | null) | Project;
+  relatedThread?: (number | null) | Thread;
+  relatedBadgeAward?: (number | null) | ProfileBadge;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notificationPreferences".
+ */
+export interface NotificationPreference {
+  id: number;
+  user: number | User;
+  emailEnabled?: boolean | null;
+  sessionAnnouncements: 'in_app' | 'email' | 'muted';
+  sessionReminders: 'in_app' | 'email' | 'muted';
+  briefs: 'in_app' | 'email' | 'muted';
+  activityDigestFrequency: 'none' | 'daily' | 'weekly';
+  weeklyDigest: 'in_app' | 'email' | 'muted';
+  badgeAwards: 'in_app' | 'email' | 'muted';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Private intake records for sponsor, bounty, project, and funding opportunities.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1384,7 +1571,7 @@ export interface SponsorInquiry {
   createdAt: string;
 }
 /**
- * Comments submitted by visitors on blog posts
+ * Flat comments submitted by visitors on portal content
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "comments".
@@ -1396,7 +1583,23 @@ export interface Comment {
     name: string;
     email: string;
   };
-  post: number | Post;
+  parent:
+    | {
+        relationTo: 'posts';
+        value: number | Post;
+      }
+    | {
+        relationTo: 'events';
+        value: number | Event;
+      }
+    | {
+        relationTo: 'projects';
+        value: number | Project;
+      }
+    | {
+        relationTo: 'contributionRequests';
+        value: number | ContributionRequest;
+      };
   /**
    * Comments must be approved before they appear publicly
    */
@@ -1535,6 +1738,10 @@ export interface PayloadLockedDocument {
         value: number | Project;
       } | null)
     | ({
+        relationTo: 'contributionRequests';
+        value: number | ContributionRequest;
+      } | null)
+    | ({
         relationTo: 'threads';
         value: number | Thread;
       } | null)
@@ -1545,6 +1752,18 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'profileBadges';
         value: number | ProfileBadge;
+      } | null)
+    | ({
+        relationTo: 'modules';
+        value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'notifications';
+        value: number | Notification;
+      } | null)
+    | ({
+        relationTo: 'notificationPreferences';
+        value: number | NotificationPreference;
       } | null)
     | ({
         relationTo: 'profiles';
@@ -2039,6 +2258,7 @@ export interface ProjectsSelect<T extends boolean = true> {
         id?: T;
       };
   coverImage?: T;
+  stewards?: T;
   contributors?: T;
   canonicalProject?: T;
   relatedProjects?: T;
@@ -2099,6 +2319,32 @@ export interface ProjectsSelect<T extends boolean = true> {
         url?: T;
         id?: T;
       };
+  publishedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contributionRequests_select".
+ */
+export interface ContributionRequestsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  body?: T;
+  requestStatus?: T;
+  requestType?: T;
+  owner?: T;
+  project?: T;
+  relatedEvents?: T;
+  relatedThreads?: T;
+  relatedPosts?: T;
+  relatedProfiles?: T;
+  profileSkills?: T;
+  visibility?: T;
+  responseURL?: T;
   publishedAt?: T;
   slug?: T;
   slugLock?: T;
@@ -2169,6 +2415,93 @@ export interface ProfileBadgesSelect<T extends boolean = true> {
   note?: T;
   featured?: T;
   visibility?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "modules_select".
+ */
+export interface ModulesSelect<T extends boolean = true> {
+  name?: T;
+  summary?: T;
+  status?: T;
+  visibility?: T;
+  enabled?: T;
+  featured?: T;
+  sortOrder?: T;
+  entryRoute?: T;
+  adminRoute?: T;
+  specURL?: T;
+  repositoryURL?: T;
+  owners?: T;
+  sourceProject?: T;
+  relatedProjects?: T;
+  relatedThreads?: T;
+  relatedProfiles?: T;
+  ownedCollections?:
+    | T
+    | {
+        collectionSlug?: T;
+        id?: T;
+      };
+  corePrimitiveRelationships?:
+    | T
+    | {
+        primitive?: T;
+        id?: T;
+      };
+  graduationCriteria?: T;
+  riskNotes?: T;
+  lastReviewedAt?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notifications_select".
+ */
+export interface NotificationsSelect<T extends boolean = true> {
+  recipient?: T;
+  title?: T;
+  body?: T;
+  type?: T;
+  status?: T;
+  priority?: T;
+  deliveryChannel?: T;
+  emailStatus?: T;
+  emailError?: T;
+  readAt?: T;
+  archivedAt?: T;
+  emailedAt?: T;
+  dedupeKey?: T;
+  actionLabel?: T;
+  actionURL?: T;
+  relatedEvent?: T;
+  relatedBrief?: T;
+  relatedActivityItem?: T;
+  relatedProject?: T;
+  relatedThread?: T;
+  relatedBadgeAward?: T;
+  metadata?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "notificationPreferences_select".
+ */
+export interface NotificationPreferencesSelect<T extends boolean = true> {
+  user?: T;
+  emailEnabled?: T;
+  sessionAnnouncements?: T;
+  sessionReminders?: T;
+  briefs?: T;
+  activityDigestFrequency?: T;
+  weeklyDigest?: T;
+  badgeAwards?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2405,7 +2738,7 @@ export interface CommentsSelect<T extends boolean = true> {
         name?: T;
         email?: T;
       };
-  post?: T;
+  parent?: T;
   isApproved?: T;
   publishedAt?: T;
   updatedAt?: T;

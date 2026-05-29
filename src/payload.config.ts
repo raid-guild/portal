@@ -12,10 +12,14 @@ import { ActivityItems } from './collections/ActivityItems'
 import { Badges } from './collections/Badges'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
+import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
 import { Media } from './collections/Media'
+import { Modules } from './collections/Modules'
+import { NotificationPreferences } from './collections/NotificationPreferences'
+import { Notifications } from './collections/Notifications'
 import { Pages } from './collections/Pages'
 import { PointEvents } from './collections/PointEvents'
 import { Profiles } from './collections/Profiles'
@@ -113,9 +117,13 @@ export default buildConfig({
     Events,
     PointEvents,
     Projects,
+    ContributionRequests,
     Threads,
     Badges,
     ProfileBadges,
+    Modules,
+    Notifications,
+    NotificationPreferences,
     Profiles,
     ProfileSkills,
     ProfileRoles,

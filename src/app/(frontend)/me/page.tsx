@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 
 import type { Event, Post, Profile, Project, User } from '@/payload-types'
 import { EmailVerificationCard } from '../_components/EmailVerificationCard'
+import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
@@ -31,11 +32,25 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
     redirect(`/login?next=${encodeURIComponent(returnPath)}`)
   }
 
-  const [profile, pointsTotal, skills, roles, claimableProfiles] = await Promise.all([
+  const [
+    badgeCount,
+    checkedInToday,
+    notificationPreferences,
+    profile,
+    pointsTotal,
+    skills,
+    roles,
+    unreadNotifications,
+    claimableProfiles,
+  ] = await Promise.all([
+    getBadgeCount(user),
+    getCheckedInToday(user),
+    getNotificationPreferences(user),
     getProfileForUser(user.id),
     getPointsTotal(user),
     getProfileSkills(),
     getProfileRoles(),
+    getUnreadNotificationCount(user),
     getClaimableProfiles(user),
   ])
 
@@ -52,16 +67,37 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
             entering Payload Admin.
           </p>
         </div>
-        <div>
+        <div className="space-y-4">
           <EmailVerificationCard email={user.email} emailVerifiedAt={user.emailVerifiedAt} />
           <p className="mt-4 border-l border-border pl-6 text-sm text-muted-foreground">
             {profile ? 'Profile connected' : 'Profile not started'}
           </p>
           <p className="mt-3 portal-heading">{pointsTotal} points</p>
+          <PortalLinks
+            badgeCount={badgeCount}
+            checkedInToday={checkedInToday}
+            profile={profile}
+            unreadNotifications={unreadNotifications}
+          />
         </div>
       </section>
 
-      <section className="mt-12">
+      <nav className="mt-10 flex flex-wrap gap-3 text-sm">
+        <a className="portal-admin-link" href="#profile">
+          Profile
+        </a>
+        <a className="portal-admin-link" href="#account">
+          Account
+        </a>
+        <a className="portal-admin-link" href="#notifications">
+          Notifications
+        </a>
+        <a className="portal-admin-link" href="#activity">
+          Activity
+        </a>
+      </nav>
+
+      <section className="mt-12" id="profile">
         <h2 className="mb-4 portal-heading">Profile wizard</h2>
         <ProfileWizardForm
           accountEmail={user.email}
@@ -98,7 +134,27 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         </div>
       </section>
 
-      <section className="mt-12">
+      <section className="mt-12" id="account">
+        <div className="portal-panel">
+          <h2 className="portal-heading-sm">Account</h2>
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            {user.emailVerifiedAt
+              ? 'Your account email is verified and can be used for notification delivery.'
+              : 'Verify your account email in the summary panel before enabling email notifications.'}
+          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{user.email}</p>
+        </div>
+      </section>
+
+      <section className="mt-12" id="notifications">
+        <NotificationPreferencesForm
+          emailVerified={Boolean(user.emailVerifiedAt)}
+          initialPreferences={notificationPreferences}
+          userID={user.id}
+        />
+      </section>
+
+      <section className="mt-12" id="activity">
         <h2 className="portal-heading">Created by you</h2>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           Drafts and published records connected to your user or profile.
@@ -109,7 +165,6 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
           <CreatedList items={createdRecords.posts} title="Posts" />
         </div>
       </section>
-
     </main>
   )
 }
@@ -141,6 +196,41 @@ const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
     </div>
   )
 }
+
+const PortalLinks: React.FC<{
+  badgeCount: number
+  checkedInToday: boolean
+  profile: Profile | null
+  unreadNotifications: number
+}> = ({ badgeCount, checkedInToday, profile, unreadNotifications }) => (
+  <div className="portal-panel">
+    <h2 className="portal-heading-sm">Your portal</h2>
+    <div className="mt-4 grid gap-3 text-sm">
+      <Link className="portal-admin-link justify-between" href="/inbox">
+        <span>Inbox</span>
+        {unreadNotifications ? <span>{unreadNotifications} unread</span> : <span>Open</span>}
+      </Link>
+      <Link className="portal-admin-link justify-between" href="/dashboard">
+        <span>Daily check-in</span>
+        <span>{checkedInToday ? 'Done today' : 'Check in'}</span>
+      </Link>
+      <Link className="portal-admin-link justify-between" href="/badges">
+        <span>Badges</span>
+        <span>{badgeCount}</span>
+      </Link>
+      {profile?.handle ? (
+        <Link className="portal-admin-link justify-between" href={`/members/${profile.handle}`}>
+          <span>Public profile</span>
+          <span>View</span>
+        </Link>
+      ) : null}
+      <Link className="portal-admin-link justify-between" href="/dashboard">
+        <span>Dashboard</span>
+        <span>Open</span>
+      </Link>
+    </div>
+  </div>
+)
 
 const CreatedList: React.FC<{
   items: (Event | Post | Project)[]
@@ -282,6 +372,95 @@ const getPointsTotal = async (user: User) => {
   })
 
   return result.docs.reduce((sum, event) => sum + (event.amount || 0), 0)
+}
+
+const getUnreadNotificationCount = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.count({
+    collection: 'notifications',
+    overrideAccess: false,
+    user,
+    where: {
+      status: {
+        equals: 'unread',
+      },
+    },
+  })
+
+  return result.totalDocs
+}
+
+const getNotificationPreferences = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'notificationPreferences',
+    depth: 0,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      user: {
+        equals: user.id,
+      },
+    },
+  })
+
+  return result.docs[0] || null
+}
+
+const getCheckedInToday = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const today = new Date()
+  today.setUTCHours(0, 0, 0, 0)
+  const result = await payload.find({
+    collection: 'dailyEngagements',
+    depth: 0,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      and: [
+        {
+          user: {
+            equals: user.id,
+          },
+        },
+        {
+          engagementDate: {
+            equals: today.toISOString(),
+          },
+        },
+        {
+          status: {
+            equals: 'valid',
+          },
+        },
+      ],
+    },
+  })
+
+  return Boolean(result.docs[0])
+}
+
+const getBadgeCount = async (user: User) => {
+  const profile = await getProfileForUser(user.id)
+  if (!profile?.id) return 0
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.count({
+    collection: 'profileBadges',
+    overrideAccess: false,
+    user,
+    where: {
+      profiles: {
+        in: [String(profile.id)],
+      },
+    },
+  })
+
+  return result.totalDocs
 }
 
 const getCreatedRecords = async (user: User, profile?: Profile | null) => {

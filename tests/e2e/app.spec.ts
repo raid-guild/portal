@@ -361,11 +361,267 @@ async function verifySeededProjectSpike(page: Page) {
   await expect(page.getByText('Render the Update Brief')).toBeVisible()
 }
 
+async function verifyContributionRequests(adminPage: Page, browser: Browser, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Good first contribution ${suffix}`
+  const slug = `good-first-contribution-${suffix}`
+
+  const [projectResponse, eventResponse, profileResponse, skillResponse] = await Promise.all([
+    adminPage.request.get('/api/projects', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[slug][equals]': 'cohort-project-spike-portal',
+      },
+    }),
+    adminPage.request.get('/api/events', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[title][equals]': 'Cohort Project Spike Sync',
+      },
+    }),
+    adminPage.request.get('/api/profiles', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(projectResponse.ok()).toBeTruthy()
+  expect(eventResponse.ok()).toBeTruthy()
+  expect(profileResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+
+  const project = (await projectResponse.json()).docs?.[0]
+  const event = (await eventResponse.json()).docs?.[0]
+  const profile = (await profileResponse.json()).docs?.[0]
+  const skill = (await skillResponse.json()).docs?.[0]
+
+  expect(project?.id).toBeTruthy()
+  expect(event?.id).toBeTruthy()
+  expect(profile?.id).toBeTruthy()
+  expect(skill?.id).toBeTruthy()
+
+  const requestResponse = await adminPage.request.post('/api/contributionRequests', {
+    data: {
+      title,
+      slug,
+      summary: 'Help polish a small, well-scoped portal contribution.',
+      body: 'This should be visible from the linked project, session, and request detail page.',
+      owner: profile.id,
+      project: project.id,
+      profileSkills: [skill.id],
+      relatedEvents: [event.id],
+      requestStatus: 'open',
+      requestType: 'good_first_contribution',
+      responseURL: `/projects/${project.slug}`,
+      publishedAt: new Date().toISOString(),
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(requestResponse.status()).toBe(201)
+  const requestBody = await requestResponse.json()
+  const requestID = requestBody.doc?.id || requestBody.id
+  expect(requestID).toBeTruthy()
+
+  await publicPage.goto(`/projects/${project.slug}`)
+  await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(
+    publicPage.getByText('Good first contribution', { exact: true }).first(),
+  ).toBeVisible()
+
+  await publicPage.goto(`/events/${event.id}`)
+  await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+
+  const detailResponse = await publicPage.goto(`/requests/${slug}`)
+  expect(detailResponse?.ok()).toBeTruthy()
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Useful Skills' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Respond' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+
+  const commentContent = `Request comment ${suffix}`
+  const commentResponse = await adminPage.request.post('/api/comments', {
+    data: {
+      author: {
+        email: `request-comment-${suffix}@example.com`,
+        name: 'Request Commenter',
+      },
+      content: commentContent,
+      isApproved: true,
+      parent: {
+        relationTo: 'contributionRequests',
+        value: requestID,
+      },
+      publishedAt: new Date().toISOString(),
+    },
+  })
+
+  expect(commentResponse.status()).toBe(201)
+
+  await publicPage.goto(`/requests/${slug}`)
+  await expect(publicPage.getByText(commentContent)).toBeVisible()
+
+  const stewardPassword = 'ChangeMe123!'
+  const stewardEmail = `project-steward-${suffix}@example.com`
+  const stewardDisplayName = `Project Steward ${suffix}`
+  const stewardHandle = `project-steward-${suffix}`
+  const stewardProjectTitle = `Stewarded Project ${suffix}`
+  const stewardProjectSlug = `stewarded-project-${suffix}`
+  const stewardActivityTitle = `Steward activity ${suffix}`
+  const stewardRequestTitle = `Steward request ${suffix}`
+  const stewardRequestSlug = `steward-request-${suffix}`
+
+  const roleResponse = await adminPage.request.get('/api/profileRoles', {
+    params: {
+      depth: '0',
+      limit: '1',
+    },
+  })
+  expect(roleResponse.ok()).toBeTruthy()
+  const roleID = (await roleResponse.json()).docs?.[0]?.id
+  expect(roleID).toBeTruthy()
+
+  const stewardUserResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: stewardEmail,
+      name: stewardDisplayName,
+      password: stewardPassword,
+      roles: ['member'],
+    },
+  })
+  expect(stewardUserResponse.status()).toBe(201)
+  const stewardUser = await stewardUserResponse.json()
+  const stewardUserID = stewardUser.doc?.id || stewardUser.id
+
+  const stewardProfileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'A member profile stewarding a project surface.',
+      displayName: stewardDisplayName,
+      handle: stewardHandle,
+      profileRoles: [roleID],
+      profileSkills: [skill.id],
+      status: 'active',
+      user: stewardUserID,
+      visibility: 'public',
+    },
+  })
+  expect(stewardProfileResponse.status()).toBe(201)
+  const stewardProfile = await stewardProfileResponse.json()
+  const stewardProfileID = stewardProfile.doc?.id || stewardProfile.id
+
+  const stewardProjectResponse = await adminPage.request.post('/api/projects', {
+    data: {
+      title: stewardProjectTitle,
+      summary: 'A project maintained by a member steward.',
+      lastActiveAt: new Date().toISOString(),
+      projectStatus: 'active',
+      publishedAt: new Date().toISOString(),
+      slug: stewardProjectSlug,
+      stewards: [stewardProfileID],
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardProjectResponse.status()).toBe(201)
+  const stewardProject = await stewardProjectResponse.json()
+  const stewardProjectID = stewardProject.doc?.id || stewardProject.id
+
+  const stewardContext = await browser.newContext()
+  const stewardPage = await stewardContext.newPage()
+  await stewardPage.goto('/login')
+  await fillFirst(stewardPage.getByLabel(/^email$/i), stewardEmail)
+  await fillFirst(stewardPage.getByLabel(/^password$/i), stewardPassword)
+  await stewardPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(stewardPage).toHaveURL(/\/dashboard/)
+
+  const stewardProjectPatchResponse = await stewardPage.request.patch(
+    `/api/projects/${stewardProjectID}`,
+    {
+      data: {
+        contributors: [stewardProfileID],
+        resources: [
+          {
+            label: 'Steward notes',
+            resourceType: 'doc',
+            url: 'https://example.com/steward-notes',
+          },
+        ],
+      },
+    },
+  )
+  expect(stewardProjectPatchResponse.status()).toBe(200)
+
+  const stewardActivityResponse = await stewardPage.request.post('/api/activityItems', {
+    data: {
+      activityType: 'contribution',
+      body: 'The project steward attached a factual update.',
+      happenedAt: new Date().toISOString(),
+      relatedProject: stewardProjectID,
+      title: stewardActivityTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardActivityResponse.status()).toBe(201)
+
+  const stewardRequestResponse = await stewardPage.request.post('/api/contributionRequests', {
+    data: {
+      title: stewardRequestTitle,
+      slug: stewardRequestSlug,
+      summary: 'A project steward can publish a project-scoped request.',
+      body: 'This request is tied to a stewarded project.',
+      owner: stewardProfileID,
+      project: stewardProjectID,
+      requestStatus: 'open',
+      requestType: 'help_wanted',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(stewardRequestResponse.status()).toBe(201)
+
+  await stewardPage.goto(`/projects/${stewardProjectSlug}`)
+  await stewardPage.getByRole('link', { name: 'Manage project' }).click()
+  await expect(stewardPage).toHaveURL(new RegExp(`/projects/${stewardProjectSlug}/edit`))
+  await fillFirst(
+    stewardPage.getByLabel('Summary'),
+    'A project maintained by a member steward through the frontend.',
+  )
+  await fillFirst(stewardPage.getByLabel('Primary CTA label'), 'Open steward notes')
+  await fillFirst(stewardPage.getByLabel('Primary CTA URL'), 'https://example.com/steward-notes')
+  await stewardPage.getByRole('button', { name: 'Save project' }).click()
+  await expect(stewardPage).toHaveURL(new RegExp(`/projects/${stewardProjectSlug}`))
+  await expect(stewardPage.getByRole('link', { name: 'Open steward notes' })).toBeVisible()
+
+  await stewardPage.goto(`/requests/new?project=${stewardProjectID}`)
+  await expect(stewardPage.getByLabel('Publish immediately')).toBeChecked()
+  await stewardContext.close()
+
+  await publicPage.goto(`/projects/${stewardProjectSlug}`)
+  await expect(publicPage.getByText(stewardDisplayName).first()).toBeVisible()
+  await expect(publicPage.getByText(stewardActivityTitle)).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: stewardRequestTitle })).toBeVisible()
+}
+
 async function verifyMemberOnlyProjectVisibility(
   adminPage: Page,
   browser: Browser,
   publicPage: Page,
 ) {
+  const moduleSlug = `member-only-module-${Date.now()}`
   const memberOnlyProjectTitle = 'Member Only Project Spike'
   const memberOnlyProjectSlug = 'member-only-project-spike'
   const memberOnlyEventTitle = 'Member Only Planning Session'
@@ -429,6 +685,19 @@ async function verifyMemberOnlyProjectVisibility(
   })
 
   expect(postResponse.status()).toBe(201)
+
+  const moduleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'Member Only Module',
+      slug: moduleSlug,
+      summary: 'A module that should only be visible to users with the member role.',
+      status: 'active',
+      visibility: 'member',
+      enabled: true,
+    },
+  })
+
+  expect(moduleResponse.status()).toBe(201)
 
   const memberResponse = await adminPage.request.post('/api/users', {
     data: {
@@ -508,6 +777,8 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
   expect(contributorPostDetailResponse?.status()).toBe(404)
+  await contributorPage.goto('/modules')
+  await expect(contributorPage.getByText('Member Only Module')).toHaveCount(0)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -536,6 +807,8 @@ async function verifyMemberOnlyProjectVisibility(
     memberPage.getByRole('heading', { exact: true, name: memberOnlyPostTitle }),
   ).toBeVisible()
   await expect(memberPage.getByText('Member-only post details')).toBeVisible()
+  await memberPage.goto('/modules')
+  await expect(memberPage.getByText('Member Only Module')).toBeVisible()
   await memberContext.close()
 
   const agentContext = await browser.newContext()
@@ -776,6 +1049,25 @@ async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage
   expect(awardBody.doc?.source || awardBody.source).toBe('agent')
   expect(String(awardedByUserID)).toBe(String(agentID))
   expect(awardBody.doc?.profiles || awardBody.profiles).toHaveLength(2)
+  const awardID = awardBody.doc?.id || awardBody.id
+  expect(awardID).toBeTruthy()
+
+  const badgeNotificationsResponse = await adminPage.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[relatedBadgeAward][equals]': String(awardID),
+      'where[type][equals]': 'badge_awarded',
+    },
+  })
+  expect(badgeNotificationsResponse.ok()).toBeTruthy()
+  const badgeNotificationsBody = await badgeNotificationsResponse.json()
+  expect(badgeNotificationsBody.docs).toHaveLength(2)
+  expect(badgeNotificationsBody.docs?.[0]).toMatchObject({
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `Badge awarded: ${badgeTitle}`,
+  })
 
   const memberAwardResponse = await agentPage.request.post('/api/profileBadges', {
     data: {
@@ -1762,6 +2054,7 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('link', { name: 'My Profile' })).toHaveCount(0)
   await page.getByRole('button', { name: 'Open account menu' }).click()
   await expect(page.getByRole('menuitem', { name: 'My profile' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Inbox' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
   await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
@@ -1786,6 +2079,46 @@ async function verifyDashboardBrief(page: Page) {
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Public Posts' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Modules' })).toBeVisible()
+}
+
+async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
+  const moduleSuffix = Date.now()
+  const archivedModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'Archived E2E Module',
+      slug: `archived-e2e-module-${moduleSuffix}`,
+      summary: 'An enabled archived module should not appear on the member-facing index.',
+      status: 'archived',
+      visibility: 'authenticated',
+      enabled: true,
+    },
+  })
+  expect(archivedModuleResponse.status()).toBe(201)
+
+  await publicPage.goto('/modules')
+  await expect(publicPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Join to access modules' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Log in' })).toBeVisible()
+  await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
+
+  const publicModulesResponse = await publicPage.request.get('/api/modules')
+  if (publicModulesResponse.ok()) {
+    const publicModulesBody = await publicModulesResponse.json()
+    expect(publicModulesBody.docs).toHaveLength(0)
+  } else {
+    expect(publicModulesResponse.status()).toBeGreaterThanOrEqual(400)
+  }
+
+  await adminPage.goto('/modules')
+  await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
+  await expect(adminPage.getByText('Bounty Board')).toBeVisible()
+  await expect(adminPage.getByText('Leaderboard')).toBeVisible()
+  await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
+  await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(0)
 }
 
 async function verifyDailyVibeCheck(page: Page) {
@@ -1835,11 +2168,476 @@ async function verifyDailyVibeCheck(page: Page) {
   })
 }
 
+async function verifyInboxAndNotificationPreferences(page: Page) {
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const meBody = await meResponse.json()
+  const userID = meBody.user?.id
+  expect(userID).toBeTruthy()
+
+  const existingNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '100',
+      'where[recipient][equals]': String(userID),
+      'where[status][equals]': 'unread',
+    },
+  })
+  expect(existingNotificationsResponse.ok()).toBeTruthy()
+  const existingNotificationsBody = await existingNotificationsResponse.json()
+  for (const notification of existingNotificationsBody.docs || []) {
+    const archiveResponse = await page.request.patch(`/api/notifications/${notification.id}`, {
+      data: {
+        status: 'archived',
+      },
+    })
+    expect(archiveResponse.ok()).toBeTruthy()
+  }
+
+  const notificationTitle = `E2E Inbox Notice ${Date.now()}`
+  const notificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open dashboard',
+      actionURL: '/dashboard',
+      body: 'A deterministic notification for inbox e2e coverage.',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: notificationTitle,
+      type: 'system',
+    },
+  })
+  expect(notificationResponse.status()).toBe(201)
+
+  await page.goto('/dashboard')
+  await page.getByRole('button', { name: 'Open account menu' }).click()
+  const inboxItem = page.getByRole('menuitem', { name: /Inbox/ })
+  await expect(inboxItem).toBeVisible()
+  await expect(inboxItem).toContainText('1')
+  await inboxItem.click()
+
+  await expect(page).toHaveURL(/\/inbox/)
+  await expect(page.getByRole('heading', { exact: true, name: 'Inbox' })).toBeVisible()
+  await expect(page.getByText(notificationTitle)).toBeVisible()
+  await expect(page.getByText('A deterministic notification for inbox e2e coverage.')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Open dashboard' })).toHaveAttribute(
+    'href',
+    '/dashboard',
+  )
+  await page.getByRole('button', { name: 'Mark read' }).click()
+  await expect(page.getByRole('button', { name: 'Mark read' })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Archive' }).click()
+  await expect(page.getByText('Archived')).toBeVisible()
+
+  await page.goto('/me#notifications')
+  await expect(page.getByRole('heading', { name: 'Notification preferences' })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Inbox/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Daily check-in/ })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Badges/ })).toBeVisible()
+  await expect(
+    page.getByText(/Verify your account email to enable email notifications/i),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save preferences' }).click()
+  await expect(page.getByText('Preferences saved.')).toBeVisible()
+
+  const hookSuffix = Date.now()
+  const hookEventTitle = `E2E Hook Session ${hookSuffix}`
+  const hookEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(Date.now() + 27 * 60 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: new Date(Date.now() + 26 * 60 * 60 * 1000).toISOString(),
+      summary: 'A published session that should create an inbox notification.',
+      title: hookEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(hookEventResponse.status()).toBe(201)
+  const hookEventBody = await hookEventResponse.json()
+  const hookEventID = hookEventBody.doc?.id || hookEventBody.id
+  const hookEventNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(hookEventID),
+      'where[type][equals]': 'event_published',
+    },
+  })
+  expect(hookEventNotificationsResponse.ok()).toBeTruthy()
+  const hookEventNotificationsBody = await hookEventNotificationsResponse.json()
+  expect(hookEventNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${hookEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New session: ${hookEventTitle}`,
+  })
+
+  const hookBriefTitle = `E2E Hook Brief ${hookSuffix}`
+  const hookBriefResponse = await page.request.post('/api/dailyBriefs', {
+    data: {
+      briefDate: new Date().toISOString(),
+      briefType: 'weekly',
+      sections: [
+        {
+          body: 'Notification hook coverage for a published brief.',
+          heading: 'Hook coverage',
+        },
+      ],
+      summary: 'A published brief that should create an inbox notification.',
+      title: hookBriefTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(hookBriefResponse.status()).toBe(201)
+  const hookBriefBody = await hookBriefResponse.json()
+  const hookBriefID = hookBriefBody.doc?.id || hookBriefBody.id
+  const hookBriefNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedBrief][equals]': String(hookBriefID),
+      'where[type][equals]': 'brief_published',
+    },
+  })
+  expect(hookBriefNotificationsResponse.ok()).toBeTruthy()
+  const hookBriefNotificationsBody = await hookBriefNotificationsResponse.json()
+  expect(hookBriefNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: `New weekly brief: ${hookBriefTitle}`,
+  })
+
+  const reminderUnauthorizedResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      dryRun: true,
+    },
+  })
+  expect(reminderUnauthorizedResponse.status()).toBe(401)
+
+  const reminderEventTitle = `E2E Reminder Session ${hookSuffix}`
+  const reminderStartsAt = new Date(Date.now() + 65 * 60 * 1000)
+  const reminderEventResponse = await page.request.post('/api/events', {
+    data: {
+      endsAt: new Date(reminderStartsAt.getTime() + 30 * 60 * 1000).toISOString(),
+      sessionType: 'demo',
+      startsAt: reminderStartsAt.toISOString(),
+      summary: 'A session that should receive a one-hour reminder notification.',
+      title: reminderEventTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(reminderEventResponse.status()).toBe(201)
+  const reminderEventBody = await reminderEventResponse.json()
+  const reminderEventID = reminderEventBody.doc?.id || reminderEventBody.id
+  const reminderResponse = await page.request.post('/api/notifications/reminders/run', {
+    data: {
+      lookaheadMinutes: 15,
+      windows: ['1h'],
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(reminderResponse.ok()).toBeTruthy()
+  const reminderBody = await reminderResponse.json()
+  expect(reminderBody.results?.[0]).toMatchObject({
+    eventsMatched: 1,
+    window: '1h',
+  })
+
+  const reminderNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(userID),
+      'where[relatedEvent][equals]': String(reminderEventID),
+      'where[type][equals]': 'event_reminder',
+    },
+  })
+  expect(reminderNotificationsResponse.ok()).toBeTruthy()
+  const reminderNotificationsBody = await reminderNotificationsResponse.json()
+  expect(reminderNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: `/events/${reminderEventID}`,
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    priority: 'high',
+    title: `${reminderEventTitle} starts in 1 hour`,
+  })
+
+  const emailDispatchUnauthorizedResponse = await page.request.post(
+    '/api/notifications/email/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(emailDispatchUnauthorizedResponse.status()).toBe(401)
+
+  const emailNotificationTitle = `E2E Email Notification ${hookSuffix}`
+  const emailNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic pending email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: userID,
+      status: 'unread',
+      title: emailNotificationTitle,
+      type: 'system',
+    },
+  })
+  expect(emailNotificationResponse.status()).toBe(201)
+  const emailNotificationBody = await emailNotificationResponse.json()
+  const emailNotificationID = emailNotificationBody.doc?.id || emailNotificationBody.id
+
+  const skippedEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(skippedEmailDispatchResponse.ok()).toBeTruthy()
+  const skippedEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${emailNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(skippedEmailNotificationResponse.ok()).toBeTruthy()
+  const skippedEmailNotificationBody = await skippedEmailNotificationResponse.json()
+  expect(skippedEmailNotificationBody.emailStatus).toBe('skipped')
+
+  const verifiedEmail = `notification-dispatch-${hookSuffix}@example.com`
+  const verifiedUserResponse = await page.request.post('/api/users', {
+    data: {
+      email: verifiedEmail,
+      emailVerifiedAt: new Date().toISOString(),
+      name: `Notification Dispatch ${hookSuffix}`,
+      password: 'ChangeMe123!',
+      roles: ['member'],
+    },
+  })
+  expect(verifiedUserResponse.status()).toBe(201)
+  const verifiedUserBody = await verifiedUserResponse.json()
+  const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
+  const sendableNotificationResponse = await page.request.post('/api/notifications', {
+    data: {
+      actionLabel: 'Open inbox',
+      actionURL: '/inbox',
+      body: 'A deterministic sendable email notification for dispatcher coverage.',
+      deliveryChannel: 'email',
+      emailStatus: 'pending',
+      priority: 'normal',
+      recipient: verifiedUserID,
+      status: 'unread',
+      title: `E2E Sendable Email Notification ${hookSuffix}`,
+      type: 'system',
+    },
+  })
+  expect(sendableNotificationResponse.status()).toBe(201)
+  const sendableNotificationBody = await sendableNotificationResponse.json()
+  const sendableNotificationID = sendableNotificationBody.doc?.id || sendableNotificationBody.id
+  const sentEmailDispatchResponse = await page.request.post('/api/notifications/email/run', {
+    data: {
+      limit: 10,
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(sentEmailDispatchResponse.ok()).toBeTruthy()
+  const sentEmailNotificationResponse = await page.request.get(
+    `/api/notifications/${sendableNotificationID}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(sentEmailNotificationResponse.ok()).toBeTruthy()
+  const sentEmailNotificationBody = await sentEmailNotificationResponse.json()
+  expect(sentEmailNotificationBody).toMatchObject({
+    emailStatus: 'sent',
+  })
+  expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
+
+  const digestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(digestUnauthorizedResponse.status()).toBe(401)
+
+  const digestActivityTitle = `E2E Digest Activity ${hookSuffix}`
+  const digestSince = new Date(Date.now() - 60 * 60 * 1000)
+  const digestUntil = new Date(Date.now() + 60 * 60 * 1000)
+  const digestNotificationStartedAt = new Date().toISOString()
+  const digestActivityResponse = await page.request.post('/api/activityItems', {
+    data: {
+      activityType: 'insight',
+      body: 'A deterministic activity item for weekly digest coverage.',
+      happenedAt: new Date().toISOString(),
+      title: digestActivityTitle,
+      visibility: 'authenticated',
+      _status: 'published',
+    },
+  })
+  expect(digestActivityResponse.status()).toBe(201)
+
+  const digestResponse = await page.request.post('/api/notifications/digests/weekly/run', {
+    data: {
+      limit: 20,
+      since: digestSince.toISOString(),
+      until: digestUntil.toISOString(),
+    },
+    headers: {
+      authorization: `Bearer ${agentRegistrationSecret}`,
+    },
+  })
+  expect(digestResponse.ok()).toBeTruthy()
+  const digestBody = await digestResponse.json()
+  expect(digestBody.created).toBeGreaterThanOrEqual(1)
+
+  const digestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      sort: '-createdAt',
+      'where[createdAt][greater_than_equal]': digestNotificationStartedAt,
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'weekly_digest',
+    },
+  })
+  expect(digestNotificationsResponse.ok()).toBeTruthy()
+  const digestNotificationsBody = await digestNotificationsResponse.json()
+  expect(digestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your weekly RaidGuild portal digest',
+  })
+  expect(digestNotificationsBody.docs?.[0]?.body).toContain('activity update')
+  expect(digestNotificationsBody.docs?.[0]?.metadata?.counts?.activityItems).toBeGreaterThanOrEqual(
+    1,
+  )
+
+  const invalidWeeklyDigestResponse = await page.request.post(
+    '/api/notifications/digests/weekly/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidWeeklyDigestResponse.status()).toBe(400)
+
+  const activityDigestUnauthorizedResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        dryRun: true,
+      },
+    },
+  )
+  expect(activityDigestUnauthorizedResponse.status()).toBe(401)
+
+  const preferenceResponse = await page.request.get('/api/notificationPreferences', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[user][equals]': String(userID),
+    },
+  })
+  expect(preferenceResponse.ok()).toBeTruthy()
+  const preferenceBody = await preferenceResponse.json()
+  const preferenceID = preferenceBody.docs?.[0]?.id
+  expect(preferenceID).toBeTruthy()
+  const activityPreferenceResponse = await page.request.patch(
+    `/api/notificationPreferences/${preferenceID}`,
+    {
+      data: {
+        activityDigestFrequency: 'daily',
+      },
+    },
+  )
+  expect(activityPreferenceResponse.ok()).toBeTruthy()
+
+  const invalidActivityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        until: 'not-a-date',
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(invalidActivityDigestResponse.status()).toBe(400)
+
+  const activityDigestResponse = await page.request.post(
+    '/api/notifications/digests/activity/run',
+    {
+      data: {
+        limit: 20,
+        since: digestSince.toISOString(),
+        until: digestUntil.toISOString(),
+      },
+      headers: {
+        authorization: `Bearer ${agentRegistrationSecret}`,
+      },
+    },
+  )
+  expect(activityDigestResponse.ok()).toBeTruthy()
+  const activityDigestBody = await activityDigestResponse.json()
+  expect(activityDigestBody.created).toBeGreaterThanOrEqual(1)
+
+  const activityDigestNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      sort: '-createdAt',
+      'where[createdAt][greater_than_equal]': digestNotificationStartedAt,
+      'where[recipient][equals]': String(userID),
+      'where[type][equals]': 'activity_digest',
+    },
+  })
+  expect(activityDigestNotificationsResponse.ok()).toBeTruthy()
+  const activityDigestNotificationsBody = await activityDigestNotificationsResponse.json()
+  expect(activityDigestNotificationsBody.docs?.[0]).toMatchObject({
+    actionURL: '/dashboard',
+    deliveryChannel: 'in_app',
+    emailStatus: 'none',
+    title: 'Your RaidGuild activity digest',
+  })
+  expect(activityDigestNotificationsBody.docs?.[0]?.metadata?.count).toBeGreaterThanOrEqual(1)
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page)
+  await verifyInboxAndNotificationPreferences(page)
   await createProfileAndVerifyContributorCreateLinks(page)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)
@@ -1857,6 +2655,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
+  await verifyModulesFeature(page, publicPage)
   await verifyPublicHome(publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
@@ -1865,6 +2664,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifySeededProjectSpike(publicPage)
+  await verifyContributionRequests(page, browser, publicPage)
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, publicPage)
   await verifySessionTypeCreation(page)

@@ -6,7 +6,7 @@ import type { Header as HeaderType } from '@/payload-types'
 
 import { CMSLink } from '@/components/Link'
 import Link from 'next/link'
-import { ChevronDown, LogOut, SearchIcon, Shield, UserRound } from 'lucide-react'
+import { ChevronDown, Inbox, LogOut, SearchIcon, Shield, UserRound } from 'lucide-react'
 import { authChangeEvent, notifyAuthChanged } from '@/utilities/authEvents'
 import { useRouter } from 'next/navigation'
 
@@ -31,6 +31,7 @@ type AccountProfile = {
 export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
+  const [unreadCount, setUnreadCount] = useState(0)
   const [user, setUser] = useState<AccountUser | null>(null)
   const router = useRouter()
   const navItems = (header?.navItems || []).filter(({ link }) => {
@@ -51,18 +52,25 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
     if (!currentUser?.id) {
       setOpen(false)
       setProfile(null)
+      setUnreadCount(0)
       return
     }
 
-    const profileResponse = await fetch(
-      `/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`,
-      {
+    const [profileResponse, notificationsResponse] = await Promise.all([
+      fetch(`/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`, {
         credentials: 'include',
-      },
-    ).catch(() => null)
+      }).catch(() => null),
+      fetch('/api/notifications?depth=0&limit=1&where[status][equals]=unread', {
+        credentials: 'include',
+      }).catch(() => null),
+    ])
     const profileData = profileResponse?.ok ? await profileResponse.json().catch(() => null) : null
+    const notificationsData = notificationsResponse?.ok
+      ? await notificationsResponse.json().catch(() => null)
+      : null
 
     setProfile(profileData?.docs?.[0] || null)
+    setUnreadCount(Number(notificationsData?.totalDocs || 0))
   }, [])
 
   useEffect(() => {
@@ -82,6 +90,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
 
     setOpen(false)
     setProfile(null)
+    setUnreadCount(0)
     setUser(null)
     notifyAuthChanged()
     router.push('/')
@@ -146,6 +155,18 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
               >
                 <UserRound className="h-4 w-4" />
                 Dashboard
+              </Link>
+              <Link
+                className="flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-card"
+                href="/inbox"
+                onClick={() => setOpen(false)}
+                role="menuitem"
+              >
+                <span className="flex items-center gap-2">
+                  <Inbox className="h-4 w-4" />
+                  Inbox
+                </span>
+                {unreadCount ? <span className="portal-pill">{unreadCount}</span> : null}
               </Link>
               <Link
                 className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-card"

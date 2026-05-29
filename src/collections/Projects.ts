@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
+import { updateProjectsAsContributorOrSteward } from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
@@ -11,7 +12,7 @@ export const Projects: CollectionConfig = {
     create: contentContributors,
     delete: contentContributors,
     read: readVisiblePortalContent,
-    update: contentContributors,
+    update: updateProjectsAsContributorOrSteward,
   },
   admin: {
     defaultColumns: [
@@ -404,6 +405,16 @@ export const Projects: CollectionConfig = {
       name: 'coverImage',
       type: 'upload',
       relationTo: 'media',
+    },
+    {
+      name: 'stewards',
+      type: 'relationship',
+      admin: {
+        description:
+          'Profiles responsible for keeping this project surface accurate and managing related requests/activity.',
+      },
+      hasMany: true,
+      relationTo: 'profiles',
     },
     {
       name: 'contributors',

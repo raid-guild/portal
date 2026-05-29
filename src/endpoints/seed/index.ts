@@ -17,6 +17,10 @@ const collections: CollectionSlug[] = [
   'activityItems',
   'profileBadges',
   'badges',
+  'modules',
+  'notifications',
+  'notificationPreferences',
+  'contributionRequests',
   'categories',
   'dailyBriefs',
   'events',
@@ -496,6 +500,91 @@ export const seed = async ({
         publishedAt: '2026-05-11T17:34:47.664Z',
       },
     })
+
+    await Promise.all([
+      payload.create({
+        collection: 'modules',
+        data: {
+          name: 'Infinite Wiki',
+          slug: 'infinite-wiki',
+          summary:
+            'A source-backed knowledge module for turning reviewed community memory into durable topic pages.',
+          status: 'experimental',
+          visibility: 'authenticated',
+          enabled: true,
+          featured: true,
+          sortOrder: 10,
+          specURL:
+            'https://github.com/raid-guild/portal/blob/main/docs/infinite-wiki-feature-spec.md',
+          owners: [demoProfile.id],
+          sourceProject: cohortProject.id,
+          relatedProjects: [cohortProject.id],
+          relatedThreads: [projectObjectThread.id],
+          relatedProfiles: [demoProfile.id],
+          ownedCollections: [
+            {
+              collectionSlug: 'wikiPages',
+            },
+          ],
+          corePrimitiveRelationships: [
+            { primitive: 'project' },
+            { primitive: 'thread' },
+            { primitive: 'event' },
+            { primitive: 'profile' },
+            { primitive: 'post' },
+          ],
+          graduationCriteria:
+            'Members use reviewed pages for project and session context, and editors can reject or improve generated drafts from clear source references.',
+          riskNotes:
+            'Must not publish generated pages without review or leak private/member-only source material.',
+          lastReviewedAt: '2026-05-29T00:00:00.000Z',
+        },
+      }),
+      payload.create({
+        collection: 'modules',
+        data: {
+          name: 'Bounty Board',
+          slug: 'bounty-board',
+          summary:
+            'A future contribution module for surfacing scoped opportunities, rewards, and claims without turning projects into task boards.',
+          status: 'idea',
+          visibility: 'authenticated',
+          enabled: true,
+          sortOrder: 20,
+          sourceProject: cohortProject.id,
+          relatedProjects: [cohortProject.id],
+          relatedThreads: [ownershipThread.id],
+          corePrimitiveRelationships: [
+            { primitive: 'project' },
+            { primitive: 'thread' },
+            { primitive: 'profile' },
+            { primitive: 'activityItem' },
+          ],
+          graduationCriteria:
+            'The portal has repeated contribution requests that need their own lifecycle beyond project CTAs.',
+        },
+      }),
+      payload.create({
+        collection: 'modules',
+        data: {
+          name: 'Leaderboard',
+          slug: 'leaderboard',
+          summary:
+            'A future recognition module for exploring aggregate contribution signals without making points the primary community goal.',
+          status: 'idea',
+          visibility: 'authenticated',
+          enabled: true,
+          sortOrder: 30,
+          relatedProjects: [cohortProject.id],
+          relatedProfiles: [demoProfile.id],
+          corePrimitiveRelationships: [{ primitive: 'profile' }, { primitive: 'activityItem' }],
+          graduationCriteria:
+            'Recognition signals prove useful for discovery and celebration without incentivizing low-quality activity.',
+          riskNotes:
+            'Avoid broad ranking dynamics until points, badges, and props have stable meaning.',
+        },
+      }),
+    ])
 
     const activityItems = await Promise.all([
       payload.create({

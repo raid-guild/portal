@@ -153,18 +153,27 @@ Suggested fields:
 - `status`
 - `links`
 - `coverImage`: upload relationship to `media`
+- `stewards`: relationship to `profiles`, has many
 - `contributors`: relationship to `profiles`, has many
 - `profileSkills`: relationship to `profileSkills`, has many
 - `publishedAt`
 - `visibility`
 
-Projects should show details, links, and contributors. They should not become
-tasks, milestones, assignments, or PM workflow records.
+Projects should show details, links, stewards, and contributors. Stewards own
+the presentation surface and can keep requests, activity, links, and related
+context accurate. Projects should not become tasks, milestones, assignments, or
+PM workflow records.
 
-Future requests for help should use a lightweight `contributionRequests` feature
-module if they need independent status, comments, filtering, or cross-portal
-discovery. Keep project-local help fields embedded only while the request surface
-is simple. See `docs/contribution-requests-feature-spec.md`.
+Frontend steward management should expose only the fields needed to keep that
+surface useful: title, summary, status, visibility, primary CTA, contributors,
+resources, links, related projects, related sessions, and related threads. Deeper
+review/evidence fields stay in the CMS/admin or agent workflow.
+
+Requests for help should use the lightweight `contributionRequests` feature
+module when they need independent status, visibility, relationships, API access,
+or cross-portal discovery. Project pages can surface open related requests, but
+projects should not become task boards or carry assignment workflow. See
+`docs/contribution-requests-feature-spec.md`.
 
 ### events
 

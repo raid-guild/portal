@@ -1,12 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-import {
-  agentRegistrationSecret,
-  baseURL,
-  databaseURL,
-  payloadSecret,
-  port,
-} from './tests/e2e/env'
+import { agentRegistrationSecret, baseURL, databaseURL, payloadSecret, port } from './tests/e2e/env'
 
 const slowMo = Number(process.env.PLAYWRIGHT_SLOW_MO ?? '0')
 

@@ -38,18 +38,28 @@
   </a>
 </p>
 
-## About This Repo
+# RaidGuild Portal
 
-This repo is being evolved from a Payload CMS website boilerplate into the
-RaidGuild Portal: a CMS-backed surface for briefs, projects, threads, activity,
-sessions, profiles, and contributor workflows.
+This repo powers the RaidGuild Portal: a CMS-backed surface for briefs,
+projects, threads, activity, sessions, profiles, recognition, contribution
+requests, modules, notifications, and contributor workflows.
 
-Start with [Portal Documentation](./docs/README.md) for the current product
-mental model, implementation direction, and contributor guidelines.
+Start with:
+
+- [Product overview](./docs/portal-product-overview.md)
+- [Portal documentation](./docs/README.md)
+- [Implementation checklist](./docs/portal-implementation-checklist.md)
+
+The Portal should make real community activity visible and help people find a
+useful next step. It should not become a project management system, Discord
+replacement, course platform, handbook dump, or generic AI content feed.
 
 ## About this boilerplate
 
-This boilerplate is a pre-configured, ready-to-deploy solution for Payload CMS as a website builder. It includes a fully-working backend, enterprise-grade admin panel, and a beautifully designed, production-ready website. This template is optimized for seamless deployment on [Railway](https://railway.app?referralCode=-Yg50p), and uses PostgreSQL for both local development and production environments.
+This project started from a Payload CMS website boilerplate and still uses
+Payload, Next.js, and PostgreSQL as its foundation. Some lower sections of this
+README retain setup notes from the original template, but product direction now
+lives in `docs/`.
 
 ## Version Info
 

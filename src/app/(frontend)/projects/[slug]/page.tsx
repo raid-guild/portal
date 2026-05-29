@@ -6,8 +6,11 @@ import React, { cache } from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { canContributeContent, hasRole } from '@/access/roles'
+import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
+  ContributionRequest,
   Event,
   Media,
   Profile,
@@ -18,6 +21,7 @@ import type {
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { getProfileIDForUser, isProjectStewardProfile } from '../formData'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,15 +56,27 @@ const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): 
 export default async function ProjectPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
   const user = await getCurrentUser()
-  const project = await queryProjectBySlug({ slug, user })
+  const [project, currentProfileID] = await Promise.all([
+    queryProjectBySlug({ slug, user }),
+    user ? getProfileIDForUser(user.id, user) : Promise.resolve(null),
+  ])
 
   if (!project) notFound()
 
-  const activityItems = relationDocs<ActivityItem>(project.activityItems)
+  const activityItems = mergeByID(
+    relationDocs<ActivityItem>(project.activityItems),
+    await getActivityItemsForProject(project.id, user),
+  ).sort((a, b) => new Date(b.happenedAt || 0).getTime() - new Date(a.happenedAt || 0).getTime())
+  const contributionRequests = await getOpenContributionRequestsForProject(project.id, user)
   const threads = relationDocs<Thread>(project.threads)
   const events = relationDocs<Event>(project.events)
+  const stewards = relationDocs<Profile>(project.stewards)
   const contributors = relationDocs<Profile>(project.contributors)
   const skills = relationDocs<ProfileSkill>(project.profileSkills)
+  const canCreateRequests = canContributeContent(user) || hasRole(user, 'member')
+  const canManageProject =
+    canContributeContent(user) ||
+    (user ? isProjectStewardProfile(project, currentProfileID) : false)
 
   return (
     <main className="container pb-24 pt-12">
@@ -86,6 +102,14 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
               </span>
             ))}
           </div>
+          {canManageProject ? (
+            <Link
+              className="portal-admin-link mt-6 inline-flex"
+              href={`/projects/${project.slug}/edit`}
+            >
+              Manage project
+            </Link>
+          ) : null}
         </div>
         <aside className="portal-panel text-sm">
           <p className="font-bold">Project state</p>
@@ -99,6 +123,17 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
                 {contributors.map((profile) => profile.displayName).join(', ')}
               </p>
             </div>
+          ) : null}
+          {stewards.length ? (
+            <div className="mt-5">
+              <p className="font-medium">Stewards</p>
+              <p className="mt-2 text-muted-foreground">
+                {stewards.map((profile) => profile.displayName).join(', ')}
+              </p>
+            </div>
+          ) : null}
+          {!stewards.length && user ? (
+            <p className="mt-5 text-xs text-muted-foreground">No steward is assigned yet.</p>
           ) : null}
           <ActionLink action={project.primaryCTA} className="mt-5 block" />
         </aside>
@@ -163,6 +198,28 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
         </div>
 
         <div className="space-y-6">
+          <Section title="Contribution Requests">
+            {canCreateRequests ? (
+              <Link
+                className="portal-admin-link mb-4 inline-flex"
+                href={`/requests/new?project=${project.id}`}
+              >
+                Create request
+              </Link>
+            ) : null}
+            {contributionRequests.length ? (
+              <div className="space-y-3">
+                {contributionRequests.map((request) => (
+                  <ContributionRequestCard key={request.id} request={request} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                No open contribution requests are linked yet.
+              </p>
+            )}
+          </Section>
+
           <Section title="Next Sessions">
             {events.length ? (
               <div className="space-y-3">
@@ -337,3 +394,87 @@ const queryProjectBySlug = cache(async ({ slug, user }: { slug: string; user: Us
 
   return result.docs[0] || null
 })
+
+const getOpenContributionRequestsForProject = async (
+  projectID: number,
+  user: User | null,
+): Promise<ContributionRequest[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'contributionRequests',
+    depth: 2,
+    draft: false,
+    limit: 10,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-publishedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          requestStatus: {
+            equals: 'open',
+          },
+        },
+        {
+          project: {
+            equals: projectID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getActivityItemsForProject = async (
+  projectID: number,
+  user: User | null,
+): Promise<ActivityItem[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'activityItems',
+    depth: 0,
+    draft: false,
+    limit: 20,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-happenedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          relatedProject: {
+            equals: projectID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const mergeByID = <T extends { id: number }>(primary: T[], secondary: T[]): T[] => {
+  const seen = new Set<number>()
+  const merged: T[] = []
+
+  for (const item of [...primary, ...secondary]) {
+    if (seen.has(item.id)) continue
+    seen.add(item.id)
+    merged.push(item)
+  }
+
+  return merged
+}

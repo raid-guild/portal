@@ -6,7 +6,23 @@ import { Textarea } from '../ui/textarea'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
-const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
+type CommentParent = {
+  relationTo: 'contributionRequests' | 'events' | 'posts' | 'projects'
+  value: number | string
+}
+
+type CommentFormProps =
+  | {
+      parent?: never
+      postId: number | string
+    }
+  | {
+      parent: CommentParent
+      postId?: never
+    }
+
+const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
+  const commentParent = parent || { relationTo: 'posts' as const, value: postId }
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [content, setContent] = useState('')
@@ -29,7 +45,7 @@ const CommentForm: React.FC<{ postId: number | string }> = ({ postId }) => {
         body: JSON.stringify({
           content,
           author: { name, email },
-          post: postId,
+          parent: commentParent,
         }),
       })
 
