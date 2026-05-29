@@ -215,6 +215,7 @@
 - [ ] Bounty board module. See `docs/modules-feature-spec.md`.
 - [ ] Peer props, agent-proposed props, prop campaigns, and leaderboard-like recognition views. See `docs/badges-and-props-feature-spec.md`.
 - [ ] Infinite Wiki generation and review. See `docs/infinite-wiki-feature-spec.md`.
+- [ ] Public onboarding and inquiry funnels. See `docs/onboarding-funnel-feature-spec.md`.
 - [ ] Entitlements.
 - [ ] Cohort modeling.
 - [ ] Module/plugin registry.
