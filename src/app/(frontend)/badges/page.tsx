@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Award, Shield, Sparkles, Star, Users } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
 
@@ -6,6 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import type { Media } from '@/payload-types'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,11 +15,13 @@ type BadgeCard = {
   category?: string | null
   description?: string | null
   displayStyle?: string | null
+  fallbackIcon?: string | null
   id: number | string
   isRetired?: boolean | null
   recipientCount: number
   slug?: string | null
   title: string
+  artworkURL?: string | null
 }
 
 export default async function BadgesPage() {
@@ -44,21 +48,32 @@ export default async function BadgesPage() {
         {badges.length ? (
           badges.map((badge) => (
             <article className="portal-panel" key={badge.id}>
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="portal-kicker">{formatCategory(badge.category)}</p>
-                  <h2 className="mt-2 portal-heading-sm">{badge.title}</h2>
+              <div className="flex items-start gap-4">
+                <BadgeArtwork
+                  fallbackIcon={badge.fallbackIcon}
+                  title={badge.title}
+                  url={badge.artworkURL}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <p className="portal-kicker">{formatCategory(badge.category)}</p>
+                      <h2 className="mt-2 portal-heading-sm">{badge.title}</h2>
+                    </div>
+                    {badge.isRetired ? <span className="portal-pill">Retired</span> : null}
+                  </div>
+                  {badge.description ? (
+                    <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                      {badge.description}
+                    </p>
+                  ) : null}
+                  <p className="mt-5 text-sm font-medium">
+                    {badge.recipientCount === 1
+                      ? '1 member has received this badge'
+                      : `${badge.recipientCount} members have received this badge`}
+                  </p>
                 </div>
-                {badge.isRetired ? <span className="portal-pill">Retired</span> : null}
               </div>
-              {badge.description ? (
-                <p className="mt-4 text-sm leading-6 text-muted-foreground">{badge.description}</p>
-              ) : null}
-              <p className="mt-5 text-sm font-medium">
-                {badge.recipientCount === 1
-                  ? '1 member has received this badge'
-                  : `${badge.recipientCount} members have received this badge`}
-              </p>
             </article>
           ))
         ) : (
@@ -79,7 +94,7 @@ const getBadges = async (
   const payload = await getPayload({ config: configPromise })
   const badgeResult = await payload.find({
     collection: 'badges',
-    depth: 0,
+    depth: 1,
     limit: 100,
     overrideAccess: false,
     pagination: false,
@@ -94,11 +109,13 @@ const getBadges = async (
     category: badge.category,
     description: badge.description,
     displayStyle: badge.displayStyle,
+    fallbackIcon: badge.fallbackIcon,
     id: badge.id,
     isRetired: badge.isRetired,
     recipientCount: recipientCounts.get(String(badge.id)) || 0,
     slug: badge.slug,
     title: badge.title,
+    artworkURL: getMediaURL(badge.artwork),
   }))
 }
 
@@ -146,3 +163,43 @@ const getRecipientCounts = async ({
 
 const formatCategory = (category?: string | null) =>
   category ? category.replace(/-/g, ' ') : 'badge'
+
+const getMediaURL = (media?: Media | number | null) =>
+  typeof media === 'object' && media ? media.sizes?.square?.url || media.url || null : null
+
+const BadgeArtwork: React.FC<{
+  fallbackIcon?: string | null
+  title: string
+  url?: string | null
+}> = ({ fallbackIcon, title, url }) => {
+  const Icon = iconFor(fallbackIcon)
+
+  return (
+    <div className="grid h-20 w-20 shrink-0 place-items-center overflow-hidden border border-border bg-card/60">
+      {url ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img alt="" className="h-full w-full object-cover" src={url} />
+      ) : (
+        <div aria-label={`${title} badge placeholder`} className="text-primary">
+          <Icon className="h-9 w-9" />
+        </div>
+      )}
+    </div>
+  )
+}
+
+const iconFor = (fallbackIcon?: string | null) => {
+  switch (fallbackIcon) {
+    case 'award':
+      return Award
+    case 'shield':
+      return Shield
+    case 'star':
+      return Star
+    case 'users':
+      return Users
+    case 'spark':
+    default:
+      return Sparkles
+  }
+}
