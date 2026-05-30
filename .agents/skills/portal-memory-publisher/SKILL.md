@@ -83,6 +83,8 @@ Agent accounts are contributor-level publishers. They may create draft/proposal 
 
 ## Event Creation And Discord Sync
 
+Hard rule: `syncDiscord` is not a field on the Payload `events` collection. Passing `"syncDiscord": true` to the raw Payload collection endpoint (`POST /api/events`) will be ignored and will not create a Discord scheduled event.
+
 Use the raw Payload collection endpoint (`POST /api/events`) only for Portal-only records, imports, past-session enrichment, drafts, or records that already have external calendar/Discord links.
 
 When creating a future Portal session that should try to create a Discord scheduled event, use the Portal session endpoint instead:
@@ -101,13 +103,24 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
   }'
 ```
 
+Payload differences for `/api/events/create`:
+
+- Send `durationMinutes` instead of `endsAt`; the endpoint calculates `endsAt`.
+- Send `hosts` instead of `hostProfiles`.
+- Send `guests` instead of `speakerProfiles`.
+- Do not send `_status` or `publishedAt`; the endpoint publishes the event.
+- Include `"syncDiscord": true` when the user asked for a Discord scheduled event.
+
 Expected behavior:
 
 - `visibility` may be `public`, `authenticated`, `member`, or `admin`. Use `member` only when confirmed members should see the session.
 
 - If Discord sync is configured and succeeds, Portal stores `discordScheduledEventID`, `discordEventURL`, `joinURL`, and `discordSyncStatus: synced`.
 - If Discord sync fails, Portal still creates the event and stores `discordSyncStatus: failed` with `discordSyncError`.
-- If `syncDiscord` is false, missing, or Discord env vars are absent, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
+- If `syncDiscord` is false or missing, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
+- If `/api/events/create` receives `syncDiscord: true` and Discord env/config is missing or invalid, Portal should return the event with `discordSyncStatus: failed` and `discordSyncError`.
+
+Diagnostic rule: if the response has `discordSyncStatus: not_configured`, assume the request did not use `/api/events/create` with `syncDiscord: true`. Do not patch `syncDiscord` onto an existing event; it will not trigger sync.
 
 Do not tell users a Discord scheduled event was created unless the response has `discordSyncStatus: synced` and a `discordEventURL`.
 

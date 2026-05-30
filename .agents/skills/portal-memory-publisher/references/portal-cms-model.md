@@ -87,7 +87,9 @@ Rule: sessions can be cohort-wide or scoped to one or more projects through `rel
 
 Rule: use `member` visibility for member-only sessions. Authenticated non-members should not see those events.
 
-Rule: direct `POST /api/events` creates only the Portal record. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
+Rule: direct `POST /api/events` creates only the Portal record. `syncDiscord` is not a persisted field and is ignored by the raw Payload collection endpoint. Agents that intend Discord scheduled-event creation must use `POST /api/events/create` with `syncDiscord: true` and confirm the response has `discordSyncStatus: synced`.
+
+Rule: `/api/events/create` uses a different request shape than raw `events`: send `durationMinutes` instead of `endsAt`, `hosts` instead of `hostProfiles`, `guests` instead of `speakerProfiles`, and do not send `_status` or `publishedAt`.
 
 Rule: recurring sessions are lightweight event metadata, not a separate collection. When generating the next occurrence, copy `seriesKey`, `seriesTitle`, `recurrenceCadence`, and `recurrenceUntil`, set `previousOccurrence` to the current event, then patch the current event's `nextOccurrence`.
 
