@@ -62,6 +62,7 @@ The main portal surfaces are:
 
 - [Product overview](./portal-product-overview.md)
 - [Portal direction](./portal-direction.md)
+- [Portal launch announcement draft](./portal-launch-announcement-draft.md)
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
