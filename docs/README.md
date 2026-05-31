@@ -66,6 +66,7 @@ The main portal surfaces are:
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
+- [Generic community portal template spec](./generic-community-portal-template-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
