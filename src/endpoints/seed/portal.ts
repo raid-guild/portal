@@ -330,6 +330,33 @@ export const seedPortalContent = async ({
     await Promise.all([
       upsert({
         collection: 'modules',
+        match: { slug: 'portal-graph' },
+        payload,
+        data: {
+          name: 'Portal Graph',
+          slug: 'portal-graph',
+          summary:
+            'An interactive graph for exploring relationships between profiles, roles, skills, projects, sessions, and other Portal records.',
+          status: 'experimental',
+          visibility: 'authenticated',
+          enabled: true,
+          featured: true,
+          sortOrder: 5,
+          entryRoute: '/portal-graph',
+          specURL:
+            'https://github.com/raid-guild/portal/blob/main/docs/portal-graph-feature-spec.md',
+          sourceProject: cohortProject.id,
+          relatedProjects: [cohortProject.id],
+          corePrimitiveRelationships: [{ primitive: 'profile' }],
+          graduationCriteria:
+            'Members use the graph to discover collaborators and understand relationships across active Portal records.',
+          riskNotes:
+            'Keep the module read-only until profile taxonomy and matching behavior prove useful.',
+          lastReviewedAt: '2026-06-01T00:00:00.000Z',
+        },
+      }),
+      upsert({
+        collection: 'modules',
         match: { slug: 'infinite-wiki' },
         payload,
         data: {
@@ -341,7 +368,7 @@ export const seedPortalContent = async ({
           visibility: 'authenticated',
           enabled: true,
           featured: true,
-          sortOrder: 10,
+          sortOrder: 15,
           specURL:
             'https://github.com/raid-guild/portal/blob/main/docs/infinite-wiki-feature-spec.md',
           sourceProject: cohortProject.id,
@@ -378,7 +405,7 @@ export const seedPortalContent = async ({
           status: 'idea',
           visibility: 'authenticated',
           enabled: true,
-          sortOrder: 20,
+          sortOrder: 25,
           sourceProject: cohortProject.id,
           relatedProjects: [cohortProject.id],
           relatedThreads: [ownershipThread.id],
@@ -404,7 +431,7 @@ export const seedPortalContent = async ({
           status: 'idea',
           visibility: 'authenticated',
           enabled: true,
-          sortOrder: 30,
+          sortOrder: 35,
           relatedProjects: [cohortProject.id],
           corePrimitiveRelationships: [{ primitive: 'profile' }, { primitive: 'activityItem' }],
           graduationCriteria:

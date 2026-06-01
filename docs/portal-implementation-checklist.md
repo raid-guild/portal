@@ -209,6 +209,19 @@
 - [ ] Add e2e coverage for status, visibility, source rendering, and draft
       review boundaries.
 
+## Phase 10: Portal Graph Module
+
+- [x] Add `react-force-graph-2d` for the client-side graph surface.
+- [x] Add authenticated `/portal-graph` route.
+- [x] Build graph data from visible `profiles`, `profileRoles`, and
+      `profileSkills`.
+- [x] Add client-side search, filters, node selection, and side panel.
+- [x] Link selected profile nodes to public member profile pages.
+- [x] Register Portal Graph in the `modules` seed data.
+- [x] Ensure `/modules` exposes the module with join/login CTAs for
+      unauthenticated visitors and open CTA for authenticated users.
+- [x] Add e2e coverage for access, module listing, and profile links.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. See `docs/points-and-daily-engagement-feature-spec.md`.
