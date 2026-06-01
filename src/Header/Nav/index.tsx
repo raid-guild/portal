@@ -62,9 +62,14 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
       fetch(`/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`, {
         credentials: 'include',
       }).catch(() => null),
-      fetch('/api/notifications?depth=0&limit=1&where[status][equals]=unread', {
-        credentials: 'include',
-      }).catch(() => null),
+      fetch(
+        `/api/notifications?depth=0&limit=1&where[status][equals]=unread&where[recipient][equals]=${encodeURIComponent(
+          String(currentUser.id),
+        )}`,
+        {
+          credentials: 'include',
+        },
+      ).catch(() => null),
     ])
     const profileData = profileResponse?.ok ? await profileResponse.json().catch(() => null) : null
     const notificationsData = notificationsResponse?.ok
