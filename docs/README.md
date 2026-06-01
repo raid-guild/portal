@@ -73,6 +73,7 @@ The main portal surfaces are:
 - [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
 - [CMS-managed page copy feature spec](./cms-managed-page-copy-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)
+- [Widget Bubble feature spec](./widget-bubble-feature-spec.md)
 - [Modules feature spec](./modules-feature-spec.md)
 - [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)
