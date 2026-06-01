@@ -2,14 +2,17 @@
 
 import { MessageSquarePlus } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
 import React, { useEffect, useMemo, useState } from 'react'
 
 export const WidgetBubble: React.FC = () => {
-  const [currentPath, setCurrentPath] = useState('/')
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [hash, setHash] = useState('')
   const [isTextInputFocused, setIsTextInputFocused] = useState(false)
 
   useEffect(() => {
-    setCurrentPath(`${window.location.pathname}${window.location.search}${window.location.hash}`)
+    setHash(window.location.hash || '')
 
     const onFocusIn = (event: FocusEvent) => {
       setIsTextInputFocused(isTextEntryElement(event.target))
@@ -19,23 +22,28 @@ export const WidgetBubble: React.FC = () => {
         setIsTextInputFocused(isTextEntryElement(document.activeElement))
       }, 0)
     }
+    const onHashChange = () => setHash(window.location.hash || '')
 
     window.addEventListener('focusin', onFocusIn)
     window.addEventListener('focusout', onFocusOut)
+    window.addEventListener('hashchange', onHashChange)
 
     return () => {
       window.removeEventListener('focusin', onFocusIn)
       window.removeEventListener('focusout', onFocusOut)
+      window.removeEventListener('hashchange', onHashChange)
     }
   }, [])
 
   const href = useMemo(() => {
+    const query = searchParams.toString()
+    const currentPath = `${pathname || '/'}${query ? `?${query}` : ''}${hash}`
     const params = new URLSearchParams({
       from: currentPath,
     })
 
     return `/feedback?${params.toString()}`
-  }, [currentPath])
+  }, [hash, pathname, searchParams])
 
   if (isTextInputFocused) return null
 
@@ -56,5 +64,10 @@ const isTextEntryElement = (target: EventTarget | null) => {
 
   const tagName = target.tagName.toLowerCase()
 
-  return tagName === 'input' || tagName === 'textarea' || tagName === 'select' || target.isContentEditable
+  return (
+    tagName === 'input' ||
+    tagName === 'textarea' ||
+    tagName === 'select' ||
+    target.isContentEditable
+  )
 }

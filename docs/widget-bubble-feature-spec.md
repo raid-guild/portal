@@ -2,9 +2,10 @@
 
 ## Status
 
-MVP implementation started. This spec documents a small floating launcher for
-feedback and bug reports. The first implementation should stay simple and should
-not become a support desk, Discord replacement, or Prism chat surface yet.
+MVP implementation completed (first pass). This spec documents a small floating
+launcher for feedback and bug reports. The first implementation should stay
+simple and should not become a support desk, Discord replacement, or Prism chat
+surface yet.
 
 The launcher should be generic enough to evolve later into a Prism chat or
 assistant entry point.

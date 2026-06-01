@@ -37,7 +37,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           <Header />
           {children}
-          {widgetBubbleEnabled ? <WidgetBubble /> : null}
+          {widgetBubbleEnabled ? (
+            <React.Suspense fallback={null}>
+              <WidgetBubble />
+            </React.Suspense>
+          ) : null}
           <Footer />
         </Providers>
       </body>

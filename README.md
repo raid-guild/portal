@@ -145,9 +145,11 @@ Legacy profile claims are requested from `/me`; matching unclaimed profiles send
 
 ### Feedback Widget
 
-The frontend includes a small widget bubble that links to `/feedback` for authenticated bug reports and product notes. It is enabled by default.
+The frontend includes a small widget bubble that links to `/feedback` for
+authenticated bug reports and product notes. It is enabled by default.
 
-Set `NEXT_PUBLIC_WIDGET_BUBBLE_ENABLED=false` to hide the floating widget without removing the feedback route or admin collection.
+Set `NEXT_PUBLIC_WIDGET_BUBBLE_ENABLED=false` to hide the floating widget without
+removing the feedback route or admin collection.
 
 ### End-to-End Testing
 

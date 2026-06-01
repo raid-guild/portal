@@ -12,6 +12,7 @@ type Args = {
 
 export default async function FeedbackPage({ searchParams }: Args) {
   const [{ from }, user] = await Promise.all([searchParams, getCurrentUser()])
+  const loginHref = getLoginHref(from)
 
   return (
     <main className="container pb-24 pt-12">
@@ -42,7 +43,7 @@ export default async function FeedbackPage({ searchParams }: Args) {
               followed up safely.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link className="portal-admin-link" href="/login?next=%2Ffeedback">
+              <Link className="portal-admin-link" href={loginHref}>
                 Login
               </Link>
               <Link className="portal-admin-link" href="/join">
@@ -59,4 +60,10 @@ export default async function FeedbackPage({ searchParams }: Args) {
 export const metadata: Metadata = {
   description: 'Submit feedback, bug reports, and product notes for the Portal.',
   title: 'Feedback',
+}
+
+const getLoginHref = (from?: string) => {
+  const feedbackPath = from ? `/feedback?from=${encodeURIComponent(from)}` : '/feedback'
+
+  return `/login?next=${encodeURIComponent(feedbackPath)}`
 }

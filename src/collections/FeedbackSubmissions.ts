@@ -215,7 +215,7 @@ export const FeedbackSubmissions: CollectionConfig = {
   ],
   hooks: {
     beforeValidate: [
-      async ({ data, req }) => {
+      async ({ data, operation, req }) => {
         const user = req.user
         const normalizedData =
           typeof data?.email === 'string'
@@ -225,7 +225,7 @@ export const FeedbackSubmissions: CollectionConfig = {
               }
             : data
 
-        if (!user?.id) return normalizedData
+        if (operation !== 'create' || !user?.id) return normalizedData
 
         const nextData: Record<string, unknown> = {
           ...normalizedData,

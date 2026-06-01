@@ -171,6 +171,8 @@ const normalizePageURL = (value?: null | string) => {
   try {
     const url = new URL(trimmed)
 
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return ''
+
     return `${url.pathname}${url.search}${url.hash}`
   } catch {
     return ''
