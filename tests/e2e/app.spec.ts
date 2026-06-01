@@ -2795,12 +2795,51 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   expect(activityDigestNotificationsBody.docs?.[0]?.metadata?.count).toBeGreaterThanOrEqual(1)
 }
 
+async function verifyFeedbackWidget(page: Page) {
+  const feedbackTitle = `E2E Feedback ${Date.now()}`
+
+  await page.goto('/dashboard')
+  await page.getByLabel('Send feedback').click()
+  await expect(page).toHaveURL(/\/feedback\?from=%2Fdashboard/)
+
+  await page.getByLabel(/type/i).selectOption('bug')
+  await fillFirst(page.getByLabel(/title/i), feedbackTitle)
+  await fillFirst(
+    page.getByLabel(/what happened/i),
+    'The floating widget should create a triageable feedback record.',
+  )
+  await expect(page.getByLabel(/page/i)).toHaveValue('/dashboard')
+  await page.getByRole('button', { name: /submit feedback/i }).click()
+
+  await expect(page.getByRole('heading', { name: /thanks for the signal/i })).toBeVisible()
+
+  const response = await page.request.get('/api/feedbackSubmissions', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[title][equals]': feedbackTitle,
+    },
+  })
+
+  expect(response.ok()).toBeTruthy()
+
+  const body = await response.json()
+
+  expect(body.docs?.[0]).toMatchObject({
+    pageURL: '/dashboard',
+    status: 'new',
+    title: feedbackTitle,
+    type: 'bug',
+  })
+}
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page)
   await verifyInboxAndNotificationPreferences(page)
+  await verifyFeedbackWidget(page)
   await createProfileAndVerifyContributorCreateLinks(page)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)

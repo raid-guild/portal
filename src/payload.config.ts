@@ -16,6 +16,7 @@ import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
 import { Events } from './collections/Events'
+import { FeedbackSubmissions } from './collections/FeedbackSubmissions'
 import { Inquiries } from './collections/Inquiries'
 import { Media } from './collections/Media'
 import { Modules } from './collections/Modules'
@@ -126,6 +127,7 @@ export default buildConfig({
     Modules,
     Notifications,
     NotificationPreferences,
+    FeedbackSubmissions,
     PageCopy,
     Profiles,
     ProfileSkills,

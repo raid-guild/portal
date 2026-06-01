@@ -2,9 +2,10 @@
 
 ## Status
 
-Future feature module. This spec documents a small floating launcher for
-feedback and bug reports. The first implementation should stay simple and should
-not become a support desk, Discord replacement, or Prism chat surface yet.
+MVP implementation completed (first pass). This spec documents a small floating
+launcher for feedback and bug reports. The first implementation should stay
+simple and should not become a support desk, Discord replacement, or Prism chat
+surface yet.
 
 The launcher should be generic enough to evolve later into a Prism chat or
 assistant entry point.
@@ -248,11 +249,11 @@ Recommended MVP access:
 
 ## First Implementation Checklist
 
-- Add `feedbackSubmissions` collection.
-- Add `/feedback` route with a simple accessible form.
-- Add `WidgetBubble` launcher to the frontend shell.
-- Add `NEXT_PUBLIC_WIDGET_BUBBLE_ENABLED` helper with default-on behavior.
-- Add account-menu `Feedback` link.
-- Capture `from` URL and browser context.
-- Add admin default columns for status, type, title, submitter, and created date.
-- Add focused e2e coverage for authenticated feedback submission.
+- [x] Add `feedbackSubmissions` collection.
+- [x] Add `/feedback` route with a simple accessible form.
+- [x] Add `WidgetBubble` launcher to the frontend shell.
+- [x] Add `NEXT_PUBLIC_WIDGET_BUBBLE_ENABLED` helper with default-on behavior.
+- [x] Add account-menu `Feedback` link.
+- [x] Capture `from` URL and browser context.
+- [x] Add admin default columns for status, type, title, submitter, and created date.
+- [x] Add focused e2e coverage for authenticated feedback submission.
