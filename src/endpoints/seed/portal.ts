@@ -1,4 +1,9 @@
-import type { CollectionSlug, Payload, PayloadRequest } from 'payload'
+import type {
+  CollectionSlug,
+  Payload,
+  PayloadRequest,
+  RequiredDataFromCollectionSlug,
+} from 'payload'
 
 import { badges } from './badges'
 import { dailyBrief } from './daily-brief'
@@ -15,6 +20,165 @@ const publishedAt = '2026-05-11T17:34:47.664Z'
 const sessionEndedAt = '2026-05-11T17:34:47.664Z'
 const nextSessionCalendarURL = 'https://calendar.google.com'
 const nextSessionJoinURL = 'https://discord.com'
+const inquirySharedCopy = {
+  backLinkLabel: 'Back to join',
+  contextBody:
+    'Submit the inquiry first. The Portal saves it immediately, then asks you to create an account so follow-up can connect to your profile.',
+  contextHeading: 'How this works',
+  createAccountLabel: 'Create account',
+  postSubmitBody:
+    'Your request has been started. Create an account so we can connect this request to your Portal profile, share follow-ups, and keep the conversation tied to your work.',
+  postSubmitEyebrow: 'Inquiry started',
+  postSubmitHeading: 'Continue your RaidGuild intake',
+  submitAnotherLabel: 'Submit another',
+  submitLabel: 'Start inquiry',
+}
+
+const pageCopySeeds = [
+  {
+    contextBody: 'No public sessions are scheduled yet. Join to get access to member coordination.',
+    contextHeading: 'Next public session',
+    createAccountLabel: 'Join RaidGuild',
+    eyebrow: 'RaidGuild Portal',
+    headline: 'A digital coworking space for builders',
+    intro:
+      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+    key: 'brief-public',
+    label: 'Public Brief Page',
+    seoDescription:
+      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+    seoTitle: 'RaidGuild Portal | A digital coworking space for builders',
+    status: 'published',
+    submitAnotherLabel: 'View sessions',
+    surface: 'brief',
+  },
+  {
+    benefits: [
+      { body: 'Follow real guild activity without digging through chat.' },
+      { body: 'Build a public profile connected to sessions, projects, posts, and badges.' },
+      { body: 'Discover projects and contribution requests.' },
+      { body: 'Join live sessions and keep track of context afterward.' },
+      {
+        body: 'Bring client, sponsor, grant, or partnership opportunities into the right intake path.',
+      },
+    ],
+    benefitsHeading: 'Turn participation into skills, visibility, and opportunity.',
+    eyebrow: 'Join the Portal',
+    funnelEyebrow: 'Need a different path?',
+    funnelHeading: 'Start with the right intake.',
+    funnelLinks: [
+      {
+        description:
+          'Talk through a client build, product spike, or technical implementation need.',
+        href: '/inquire/client',
+        label: 'Request a build',
+      },
+      {
+        description: 'Bring sponsorship, bounties, or paid work into the guild review path.',
+        href: '/inquire/sponsor',
+        label: 'Sponsor the guild',
+      },
+      {
+        description:
+          'Route grants, public goods funding, or ecosystem support to the right context.',
+        href: '/inquire/grant',
+        label: 'Offer funding or grants',
+      },
+      {
+        description: 'Start a partnership, collaboration, research, or community opportunity.',
+        href: '/inquire/opportunity',
+        label: 'Bring a collaboration',
+      },
+      {
+        description: 'Ask a general question and get routed toward the right next step.',
+        href: '/inquire/general',
+        label: 'Talk to the guild',
+      },
+    ],
+    headline: "Join RaidGuild's digital coworking space.",
+    intro:
+      'Create an account to connect your profile, follow live guild activity, join sessions, and find useful places to contribute.',
+    key: 'join',
+    label: 'Join Page',
+    secondaryIntro:
+      'The Portal shows the current brief, upcoming sessions, active projects, contributor requests, and the people building around them.',
+    seoDescription:
+      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+    seoTitle: 'Join the Portal',
+    status: 'published',
+    surface: 'join',
+  },
+  {
+    ...inquirySharedCopy,
+    eyebrow: 'Build Request',
+    headline: 'Request a build with RaidGuild.',
+    intro:
+      'Share the product, technical, or strategic problem you want to move forward. This starts a private intake record for review.',
+    key: 'inquire-client',
+    label: 'Client Inquiry Page',
+    messageLabel: 'What do you want to build, validate, or unblock?',
+    seoDescription: 'Start a private build request with RaidGuild.',
+    seoTitle: 'Request a build with RaidGuild.',
+    status: 'published',
+    surface: 'inquiry',
+  },
+  {
+    ...inquirySharedCopy,
+    eyebrow: 'Guild Inquiry',
+    headline: 'Talk to the guild.',
+    intro:
+      'Not sure where to start? Share the question or context and the guild can route it toward the right next step.',
+    key: 'inquire-general',
+    label: 'General Inquiry Page',
+    messageLabel: 'What should we know?',
+    seoDescription: 'Start a general RaidGuild inquiry and get routed to the right next step.',
+    seoTitle: 'Talk to the guild.',
+    status: 'published',
+    surface: 'inquiry',
+  },
+  {
+    ...inquirySharedCopy,
+    eyebrow: 'Funding Path',
+    headline: 'Offer funding or grants.',
+    intro:
+      'Bring grants, public goods funding, ecosystem budgets, or other support opportunities into review.',
+    key: 'inquire-grant',
+    label: 'Grant Inquiry Page',
+    messageLabel: 'What funding path or grant context are you bringing?',
+    seoDescription: 'Bring grant, public goods, or ecosystem funding context into review.',
+    seoTitle: 'Offer funding or grants.',
+    status: 'published',
+    surface: 'inquiry',
+  },
+  {
+    ...inquirySharedCopy,
+    eyebrow: 'Collaboration',
+    headline: 'Bring a collaboration opportunity.',
+    intro:
+      'Start a partnership, research, community, or ecosystem collaboration thread without needing to know the right internal channel.',
+    key: 'inquire-opportunity',
+    label: 'Collaboration Inquiry Page',
+    messageLabel: 'What collaboration opportunity should RaidGuild understand?',
+    seoDescription: 'Share a partnership, research, community, or ecosystem collaboration.',
+    seoTitle: 'Bring a collaboration opportunity.',
+    status: 'published',
+    surface: 'inquiry',
+  },
+  {
+    ...inquirySharedCopy,
+    eyebrow: 'Sponsorship',
+    headline: 'Sponsor the guild.',
+    intro:
+      'Share sponsorship, bounty, paid work, or support context so it can be reviewed without getting lost in chat.',
+    key: 'inquire-sponsor',
+    label: 'Sponsorship Inquiry Page',
+    messageLabel: 'What are you sponsoring or bringing to the guild?',
+    seoDescription: 'Start a sponsorship, bounty, paid work, or support inquiry with RaidGuild.',
+    seoTitle: 'Sponsor the guild.',
+    status: 'published',
+    surface: 'inquiry',
+  },
+]
 
 const findOne = async ({ collection, match, payload }: Omit<UpsertArgs, 'data'>) => {
   const result = await payload.find({
@@ -636,6 +800,17 @@ export const seedPortalContent = async ({
         publishedAt,
       },
     })
+
+    await Promise.all(
+      pageCopySeeds.map((copy) =>
+        upsert({
+          collection: 'pageCopy',
+          data: copy as RequiredDataFromCollectionSlug<'pageCopy'>,
+          match: { key: copy.key },
+          payload,
+        }),
+      ),
+    )
 
     payload.logger.info('Portal starter content upserted successfully.')
   } finally {

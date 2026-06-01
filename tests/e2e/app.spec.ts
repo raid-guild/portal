@@ -1576,6 +1576,35 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   })
 }
 
+async function verifyCMSManagedPageCopy(adminPage: Page, publicPage: Page) {
+  const copyResponse = await adminPage.request.get('/api/pageCopy', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[key][equals]': 'inquire-client',
+    },
+  })
+  expect(copyResponse.ok()).toBeTruthy()
+  const copyBody = await copyResponse.json()
+  const copyID = copyBody.docs?.[0]?.id
+  expect(copyID).toBeTruthy()
+
+  const headline = `CMS build intake ${Date.now()}`
+  const updateResponse = await adminPage.request.patch(`/api/pageCopy/${copyID}`, {
+    data: {
+      headline,
+      messageLabel: 'What should this CMS-managed form ask?',
+    },
+  })
+  expect(updateResponse.ok()).toBeTruthy()
+
+  await publicPage.goto('/inquire/client')
+  await expect(publicPage.getByRole('heading', { name: headline })).toBeVisible({
+    timeout: 30000,
+  })
+  await expect(publicPage.getByLabel('What should this CMS-managed form ask?')).toBeVisible()
+}
+
 async function verifyJoinFormEmailErrors(page: Page) {
   await page.goto('/join')
   await fillFirst(page.getByLabel(/^display name$/i), 'Email Test')
@@ -2797,6 +2826,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
+  await verifyCMSManagedPageCopy(page, publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifyContributionRequests(page, browser, publicPage)
   await verifySeededSessions(publicPage)
