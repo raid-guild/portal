@@ -11,14 +11,14 @@ type Args = {
   }>
 }
 
+const isInquiryType = (type: string): type is InquiryType => type in inquiryPageFallbacks
+
 export default async function InquiryPage({ params }: Args) {
   const { type } = await params
-  const isInquiryType = type in inquiryPageFallbacks
 
-  if (!isInquiryType) notFound()
+  if (!isInquiryType(type)) notFound()
 
-  const inquiryType = type as InquiryType
-  const copy = await getInquiryPageCopy(inquiryType)
+  const copy = await getInquiryPageCopy(type)
 
   return (
     <main className="container pb-24 pt-12">
@@ -44,7 +44,7 @@ export default async function InquiryPage({ params }: Args) {
           sourceRoute={`/inquire/${type}`}
           submitAnotherLabel={copy.submitAnotherLabel}
           submitLabel={copy.submitLabel}
-          type={inquiryType}
+          type={type}
         />
       </section>
     </main>
@@ -57,16 +57,15 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const { type } = await params
-  const isInquiryType = type in inquiryPageFallbacks
 
-  if (!isInquiryType) {
+  if (!isInquiryType(type)) {
     return {
       description: 'The requested RaidGuild inquiry type could not be found.',
       title: 'Inquiry not found',
     }
   }
 
-  const copy = await getInquiryPageCopy(type as InquiryType)
+  const copy = await getInquiryPageCopy(type)
 
   return {
     description: copy.seoDescription,

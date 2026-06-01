@@ -123,12 +123,8 @@ Fields:
 - `intro`
 - `createAccountLabel`
 - `submitAnotherLabel`
-- `benefits`
-  - body
-- `funnelLinks`
-  - label
-  - description
-  - url
+- `benefits`: repeated body rows
+- `funnelLinks`: repeated label, description, and URL rows
 - `contextHeading`
 - `contextBody`
 - `messageLabel`

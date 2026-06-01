@@ -33,8 +33,8 @@ export default async function JoinPage({ searchParams }: Args) {
             <p className="text-xl font-medium">{copy.benefitsHeading}</p>
           ) : null}
           <div className="mt-8 grid gap-4 text-sm leading-6 text-muted-foreground md:grid-cols-2">
-            {copy.benefits?.map((item) => (
-              <div className="border border-border p-4" key={item}>
+            {copy.benefits?.map((item, index) => (
+              <div className="border border-border p-4" key={`${index}-${item}`}>
                 <p>{item}</p>
               </div>
             ))}
