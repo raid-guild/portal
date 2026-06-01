@@ -1509,6 +1509,73 @@ async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
   await expect(adminPage.getByRole('link', { name: 'Sponsor Lead' })).toBeVisible()
 }
 
+async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
+  const suffix = Date.now()
+  const email = `inquiry-${suffix}@example.com`
+
+  await publicPage.goto('/join')
+  await expect(publicPage.getByRole('link', { name: 'Talk to the guild' })).toBeVisible()
+
+  await publicPage.goto('/inquire/general?utm_source=e2e&utm_medium=test&utm_campaign=funnel')
+  await expect(publicPage.getByRole('heading', { name: 'Talk to the guild.' })).toBeVisible()
+  await fillFirst(publicPage.getByLabel(/^name$/i), 'Inquiry Visitor')
+  await fillFirst(publicPage.getByLabel(/^email$/i), email)
+  await fillFirst(publicPage.getByLabel(/organization/i), 'Signal Workshop')
+  await fillFirst(publicPage.getByLabel(/role \/ title/i), 'Builder')
+  await fillFirst(
+    publicPage.getByLabel(/what should we know/i),
+    'I want to understand where a new collaborator should plug into current guild work.',
+  )
+  await fillFirst(publicPage.getByLabel(/link label/i), 'Context')
+  await fillFirst(publicPage.getByLabel(/relevant link/i), 'https://example.com/context')
+  await publicPage.getByRole('button', { name: /start inquiry/i }).click()
+
+  await expect(
+    publicPage.getByRole('heading', { name: 'Continue your RaidGuild intake' }),
+  ).toBeVisible()
+  const createAccountLink = publicPage.getByRole('link', { name: 'Create account' })
+  await expect(createAccountLink).toHaveAttribute(
+    'href',
+    new RegExp(`/join\\?email=${encodeURIComponent(email)}`),
+  )
+
+  await adminPage.goto('/admin/collections/inquiries')
+  await expect(adminPage.getByText('Signal Workshop')).toBeVisible({
+    timeout: 30000,
+  })
+
+  const createResponse = await publicPage.request.post('/api/users', {
+    data: {
+      email,
+      name: 'Inquiry Visitor',
+      password: 'password123',
+    },
+  })
+  expect(createResponse.ok()).toBeTruthy()
+  const createdUser = await createResponse.json()
+  const createdUserID = createdUser.doc?.id || createdUser.id
+
+  const inquiryResponse = await adminPage.request.get('/api/inquiries', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[email][equals]': email,
+    },
+  })
+  expect(inquiryResponse.ok()).toBeTruthy()
+  const inquiryBody = await inquiryResponse.json()
+  expect(inquiryBody.docs?.[0]).toMatchObject({
+    accountLinkStatus: 'linked',
+    email,
+    sourceRoute: '/inquire/general',
+    submitterUser: createdUserID,
+    type: 'general',
+    utmCampaign: 'funnel',
+    utmMedium: 'test',
+    utmSource: 'e2e',
+  })
+}
+
 async function verifyJoinFormEmailErrors(page: Page) {
   await page.goto('/join')
   await fillFirst(page.getByLabel(/^display name$/i), 'Email Test')
@@ -2741,6 +2808,12 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)
   await verifyJoinFormEmailErrors(publicPage)
+
+  const inquiryContext = await browser.newContext()
+  const inquiryPage = await inquiryContext.newPage()
+  await submitGeneralInquiry(inquiryPage, page)
+  await inquiryContext.close()
+
   await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()

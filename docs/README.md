@@ -71,6 +71,7 @@ The main portal surfaces are:
 - [Portal Graph feature spec](./portal-graph-feature-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
+- [CMS-managed page copy feature spec](./cms-managed-page-copy-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)
 - [Modules feature spec](./modules-feature-spec.md)
 - [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md)

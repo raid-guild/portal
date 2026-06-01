@@ -85,6 +85,7 @@ export interface Config {
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
+    inquiries: Inquiry;
     sponsorInquiries: SponsorInquiry;
     media: Media;
     categories: Category;
@@ -119,6 +120,7 @@ export interface Config {
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
+    inquiries: InquiriesSelect<false> | InquiriesSelect<true>;
     sponsorInquiries: SponsorInquiriesSelect<false> | SponsorInquiriesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
@@ -1526,6 +1528,42 @@ export interface NotificationPreference {
   createdAt: string;
 }
 /**
+ * Private intake records for onboarding, client, funding, and collaboration funnels.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inquiries".
+ */
+export interface Inquiry {
+  id: number;
+  type: 'client' | 'sponsor' | 'grant' | 'opportunity' | 'general';
+  status: 'new' | 'reviewing' | 'contacted' | 'converted' | 'closed' | 'spam';
+  accountLinkStatus: 'unlinked' | 'linked' | 'skipped';
+  name: string;
+  email: string;
+  organization?: string | null;
+  roleOrTitle?: string | null;
+  message: string;
+  budgetRange?: ('no-budget-yet' | 'under-5k' | '5k-15k' | '15k-50k' | '50k-plus' | 'unknown') | null;
+  timeline?: ('this-week' | 'this-month' | 'this-quarter' | 'flexible') | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  sourceRoute?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  submitterUser?: (number | null) | User;
+  submitterProfile?: (number | null) | Profile;
+  relatedProject?: (number | null) | Project;
+  notes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Private intake records for sponsor, bounty, project, and funding opportunities.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1776,6 +1814,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'profileRoles';
         value: number | ProfileRole;
+      } | null)
+    | ({
+        relationTo: 'inquiries';
+        value: number | Inquiry;
       } | null)
     | ({
         relationTo: 'sponsorInquiries';
@@ -2570,6 +2612,39 @@ export interface ProfileRolesSelect<T extends boolean = true> {
   icon?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "inquiries_select".
+ */
+export interface InquiriesSelect<T extends boolean = true> {
+  type?: T;
+  status?: T;
+  accountLinkStatus?: T;
+  name?: T;
+  email?: T;
+  organization?: T;
+  roleOrTitle?: T;
+  message?: T;
+  budgetRange?: T;
+  timeline?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  sourceRoute?: T;
+  utmSource?: T;
+  utmMedium?: T;
+  utmCampaign?: T;
+  submitterUser?: T;
+  submitterProfile?: T;
+  relatedProject?: T;
+  notes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

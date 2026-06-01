@@ -27,6 +27,7 @@ import * as migration_20260529_120000_notifications from './20260529_120000_noti
 import * as migration_20260529_130000_contribution_requests from './20260529_130000_contribution_requests'
 import * as migration_20260529_130000_modules from './20260529_130000_modules'
 import * as migration_20260529_140000_comment_parents from './20260529_140000_comment_parents'
+import * as migration_20260601_120000_onboarding_inquiries from './20260601_120000_onboarding_inquiries'
 
 export const migrations = [
   {
@@ -173,5 +174,10 @@ export const migrations = [
     up: migration_20260529_140000_comment_parents.up,
     down: migration_20260529_140000_comment_parents.down,
     name: '20260529_140000_comment_parents',
+  },
+  {
+    up: migration_20260601_120000_onboarding_inquiries.up,
+    down: migration_20260601_120000_onboarding_inquiries.down,
+    name: '20260601_120000_onboarding_inquiries',
   },
 ]
