@@ -20,7 +20,7 @@ export const home: RequiredDataFromCollectionSlug<'pages'> = {
           type: 'custom',
           appearance: 'default',
           label: 'Pledge now',
-          url: '/contact',
+          url: '/join',
         },
       },
       {
@@ -35,11 +35,7 @@ export const home: RequiredDataFromCollectionSlug<'pages'> = {
     // @ts-expect-error seeded media placeholder is resolved during the seed run
     media: '{{IMAGE_1}}',
     richText: lexicalRoot([
-      headingNode('h1', [
-        text('FORGE YOUR PATH.'),
-        lineBreakNode(),
-        text('EARN YOUR SEAT.'),
-      ]),
+      headingNode('h1', [text('FORGE YOUR PATH.'), lineBreakNode(), text('EARN YOUR SEAT.')]),
       paragraphNode(
         "RaidGuild's monthly cohort is a 4-week proving ground where you embark on real projects, train with battle-tested builders, and claim your place in the premier design and dev collective of the decentralized realm.",
       ),
@@ -62,7 +58,7 @@ export const home: RequiredDataFromCollectionSlug<'pages'> = {
             type: 'custom',
             appearance: 'default',
             label: 'Start the journey',
-            url: '/contact',
+            url: '/join',
           },
         },
       ],

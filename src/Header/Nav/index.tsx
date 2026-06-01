@@ -28,6 +28,8 @@ type AccountProfile = {
   handle?: string | null
 }
 
+type HeaderNavLink = NonNullable<HeaderType['navItems']>[number]['link']
+
 export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
   const [open, setOpen] = useState(false)
   const [profile, setProfile] = useState<AccountProfile | null>(null)
@@ -110,7 +112,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
   return (
     <nav className="flex gap-3 items-center">
       {navItems.map(({ link }, i) => {
-        return <CMSLink key={i} {...link} appearance="link" />
+        return <CMSLink key={i} {...normalizeNavLink(link)} appearance="link" />
       })}
       {user?.id ? (
         <div className="relative">
@@ -212,4 +214,18 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
       </Link>
     </nav>
   )
+}
+
+const normalizeNavLink = (link: HeaderNavLink) => {
+  if (typeof link?.label === 'string' && link.label.toLowerCase() === 'contact') {
+    return {
+      ...link,
+      label: 'Inquire',
+      reference: undefined,
+      type: 'custom' as const,
+      url: '/inquire/general',
+    }
+  }
+
+  return link
 }

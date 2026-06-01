@@ -82,6 +82,7 @@ export const Users: CollectionConfig = {
     afterChange: [
       async ({ context, doc, operation, req }) => {
         if (operation !== 'create') return
+        await linkMatchingInquiries({ req, user: doc as User })
         if (context.skipWelcomeEmail) return
 
         await sendWelcomeEmail({ req, user: doc as User })
@@ -114,6 +115,61 @@ export const Users: CollectionConfig = {
     ],
   },
   timestamps: true,
+}
+
+const linkMatchingInquiries = async ({ req, user }: { req: PayloadRequest; user: User }) => {
+  if (!user.email) return
+
+  try {
+    const matchingEmail = user.email.trim().toLowerCase()
+
+    while (true) {
+      const result = await req.payload.find({
+        collection: 'inquiries',
+        limit: 100,
+        overrideAccess: true,
+        req,
+        sort: '-createdAt',
+        where: {
+          and: [
+            {
+              email: {
+                equals: matchingEmail,
+              },
+            },
+            {
+              accountLinkStatus: {
+                equals: 'unlinked',
+              },
+            },
+          ],
+        },
+      })
+
+      if (result.docs.length === 0) break
+
+      await Promise.all(
+        result.docs.map((inquiry) =>
+          req.payload.update({
+            collection: 'inquiries',
+            id: inquiry.id,
+            data: {
+              accountLinkStatus: 'linked',
+              submitterUser: user.id,
+            },
+            overrideAccess: true,
+            req,
+          }),
+        ),
+      )
+    }
+  } catch (error) {
+    req.payload.logger.warn({
+      err: error,
+      msg: 'Failed to link matching inquiries after signup.',
+      userID: user.id,
+    })
+  }
 }
 
 const sendWelcomeEmail = async ({ req, user }: { req: PayloadRequest; user: User }) => {
