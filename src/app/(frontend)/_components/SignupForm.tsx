@@ -48,7 +48,10 @@ const formatSignupError = (message: string): SignupFieldErrors => {
   }
 }
 
-export const SignupForm: React.FC = () => {
+export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> = ({
+  initialEmail,
+  nextPath,
+}) => {
   const router = useRouter()
   const [errors, setErrors] = useState<SignupFieldErrors>({})
   const [isLoading, setIsLoading] = useState(false)
@@ -122,7 +125,7 @@ export const SignupForm: React.FC = () => {
         return
       }
 
-      router.push('/dashboard')
+      router.push(nextPath || '/dashboard')
       router.refresh()
     } catch (err) {
       setErrors(formatSignupError(err instanceof Error ? err.message : 'Unable to create account.'))
@@ -153,6 +156,7 @@ export const SignupForm: React.FC = () => {
             autoComplete="email"
             id="email"
             name="email"
+            defaultValue={initialEmail}
             required
             type="email"
           />

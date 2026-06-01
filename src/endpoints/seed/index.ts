@@ -796,12 +796,9 @@ export const seed = async ({
           },
           {
             link: {
-              type: 'reference',
-              label: 'Contact',
-              reference: {
-                relationTo: 'pages',
-                value: contactPage.id,
-              },
+              type: 'custom',
+              label: 'Inquire',
+              url: '/inquire/general',
             },
           },
         ],
