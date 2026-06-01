@@ -82,6 +82,7 @@ export interface Config {
     modules: Module;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
+    pageCopy: PageCopy;
     profiles: Profile;
     profileSkills: ProfileSkill;
     profileRoles: ProfileRole;
@@ -117,6 +118,7 @@ export interface Config {
     modules: ModulesSelect<false> | ModulesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
+    pageCopy: PageCopySelect<false> | PageCopySelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
     profileRoles: ProfileRolesSelect<false> | ProfileRolesSelect<true>;
@@ -1528,6 +1530,57 @@ export interface NotificationPreference {
   createdAt: string;
 }
 /**
+ * Structured copy overrides for fixed Portal product-flow pages.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pageCopy".
+ */
+export interface PageCopy {
+  id: number;
+  label: string;
+  /**
+   * Stable route key, for example join or inquire-client.
+   */
+  key: string;
+  surface: 'join' | 'inquiry' | 'brief' | 'other';
+  status: 'draft' | 'published';
+  eyebrow?: string | null;
+  headline?: string | null;
+  intro?: string | null;
+  secondaryIntro?: string | null;
+  benefitsHeading?: string | null;
+  benefits?:
+    | {
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  funnelEyebrow?: string | null;
+  funnelHeading?: string | null;
+  funnelLinks?:
+    | {
+        label: string;
+        description?: string | null;
+        href: string;
+        id?: string | null;
+      }[]
+    | null;
+  contextHeading?: string | null;
+  contextBody?: string | null;
+  messageLabel?: string | null;
+  submitLabel?: string | null;
+  postSubmitEyebrow?: string | null;
+  postSubmitHeading?: string | null;
+  postSubmitBody?: string | null;
+  createAccountLabel?: string | null;
+  submitAnotherLabel?: string | null;
+  backLinkLabel?: string | null;
+  seoTitle?: string | null;
+  seoDescription?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Private intake records for onboarding, client, funding, and collaboration funnels.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1802,6 +1855,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notificationPreferences';
         value: number | NotificationPreference;
+      } | null)
+    | ({
+        relationTo: 'pageCopy';
+        value: number | PageCopy;
       } | null)
     | ({
         relationTo: 'profiles';
@@ -2544,6 +2601,51 @@ export interface NotificationPreferencesSelect<T extends boolean = true> {
   activityDigestFrequency?: T;
   weeklyDigest?: T;
   badgeAwards?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pageCopy_select".
+ */
+export interface PageCopySelect<T extends boolean = true> {
+  label?: T;
+  key?: T;
+  surface?: T;
+  status?: T;
+  eyebrow?: T;
+  headline?: T;
+  intro?: T;
+  secondaryIntro?: T;
+  benefitsHeading?: T;
+  benefits?:
+    | T
+    | {
+        body?: T;
+        id?: T;
+      };
+  funnelEyebrow?: T;
+  funnelHeading?: T;
+  funnelLinks?:
+    | T
+    | {
+        label?: T;
+        description?: T;
+        href?: T;
+        id?: T;
+      };
+  contextHeading?: T;
+  contextBody?: T;
+  messageLabel?: T;
+  submitLabel?: T;
+  postSubmitEyebrow?: T;
+  postSubmitHeading?: T;
+  postSubmitBody?: T;
+  createAccountLabel?: T;
+  submitAnotherLabel?: T;
+  backLinkLabel?: T;
+  seoTitle?: T;
+  seoDescription?: T;
   updatedAt?: T;
   createdAt?: T;
 }

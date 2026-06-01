@@ -8,6 +8,7 @@ import type { User } from '@/payload-types'
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
 
 export const dynamic = 'force-dynamic'
 
@@ -39,7 +40,8 @@ export default async function HomePage() {
     )
   }
 
-  const [posts, projects, upcomingEvents, weeklyBrief] = await Promise.all([
+  const [copy, posts, projects, upcomingEvents, weeklyBrief] = await Promise.all([
+    getBriefPublicPageCopy(),
     getRecentPosts(),
     getProjects(),
     getPublicUpcomingEvents(),
@@ -48,6 +50,7 @@ export default async function HomePage() {
 
   return (
     <PortalPublicHome
+      copy={copy}
       posts={posts}
       projects={projects}
       upcomingEvents={upcomingEvents}
@@ -56,23 +59,24 @@ export default async function HomePage() {
   )
 }
 
-export const metadata: Metadata = {
-  description:
-    'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
-  openGraph: mergeOpenGraph({
-    description:
-      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
-    title: 'RaidGuild Portal | A digital coworking space for builders',
-    url: '/',
-  }),
-  title: 'RaidGuild Portal | A digital coworking space for builders',
-  twitter: {
-    card: 'summary_large_image',
-    description:
-      'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
-    images: ['/assets/image.png'],
-    title: 'RaidGuild Portal | A digital coworking space for builders',
-  },
+export async function generateMetadata(): Promise<Metadata> {
+  const copy = await getBriefPublicPageCopy()
+
+  return {
+    description: copy.seoDescription,
+    openGraph: mergeOpenGraph({
+      description: copy.seoDescription,
+      title: copy.seoTitle,
+      url: '/',
+    }),
+    title: copy.seoTitle,
+    twitter: {
+      card: 'summary_large_image',
+      description: copy.seoDescription,
+      images: ['/assets/image.png'],
+      title: copy.seoTitle,
+    },
+  }
 }
 
 const getRecentPosts = async () => {
