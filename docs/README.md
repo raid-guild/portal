@@ -68,7 +68,7 @@ The main portal surfaces are:
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
 - [Generic community portal template spec](./generic-community-portal-template-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
-- [Skill / Role Explorer feature spec](./skill-role-explorer-feature-spec.md)
+- [Portal Graph feature spec](./portal-graph-feature-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)

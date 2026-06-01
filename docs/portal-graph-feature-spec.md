@@ -1,17 +1,18 @@
-# Skill / Role Explorer Feature Spec
+# Portal Graph Feature Spec
 
 ## Status
 
 Future feature module. This spec documents the planning direction for an
-interactive skill and role knowledge graph before implementation.
+interactive Portal relationship graph.
 
-The first version should derive from existing profile role, profile skill, and
-profile records. Do not add a new collection for v1.
+The first version should ship as a Skills & Roles graph derived from existing
+profile role, profile skill, and profile records. Do not add a new collection
+for v1.
 
 ## Product Intent
 
-The Skill / Role Explorer should help authenticated Portal users visually
-explore the shape of the community:
+The Portal Graph should help authenticated Portal users visually explore the
+shape of the community:
 
 - which roles exist
 - which skills are common or rare
@@ -29,12 +30,12 @@ This belongs in the module system, not the core navigation.
 Recommended module registry record:
 
 ```txt
-title: Skill / Role Explorer
-slug: skill-role-explorer
+title: Portal Graph
+slug: portal-graph
 status: experimental
 visibility: authenticated
-route: /skill-role-explorer
-summary: Explore the relationship between member roles, skills, and profiles.
+route: /portal-graph
+summary: Explore relationships between profiles, roles, skills, projects, sessions, and other Portal records.
 ```
 
 The module should appear on `/modules`.
@@ -42,7 +43,7 @@ The module should appear on `/modules`.
 Unauthenticated users should see a teaser card and CTA:
 
 ```txt
-Join to explore member skills and roles.
+Join to explore member skills, roles, and relationships.
 ```
 
 Authenticated users should see an open CTA:
@@ -56,7 +57,7 @@ Open explorer
 Use a direct feature route:
 
 ```txt
-/skill-role-explorer
+/portal-graph
 ```
 
 This follows the module guidance that module experiences do not need to be
@@ -64,7 +65,7 @@ nested under `/modules`.
 
 Access:
 
-- unauthenticated users: redirect to `/login?next=/skill-role-explorer` or show
+- unauthenticated users: redirect to `/login?next=/portal-graph` or show
   a join/login CTA
 - authenticated users: render the explorer
 
@@ -252,12 +253,12 @@ keeping the graph as a secondary visual.
 ## Implementation Plan
 
 1. Add `react-force-graph-2d`.
-2. Add `/skill-role-explorer` authenticated route.
+2. Add `/portal-graph` authenticated route.
 3. Build server-side data fetch for visible profiles, roles, and skills.
 4. Normalize graph data for the client component.
 5. Build client graph component with search, filters, click selection, and side
    panel.
-6. Add a module registry seed/record for Skill / Role Explorer.
+6. Add a module registry seed/record for Portal Graph.
 7. Ensure `/modules` shows teaser CTA for unauthenticated users and open CTA for
    authenticated users.
 8. Add e2e coverage for authenticated access, unauthenticated CTA, and profile

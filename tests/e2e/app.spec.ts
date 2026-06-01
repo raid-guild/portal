@@ -2084,6 +2084,10 @@ async function verifyDashboardBrief(page: Page) {
 
 async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   const moduleSuffix = Date.now()
+  const explorerRoleSlug = `explorer-role-${moduleSuffix}`
+  const explorerSkillSlug = `explorer-skill-${moduleSuffix}`
+  const explorerProfileHandle = `graph-profile-${moduleSuffix}`
+  const explorerProfileName = `Graph Profile ${moduleSuffix}`
   const archivedModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: 'Archived E2E Module',
@@ -2096,11 +2100,63 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   })
   expect(archivedModuleResponse.status()).toBe(201)
 
+  const explorerRoleResponse = await adminPage.request.post('/api/profileRoles', {
+    data: {
+      title: `Explorer Role ${moduleSuffix}`,
+      slug: explorerRoleSlug,
+      description: 'Role used to verify the Portal Graph.',
+    },
+  })
+  expect(explorerRoleResponse.status()).toBe(201)
+  const explorerRole = await explorerRoleResponse.json()
+
+  const explorerSkillResponse = await adminPage.request.post('/api/profileSkills', {
+    data: {
+      title: `Explorer Skill ${moduleSuffix}`,
+      slug: explorerSkillSlug,
+      description: 'Skill used to verify the Portal Graph.',
+    },
+  })
+  expect(explorerSkillResponse.status()).toBe(201)
+  const explorerSkill = await explorerSkillResponse.json()
+
+  const explorerUserResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: `graph-profile-${moduleSuffix}@example.com`,
+      name: explorerProfileName,
+      password: 'Password123!',
+      roles: ['contributor'],
+    },
+  })
+  expect(explorerUserResponse.status()).toBe(201)
+  const explorerUser = await explorerUserResponse.json()
+
+  const explorerProfileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'A visible profile used to verify graph side-panel links.',
+      claimStatus: 'claimed',
+      displayName: explorerProfileName,
+      handle: explorerProfileHandle,
+      profileRoles: [explorerRole.doc?.id || explorerRole.id],
+      profileSkills: [explorerSkill.doc?.id || explorerSkill.id],
+      status: 'active',
+      user: explorerUser.doc?.id || explorerUser.id,
+      visibility: 'public',
+    },
+  })
+  expect(explorerProfileResponse.status()).toBe(201)
+
   await publicPage.goto('/modules')
   await expect(publicPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Join to access modules' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Log in' })).toBeVisible()
+  await expect(publicPage.getByText('Portal Graph')).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
   await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
+
+  await publicPage.goto('/portal-graph')
+  await expect(publicPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
 
   const publicModulesResponse = await publicPage.request.get('/api/modules')
   if (publicModulesResponse.ok()) {
@@ -2113,12 +2169,23 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await adminPage.goto('/modules')
   await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
   await expect(adminPage.getByText('Bounty Board')).toBeVisible()
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(0)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(1)
+
+  await adminPage.goto('/portal-graph')
+  await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
+  await fillFirst(adminPage.getByPlaceholder('Find a role, skill, or profile'), explorerProfileName)
+  await adminPage.getByRole('button', { name: 'Focus' }).click()
+  await expect(adminPage.getByRole('link', { name: 'View profile' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'View profile' })).toHaveAttribute(
+    'href',
+    `/members/${explorerProfileHandle}`,
+  )
 }
 
 async function verifyDailyVibeCheck(page: Page) {
