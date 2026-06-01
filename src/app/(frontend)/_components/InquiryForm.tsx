@@ -28,10 +28,26 @@ const timelines = [
 ]
 
 export const InquiryForm: React.FC<{
+  createAccountLabel?: string
   messageLabel: string
+  postSubmitBody?: string
+  postSubmitEyebrow?: string
+  postSubmitHeading?: string
   sourceRoute: string
+  submitAnotherLabel?: string
+  submitLabel?: string
   type: InquiryType
-}> = ({ messageLabel, sourceRoute, type }) => {
+}> = ({
+  createAccountLabel = 'Create account',
+  messageLabel,
+  postSubmitBody = 'Your request has been started. Create an account so we can connect this request to your Portal profile, share follow-ups, and keep the conversation tied to your work.',
+  postSubmitEyebrow = 'Inquiry started',
+  postSubmitHeading = 'Continue your RaidGuild intake',
+  sourceRoute,
+  submitAnotherLabel = 'Submit another',
+  submitLabel = 'Start inquiry',
+  type,
+}) => {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState<{ email: string; id: number | string } | null>(null)
@@ -118,18 +134,15 @@ export const InquiryForm: React.FC<{
   if (submitted) {
     return (
       <div className="portal-panel">
-        <p className="portal-kicker">Inquiry started</p>
-        <h2 className="mt-3 portal-heading-sm">Continue your RaidGuild intake</h2>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          Your request has been started. Create an account so we can connect this request to your
-          Portal profile, share follow-ups, and keep the conversation tied to your work.
-        </p>
+        <p className="portal-kicker">{postSubmitEyebrow}</p>
+        <h2 className="mt-3 portal-heading-sm">{postSubmitHeading}</h2>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">{postSubmitBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
           <Link className="portal-admin-link" href={joinHref}>
-            Create account
+            {createAccountLabel}
           </Link>
           <button className="portal-admin-link" onClick={() => setSubmitted(null)} type="button">
-            Submit another
+            {submitAnotherLabel}
           </button>
         </div>
       </div>
@@ -188,7 +201,7 @@ export const InquiryForm: React.FC<{
       {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
 
       <Button className="mt-6 w-full" disabled={isLoading} type="submit">
-        {isLoading ? 'Submitting...' : 'Start inquiry'}
+        {isLoading ? 'Submitting...' : submitLabel}
         {!isLoading ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
       </Button>
     </form>

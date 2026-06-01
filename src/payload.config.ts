@@ -21,6 +21,7 @@ import { Media } from './collections/Media'
 import { Modules } from './collections/Modules'
 import { NotificationPreferences } from './collections/NotificationPreferences'
 import { Notifications } from './collections/Notifications'
+import { PageCopy } from './collections/PageCopy'
 import { Pages } from './collections/Pages'
 import { PointEvents } from './collections/PointEvents'
 import { Profiles } from './collections/Profiles'
@@ -125,6 +126,7 @@ export default buildConfig({
     Modules,
     Notifications,
     NotificationPreferences,
+    PageCopy,
     Profiles,
     ProfileSkills,
     ProfileRoles,

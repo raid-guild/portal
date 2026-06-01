@@ -24,10 +24,12 @@ import type {
   User,
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
+import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import { VibeCheckButton } from './VibeCheckButton'
 
 type PortalHomeProps = {
+  copy: ProductPageCopy
   posts?: Post[]
   projects?: Project[]
   upcomingEvents?: Event[]
@@ -96,6 +98,7 @@ const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief,
 }
 
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({
+  copy,
   posts = [],
   projects = [],
   upcomingEvents = [],
@@ -108,27 +111,25 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       <section className="container py-16 md:py-24">
         <div className="grid gap-10 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div className="max-w-3xl">
-            <p className="mb-4 portal-kicker">RaidGuild Portal</p>
-            <h1 className="mb-6 portal-title-lg">A digital coworking space for builders</h1>
-            <p className="max-w-2xl text-lg leading-8 text-muted-foreground">
-              Join sessions, find a team, build your skills, and help turn ideas into shipped work
-              with the RaidGuild community.
-            </p>
+            <p className="mb-4 portal-kicker">{copy.eyebrow}</p>
+            <h1 className="mb-6 portal-title-lg">{copy.headline}</h1>
+            <p className="max-w-2xl text-lg leading-8 text-muted-foreground">{copy.intro}</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link href="/join">
-                  Join RaidGuild <ArrowRight className="ml-2 h-4 w-4" />
+                  {copy.createAccountLabel || 'Join RaidGuild'}{' '}
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline">
-                <Link href="/events">View sessions</Link>
+                <Link href="/events">{copy.submitAnotherLabel || 'View sessions'}</Link>
               </Button>
             </div>
           </div>
           <div className="portal-panel">
             <div className="flex items-center gap-2">
               <CalendarDays className="h-5 w-5" />
-              <h2 className="portal-heading-sm">Next public session</h2>
+              <h2 className="portal-heading-sm">{copy.contextHeading || 'Next public session'}</h2>
             </div>
             {nextEvent ? (
               <div className="mt-4">
@@ -144,7 +145,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
               </div>
             ) : (
               <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                No public sessions are scheduled yet. Join to get access to member coordination.
+                {copy.contextBody ||
+                  'No public sessions are scheduled yet. Join to get access to member coordination.'}
               </p>
             )}
           </div>

@@ -1,7 +1,7 @@
 # CMS-Managed Page Copy Feature Spec
 
-Future feature module. This spec documents how Portal product-flow pages can
-support CMS-managed copy without turning core application routes into fragile
+Feature module. This spec documents how Portal product-flow pages support
+CMS-managed copy without turning core application routes into fragile
 page-builder experiences.
 
 ## Purpose
@@ -23,7 +23,6 @@ The repository includes a generic `Pages` collection with seeded Home and
 Contact records, but the current Portal experience is mostly route-driven:
 
 - `/`
-- `/brief`
 - `/join`
 - `/inquire/[type]`
 - `/dashboard`
@@ -34,6 +33,23 @@ Contact records, but the current Portal experience is mostly route-driven:
 
 These are product surfaces with state, permissions, relationships, and
 workflow logic. They should not become fully generic CMS pages by default.
+
+## Current Implementation
+
+Portal now includes a structured `PageCopy` collection for fixed product-flow
+copy. The current implemented keys are:
+
+- `brief-public` for the unauthenticated public home / brief wrapper at `/`
+- `join` for `/join`
+- `inquire-client` for `/inquire/client`
+- `inquire-sponsor` for `/inquire/sponsor`
+- `inquire-grant` for `/inquire/grant`
+- `inquire-opportunity` for `/inquire/opportunity`
+- `inquire-general` for `/inquire/general`
+
+These records manage hero copy, contextual explanation, CTA labels, inquiry
+form labels, post-submit account creation copy, funnel links, and SEO metadata.
+Routes keep hardcoded fallback copy so missing records do not break production.
 
 ## Product Principle
 
@@ -54,7 +70,7 @@ CMS-managed copy for:
 - `/inquire/grant`
 - `/inquire/opportunity`
 - `/inquire/general`
-- `/brief`
+- unauthenticated public home / brief wrapper at `/`
 - unauthenticated CTA blocks around brief/activity/session preview surfaces
 
 CMS-managed page wrapper fields:
@@ -105,24 +121,24 @@ Fields:
 - `eyebrow`
 - `headline`
 - `intro`
-- `primaryCTA`
-  - label
-  - url
-- `secondaryCTA`
-  - label
-  - url
+- `createAccountLabel`
+- `submitAnotherLabel`
 - `benefits`
-  - title
   - body
-- `faq`
-  - question
-  - answer
-- `formIntro`
+- `funnelLinks`
+  - label
+  - description
+  - url
+- `contextHeading`
+- `contextBody`
+- `messageLabel`
+- `submitLabel`
+- `backLinkLabel`
+- `postSubmitEyebrow`
 - `postSubmitHeading`
 - `postSubmitBody`
-- `seo`
-  - title
-  - description
+- `seoTitle`
+- `seoDescription`
 
 The route owns the structure. The CMS record fills the text.
 
@@ -152,7 +168,7 @@ Avoid using `Pages` as the source of truth for product-flow routes:
 
 - `/join`
 - `/inquire/[type]`
-- `/brief`
+- unauthenticated public home / brief wrapper at `/`
 - `/dashboard`
 - `/me`
 - `/sessions/create`
