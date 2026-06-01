@@ -62,10 +62,13 @@ The main portal surfaces are:
 
 - [Product overview](./portal-product-overview.md)
 - [Portal direction](./portal-direction.md)
+- [Portal launch announcement draft](./portal-launch-announcement-draft.md)
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
+- [Generic community portal template spec](./generic-community-portal-template-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
+- [Portal Graph feature spec](./portal-graph-feature-spec.md)
 - [Launch invites feature spec](./launch-invites-feature-spec.md)
 - [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
 - [Notifications feature spec](./notifications-feature-spec.md)

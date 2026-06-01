@@ -99,6 +99,19 @@ const ModulesTeaser = () => (
         </Link>
       </div>
     </section>
+    <section className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <article className="portal-panel">
+        <p className="portal-kicker">Experimental</p>
+        <h2 className="mt-2 portal-heading-sm">Portal Graph</h2>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          An interactive graph for exploring how member skills, roles, profiles, and future Portal
+          records connect.
+        </p>
+        <Link className="portal-admin-link mt-6" href="/join">
+          Join to explore
+        </Link>
+      </article>
+    </section>
   </main>
 )
 
