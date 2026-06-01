@@ -82,6 +82,7 @@ export interface Config {
     modules: Module;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
+    feedbackSubmissions: FeedbackSubmission;
     pageCopy: PageCopy;
     profiles: Profile;
     profileSkills: ProfileSkill;
@@ -118,6 +119,7 @@ export interface Config {
     modules: ModulesSelect<false> | ModulesSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
+    feedbackSubmissions: FeedbackSubmissionsSelect<false> | FeedbackSubmissionsSelect<true>;
     pageCopy: PageCopySelect<false> | PageCopySelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
@@ -1530,6 +1532,46 @@ export interface NotificationPreference {
   createdAt: string;
 }
 /**
+ * Private user feedback, bug reports, and product ideas for admin triage.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feedbackSubmissions".
+ */
+export interface FeedbackSubmission {
+  id: number;
+  type: 'bug' | 'feedback' | 'idea' | 'content_issue' | 'account_issue' | 'other';
+  status: 'new' | 'triaged' | 'planned' | 'resolved' | 'closed' | 'spam';
+  priority: 'low' | 'normal' | 'high' | 'urgent';
+  title: string;
+  message: string;
+  email?: string | null;
+  submittedBy?: (number | null) | User;
+  submittedProfile?: (number | null) | Profile;
+  pageURL?: string | null;
+  userAgent?: string | null;
+  viewport?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  adminNotes?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Structured copy overrides for fixed Portal product-flow pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1855,6 +1897,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'notificationPreferences';
         value: number | NotificationPreference;
+      } | null)
+    | ({
+        relationTo: 'feedbackSubmissions';
+        value: number | FeedbackSubmission;
       } | null)
     | ({
         relationTo: 'pageCopy';
@@ -2601,6 +2647,27 @@ export interface NotificationPreferencesSelect<T extends boolean = true> {
   activityDigestFrequency?: T;
   weeklyDigest?: T;
   badgeAwards?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feedbackSubmissions_select".
+ */
+export interface FeedbackSubmissionsSelect<T extends boolean = true> {
+  type?: T;
+  status?: T;
+  priority?: T;
+  title?: T;
+  message?: T;
+  email?: T;
+  submittedBy?: T;
+  submittedProfile?: T;
+  pageURL?: T;
+  userAgent?: T;
+  viewport?: T;
+  metadata?: T;
+  adminNotes?: T;
   updatedAt?: T;
   createdAt?: T;
 }

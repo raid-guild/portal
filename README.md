@@ -143,6 +143,12 @@ The public reset flow is available at `/forgot-password` and `/reset-password?to
 Logged-in users can verify their account email from `/me`; self-serve signups start as `unverified` and become `contributor` after verification.
 Legacy profile claims are requested from `/me`; matching unclaimed profiles send a verification link to the legacy `claimEmail` before the profile is attached to the logged-in user and the account is promoted to `member`.
 
+### Feedback Widget
+
+The frontend includes a small widget bubble that links to `/feedback` for authenticated bug reports and product notes. It is enabled by default.
+
+Set `NEXT_PUBLIC_WIDGET_BUBBLE_ENABLED=false` to hide the floating widget without removing the feedback route or admin collection.
+
 ### End-to-End Testing
 
 The Playwright suite boots a fresh PostgreSQL container, builds the app from scratch, creates the first admin user through the onboarding UI, upserts the portal starter content, submits a public comment, approves it in the admin UI, and verifies it appears on the public post page.
