@@ -6,7 +6,15 @@ import type { Header as HeaderType } from '@/payload-types'
 
 import { CMSLink } from '@/components/Link'
 import Link from 'next/link'
-import { ChevronDown, Inbox, LogOut, SearchIcon, Shield, UserRound } from 'lucide-react'
+import {
+  ChevronDown,
+  Inbox,
+  LogOut,
+  MessageSquarePlus,
+  SearchIcon,
+  Shield,
+  UserRound,
+} from 'lucide-react'
 import { authChangeEvent, notifyAuthChanged } from '@/utilities/authEvents'
 import { useRouter } from 'next/navigation'
 
@@ -62,9 +70,14 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
       fetch(`/api/profiles?depth=1&limit=1&where[user][equals]=${currentUser.id}`, {
         credentials: 'include',
       }).catch(() => null),
-      fetch('/api/notifications?depth=0&limit=1&where[status][equals]=unread', {
-        credentials: 'include',
-      }).catch(() => null),
+      fetch(
+        `/api/notifications?depth=0&limit=1&where[status][equals]=unread&where[recipient][equals]=${encodeURIComponent(
+          String(currentUser.id),
+        )}`,
+        {
+          credentials: 'include',
+        },
+      ).catch(() => null),
     ])
     const profileData = profileResponse?.ok ? await profileResponse.json().catch(() => null) : null
     const notificationsData = notificationsResponse?.ok
@@ -169,6 +182,15 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
                   Inbox
                 </span>
                 {unreadCount ? <span className="portal-pill">{unreadCount}</span> : null}
+              </Link>
+              <Link
+                className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-card"
+                href="/feedback"
+                onClick={() => setOpen(false)}
+                role="menuitem"
+              >
+                <MessageSquarePlus className="h-4 w-4" />
+                Feedback
               </Link>
               <Link
                 className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-card"

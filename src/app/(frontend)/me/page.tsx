@@ -383,9 +383,18 @@ const getUnreadNotificationCount = async (user: User) => {
     overrideAccess: false,
     user,
     where: {
-      status: {
-        equals: 'unread',
-      },
+      and: [
+        {
+          recipient: {
+            equals: user.id,
+          },
+        },
+        {
+          status: {
+            equals: 'unread',
+          },
+        },
+      ],
     },
   })
 

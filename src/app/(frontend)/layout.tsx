@@ -8,14 +8,17 @@ import { Header } from '@/Header/Component'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
+import { WidgetBubble } from './_components/WidgetBubble'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
+import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
 
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
+  const widgetBubbleEnabled = isWidgetBubbleEnabled()
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -34,6 +37,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
           <Header />
           {children}
+          {widgetBubbleEnabled ? (
+            <React.Suspense fallback={null}>
+              <WidgetBubble />
+            </React.Suspense>
+          ) : null}
           <Footer />
         </Providers>
       </body>

@@ -131,9 +131,18 @@ const getNotifications = async (
     sort: '-createdAt',
     user,
     where: {
-      status: {
-        not_equals: 'archived',
-      },
+      and: [
+        {
+          recipient: {
+            equals: user.id,
+          },
+        },
+        {
+          status: {
+            not_equals: 'archived',
+          },
+        },
+      ],
     },
   })
 
