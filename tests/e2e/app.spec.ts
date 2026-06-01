@@ -1552,6 +1552,8 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
     },
   })
   expect(createResponse.ok()).toBeTruthy()
+  const createdUser = await createResponse.json()
+  const createdUserID = createdUser.doc?.id || createdUser.id
 
   const inquiryResponse = await adminPage.request.get('/api/inquiries', {
     params: {
@@ -1566,6 +1568,7 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
     accountLinkStatus: 'linked',
     email,
     sourceRoute: '/inquire/general',
+    submitterUser: createdUserID,
     type: 'general',
     utmCampaign: 'funnel',
     utmMedium: 'test',
@@ -2805,7 +2808,12 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)
   await verifyJoinFormEmailErrors(publicPage)
-  await submitGeneralInquiry(publicPage, page)
+
+  const inquiryContext = await browser.newContext()
+  const inquiryPage = await inquiryContext.newPage()
+  await submitGeneralInquiry(inquiryPage, page)
+  await inquiryContext.close()
+
   await submitSponsorInquiry(publicPage, page)
   await publicPage.goto(`/posts/${targetPost.slug}`)
   await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()

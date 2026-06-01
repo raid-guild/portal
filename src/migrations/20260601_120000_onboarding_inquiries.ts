@@ -51,7 +51,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
     CREATE INDEX "inquiries_type_idx" ON "inquiries" USING btree ("type");
     CREATE INDEX "inquiries_status_idx" ON "inquiries" USING btree ("status");
     CREATE INDEX "inquiries_account_link_status_idx" ON "inquiries" USING btree ("account_link_status");
-    CREATE INDEX "inquiries_email_idx" ON "inquiries" USING btree ("email");
+    CREATE INDEX "inquiries_email_idx" ON "inquiries" USING btree (lower("email"));
     CREATE INDEX "inquiries_submitter_user_idx" ON "inquiries" USING btree ("submitter_user_id");
     CREATE INDEX "inquiries_submitter_profile_idx" ON "inquiries" USING btree ("submitter_profile_id");
     CREATE INDEX "inquiries_related_project_idx" ON "inquiries" USING btree ("related_project_id");

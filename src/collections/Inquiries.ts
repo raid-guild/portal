@@ -293,16 +293,23 @@ export const Inquiries: CollectionConfig = {
     beforeValidate: [
       ({ data, req }) => {
         const user = req.user
+        const normalizedData =
+          typeof data?.email === 'string'
+            ? {
+                ...data,
+                email: data.email.trim().toLowerCase(),
+              }
+            : data
 
-        if (user?.id && !data?.submitterUser) {
+        if (user?.id && !normalizedData?.submitterUser) {
           return {
-            ...data,
+            ...normalizedData,
             accountLinkStatus: 'linked',
             submitterUser: user.id,
           }
         }
 
-        return data
+        return normalizedData
       },
     ],
   },

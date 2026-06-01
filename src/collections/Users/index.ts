@@ -121,40 +121,48 @@ const linkMatchingInquiries = async ({ req, user }: { req: PayloadRequest; user:
   if (!user.email) return
 
   try {
-    const result = await req.payload.find({
-      collection: 'inquiries',
-      limit: 10,
-      overrideAccess: true,
-      sort: '-createdAt',
-      where: {
-        and: [
-          {
-            email: {
-              equals: user.email.toLowerCase(),
-            },
-          },
-          {
-            accountLinkStatus: {
-              equals: 'unlinked',
-            },
-          },
-        ],
-      },
-    })
+    const matchingEmail = user.email.trim().toLowerCase()
 
-    await Promise.all(
-      result.docs.map((inquiry) =>
-        req.payload.update({
-          collection: 'inquiries',
-          id: inquiry.id,
-          data: {
-            accountLinkStatus: 'linked',
-            submitterUser: user.id,
-          },
-          overrideAccess: true,
-        }),
-      ),
-    )
+    while (true) {
+      const result = await req.payload.find({
+        collection: 'inquiries',
+        limit: 100,
+        overrideAccess: true,
+        req,
+        sort: '-createdAt',
+        where: {
+          and: [
+            {
+              email: {
+                equals: matchingEmail,
+              },
+            },
+            {
+              accountLinkStatus: {
+                equals: 'unlinked',
+              },
+            },
+          ],
+        },
+      })
+
+      if (result.docs.length === 0) break
+
+      await Promise.all(
+        result.docs.map((inquiry) =>
+          req.payload.update({
+            collection: 'inquiries',
+            id: inquiry.id,
+            data: {
+              accountLinkStatus: 'linked',
+              submitterUser: user.id,
+            },
+            overrideAccess: true,
+            req,
+          }),
+        ),
+      )
+    }
   } catch (error) {
     req.payload.logger.warn({
       err: error,
