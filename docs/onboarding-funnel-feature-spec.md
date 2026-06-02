@@ -2,9 +2,9 @@
 
 ## Status
 
-Future feature module. This spec documents the intended public onboarding and
-inquiry flow before implementation. Page copy in this document is draft filler
-and should receive BD/content review before launch.
+First slice implemented. Portal now has `/join`, `/inquire/[type]`, an
+`inquiries` collection, and CMS-managed copy for fixed inquiry pages. Page copy
+still needs BD/content review before launch.
 
 ## Product Intent
 

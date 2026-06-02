@@ -2,9 +2,11 @@
 
 ## Status
 
-Future feature module. Notifications are for existing portal users and profiles.
-They should not replace launch invite tracking, SendGrid Marketing Campaigns,
-Discord, or newsletter-style broadcast tooling.
+First slice implemented. Portal now has user-scoped in-app notifications,
+preferences, inbox, publish hooks, reminders, digest endpoints, and an email
+dispatcher. Future work should stay scoped to existing users and profiles.
+Notifications should not replace launch invite tracking, SendGrid Marketing
+Campaigns, Discord, or newsletter-style broadcast tooling.
 
 This spec covers product notifications for:
 

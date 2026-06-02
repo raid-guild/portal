@@ -272,6 +272,69 @@ Example post payload with both a header image and inline image:
 }
 ```
 
+## CMS Intake Page Copy
+
+Use `PageCopy` for copy edits to fixed Portal product-flow pages. Do not hardcode
+copy changes in React components when the page is already CMS-managed.
+
+Managed routes and stable keys:
+
+- `/join` -> `PageCopy.key = "join"`
+- `/inquire/client` -> `PageCopy.key = "inquire-client"`
+- `/inquire/sponsor` -> `PageCopy.key = "inquire-sponsor"`
+- `/inquire/grant` -> `PageCopy.key = "inquire-grant"`
+- `/inquire/opportunity` -> `PageCopy.key = "inquire-opportunity"`
+- `/inquire/general` -> `PageCopy.key = "inquire-general"`
+
+Use `PageCopy` fields for:
+
+- eyebrow
+- headline
+- intro
+- context heading/body
+- CTA labels
+- post-submit copy
+- SEO title/description
+- join-page benefit bullets
+- join-page funnel links
+
+Rules:
+
+- Page copy is editorial/product copy. Treat updates as human-reviewable unless
+  the user explicitly asks to write them.
+- Only admins/editors should manage `PageCopy` records.
+- Do not create a new collection for copy-only intake changes.
+- Keep form submissions writing to the `inquiries` collection.
+- Keep inquiry page routes tied to the existing inquiry types unless the user
+  explicitly asks for a new intake lane.
+- Existing inquiry types are `client`, `sponsor`, `grant`, `opportunity`, and
+  `general`.
+- For a one-hour consultation MVP, prefer a `client` inquiry variant using
+  copy/source-route/intent tracking before adding a new collection or new
+  top-level inquiry type.
+
+Example `PageCopy` patch for a consultation-flavored client page:
+
+```bash
+curl -b cookies.txt -X PATCH "$PORTAL_URL/api/pageCopy/:id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "headline": "Book a one-hour consultation.",
+    "intro": "Bring a product, technical, or strategy question and use one focused hour to clarify the next useful move.",
+    "messageLabel": "What do you want to validate, scope, or unblock?"
+  }'
+```
+
+When the request is to add a new intake surface rather than only changing copy,
+prefer the smallest model change:
+
+1. Use an existing inquiry `type`.
+2. Track the page or campaign through `sourceRoute` and UTM fields.
+3. Add an optional `intent` field only if reporting/routing needs a durable
+   distinction.
+4. Add a new `type` only when lifecycle, routing, permissions, notifications,
+   or analytics need to differ from existing lanes.
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.

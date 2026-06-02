@@ -1,8 +1,12 @@
 # CMS-Managed Page Copy Feature Spec
 
-Feature module. This spec documents how Portal product-flow pages support
-CMS-managed copy without turning core application routes into fragile
-page-builder experiences.
+## Status
+
+First slice implemented. Portal now uses structured `PageCopy` records for
+fixed product-flow pages, with route-level fallbacks when CMS copy is missing.
+
+This spec documents how Portal product-flow pages support CMS-managed copy
+without turning core application routes into fragile page-builder experiences.
 
 ## Purpose
 

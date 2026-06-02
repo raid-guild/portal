@@ -60,20 +60,14 @@ The main portal surfaces are:
 
 ## Notes
 
+Start with the [Feature Spec Index](./feature-spec-index.md) for current status,
+grouping, and handoff links.
+
 - [Product overview](./portal-product-overview.md)
 - [Portal direction](./portal-direction.md)
 - [Portal launch announcement draft](./portal-launch-announcement-draft.md)
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
-- [Generic community portal template spec](./generic-community-portal-template-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
-- [Portal Graph feature spec](./portal-graph-feature-spec.md)
-- [Launch invites feature spec](./launch-invites-feature-spec.md)
-- [Onboarding and inquiry funnel feature spec](./onboarding-funnel-feature-spec.md)
-- [CMS-managed page copy feature spec](./cms-managed-page-copy-feature-spec.md)
-- [Notifications feature spec](./notifications-feature-spec.md)
-- [Widget Bubble feature spec](./widget-bubble-feature-spec.md)
-- [Modules feature spec](./modules-feature-spec.md)
-- [Infinite Wiki feature spec](./infinite-wiki-feature-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)

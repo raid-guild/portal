@@ -2,8 +2,9 @@
 
 ## Status
 
-Future feature module. This spec documents the planning direction for an
-interactive Portal relationship graph.
+First slice implemented. Portal now has an authenticated `/portal-graph` module
+for role, skill, and profile exploration. This spec documents the broader
+planning direction for an interactive Portal relationship graph.
 
 The first version should ship as a Skills & Roles graph derived from existing
 profile role, profile skill, and profile records. Do not add a new collection

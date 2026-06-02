@@ -2,8 +2,9 @@
 
 ## Status
 
-Future core platform capability. Define before implementing experimental
-modules like Infinite Wiki.
+First slice implemented. Portal now has a module registry, `/modules` surface,
+and an authenticated Portal Graph module. Use this spec to keep future modules
+bounded and optional.
 
 Modules are a way to let contributors explore Portal capabilities without
 turning every experiment into a core primitive or primary navigation item.
