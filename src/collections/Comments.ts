@@ -1,4 +1,4 @@
-import type { CollectionConfig, Where } from 'payload'
+import type { CollectionConfig, PayloadRequest, Where } from 'payload'
 import { authenticated } from '../access/authenticated'
 import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
@@ -15,32 +15,11 @@ export const Comments: CollectionConfig = {
     read: async ({ req }) => {
       const { user } = req
 
-      if (user) {
+      if (canEditContent(user)) {
         return true
       }
 
-      const visibleEvents = await req.payload.find({
-        collection: 'events',
-        depth: 0,
-        limit: 1000,
-        overrideAccess: false,
-        pagination: false,
-        where: {
-          and: [
-            {
-              _status: {
-                equals: 'published',
-              },
-            },
-            {
-              visibility: {
-                equals: 'public',
-              },
-            },
-          ],
-        },
-      })
-      const visibleEventIDs = visibleEvents.docs.map((event) => event.id)
+      const visibleEventIDs = await getVisibleEventIDs(req)
 
       const publicReadWhere: Where = {
         and: [
@@ -53,7 +32,17 @@ export const Comments: CollectionConfig = {
             or: [
               {
                 'parent.relationTo': {
-                  not_equals: 'events',
+                  equals: 'posts',
+                },
+              },
+              {
+                'parent.relationTo': {
+                  equals: 'projects',
+                },
+              },
+              {
+                'parent.relationTo': {
+                  equals: 'contributionRequests',
                 },
               },
               {
@@ -223,4 +212,28 @@ const getParentPath = (
   if (relationTo === 'projects') return `/projects/${doc.slug}`
 
   return null
+}
+
+const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
+  const ids: (number | string)[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const result = await req.payload.find({
+      collection: 'events',
+      depth: 0,
+      limit: 100,
+      overrideAccess: false,
+      page,
+      pagination: true,
+      user: req.user || undefined,
+    })
+
+    ids.push(...result.docs.map((event) => event.id))
+    hasNextPage = Boolean(result.hasNextPage)
+    page += 1
+  }
+
+  return ids
 }

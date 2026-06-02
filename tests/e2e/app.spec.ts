@@ -1292,10 +1292,32 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
   await expect(hostPage.getByText(eventCommentContent)).toBeVisible()
   await hostPage.getByRole('button', { name: /hide comment/i }).click()
   await expect(hostPage.getByText('Comment hidden.')).toBeVisible()
+
+  const hiddenHostReadResponse = await hostPage.request.get('/api/comments', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[id][equals]': String(eventCommentID),
+    },
+  })
+  expect(hiddenHostReadResponse.ok()).toBeTruthy()
+  const hiddenHostReadBody = await hiddenHostReadResponse.json()
+  expect(hiddenHostReadBody.docs).toHaveLength(0)
   await hostContext.close()
 
   await publicPage.goto(`/events/${publicEventID}`)
   await expect(publicPage.getByText(eventCommentContent)).toHaveCount(0)
+
+  const hiddenAdminReadResponse = await adminPage.request.get('/api/comments', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[id][equals]': String(eventCommentID),
+    },
+  })
+  expect(hiddenAdminReadResponse.ok()).toBeTruthy()
+  const hiddenAdminReadBody = await hiddenAdminReadResponse.json()
+  expect(hiddenAdminReadBody.docs).toHaveLength(1)
 
   await publicPage.goto(`/events/${failedDiscordEventID}`)
   await expect(publicPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
