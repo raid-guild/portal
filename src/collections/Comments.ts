@@ -19,6 +19,8 @@ export const Comments: CollectionConfig = {
         return true
       }
 
+      // Event comments should inherit event visibility because events can be public,
+      // authenticated, member-only, or admin-only.
       const visibleEventIDs = await getVisibleEventIDs(req)
 
       const publicReadWhere: Where = {

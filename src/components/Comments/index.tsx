@@ -2,7 +2,7 @@ import React from 'react'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import Link from 'next/link'
-import type { Comment } from '../../payload-types'
+import type { Comment, User } from '../../payload-types'
 import CommentForm from './CommentForm'
 import HideCommentButton from './HideCommentButton'
 
@@ -18,6 +18,7 @@ type Props = {
   commenterLabel?: string
   loginHref?: string
   title?: string | null
+  user?: User | null
 } & (
   | {
       parent?: never
@@ -38,11 +39,13 @@ export const Comments: React.FC<Props> = async ({
   className,
   loginHref,
   title = 'Comments',
+  user,
 }) => {
   const commentParent = parent || { relationTo: 'posts' as const, value: postId }
   const payload = await getPayload({ config: configPromise })
   const { docs: comments } = await payload.find({
     collection: 'comments',
+    user,
     where: {
       'parent.relationTo': {
         equals: commentParent.relationTo,

@@ -315,6 +315,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           loginHref={`/login?next=${encodeURIComponent(`/events/${event.id}`)}`}
           parent={{ relationTo: 'events', value: event.id }}
           title={null}
+          user={user}
         />
       </Section>
 
