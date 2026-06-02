@@ -1183,6 +1183,13 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
       sourceArtifactURL: 'https://example.com/source-artifact',
       sourceStatus: 'processed',
       hostProfiles: [hostProfileID],
+      resources: [
+        {
+          label: `Session notes ${suffix}`,
+          resourceType: 'notes',
+          url: 'https://example.com/session-notes',
+        },
+      ],
       visibility: 'public',
       _status: 'published',
       publishedAt,
@@ -1239,6 +1246,7 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
   await expect(publicPage.getByRole('button', { name: /submit comment/i })).toHaveCount(0)
   await expect(publicPage.getByText('Continue In The Portal')).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Source Material' })).toHaveCount(0)
+  await expect(publicPage.getByRole('heading', { name: 'Resources' })).toHaveCount(0)
 
   const anonymousAuthenticatedResponse = await publicPage.goto(`/events/${authenticatedEventID}`)
   expect(anonymousAuthenticatedResponse?.status()).toBe(404)
@@ -1250,8 +1258,11 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
   await expect(adminPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
   await expect(adminPage.getByText('Posting as Playwright Admin')).toBeVisible()
   await expect(adminPage.getByRole('button', { name: /submit comment/i })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Edit session' })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Source artifact' })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Resources' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: `Session notes ${suffix}` })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Derived Posts' })).toBeVisible()
   await expect(adminPage.getByText('No published posts have been derived')).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Related Context' })).toBeVisible()
@@ -1290,6 +1301,19 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
   await loginPortalUser(hostPage, hostEmail, hostPassword)
   await hostPage.goto(`/events/${publicEventID}`)
   await expect(hostPage.getByText(eventCommentContent)).toBeVisible()
+  await expect(hostPage.getByRole('link', { name: 'Edit session' })).toBeVisible()
+  const hostPatchResponse = await hostPage.request.patch(`/api/events/${publicEventID}`, {
+    data: {
+      resources: [
+        {
+          label: `Host-updated notes ${suffix}`,
+          resourceType: 'notes',
+          url: 'https://example.com/host-updated-notes',
+        },
+      ],
+    },
+  })
+  expect(hostPatchResponse.ok()).toBeTruthy()
   await hostPage.getByRole('button', { name: /hide comment/i }).click()
   await expect(hostPage.getByText('Comment hidden.')).toBeVisible()
 
