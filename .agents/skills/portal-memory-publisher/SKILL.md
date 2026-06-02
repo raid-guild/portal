@@ -163,6 +163,65 @@ Matching order:
 
 The endpoint updates `recordingURL`, `transcriptArtifactURL`, `summaryArtifactURL`, `sourceArtifactURL`, `sourceArtifactID`, and `sourceStatus`. If no event matches, keep the artifact in the Prism workflow for human review rather than inventing a Portal event.
 
+## Session Resources And Comments
+
+Use `events.resources` for supplemental session links that should be visible on
+the session detail page for authenticated users:
+
+- notes
+- slides
+- docs
+- repos
+- design boards
+- follow-up links
+- supplemental artifacts
+
+Do not use `resources` for the primary Prism recording, transcript, or summary
+artifact. Those belong in the dedicated event artifact fields through
+`POST /api/events/artifacts/ingest`.
+
+Valid `resourceType` values are `link`, `notes`, `slides`, `doc`, `repo`,
+`design`, `artifact`, and `other`.
+
+Example resource update:
+
+```bash
+curl -b cookies.txt -X PATCH "$PORTAL_URL/api/events/:id" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "resources": [
+      {
+        "label": "Session notes",
+        "url": "https://example.com/notes",
+        "resourceType": "notes"
+      }
+    ]
+  }'
+```
+
+Hosts may update sessions they host. Content contributors, editors, admins, and
+agents may update sessions according to their role. The first Portal UI slice
+links eligible hosts and admins to the Payload admin edit screen.
+
+Session comments use the existing `comments` collection with an event parent:
+
+```json
+{
+  "parent": {
+    "relationTo": "events",
+    "value": 123
+  },
+  "content": "Useful follow-up from the session.",
+  "isApproved": true
+}
+```
+
+Comments are flat; do not create direct replies. Authenticated humans create
+comments from the Portal UI. Agents should not turn source material,
+transcripts, or meeting summaries into comments unless the user explicitly asks
+for a human-reviewable comment draft. Use activity items, resources, artifacts,
+briefs, or posts for memory publishing.
+
 ## Post Draft Creation
 
 Agent-created posts are review drafts. When writing posts through `POST /api/posts`,
@@ -399,6 +458,6 @@ Review notes:
 - Do not create tasks, assignees, sprint boards, estimates, or PM workflow state.
 - Keep activity short, dated, and source-grounded.
 - Keep threads lightweight; they are continuity, not categories or tickets.
-- Keep sessions practical: title, time, join link, add-to-calendar link, related projects/threads.
+- Keep sessions practical: title, time, join link, add-to-calendar link, related projects/threads, source artifacts, and resource links.
 - Use agent accounts for automated CMS updates; use human accounts only for human-authored updates.
 - Use direct, human wording. Avoid marketing language and generic AI summaries.
