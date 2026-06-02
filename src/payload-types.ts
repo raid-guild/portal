@@ -614,6 +614,17 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Session-specific links such as notes, slides, docs, repos, or artifacts.
+   */
+  resources?:
+    | {
+        label: string;
+        url: string;
+        resourceType?: ('link' | 'notes' | 'slides' | 'doc' | 'repo' | 'design' | 'artifact' | 'other') | null;
+        id?: string | null;
+      }[]
+    | null;
   relatedProjects?: (number | Project)[] | null;
   relatedThreads?: (number | Thread)[] | null;
   relatedProfiles?: (number | Profile)[] | null;
@@ -1734,7 +1745,7 @@ export interface Comment {
         value: number | ContributionRequest;
       };
   /**
-   * Comments must be approved before they appear publicly
+   * Visible comments can be hidden by unchecking this field.
    */
   isApproved?: boolean | null;
   publishedAt?: string | null;
@@ -2327,6 +2338,14 @@ export interface EventsSelect<T extends boolean = true> {
         url?: T;
         label?: T;
         publishedAt?: T;
+        id?: T;
+      };
+  resources?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        resourceType?: T;
         id?: T;
       };
   relatedProjects?: T;

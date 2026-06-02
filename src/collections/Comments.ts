@@ -1,6 +1,6 @@
-import { CollectionConfig } from 'payload'
+import type { CollectionConfig, PayloadRequest, Where } from 'payload'
 import { authenticated } from '../access/authenticated'
-import { hideFromNonEditors } from '@/access/roles'
+import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
 import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
@@ -12,22 +12,80 @@ export const Comments: CollectionConfig = {
     hidden: hideFromNonEditors,
   },
   access: {
-    read: ({ req: { user } }) => {
-      if (user) {
+    read: async ({ req }) => {
+      const { user } = req
+
+      if (canEditContent(user)) {
         return true
       }
 
-      return {
-        isApproved: {
-          equals: true,
-        },
+      // Event comments should inherit event visibility because events can be public,
+      // authenticated, member-only, or admin-only.
+      const visibleEventIDs = await getVisibleEventIDs(req)
+
+      const publicReadWhere: Where = {
+        and: [
+          {
+            isApproved: {
+              equals: true,
+            },
+          },
+          {
+            or: [
+              {
+                'parent.relationTo': {
+                  equals: 'posts',
+                },
+              },
+              {
+                'parent.relationTo': {
+                  equals: 'projects',
+                },
+              },
+              {
+                'parent.relationTo': {
+                  equals: 'contributionRequests',
+                },
+              },
+              {
+                and: [
+                  {
+                    'parent.relationTo': {
+                      equals: 'events',
+                    },
+                  },
+                  {
+                    'parent.value': {
+                      in: visibleEventIDs,
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       }
+
+      return publicReadWhere
     },
-    create: () => true,
-    update: authenticated,
-    delete: authenticated,
+    create: authenticated,
+    update: ({ req: { user } }) => canEditContent(user),
+    delete: ({ req: { user } }) => canEditContent(user),
   },
   hooks: {
+    beforeValidate: [
+      ({ data, operation, req }) => {
+        if (operation !== 'create' || !data || !req.user) return data
+
+        return {
+          ...data,
+          author: {
+            email: req.user.email,
+            name: req.user.name || req.user.email,
+          },
+        }
+      },
+    ],
     afterChange: [
       async ({ doc, req, operation, previousDoc }) => {
         if (shouldSkipRevalidation(req)) {
@@ -58,7 +116,10 @@ export const Comments: CollectionConfig = {
               revalidatePath(path)
             }
           } catch (error) {
-            req.payload.logger.error('Error revalidating comment parent after comment change:', error)
+            req.payload.logger.error(
+              'Error revalidating comment parent after comment change:',
+              error,
+            )
           }
         }
         return doc
@@ -106,10 +167,10 @@ export const Comments: CollectionConfig = {
     {
       name: 'isApproved',
       type: 'checkbox',
-      defaultValue: false,
+      defaultValue: true,
       admin: {
         position: 'sidebar',
-        description: 'Comments must be approved before they appear publicly',
+        description: 'Visible comments can be hidden by unchecking this field.',
       },
     },
     {
@@ -153,4 +214,28 @@ const getParentPath = (
   if (relationTo === 'projects') return `/projects/${doc.slug}`
 
   return null
+}
+
+const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
+  const ids: (number | string)[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const result = await req.payload.find({
+      collection: 'events',
+      depth: 0,
+      limit: 100,
+      overrideAccess: false,
+      page,
+      pagination: true,
+      user: req.user || undefined,
+    })
+
+    ids.push(...result.docs.map((event) => event.id))
+    hasNextPage = Boolean(result.hasNextPage)
+    page += 1
+  }
+
+  return ids
 }

@@ -80,6 +80,7 @@ Key fields:
 - `relatedProjects`
 - `relatedThreads`
 - `relatedProfiles`
+- `resources`: supplemental session links, each with `label`, `url`, and `resourceType`
 - `visibility`
 - `_status`
 
@@ -94,6 +95,12 @@ Rule: `/api/events/create` uses a different request shape than raw `events`: sen
 Rule: recurring sessions are lightweight event metadata, not a separate collection. When generating the next occurrence, copy `seriesKey`, `seriesTitle`, `recurrenceCadence`, and `recurrenceUntil`, set `previousOccurrence` to the current event, then patch the current event's `nextOccurrence`.
 
 Rule: attach Prism recording/summary artifacts through authenticated `POST /api/events/artifacts/ingest`. Agent accounts may call it after login. Match by `eventID` when known or `discord.scheduledEventID` from the Discord adapter payload.
+
+Rule: use `resources` for supplemental notes, slides, docs, repos, design boards, follow-up links, and secondary artifacts displayed on event detail pages. Valid `resourceType` values are `link`, `notes`, `slides`, `doc`, `repo`, `design`, `artifact`, and `other`.
+
+Rule: do not put primary Prism recording, transcript, or summary artifacts in `resources`; use the dedicated artifact fields and ingest endpoint.
+
+Rule: event hosts can update sessions they host. Content contributors, editors, admins, and agents can update sessions according to role.
 
 ## projects
 
@@ -145,6 +152,39 @@ or admin is publishing the post.
 Rule: use `meta.image` for the cover/header image. Use a Lexical `mediaBlock`
 with a Payload media ID for images that should appear inline in the article body.
 Markdown image syntax is not rendered as an inline image.
+
+## comments
+
+Purpose: lightweight discussion attached to Portal primitives.
+
+Key fields:
+
+- `content`
+- `author`
+- `parent`: polymorphic relation
+- `isApproved`
+- `publishedAt`
+
+Supported parent relations include:
+
+- `posts`
+- `events`
+- `projects`
+- `contributionRequests`
+
+Rule: session comments use `parent.relationTo = "events"` and the event ID as
+`parent.value`.
+
+Rule: comments are flat. Do not create direct replies.
+
+Rule: authenticated humans create comments from the Portal UI. Comments are
+approved by default; moderators, editors, admins, and eligible session hosts can
+hide inappropriate event comments by setting `isApproved` to false or using the
+Portal hide flow.
+
+Rule: agents should not use comments for memory publishing. Prefer activity
+items, resources, artifacts, briefs, or posts unless the user explicitly asks for
+a human-reviewable comment draft.
 
 ## dailyBriefs
 

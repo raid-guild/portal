@@ -92,10 +92,11 @@ They should foreground what happened, what artifacts came out of the session,
 which projects or threads it connects to, and who was involved.
 
 Session comments should be flat for MVP. Do not add direct replies, nested
-threads, or Discord-style conversation structure yet. Reuse the existing comment
-approval pattern where possible. The shared comments model now supports events
-as parent records, but the session detail comment surface should still be added
-intentionally when the archive UX is ready for it.
+threads, or Discord-style conversation structure yet. Logged-in users can submit
+session comments, and comment author identity comes from the logged-in account.
+Comments are visible by default, and session hosts or editors can hide a comment
+by marking `isApproved` false. The shared comments model now supports events as
+parent records.
 
 ## Data Model
 
@@ -146,6 +147,8 @@ Prism/source artifact fields:
 - `sourceArtifactID`
 - `sourceStatus`: `scheduled`, `recorded`, `summarized`, `processed`,
   `archived`
+- `resources`: session-specific links for notes, slides, docs, repos, designs,
+  artifacts, or other useful follow-up material
 
 Past-session notes and artifact enrichment:
 
@@ -199,10 +202,11 @@ The current user should default into hosts when their profile is available.
 Past-session enrichment should happen through Payload admin or API workflows, not
 the contributor-facing form.
 
-Hosts should eventually have a lightweight front-end edit path for sessions they
-hosted. The scope should be enrichment only: adding or correcting notes,
-artifacts, source links, and manually associated projects/threads. Admins and
-editors retain full control through Payload.
+Hosts can update sessions they hosted and currently get an admin edit link from
+the session detail page. A later front-end edit path should keep the scope to
+enrichment only: adding or correcting notes, resources, artifacts, source links,
+and manually associated projects/threads. Admins and editors retain full control
+through Payload.
 
 ### API
 
@@ -386,8 +390,8 @@ Next MVP priorities:
 
 - make past session pages clearly show notes, artifacts, related projects, and
   related threads
-- add the existing flat comments component to session detail pages with no
-  direct replies
+- keep the flat comments component on session detail pages with no direct
+  replies
 - add host-facing edit affordances for past-session enrichment
 - improve session detail UX around source material and derived content
 - tighten mobile layout and scanning on list/detail pages
@@ -413,8 +417,6 @@ Next MVP priorities:
   enough for MVP?
 - Should attendees be manually curated, imported from Discord/Prism, or omitted
   until the source is reliable?
-- Should session comments inherit the session visibility, require login, or be
-  public on public sessions?
 - Which past-session fields can hosts edit directly versus requiring admin or
   editor review?
 - Should all source material require authentication, even for public sessions?

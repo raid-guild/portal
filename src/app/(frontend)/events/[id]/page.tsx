@@ -6,8 +6,17 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
-import type { ContributionRequest, Event, Post, Profile, Project, Thread } from '@/payload-types'
+import type {
+  ContributionRequest,
+  Event,
+  Post,
+  Profile,
+  Project,
+  Thread,
+  User,
+} from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -101,6 +110,8 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
   const hostProfiles = relationDocs<Profile>(event.hostProfiles)
+  const canHideSessionComments = canEditContent(user) || isEventHost(hostProfiles, user)
+  const canEditSession = canContributeContent(user) || isEventHost(hostProfiles, user)
   const speakerProfiles = relationDocs<Profile>(event.speakerProfiles)
   const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const fallbackSpeaker = typeof event.speaker === 'object' ? event.speaker : null
@@ -121,6 +132,19 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     return safeURL ? [{ href: safeURL, label: link.label }] : []
   })
   const hasSourceLinks = sourceLinks.length > 0
+  const resources = (event.resources || []).flatMap((resource) => {
+    const safeURL = toSafeURL(resource.url)
+
+    return safeURL
+      ? [
+          {
+            href: safeURL,
+            label: resource.label,
+            resourceType: resource.resourceType || 'link',
+          },
+        ]
+      : []
+  })
   const hasRelatedContext = Boolean(projects.length || threads.length)
   const socialLinks = event.linkedSocialPosts || []
   const wikiTopics = event.wikiCandidateTopics?.map((item) => item.topic).filter(Boolean) || []
@@ -171,6 +195,11 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
             {!isPast ? <SafeLink href={event.joinURL} label="Join" /> : null}
             <SafeLink href={event.calendarURL || getCalendarFallbackURL(event)} label="Calendar" />
             <SafeLink href={event.discordEventURL} label="Discord" />
+            {canEditSession ? (
+              <Link className="portal-admin-link" href={`/admin/collections/events/${event.id}`}>
+                Edit session
+              </Link>
+            ) : null}
           </div>
         </aside>
       </section>
@@ -227,6 +256,25 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           ) : (
             <EmptyState text="No recording, transcript, summary, or source artifact has been attached yet." />
           )}
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && resources.length ? (
+        <Section title="Resources">
+          <div className="grid gap-3 md:grid-cols-2">
+            {resources.map((resource) => (
+              <a
+                className="border border-border bg-card/20 p-4 transition-colors hover:border-primary"
+                href={resource.href}
+                key={`${resource.resourceType}-${resource.href}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <p className="portal-kicker">{resource.resourceType}</p>
+                <p className="mt-2 font-medium">{resource.label}</p>
+              </a>
+            ))}
+          </div>
         </Section>
       ) : null}
 
@@ -295,6 +343,19 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           </div>
         </Section>
       ) : null}
+
+      <Section title="Comments">
+        <Comments
+          canComment={Boolean(user)}
+          canHide={canHideSessionComments}
+          className="py-0"
+          commenterLabel={user?.name || user?.email}
+          loginHref={`/login?next=${encodeURIComponent(`/events/${event.id}`)}`}
+          parent={{ relationTo: 'events', value: event.id }}
+          title={null}
+          user={user}
+        />
+      </Section>
 
       {canViewFullDetails && (event.previousOccurrence || event.nextOccurrence) ? (
         <Section title="Series Navigation">
@@ -608,4 +669,18 @@ const uniqueProfiles = (profiles: Profile[]): Profile[] => {
     seen.add(profile.id)
     return true
   })
+}
+
+const isEventHost = (hostProfiles: Profile[], user: User | null): boolean => {
+  if (!user) return false
+
+  return hostProfiles.some((profile) => relationshipID(profile.user) === user.id)
+}
+
+const relationshipID = (value: number | string | { id?: number | string } | null | undefined) => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') return Number(value)
+  if (value && typeof value.id !== 'undefined') return relationshipID(value.id)
+
+  return 0
 }

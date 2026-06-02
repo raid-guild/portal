@@ -1,9 +1,9 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
-import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 
 type CommentParent = {
@@ -11,7 +11,9 @@ type CommentParent = {
   value: number | string
 }
 
-type CommentFormProps =
+type CommentFormProps = {
+  commenterLabel?: string
+} & (
   | {
       parent?: never
       postId: number | string
@@ -20,11 +22,11 @@ type CommentFormProps =
       parent: CommentParent
       postId?: never
     }
+)
 
-const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
+const CommentForm: React.FC<CommentFormProps> = ({ commenterLabel, parent, postId }) => {
   const commentParent = parent || { relationTo: 'posts' as const, value: postId }
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
+  const router = useRouter()
   const [content, setContent] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -44,7 +46,6 @@ const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
         },
         body: JSON.stringify({
           content,
-          author: { name, email },
           parent: commentParent,
         }),
       })
@@ -55,8 +56,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
 
       setSuccess(true)
       setContent('')
-      setName('')
-      setEmail('')
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to submit comment. Please try again.')
       console.error('Comment submission error:', err)
@@ -68,23 +68,9 @@ const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h3 className="text-xl font-bold">Leave a comment</h3>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-      </div>
+      {commenterLabel ? (
+        <p className="text-sm text-muted-foreground">Posting as {commenterLabel}</p>
+      ) : null}
 
       <div className="space-y-2">
         <Label htmlFor="comment">Comment</Label>
@@ -98,11 +84,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ parent, postId }) => {
       </div>
 
       {error && <div className="text-destructive">{error}</div>}
-      {success && (
-        <div className="text-guild-olive">
-          Comment submitted successfully! It will appear after approval.
-        </div>
-      )}
+      {success && <div className="text-guild-olive">Comment submitted successfully.</div>}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit Comment'}
