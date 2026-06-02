@@ -2,8 +2,8 @@
 
 ## Status
 
-Future recognition module. Do not implement in the MVP until profile discovery
-needs durable credentials or lightweight peer/admin recognition.
+First badge slice implemented. The portal now has `badges` and `profileBadges`
+for durable recognition, profile display, and filtering. Props remain future.
 
 This module should add a little flex and feedback to profiles without turning the
 portal into a game, ranking system, task board, or social feed.

@@ -2,8 +2,9 @@
 
 ## Status
 
-Future feature module. Keep this out of the MVP until the portal needs a simple
-daily participation loop.
+First slice implemented. Portal now has `dailyEngagements`, point events, and a
+daily vibe check surfaced from member areas. Streaks, richer scoring, and broader
+automation remain future.
 
 The first version should be intentionally small: a member completes a daily vibe
 check, may leave an optional comment, and receives a default point award once per
