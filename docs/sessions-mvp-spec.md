@@ -147,6 +147,8 @@ Prism/source artifact fields:
 - `sourceArtifactID`
 - `sourceStatus`: `scheduled`, `recorded`, `summarized`, `processed`,
   `archived`
+- `resources`: session-specific links for notes, slides, docs, repos, designs,
+  artifacts, or other useful follow-up material
 
 Past-session notes and artifact enrichment:
 
@@ -200,10 +202,11 @@ The current user should default into hosts when their profile is available.
 Past-session enrichment should happen through Payload admin or API workflows, not
 the contributor-facing form.
 
-Hosts should eventually have a lightweight front-end edit path for sessions they
-hosted. The scope should be enrichment only: adding or correcting notes,
-artifacts, source links, and manually associated projects/threads. Admins and
-editors retain full control through Payload.
+Hosts can update sessions they hosted and currently get an admin edit link from
+the session detail page. A later front-end edit path should keep the scope to
+enrichment only: adding or correcting notes, resources, artifacts, source links,
+and manually associated projects/threads. Admins and editors retain full control
+through Payload.
 
 ### API
 

@@ -111,6 +111,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const threads = relationDocs<Thread>(event.relatedThreads)
   const hostProfiles = relationDocs<Profile>(event.hostProfiles)
   const canHideSessionComments = canEditContent(user) || isEventHost(hostProfiles, user)
+  const canEditSession = canContributeContent(user) || isEventHost(hostProfiles, user)
   const speakerProfiles = relationDocs<Profile>(event.speakerProfiles)
   const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const fallbackSpeaker = typeof event.speaker === 'object' ? event.speaker : null
@@ -131,6 +132,19 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     return safeURL ? [{ href: safeURL, label: link.label }] : []
   })
   const hasSourceLinks = sourceLinks.length > 0
+  const resources = (event.resources || []).flatMap((resource) => {
+    const safeURL = toSafeURL(resource.url)
+
+    return safeURL
+      ? [
+          {
+            href: safeURL,
+            label: resource.label,
+            resourceType: resource.resourceType || 'link',
+          },
+        ]
+      : []
+  })
   const hasRelatedContext = Boolean(projects.length || threads.length)
   const socialLinks = event.linkedSocialPosts || []
   const wikiTopics = event.wikiCandidateTopics?.map((item) => item.topic).filter(Boolean) || []
@@ -181,6 +195,11 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
             {!isPast ? <SafeLink href={event.joinURL} label="Join" /> : null}
             <SafeLink href={event.calendarURL || getCalendarFallbackURL(event)} label="Calendar" />
             <SafeLink href={event.discordEventURL} label="Discord" />
+            {canEditSession ? (
+              <Link className="portal-admin-link" href={`/admin/collections/events/${event.id}`}>
+                Edit session
+              </Link>
+            ) : null}
           </div>
         </aside>
       </section>
@@ -237,6 +256,25 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           ) : (
             <EmptyState text="No recording, transcript, summary, or source artifact has been attached yet." />
           )}
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && resources.length ? (
+        <Section title="Resources">
+          <div className="grid gap-3 md:grid-cols-2">
+            {resources.map((resource) => (
+              <a
+                className="border border-border bg-card/20 p-4 transition-colors hover:border-primary"
+                href={resource.href}
+                key={`${resource.resourceType}-${resource.href}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                <p className="portal-kicker">{resource.resourceType}</p>
+                <p className="mt-2 font-medium">{resource.label}</p>
+              </a>
+            ))}
+          </div>
         </Section>
       ) : null}
 

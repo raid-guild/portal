@@ -1,7 +1,8 @@
 import type { CollectionConfig } from 'payload'
 
+import { getProfileIDsForUser } from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
-import { contentContributors } from '@/access/roles'
+import { canContributeContent, contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
 import { createEventPublishedNotifications } from './Events/hooks/createEventPublishedNotifications'
 
@@ -11,7 +12,19 @@ export const Events: CollectionConfig = {
     create: contentContributors,
     delete: contentContributors,
     read: readVisiblePortalContent,
-    update: contentContributors,
+    update: async ({ req }) => {
+      if (canContributeContent(req.user)) return true
+
+      const profileIDs = await getProfileIDsForUser(req)
+
+      if (!profileIDs.length) return false
+
+      return {
+        hostProfiles: {
+          in: profileIDs,
+        },
+      }
+    },
   },
   admin: {
     defaultColumns: ['title', 'startsAt', 'visibility', '_status', 'updatedAt'],
@@ -407,6 +420,66 @@ export const Events: CollectionConfig = {
               pickerAppearance: 'dayAndTime',
             },
           },
+        },
+      ],
+    },
+    {
+      name: 'resources',
+      type: 'array',
+      admin: {
+        description: 'Session-specific links such as notes, slides, docs, repos, or artifacts.',
+      },
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          required: true,
+        },
+        {
+          name: 'url',
+          type: 'text',
+          required: true,
+          validate: (value) =>
+            validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+        },
+        {
+          name: 'resourceType',
+          type: 'select',
+          defaultValue: 'link',
+          options: [
+            {
+              label: 'Link',
+              value: 'link',
+            },
+            {
+              label: 'Notes',
+              value: 'notes',
+            },
+            {
+              label: 'Slides',
+              value: 'slides',
+            },
+            {
+              label: 'Document',
+              value: 'doc',
+            },
+            {
+              label: 'Repository',
+              value: 'repo',
+            },
+            {
+              label: 'Design',
+              value: 'design',
+            },
+            {
+              label: 'Artifact',
+              value: 'artifact',
+            },
+            {
+              label: 'Other',
+              value: 'other',
+            },
+          ],
         },
       ],
     },
