@@ -108,6 +108,13 @@ Payload differences for `/api/events/create`:
 - Send `durationMinutes` instead of `endsAt`; the endpoint calculates `endsAt`.
 - Send `hosts` instead of `hostProfiles`.
 - Send `guests` instead of `speakerProfiles`.
+- Send an existing Discord event URL in `joinURL` or `discordEventURL` when the
+  scheduled event already exists in Discord. Portal recognizes
+  `https://discord.com/events/<guildID>/<eventID>` URLs, stores the Discord
+  URL/ID, and skips creating a new scheduled event.
+- Non-Discord `joinURL` values stay normal join links. If `syncDiscord: true`
+  and no existing Discord event URL is supplied, Portal tries to create a new
+  Discord scheduled event while preserving the join link.
 - Do not send `_status` or `publishedAt`; the endpoint publishes the event.
 - Include `"syncDiscord": true` when the user asked for a Discord scheduled event.
 
@@ -115,6 +122,10 @@ Expected behavior:
 
 - `visibility` may be `public`, `authenticated`, `member`, or `admin`. Use `member` only when confirmed members should see the session.
 
+- If an existing Discord event URL is supplied in `joinURL` or
+  `discordEventURL`, Portal links that event, stores `discordScheduledEventID`,
+  sets `discordSyncStatus: synced`, and does not call Discord to create a new
+  event.
 - If Discord sync is configured and succeeds, Portal stores `discordScheduledEventID`, `discordEventURL`, `joinURL`, and `discordSyncStatus: synced`.
 - If Discord sync fails, Portal still creates the event and stores `discordSyncStatus: failed` with `discordSyncError`.
 - If `syncDiscord` is false or missing, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
