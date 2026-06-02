@@ -6,8 +6,17 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
-import type { ContributionRequest, Event, Post, Profile, Project, Thread } from '@/payload-types'
+import type {
+  ContributionRequest,
+  Event,
+  Post,
+  Profile,
+  Project,
+  Thread,
+  User,
+} from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -101,6 +110,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const projects = relationDocs<Project>(event.relatedProjects)
   const threads = relationDocs<Thread>(event.relatedThreads)
   const hostProfiles = relationDocs<Profile>(event.hostProfiles)
+  const canHideSessionComments = canEditContent(user) || isEventHost(hostProfiles, user)
   const speakerProfiles = relationDocs<Profile>(event.speakerProfiles)
   const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const fallbackSpeaker = typeof event.speaker === 'object' ? event.speaker : null
@@ -295,6 +305,18 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           </div>
         </Section>
       ) : null}
+
+      <Section title="Comments">
+        <Comments
+          canComment={Boolean(user)}
+          canHide={canHideSessionComments}
+          className="py-0"
+          commenterLabel={user?.name || user?.email}
+          loginHref={`/login?next=${encodeURIComponent(`/events/${event.id}`)}`}
+          parent={{ relationTo: 'events', value: event.id }}
+          title={null}
+        />
+      </Section>
 
       {canViewFullDetails && (event.previousOccurrence || event.nextOccurrence) ? (
         <Section title="Series Navigation">
@@ -608,4 +630,18 @@ const uniqueProfiles = (profiles: Profile[]): Profile[] => {
     seen.add(profile.id)
     return true
   })
+}
+
+const isEventHost = (hostProfiles: Profile[], user: User | null): boolean => {
+  if (!user) return false
+
+  return hostProfiles.some((profile) => relationshipID(profile.user) === user.id)
+}
+
+const relationshipID = (value: number | string | { id?: number | string } | null | undefined) => {
+  if (typeof value === 'number') return value
+  if (typeof value === 'string') return Number(value)
+  if (value && typeof value.id !== 'undefined') return relationshipID(value.id)
+
+  return 0
 }
