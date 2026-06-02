@@ -1734,7 +1734,7 @@ export interface Comment {
         value: number | ContributionRequest;
       };
   /**
-   * Comments must be approved before they appear publicly
+   * Visible comments can be hidden by unchecking this field.
    */
   isApproved?: boolean | null;
   publishedAt?: string | null;

@@ -192,7 +192,12 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
         </Section>
       ) : null}
 
-      <Comments parent={{ relationTo: 'contributionRequests', value: request.id }} />
+      <Comments
+        canComment={Boolean(user)}
+        commenterLabel={user?.name || user?.email}
+        loginHref={`/login?next=${encodeURIComponent(`/requests/${request.slug}`)}`}
+        parent={{ relationTo: 'contributionRequests', value: request.id }}
+      />
     </main>
   )
 }

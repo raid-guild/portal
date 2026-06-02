@@ -135,50 +135,12 @@ async function seedDatabase(page: Page) {
   await expect(page.getByText(/portal starter content upserted/i)).toBeVisible({ timeout: 120000 })
 }
 
-async function approveComment(page: Page) {
-  await page.goto('/admin/collections/comments')
-
-  const commentLink = page.getByRole('link', { name: commentText }).first()
-  await expect(commentLink).toBeVisible({ timeout: 30000 })
-  await commentLink.click()
-
-  const isApproved = page.getByRole('checkbox', { name: /is approved/i })
-  const saveButton = page.getByRole('button', { name: /^save$/i }).first()
-
-  await expect(isApproved).toBeVisible()
-  if (!(await isApproved.isChecked())) {
-    await isApproved.click()
-  }
-
-  if (await saveButton.isDisabled()) {
-    await isApproved.click()
-    await isApproved.click()
-  }
-
-  if (await saveButton.isEnabled()) {
-    await saveButton.click()
-  } else {
-    const commentID = page.url().match(/\/comments\/(\d+)/)?.[1]
-
-    if (!commentID) {
-      throw new Error('Unable to determine comment ID for approval fallback')
-    }
-
-    const response = await page.request.patch(`/api/comments/${commentID}`, {
-      data: {
-        isApproved: true,
-        publishedAt: new Date().toISOString(),
-      },
-    })
-
-    if (!response.ok()) {
-      throw new Error(`Comment approval fallback failed with status ${response.status()}`)
-    }
-
-    await page.reload()
-  }
-
-  await expect(isApproved).toBeChecked()
+async function loginPortalUser(page: Page, email: string, password: string) {
+  await page.goto('/login')
+  await fillFirst(page.getByLabel(/^email$/i), email)
+  await fillFirst(page.getByLabel(/^password$/i), password)
+  await page.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(page).toHaveURL(/\/dashboard/)
 }
 
 async function getApprovedCommentCount(page: Page) {
@@ -455,10 +417,6 @@ async function verifyContributionRequests(adminPage: Page, browser: Browser, pub
   const commentContent = `Request comment ${suffix}`
   const commentResponse = await adminPage.request.post('/api/comments', {
     data: {
-      author: {
-        email: `request-comment-${suffix}@example.com`,
-        name: 'Request Commenter',
-      },
       content: commentContent,
       isApproved: true,
       parent: {
@@ -1150,7 +1108,7 @@ async function verifySeededSessions(page: Page) {
   ).toBeVisible()
 }
 
-async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) {
+async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, publicPage: Page) {
   const suffix = Date.now()
   const pastStart = new Date(Date.now() - 60 * 60 * 1000).toISOString()
   const pastEnd = new Date(Date.now() - 30 * 60 * 1000).toISOString()
@@ -1158,6 +1116,62 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   const publicTitle = `Public Fireside Detail ${suffix}`
   const authenticatedTitle = `Authenticated Fireside Detail ${suffix}`
   const failedDiscordTitle = `Failed Discord Detail ${suffix}`
+  const hostEmail = `session-host-${suffix}@example.com`
+  const hostPassword = 'session-host-password'
+
+  const [rolesResponse, skillsResponse] = await Promise.all([
+    adminPage.request.get('/api/profileRoles', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(rolesResponse.ok()).toBeTruthy()
+  expect(skillsResponse.ok()).toBeTruthy()
+  const rolesBody = await rolesResponse.json()
+  const skillsBody = await skillsResponse.json()
+  const roleID = rolesBody.docs?.[0]?.id
+  const skillID = skillsBody.docs?.[0]?.id
+  expect(roleID).toBeTruthy()
+  expect(skillID).toBeTruthy()
+
+  const hostUserResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: hostEmail,
+      name: 'Session Host',
+      password: hostPassword,
+      roles: ['member'],
+    },
+  })
+  expect(hostUserResponse.status()).toBe(201)
+  const hostUserBody = await hostUserResponse.json()
+  const hostUserID = hostUserBody.doc?.id || hostUserBody.id
+  expect(hostUserID).toBeTruthy()
+
+  const hostProfileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'Hosts local session comment checks.',
+      displayName: 'Session Host',
+      handle: `session-host-${suffix}`,
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      user: hostUserID,
+      visibility: 'public',
+    },
+  })
+  expect(hostProfileResponse.status()).toBe(201)
+  const hostProfileBody = await hostProfileResponse.json()
+  const hostProfileID = hostProfileBody.doc?.id || hostProfileBody.id
+  expect(hostProfileID).toBeTruthy()
 
   const publicResponse = await adminPage.request.post('/api/events', {
     data: {
@@ -1168,6 +1182,7 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
       sessionType: 'fireside',
       sourceArtifactURL: 'https://example.com/source-artifact',
       sourceStatus: 'processed',
+      hostProfiles: [hostProfileID],
       visibility: 'public',
       _status: 'published',
       publishedAt,
@@ -1219,6 +1234,9 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   await publicPage.goto(`/events/${publicEventID}`)
   await expect(publicPage.getByRole('heading', { name: publicTitle })).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Session Notes' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+  await expect(publicPage.getByText('Log in to leave a comment.')).toBeVisible()
+  await expect(publicPage.getByRole('button', { name: /submit comment/i })).toHaveCount(0)
   await expect(publicPage.getByText('Continue In The Portal')).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Source Material' })).toHaveCount(0)
 
@@ -1229,6 +1247,9 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   await adminPage.goto(`/events/${publicEventID}`)
   await expect(adminPage.getByRole('heading', { name: publicTitle })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Session Notes' })).toBeVisible()
+  await expect(adminPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+  await expect(adminPage.getByText('Posting as Playwright Admin')).toBeVisible()
+  await expect(adminPage.getByRole('button', { name: /submit comment/i })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Source artifact' })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Derived Posts' })).toBeVisible()
@@ -1239,6 +1260,64 @@ async function verifySessionDetailVisibility(adminPage: Page, publicPage: Page) 
   await adminPage.goto(`/events/${authenticatedEventID}`)
   await expect(adminPage.getByRole('heading', { name: authenticatedTitle })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Source Material' })).toBeVisible()
+
+  const eventCommentContent = `Session comment ${suffix}`
+  const eventCommentResponse = await adminPage.request.post('/api/comments', {
+    data: {
+      author: {
+        email: `spoofed-session-comment-${suffix}@example.com`,
+        name: 'Spoofed Session Commenter',
+      },
+      content: eventCommentContent,
+      parent: {
+        relationTo: 'events',
+        value: publicEventID,
+      },
+    },
+  })
+  expect(eventCommentResponse.status()).toBe(201)
+  const eventCommentBody = await eventCommentResponse.json()
+  const eventCommentID = eventCommentBody.doc?.id || eventCommentBody.id
+  expect(eventCommentID).toBeTruthy()
+
+  await publicPage.goto(`/events/${publicEventID}`)
+  await expect(publicPage.getByText(eventCommentContent)).toBeVisible()
+  await expect(publicPage.getByText('Playwright Admin')).toBeVisible()
+  await expect(publicPage.getByText('Spoofed Session Commenter')).toHaveCount(0)
+
+  const hostContext = await browser.newContext()
+  const hostPage = await hostContext.newPage()
+  await loginPortalUser(hostPage, hostEmail, hostPassword)
+  await hostPage.goto(`/events/${publicEventID}`)
+  await expect(hostPage.getByText(eventCommentContent)).toBeVisible()
+  await hostPage.getByRole('button', { name: /hide comment/i }).click()
+  await expect(hostPage.getByText('Comment hidden.')).toBeVisible()
+
+  const hiddenHostReadResponse = await hostPage.request.get('/api/comments', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[id][equals]': String(eventCommentID),
+    },
+  })
+  expect(hiddenHostReadResponse.ok()).toBeTruthy()
+  const hiddenHostReadBody = await hiddenHostReadResponse.json()
+  expect(hiddenHostReadBody.docs).toHaveLength(0)
+  await hostContext.close()
+
+  await publicPage.goto(`/events/${publicEventID}`)
+  await expect(publicPage.getByText(eventCommentContent)).toHaveCount(0)
+
+  const hiddenAdminReadResponse = await adminPage.request.get('/api/comments', {
+    params: {
+      depth: '0',
+      limit: '10',
+      'where[id][equals]': String(eventCommentID),
+    },
+  })
+  expect(hiddenAdminReadResponse.ok()).toBeTruthy()
+  const hiddenAdminReadBody = await hiddenAdminReadResponse.json()
+  expect(hiddenAdminReadBody.docs).toHaveLength(1)
 
   await publicPage.goto(`/events/${failedDiscordEventID}`)
   await expect(publicPage.getByRole('heading', { name: failedDiscordTitle })).toBeVisible()
@@ -2869,7 +2948,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededProjectSpike(publicPage)
   await verifyContributionRequests(page, browser, publicPage)
   await verifySeededSessions(publicPage)
-  await verifySessionDetailVisibility(page, publicPage)
+  await verifySessionDetailVisibility(page, browser, publicPage)
   await verifySessionTypeCreation(page)
   await verifyLiveSessionHighlight(page, publicPage)
   await verifyEventArtifactIngest(page, publicPage)
@@ -2884,18 +2963,25 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await inquiryContext.close()
 
   await submitSponsorInquiry(publicPage, page)
-  await publicPage.goto(`/posts/${targetPost.slug}`)
-  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
 
-  await fillFirst(publicPage.getByLabel(/^name$/i), 'Playwright Visitor')
-  await fillFirst(publicPage.getByLabel(/email/i), 'visitor@example.com')
-  await fillFirst(publicPage.getByLabel(/comment/i), commentText)
-  await publicPage.getByRole('button', { name: /submit comment/i }).click()
+  const commentPublicContext = await browser.newContext()
+  const commentPublicPage = await commentPublicContext.newPage()
+  await commentPublicPage.goto(`/posts/${targetPost.slug}`)
+  await expect(commentPublicPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+  await expect(commentPublicPage.getByText('Log in to leave a comment.')).toBeVisible()
+  await expect(commentPublicPage.getByRole('button', { name: /submit comment/i })).toHaveCount(0)
 
-  await expect(publicPage.getByText(/comment submitted successfully/i)).toBeVisible()
-  await expect(publicPage.getByText(commentText)).toHaveCount(0)
+  await page.goto(`/posts/${targetPost.slug}`)
+  await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
+  await expect(page.getByText('Posting as Playwright Admin')).toBeVisible()
+  await expect(page.getByLabel(/^name$/i)).toHaveCount(0)
+  await expect(page.getByLabel(/^email$/i)).toHaveCount(0)
 
-  await approveComment(page)
+  await fillFirst(page.getByLabel(/comment/i), commentText)
+  await page.getByRole('button', { name: /submit comment/i }).click()
+
+  await expect(page.getByText(/comment submitted successfully/i)).toBeVisible()
+  await expect(page.getByText(commentText)).toBeVisible()
 
   await expect
     .poll(async () => getApprovedCommentCount(publicPage), {
@@ -2906,8 +2992,8 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await expect
     .poll(
       async () => {
-        await publicPage.reload()
-        return publicPage.getByText(commentText).count()
+        await commentPublicPage.reload()
+        return commentPublicPage.getByText(commentText).count()
       },
       {
         timeout: 30000,
@@ -2916,9 +3002,10 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
     .toBe(1)
 
   if (manualReviewMode) {
-    await publicPage.bringToFront()
-    await publicPage.pause()
+    await commentPublicPage.bringToFront()
+    await commentPublicPage.pause()
   }
 
+  await commentPublicContext.close()
   await publicContext.close()
 })

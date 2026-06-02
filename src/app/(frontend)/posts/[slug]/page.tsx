@@ -74,7 +74,12 @@ export default async function Post({ params: paramsPromise }: Args) {
 
           {/* Add Comments section */}
           <div className="max-w-[48rem] mx-auto mt-16">
-            <Comments postId={typeof post.id === 'string' ? parseInt(post.id, 10) : post.id} />
+            <Comments
+              canComment={Boolean(user)}
+              commenterLabel={user?.name || user?.email}
+              loginHref={`/login?next=${encodeURIComponent(`/posts/${post.slug}`)}`}
+              postId={typeof post.id === 'string' ? parseInt(post.id, 10) : post.id}
+            />
           </div>
         </div>
       </div>
@@ -91,13 +96,7 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 }
 
 const queryPostBySlug = cache(
-  async ({
-    slug,
-    user,
-  }: {
-    slug: string
-    user: Awaited<ReturnType<typeof getCurrentUser>>
-  }) => {
+  async ({ slug, user }: { slug: string; user: Awaited<ReturnType<typeof getCurrentUser>> }) => {
     const { isEnabled: draft } = await draftMode()
 
     const payload = await getPayload({ config: configPromise })
