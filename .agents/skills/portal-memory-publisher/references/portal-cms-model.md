@@ -169,6 +169,49 @@ Key fields:
 
 Rule: brief content should feel like a human who was present wrote it.
 
+## pageCopy
+
+Purpose: CMS-managed editorial copy for fixed product-flow pages.
+
+Key fields:
+
+- `key`: stable route key, e.g. `join`, `inquire-client`, `inquire-sponsor`,
+  `inquire-grant`, `inquire-opportunity`, `inquire-general`, `brief-public`
+- `surface`: `join`, `inquiry`, `brief`, `other`
+- `label`
+- `eyebrow`
+- `headline`
+- `intro`
+- `secondaryIntro`
+- `contextHeading`
+- `contextBody`
+- `messageLabel`
+- `submitLabel`
+- `postSubmitEyebrow`
+- `postSubmitHeading`
+- `postSubmitBody`
+- `createAccountLabel`
+- `submitAnotherLabel`
+- `backLinkLabel`
+- `benefitsHeading`
+- `benefits`
+- `funnelEyebrow`
+- `funnelHeading`
+- `funnelLinks`
+- `seoTitle`
+- `seoDescription`
+- `status`: `draft`, `published`, `archived`
+
+Rule: use `PageCopy` for `/join`, `/inquire/[type]`, and other fixed product
+flow copy changes instead of hardcoding page text.
+
+Rule: copy-only funnel changes should not create new collections or new inquiry
+types. Existing inquiry types are `client`, `sponsor`, `grant`, `opportunity`,
+and `general`.
+
+Rule: for a one-hour consultation MVP, prefer a consultation-flavored `client`
+inquiry page or source route before adding a new durable inquiry type.
+
 ## profiles
 
 Purpose: contributor identity and attribution.
