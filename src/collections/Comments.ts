@@ -4,6 +4,15 @@ import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
 import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
+type CommentAccessCache = {
+  visibleCommentEventIDs?: (number | string)[]
+  visibleCommentProjectIDs?: (number | string)[]
+}
+
+type CachedPayloadRequest = PayloadRequest & {
+  commentAccessCache?: CommentAccessCache
+}
+
 export const Comments: CollectionConfig = {
   slug: 'comments',
   admin: {
@@ -19,8 +28,8 @@ export const Comments: CollectionConfig = {
         return true
       }
 
-      // Event and project comments inherit parent visibility because those records can be public,
-      // authenticated, member-only, or admin-only.
+      // Event comments inherit event visibility. Project comments are authenticated-only
+      // and then inherit project visibility for member/admin scoped projects.
       const visibleEventIDs = await getVisibleEventIDs(req)
       const visibleProjectIDs = await getVisibleProjectIDs(req)
 
@@ -227,6 +236,13 @@ const getParentPath = (
 }
 
 const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
+  const cachedReq = req as CachedPayloadRequest
+  cachedReq.commentAccessCache ||= {}
+
+  if (cachedReq.commentAccessCache.visibleCommentEventIDs) {
+    return cachedReq.commentAccessCache.visibleCommentEventIDs
+  }
+
   const ids: (number | string)[] = []
   let page = 1
   let hasNextPage = true
@@ -247,11 +263,20 @@ const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string
     page += 1
   }
 
+  cachedReq.commentAccessCache.visibleCommentEventIDs = ids
+
   return ids
 }
 
 const getVisibleProjectIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
   if (!req.user) return []
+
+  const cachedReq = req as CachedPayloadRequest
+  cachedReq.commentAccessCache ||= {}
+
+  if (cachedReq.commentAccessCache.visibleCommentProjectIDs) {
+    return cachedReq.commentAccessCache.visibleCommentProjectIDs
+  }
 
   const ids: (number | string)[] = []
   let page = 1
@@ -272,6 +297,8 @@ const getVisibleProjectIDs = async (req: PayloadRequest): Promise<(number | stri
     hasNextPage = Boolean(result.hasNextPage)
     page += 1
   }
+
+  cachedReq.commentAccessCache.visibleCommentProjectIDs = ids
 
   return ids
 }
