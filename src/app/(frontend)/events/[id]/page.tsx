@@ -138,6 +138,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     return safeURL
       ? [
           {
+            embedURL: getYouTubeEmbedURL(safeURL),
             href: safeURL,
             label: resource.label,
             resourceType: resource.resourceType || 'link',
@@ -263,16 +264,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         <Section title="Resources">
           <div className="grid gap-3 md:grid-cols-2">
             {resources.map((resource) => (
-              <a
-                className="border border-border bg-card/20 p-4 transition-colors hover:border-primary"
-                href={resource.href}
-                key={`${resource.resourceType}-${resource.href}`}
-                rel="noreferrer"
-                target="_blank"
-              >
-                <p className="portal-kicker">{resource.resourceType}</p>
-                <p className="mt-2 font-medium">{resource.label}</p>
-              </a>
+              <ResourceCard key={`${resource.resourceType}-${resource.href}`} resource={resource} />
             ))}
           </div>
         </Section>
@@ -471,6 +463,87 @@ const SafeLink: React.FC<{ href?: string | null; label: string }> = ({ href, lab
       {label}
     </Link>
   )
+}
+
+type SessionResource = {
+  embedURL: string | null
+  href: string
+  label: string
+  resourceType: string
+}
+
+const ResourceCard: React.FC<{ resource: SessionResource }> = ({ resource }) => {
+  if (resource.embedURL) {
+    return (
+      <article className="border border-border bg-card/20 p-4 md:col-span-2">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="portal-kicker">{resource.resourceType}</p>
+            <h3 className="mt-2 font-medium">{resource.label}</h3>
+          </div>
+          <a className="portal-link text-sm" href={resource.href} rel="noreferrer" target="_blank">
+            Open video
+          </a>
+        </div>
+        <iframe
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+          allowFullScreen
+          className="mt-4 aspect-video w-full border border-border bg-background"
+          loading="lazy"
+          referrerPolicy="strict-origin-when-cross-origin"
+          src={resource.embedURL}
+          title={resource.label}
+        />
+      </article>
+    )
+  }
+
+  return (
+    <a
+      className="border border-border bg-card/20 p-4 transition-colors hover:border-primary"
+      href={resource.href}
+      rel="noreferrer"
+      target="_blank"
+    >
+      <p className="portal-kicker">{resource.resourceType}</p>
+      <p className="mt-2 font-medium">{resource.label}</p>
+    </a>
+  )
+}
+
+const getYouTubeEmbedURL = (href: string): string | null => {
+  try {
+    const url = new URL(href)
+    const host = url.hostname.toLowerCase().replace(/^www\./, '')
+    let videoID = ''
+
+    if (host === 'youtu.be') {
+      videoID = url.pathname.split('/').filter(Boolean)[0] || ''
+    }
+
+    if (
+      host === 'youtube.com' ||
+      host === 'm.youtube.com' ||
+      host === 'music.youtube.com' ||
+      host === 'youtube-nocookie.com'
+    ) {
+      if (url.pathname === '/watch') {
+        videoID = url.searchParams.get('v') || ''
+      } else {
+        const [, route, id] = url.pathname.split('/')
+
+        if (route === 'embed' || route === 'shorts' || route === 'live') {
+          videoID = id || ''
+        }
+      }
+    }
+
+    if (!/^[A-Za-z0-9_-]{11}$/.test(videoID)) return null
+
+    return `https://www.youtube-nocookie.com/embed/${videoID}`
+  } catch {
+    return null
+  }
 }
 
 const formatDiscordSyncError = (value?: string | null): string => {
