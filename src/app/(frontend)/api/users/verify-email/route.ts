@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 
 import type { User } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
+import { renderTransactionalEmail } from '@/utilities/transactionalEmail'
 
 type UserRole = Exclude<NonNullable<User['roles']>[number], undefined>
 
@@ -102,11 +103,21 @@ export async function POST(request: Request) {
 
     try {
       await payload.sendEmail({
-        html: `
-          <p>Verify your RaidGuild Portal account email.</p>
-          <p><a href="${verificationURL}">Verify this email address</a></p>
-          <p>This link expires in 30 minutes. If you did not request this, you can ignore this email.</p>
-        `,
+        html: renderTransactionalEmail({
+          action: {
+            href: verificationURL,
+            label: 'Verify email',
+          },
+          footer:
+            'This link expires in 30 minutes. If you did not request it, you can ignore this email.',
+          intro:
+            'Confirm this address so your Portal account can use contributor actions, check-ins, and notification delivery.',
+          preheader: 'Verify your RaidGuild Portal account email.',
+          sections: [
+            'Email verification helps keep member and contributor activity tied to a trusted account.',
+          ],
+          title: 'Verify your Portal email',
+        }),
         subject: 'Verify your RaidGuild Portal email',
         to: user.email,
       })

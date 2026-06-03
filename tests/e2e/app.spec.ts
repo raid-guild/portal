@@ -1860,7 +1860,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
 
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
-  await expect(page.getByText('Email not verified')).toBeVisible()
+  await expect(page.getByText('Email not verified', { exact: true })).toBeVisible()
 
   const emailVerificationToken = signAccountEmailVerificationToken({
     email,
@@ -1869,7 +1869,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
     userID: String(createdUserID),
   })
   await page.goto(`/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`)
-  await expect(page.getByText('Email verified', { exact: true })).toBeVisible()
+  await expect(page.getByText('Email verified.', { exact: true })).toBeVisible()
 
   const verifiedUserResponse = await page.request.get(`/api/users/${createdUserID}`)
   expect(verifiedUserResponse.ok()).toBeTruthy()
