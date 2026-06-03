@@ -402,6 +402,40 @@ async function verifyContributionRequests(adminPage: Page, browser: Browser, pub
   await expect(
     publicPage.getByText('Good first contribution', { exact: true }).first(),
   ).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toHaveCount(0)
+
+  const projectCommentContent = `Project comment ${suffix}`
+  const anonymousProjectCommentResponse = await publicPage.request.post('/api/comments', {
+    data: {
+      content: `Anonymous ${projectCommentContent}`,
+      parent: {
+        relationTo: 'projects',
+        value: project.id,
+      },
+    },
+  })
+  expect(anonymousProjectCommentResponse.status()).toBe(403)
+
+  const projectCommentResponse = await adminPage.request.post('/api/comments', {
+    data: {
+      content: projectCommentContent,
+      isApproved: true,
+      parent: {
+        relationTo: 'projects',
+        value: project.id,
+      },
+      publishedAt: new Date().toISOString(),
+    },
+  })
+  expect(projectCommentResponse.status()).toBe(201)
+
+  await adminPage.goto(`/projects/${project.slug}`)
+  await expect(adminPage.getByRole('heading', { name: 'Comments' })).toBeVisible()
+  await expect(adminPage.getByText(projectCommentContent)).toBeVisible()
+
+  await publicPage.goto(`/projects/${project.slug}`)
+  await expect(publicPage.getByRole('heading', { name: 'Comments' })).toHaveCount(0)
+  await expect(publicPage.getByText(projectCommentContent)).toHaveCount(0)
 
   await publicPage.goto(`/events/${event.id}`)
   await expect(publicPage.getByRole('heading', { name: 'Contribution Requests' })).toBeVisible()

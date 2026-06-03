@@ -7,6 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canContributeContent, hasRole } from '@/access/roles'
+import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
@@ -292,6 +293,19 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
           </Section>
         </div>
       </section>
+
+      {user ? (
+        <Section title="Comments">
+          <Comments
+            canComment
+            className="py-0"
+            commenterLabel={user.name || user.email}
+            parent={{ relationTo: 'projects', value: project.id }}
+            title={null}
+            user={user}
+          />
+        </Section>
+      ) : null}
     </main>
   )
 }
