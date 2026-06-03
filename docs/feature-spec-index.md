@@ -31,12 +31,12 @@ Status labels:
 | Onboarding and inquiries | [Onboarding and inquiry funnel](./onboarding-funnel-feature-spec.md) | First slice implemented | `/join`, `/inquire/[type]`, and `inquiries` exist; copy needs BD polish. |
 | CMS page copy | [CMS-managed page copy](./cms-managed-page-copy-feature-spec.md) | First slice implemented | `PageCopy` supports fixed product-flow pages. |
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
+| Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
 
 ## Planned / Future Modules
 
 | Area | Spec | Status | Notes |
 | --- | --- | --- | --- |
-| Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | Planned / future | Admin-featured focus/announcement surface plus thread detail landing pages. |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
 | Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | Planned / future | Depends on reviewed memory/content pipeline and module boundaries. |

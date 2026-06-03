@@ -2,13 +2,13 @@
 
 ## Status
 
-Planned / future feature module. This spec covers a lightweight editorial
-spotlight surface for the current brief, dashboard, and thread/session/project
-discovery flow.
+First slice implemented. Portal now has a `spotlights` collection, active
+spotlight rendering on the public home and authenticated dashboard, and a
+public `/threads/[slug]` detail page so featured threads have a meaningful
+landing surface.
 
-The first implementation should add a small `spotlights` collection, render an
-active spotlight section, and add a public thread detail page so featured
-threads have a meaningful landing surface.
+This spec still tracks deferred polish around target validation, admin warnings,
+default expiry helpers, richer thread grouping, and seeded/editorial examples.
 
 ## Product Intent
 
@@ -57,7 +57,7 @@ Recommended mental model:
 - No nested spotlights or spotlight groups.
 - No task, assignment, or project-management workflow.
 
-## Proposed Collection
+## Collection
 
 Collection slug:
 
@@ -71,7 +71,7 @@ Fields:
 title: text, required
 summary: textarea
 kind: featured / announcement
-status: draft / published / archived
+status: draft / published
 startsAt: date
 expiresAt: date
 priority: number
@@ -92,7 +92,7 @@ createdBy: relationship -> users
 publishedAt: date
 ```
 
-Recommended defaults:
+Implemented defaults:
 
 ```txt
 kind: featured
@@ -101,7 +101,7 @@ priority: 0
 visibility: public
 ```
 
-Recommended indexes:
+Implemented indexes:
 
 ```txt
 status + visibility + startsAt + expiresAt
@@ -214,10 +214,9 @@ expiresAt is empty or expiresAt > now
 visibility is visible to current user
 ```
 
-Suggested layout:
+Implemented first-slice layout:
 
-- one primary `featured` spotlight, selected by highest `priority`
-- up to two active `announcement` records below or beside it
+- up to three active spotlight records, sorted by highest `priority`
 - title, summary, target type, CTA, optional image
 - expired announcements do not render
 
@@ -310,6 +309,9 @@ Nice first-slice admin affordances:
   - project: `View project`
   - post: `Read post`
   - external/artifact: `Open link`
+
+The current first slice supports manual admin/editor creation and publishing in
+Payload Admin. The warning/default helpers above remain deferred.
 
 ## Agent Guidance
 

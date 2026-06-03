@@ -37,6 +37,7 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 - `projects`: live collaboration surfaces; what is being built.
 - `dailyBriefs`: assembled current snapshot; what matters now.
 - `profiles`: people/contributors; who is involved.
+- `spotlights`: admin/editorial placement for what should be front and center.
 
 ## Workflow
 
@@ -232,6 +233,31 @@ comments from the Portal UI. Agents should not turn source material,
 transcripts, or meeting summaries into comments unless the user explicitly asks
 for a human-reviewable comment draft. Use activity items, resources, artifacts,
 briefs, or posts for memory publishing.
+
+## Spotlight Proposals
+
+Use `spotlights` only for admin/editorial emphasis: a featured focus,
+time-boxed announcement, important thread, upcoming session, active project, or
+external artifact that should be prominent on the home/dashboard surfaces.
+
+Agents should default to draft/review proposals. Publish a spotlight only when
+the user explicitly asks, the target environment is clear, and the source facts
+are concrete.
+
+Spotlight fields to consider:
+
+- `title`
+- `summary`
+- `kind`: `featured` or `announcement`
+- `visibility`: `public`, `authenticated`, `member`, or `admin`
+- `startsAt` / `expiresAt`
+- `priority`
+- `targetType` plus exactly one matching target field
+- `ctaLabel`
+
+Featured spotlights may have no expiry. Announcements should usually have
+`expiresAt`, especially when they point to an event or deadline. Do not invent
+urgency, deadlines, or participation claims to justify a spotlight.
 
 ## Post Draft Creation
 
