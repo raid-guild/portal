@@ -91,29 +91,58 @@ export const EmailVerificationCard: React.FC<EmailVerificationCardProps> = ({
   }, [verifiedAt])
 
   return (
-    <div className="border-l border-border pl-6 text-sm">
-      <p className="font-bold">{email}</p>
-      <p className="mt-2 text-muted-foreground">
-        {verifiedAt ? 'Email verified' : 'Email not verified'}
-      </p>
-      {verifiedAt ? (
-        <p className="mt-2 text-xs text-muted-foreground">
-          Verified {new Date(verifiedAt).toLocaleDateString()}
-        </p>
-      ) : (
-        <Button
-          className="mt-4"
-          disabled={isLoading}
-          onClick={requestVerification}
-          size="sm"
-          type="button"
-          variant="outline"
+    <div className="border border-border bg-card/25 p-5 text-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="portal-kicker">Account email</p>
+          <p className="mt-2 break-all font-mono text-sm font-bold text-foreground">{email}</p>
+        </div>
+        <span
+          className={`border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] ${
+            verifiedAt
+              ? 'border-success/40 bg-success/10 text-success'
+              : 'border-warning/40 bg-warning/10 text-warning'
+          }`}
         >
-          {isLoading ? 'Sending...' : 'Verify email'}
-        </Button>
+          {verifiedAt ? 'Verified' : 'Unverified'}
+        </span>
+      </div>
+      {verifiedAt ? (
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="font-medium text-foreground">You are cleared for full Portal actions.</p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+            Verified {new Date(verifiedAt).toLocaleDateString()}. This email can receive Portal
+            notifications and account messages.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-sm leading-6 text-muted-foreground">
+            Verify this address to unlock check-ins, email notifications, and contributor actions
+            that require a trusted account.
+          </p>
+          <Button
+            className="mt-4 w-full justify-center"
+            disabled={isLoading}
+            onClick={requestVerification}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            {isLoading ? 'Sending...' : 'Send verification link'}
+          </Button>
+        </div>
       )}
-      {success ? <p className="mt-3 text-xs text-muted-foreground">{success}</p> : null}
-      {error ? <p className="mt-3 text-xs text-destructive">{error}</p> : null}
+      {success ? (
+        <p className="mt-4 border border-success/30 bg-success/10 p-3 text-xs leading-5 text-success">
+          {success}
+        </p>
+      ) : null}
+      {error ? (
+        <p className="mt-4 border border-destructive/30 bg-destructive/10 p-3 text-xs leading-5 text-destructive">
+          {error}
+        </p>
+      ) : null}
     </div>
   )
 }
