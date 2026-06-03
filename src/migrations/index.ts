@@ -30,6 +30,8 @@ import * as migration_20260529_140000_comment_parents from './20260529_140000_co
 import * as migration_20260601_120000_onboarding_inquiries from './20260601_120000_onboarding_inquiries'
 import * as migration_20260601_130000_page_copy from './20260601_130000_page_copy'
 import * as migration_20260601_140000_feedback_submissions from './20260601_140000_feedback_submissions'
+import * as migration_20260602_130000_event_resources from './20260602_130000_event_resources'
+import * as migration_20260603_120000_brief_spotlights from './20260603_120000_brief_spotlights'
 
 export const migrations = [
   {
@@ -191,5 +193,15 @@ export const migrations = [
     up: migration_20260601_140000_feedback_submissions.up,
     down: migration_20260601_140000_feedback_submissions.down,
     name: '20260601_140000_feedback_submissions',
+  },
+  {
+    up: migration_20260602_130000_event_resources.up,
+    down: migration_20260602_130000_event_resources.down,
+    name: '20260602_130000_event_resources',
+  },
+  {
+    up: migration_20260603_120000_brief_spotlights.up,
+    down: migration_20260603_120000_brief_spotlights.down,
+    name: '20260603_120000_brief_spotlights',
   },
 ]

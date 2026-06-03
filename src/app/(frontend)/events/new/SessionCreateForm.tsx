@@ -320,7 +320,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               className="h-12 border-scroll-100/25 bg-background/70"
               id="joinURL"
               name="joinURL"
-              placeholder="https://..."
+              placeholder="Discord event URL, channel link, or meeting link"
               type="url"
             />
           </Field>

@@ -20,6 +20,7 @@ import type {
   Post,
   Profile,
   Project,
+  Spotlight,
   Thread,
   User,
 } from '@/payload-types'
@@ -32,6 +33,7 @@ type PortalHomeProps = {
   copy: ProductPageCopy
   posts?: Post[]
   projects?: Project[]
+  spotlights?: Spotlight[]
   upcomingEvents?: Event[]
   weeklyBrief?: DailyBrief | null
 }
@@ -49,6 +51,7 @@ type DashboardProps = {
   profile?: Profile | null
   recentProjects?: Project[]
   recentPosts?: Post[]
+  spotlights?: Spotlight[]
   user: User
 }
 
@@ -101,6 +104,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   copy,
   posts = [],
   projects = [],
+  spotlights = [],
   upcomingEvents = [],
   weeklyBrief,
 }) => {
@@ -152,6 +156,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           </div>
         </div>
       </section>
+
+      <SpotlightSection spotlights={spotlights} />
 
       {weeklyBrief ? (
         <section className="container py-12">
@@ -331,6 +337,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   profile,
   recentProjects = [],
   recentPosts = [],
+  spotlights = [],
   user,
 }) => {
   const hasProfile = Boolean(profile)
@@ -378,6 +385,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         <DashboardLink href="/modules" icon={<Puzzle className="h-5 w-5" />} label="Modules" />
         <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
       </section>
+
+      <SpotlightSection className="mt-12" spotlights={spotlights} />
 
       <section className="mt-12 portal-panel">
         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -519,13 +528,17 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                 {briefThreads.length ? (
                   <div className="space-y-3">
                     {briefThreads.slice(0, 6).map((thread) => (
-                      <article className="portal-card" key={thread.id}>
+                      <Link
+                        className="block portal-card transition-colors hover:bg-card"
+                        href={`/threads/${thread.slug}`}
+                        key={thread.id}
+                      >
                         <p className="portal-kicker">{thread.threadStatus}</p>
                         <h3 className="mt-2 font-medium">{thread.title}</h3>
                         <p className="mt-2 text-sm leading-6 text-muted-foreground">
                           {thread.summary}
                         </p>
-                      </article>
+                      </Link>
                     ))}
                   </div>
                 ) : (
@@ -681,6 +694,182 @@ const DashboardLink: React.FC<{ href: string; icon: React.ReactNode; label: stri
     <ArrowRight className="h-4 w-4" />
   </Link>
 )
+
+const SpotlightSection: React.FC<{ className?: string; spotlights: Spotlight[] }> = ({
+  className,
+  spotlights,
+}) => {
+  if (!spotlights.length) return null
+
+  const featured = spotlights.find((spotlight) => spotlight.kind === 'featured') || spotlights[0]
+  const announcements = spotlights
+    .filter((spotlight) => spotlight.id !== featured.id && spotlight.kind === 'announcement')
+    .slice(0, 2)
+
+  return (
+    <section className={className ? className : 'container py-8'}>
+      <div className={announcements.length ? 'grid gap-4 lg:grid-cols-[1fr_22rem]' : 'grid gap-4'}>
+        <SpotlightCard spotlight={featured} />
+        {announcements.length ? (
+          <div className="grid gap-4">
+            {announcements.map((spotlight) => (
+              <SpotlightCard compact key={spotlight.id} spotlight={spotlight} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  )
+}
+
+const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
+  compact = false,
+  spotlight,
+}) => {
+  const target = getSpotlightTarget(spotlight)
+  const image = spotlight.image && typeof spotlight.image === 'object' ? spotlight.image : null
+  const imageURL = image?.url
+
+  const content = (
+    <article
+      className={`h-full border bg-card/70 p-5 transition-colors ${
+        target.href ? 'hover:border-primary hover:bg-card' : ''
+      } ${
+        compact
+          ? 'border-primary/35'
+          : 'border-primary/60 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_18px_60px_rgba(178,82,58,0.16)] md:p-7'
+      }`}
+    >
+      <div className="mb-4 h-1 w-20 bg-primary" />
+      {imageURL && !compact ? (
+        <img
+          alt=""
+          className="mb-5 aspect-[16/7] w-full object-cover"
+          loading="lazy"
+          src={imageURL}
+        />
+      ) : null}
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="portal-kicker text-primary">{spotlight.kind}</p>
+        {spotlight.expiresAt ? (
+          <span className="text-xs text-muted-foreground">
+            Until {formatDate(spotlight.expiresAt)}
+          </span>
+        ) : null}
+      </div>
+      <h2 className={compact ? 'mt-2 font-bold text-foreground' : 'mt-3 portal-heading'}>
+        {spotlight.title}
+      </h2>
+      {spotlight.summary ? (
+        <p
+          className={`mt-3 text-sm leading-6 text-muted-foreground ${
+            compact ? 'line-clamp-3' : 'max-w-3xl'
+          }`}
+        >
+          {spotlight.summary}
+        </p>
+      ) : null}
+      {target.label ? (
+        <p className="mt-5 inline-flex border border-primary/70 px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary">
+          {target.label}
+        </p>
+      ) : null}
+    </article>
+  )
+
+  if (!target.href) return content
+
+  const isExternal = target.href.startsWith('http')
+
+  return (
+    <Link
+      className="block"
+      href={target.href}
+      rel={isExternal ? 'noopener noreferrer' : undefined}
+      target={isExternal ? '_blank' : undefined}
+    >
+      {content}
+    </Link>
+  )
+}
+
+const getSpotlightTarget = (spotlight: Spotlight): { href: string | null; label: string } => {
+  const label = spotlight.ctaLabel || defaultSpotlightCTALabels[spotlight.targetType]
+
+  if (spotlight.targetType === 'thread') {
+    const thread = spotlight.targetThread
+
+    return {
+      href: thread && typeof thread === 'object' ? `/threads/${thread.slug}` : null,
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'event') {
+    const event = spotlight.targetEvent
+
+    return {
+      href: event && typeof event === 'object' ? `/events/${event.id}` : null,
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'project') {
+    const project = spotlight.targetProject
+
+    return {
+      href: project && typeof project === 'object' ? `/projects/${project.slug}` : null,
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'post') {
+    const post = spotlight.targetPost
+
+    return {
+      href: post && typeof post === 'object' ? `/posts/${post.slug}` : null,
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'profile') {
+    const profile = spotlight.targetProfile
+
+    return {
+      href: profile && typeof profile === 'object' ? `/members/${profile.handle}` : null,
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'external') {
+    return {
+      href: toSafeURL(spotlight.externalURL, { allowRelative: false }),
+      label,
+    }
+  }
+
+  if (spotlight.targetType === 'artifact') {
+    return {
+      href: toSafeURL(spotlight.artifactURL, { allowRelative: false }),
+      label,
+    }
+  }
+
+  return {
+    href: null,
+    label,
+  }
+}
+
+const defaultSpotlightCTALabels: Record<NonNullable<Spotlight['targetType']>, string> = {
+  artifact: 'Open artifact',
+  event: 'View session',
+  external: 'Open link',
+  post: 'Read post',
+  profile: 'View profile',
+  project: 'View project',
+  thread: 'View thread',
+}
 
 const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
   children,

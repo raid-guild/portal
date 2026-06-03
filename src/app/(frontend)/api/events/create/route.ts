@@ -46,13 +46,13 @@ export async function POST(request: Request) {
   const guests = numberArrayValue(body?.guests)
   const speakers = guests.length ? guests : numberArrayValue(body?.speakers)
   const speaker = speakers[0] || hosts[0] || numberValue(body?.speaker)
-  const relatedProfiles = uniqueNumbers([
-    ...hosts,
-    ...speakers,
-    ...(speaker ? [speaker] : []),
-  ])
+  const relatedProfiles = uniqueNumbers([...hosts, ...speakers, ...(speaker ? [speaker] : [])])
   const locationLabel = stringValue(body?.locationLabel)
   const joinURL = stringValue(body?.joinURL)
+  const explicitDiscordEventURL = stringValue(body?.discordEventURL)
+  const joinDiscordEventURL = extractDiscordScheduledEventID(joinURL) ? joinURL : ''
+  const discordEventURL = explicitDiscordEventURL || joinDiscordEventURL
+  const linkedDiscordScheduledEventID = extractDiscordScheduledEventID(discordEventURL)
   const seriesKey = normalizeSeriesKey(body?.seriesKey)
   const seriesTitle = stringValue(body?.seriesTitle)
   const recurrenceCadence = enumValue<RecurrenceCadence>(
@@ -83,6 +83,10 @@ export async function POST(request: Request) {
     validateSafeURL(joinURL, { allowRelative: false, protocols: ['http:', 'https:'] }) !== true
   ) {
     return Response.json({ message: 'Enter a valid join URL.' }, { status: 400 })
+  }
+
+  if (discordEventURL && !linkedDiscordScheduledEventID) {
+    return Response.json({ message: 'Enter a valid Discord event URL.' }, { status: 400 })
   }
 
   const hasRecurrenceDetails = Boolean(
@@ -119,10 +123,11 @@ export async function POST(request: Request) {
   }
 
   const endsAtDate = new Date(startsAtDate.getTime() + durationMinutes * 60 * 1000)
+  const location = joinURL || discordEventURL || locationLabel
   const initialCalendarURL = createGoogleCalendarURL({
     description: summary,
     endsAt: endsAtDate.toISOString(),
-    location: joinURL || locationLabel,
+    location,
     startsAt: startsAtDate.toISOString(),
     title,
   })
@@ -132,9 +137,11 @@ export async function POST(request: Request) {
     data: {
       _status: 'published',
       calendarURL: initialCalendarURL,
-      discordSyncStatus: syncDiscord ? 'failed' : 'not_configured',
+      discordEventURL: discordEventURL || undefined,
+      discordScheduledEventID: linkedDiscordScheduledEventID || undefined,
+      discordSyncStatus: discordEventURL ? 'synced' : syncDiscord ? 'failed' : 'not_configured',
       endsAt: endsAtDate.toISOString(),
-      joinURL: joinURL || undefined,
+      joinURL: joinURL || discordEventURL || undefined,
       locationLabel: locationLabel || undefined,
       publishedAt: new Date().toISOString(),
       hostProfiles: hosts.length ? hosts : undefined,
@@ -157,7 +164,7 @@ export async function POST(request: Request) {
     user,
   })
 
-  if (!syncDiscord) {
+  if (discordEventURL || !syncDiscord) {
     return Response.json({ event: created })
   }
 
@@ -268,4 +275,29 @@ const normalizeSeriesKey = (value: unknown): string => {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
     .slice(0, 80)
+}
+
+const extractDiscordScheduledEventID = (value: string): string => {
+  if (!value) return ''
+
+  try {
+    const url = new URL(value)
+
+    if (!['http:', 'https:'].includes(url.protocol)) return ''
+
+    const allowedHosts = new Set([
+      'canary.discord.com',
+      'discord.com',
+      'ptb.discord.com',
+      'www.discord.com',
+    ])
+
+    if (!allowedHosts.has(url.hostname)) return ''
+
+    const match = url.pathname.match(/^\/events\/\d+\/(\d+)\/?$/)
+
+    return match?.[1] || ''
+  } catch {
+    return ''
+  }
 }
