@@ -3,15 +3,24 @@ import Link from 'next/link'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
+import { PageRange } from '@/components/PageRange'
 import type { Event, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import {
+  getListPageValue,
+  getListQueryValue,
+  PortalPagination,
+  PortalSearchForm,
+  type ListSearchParams,
+} from '../_components/PortalListControls'
 
 export const dynamic = 'force-dynamic'
+const EVENTS_PER_PAGE = 24
 
 const formatDateTime = (date?: string | null) => {
   if (!date) return null
@@ -59,15 +68,21 @@ const sourceStatusLabels: Record<NonNullable<Event['sourceStatus']>, string> = {
   summarized: 'Summarized',
 }
 
-export default async function EventsPage() {
-  const user = await getCurrentUser()
-  const events = await getEvents(user)
+type Args = {
+  searchParams?: Promise<ListSearchParams>
+}
+
+export default async function EventsPage({ searchParams: searchParamsPromise }: Args) {
+  const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
+  const query = getListQueryValue(searchParams?.q)
+  const page = getListPageValue(searchParams?.page)
+  const events = await getEvents(user, { page, query })
   const now = Date.now()
-  const live = events.filter((event) => isLiveEvent(event, now))
-  const upcoming = events.filter(
+  const live = events.docs.filter((event) => isLiveEvent(event, now))
+  const upcoming = events.docs.filter(
     (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() >= now,
   )
-  const past = events.filter(
+  const past = events.docs.filter(
     (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() < now,
   )
   upcoming.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
@@ -91,6 +106,22 @@ export default async function EventsPage() {
           </Link>
         ) : null}
       </section>
+
+      <PortalSearchForm
+        action="/events"
+        label="Search sessions"
+        placeholder="Search by session title, summary, location, type, or series"
+        query={query}
+      />
+
+      <div className="mt-8">
+        <PageRange
+          collectionLabels={{ plural: 'Sessions', singular: 'Session' }}
+          currentPage={events.page}
+          limit={EVENTS_PER_PAGE}
+          totalDocs={events.totalDocs}
+        />
+      </div>
 
       {live.length ? (
         <section className="mt-10 border border-primary/40 bg-primary/10 p-5">
@@ -116,7 +147,11 @@ export default async function EventsPage() {
               <SessionRow canManageSessions={canManageSessions} event={event} key={event.id} />
             ))
           ) : (
-            <p className="text-sm text-muted-foreground">No upcoming sessions are published yet.</p>
+            <p className="text-sm text-muted-foreground">
+              {query
+                ? 'No upcoming sessions match that search on this page.'
+                : 'No upcoming sessions are published yet.'}
+            </p>
           )}
         </div>
       </section>
@@ -136,6 +171,13 @@ export default async function EventsPage() {
           </div>
         </section>
       ) : null}
+
+      <PortalPagination
+        basePath="/events"
+        page={events.page}
+        query={query}
+        totalPages={events.totalPages}
+      />
     </main>
   )
 }
@@ -314,22 +356,80 @@ const isLiveEvent = (event: Event, now: number): boolean => {
   return startsAt <= now && endsAt > now
 }
 
-const getEvents = async (user: Awaited<ReturnType<typeof getCurrentUser>>) => {
+const getEvents = async (
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+  {
+    page,
+    query,
+  }: {
+    page: number
+    query: string
+  },
+) => {
   const payload = await getPayload({ config: configPromise })
+  const where: Where = {
+    and: [
+      {
+        _status: {
+          equals: 'published',
+        },
+      },
+    ],
+  }
+
+  if (query) {
+    where.and?.push({
+      or: [
+        {
+          title: {
+            like: query,
+          },
+        },
+        {
+          summary: {
+            like: query,
+          },
+        },
+        {
+          locationLabel: {
+            like: query,
+          },
+        },
+        {
+          sessionType: {
+            like: query,
+          },
+        },
+        {
+          seriesTitle: {
+            like: query,
+          },
+        },
+        {
+          'relatedProjects.title': {
+            like: query,
+          },
+        },
+        {
+          'relatedThreads.title': {
+            like: query,
+          },
+        },
+      ],
+    })
+  }
+
   const result = await payload.find({
     collection: 'events',
     depth: 2,
     draft: false,
-    limit: 100,
+    limit: EVENTS_PER_PAGE,
     overrideAccess: false,
-    sort: 'startsAt',
+    page,
+    sort: '-startsAt',
     user: user || undefined,
-    where: {
-      _status: {
-        equals: 'published',
-      },
-    },
+    where,
   })
 
-  return result.docs
+  return result
 }

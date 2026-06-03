@@ -4,20 +4,35 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { PageRange } from '@/components/PageRange'
+import {
+  getListPageValue,
+  getListQueryValue,
+  PortalPagination,
+  PortalSearchForm,
+  type ListSearchParams,
+} from '../_components/PortalListControls'
 import { getBadgeSummariesByProfile } from './badgeData'
 import { MembersDirectory, type DirectoryProfile } from './MembersDirectory'
 
 export const dynamic = 'force-dynamic'
+const MEMBERS_PER_PAGE = 60
 
-export default async function MembersPage() {
-  const user = await getCurrentUser()
+type Args = {
+  searchParams?: Promise<ListSearchParams>
+}
+
+export default async function MembersPage({ searchParams: searchParamsPromise }: Args) {
+  const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
 
   if (!user) redirect('/join')
 
-  const profiles = await getMemberProfiles(user)
+  const query = getListQueryValue(searchParams?.q)
+  const page = getListPageValue(searchParams?.page)
+  const profiles = await getMemberProfiles(user, { page, query })
 
   return (
     <main className="container pb-24 pt-12">
@@ -35,7 +50,30 @@ export default async function MembersPage() {
         </Link>
       </section>
 
-      <MembersDirectory profiles={profiles} />
+      <PortalSearchForm
+        action="/members"
+        label="Search members"
+        placeholder="Search by name, handle, bio, role, or skill"
+        query={query}
+      />
+
+      <div className="mt-8">
+        <PageRange
+          collectionLabels={{ plural: 'Members', singular: 'Member' }}
+          currentPage={profiles.page}
+          limit={MEMBERS_PER_PAGE}
+          totalDocs={profiles.totalDocs}
+        />
+      </div>
+
+      <MembersDirectory profiles={profiles.docs} />
+
+      <PortalPagination
+        basePath="/members"
+        page={profiles.page}
+        query={query}
+        totalPages={profiles.totalPages}
+      />
     </main>
   )
 }
@@ -46,28 +84,75 @@ export const metadata: Metadata = {
 
 const getMemberProfiles = async (
   user: Awaited<ReturnType<typeof getCurrentUser>>,
-): Promise<DirectoryProfile[]> => {
+  {
+    page,
+    query,
+  }: {
+    page: number
+    query: string
+  },
+): Promise<{
+  docs: DirectoryProfile[]
+  page?: number
+  totalDocs: number
+  totalPages: number
+}> => {
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'profiles',
-    depth: 2,
-    limit: 60,
-    overrideAccess: true,
-    sort: 'displayName',
-    where: {
-      and: [
+  const where: Where = {
+    and: [
+      {
+        status: {
+          equals: 'active',
+        },
+      },
+      {
+        visibility: {
+          not_equals: 'private',
+        },
+      },
+    ],
+  }
+
+  if (query) {
+    where.and?.push({
+      or: [
         {
-          status: {
-            equals: 'active',
+          displayName: {
+            like: query,
           },
         },
         {
-          visibility: {
-            not_equals: 'private',
+          handle: {
+            like: query,
+          },
+        },
+        {
+          bio: {
+            like: query,
+          },
+        },
+        {
+          'profileRoles.title': {
+            like: query,
+          },
+        },
+        {
+          'profileSkills.title': {
+            like: query,
           },
         },
       ],
-    },
+    })
+  }
+
+  const result = await payload.find({
+    collection: 'profiles',
+    depth: 2,
+    limit: MEMBERS_PER_PAGE,
+    overrideAccess: true,
+    page,
+    sort: 'displayName',
+    where,
   })
 
   const profileIDs = result.docs.map((profile) => profile.id)
@@ -77,28 +162,33 @@ const getMemberProfiles = async (
     user,
   })
 
-  return result.docs.map((profile) => {
-    const user = typeof profile.user === 'object' ? profile.user : null
-    const authRoles = Array.isArray(user?.roles) ? user.roles : []
+  return {
+    docs: result.docs.map((profile) => {
+      const user = typeof profile.user === 'object' ? profile.user : null
+      const authRoles = Array.isArray(user?.roles) ? user.roles : []
 
-    return {
-      authRoles,
-      avatarURL:
-        typeof profile.avatar === 'object' && profile.avatar ? profile.avatar.url || null : null,
-      badges: badgesByProfile.get(String(profile.id)) || [],
-      bio: profile.bio,
-      displayName: profile.displayName,
-      handle: profile.handle,
-      id: profile.id,
-      links:
-        profile.links?.map((link) => ({
-          label: link.label,
-          url: link.url,
-        })) || [],
-      profileRoles: toTaxonomy(profile.profileRoles),
-      profileSkills: toTaxonomy(profile.profileSkills),
-    }
-  })
+      return {
+        authRoles,
+        avatarURL:
+          typeof profile.avatar === 'object' && profile.avatar ? profile.avatar.url || null : null,
+        badges: badgesByProfile.get(String(profile.id)) || [],
+        bio: profile.bio,
+        displayName: profile.displayName,
+        handle: profile.handle,
+        id: profile.id,
+        links:
+          profile.links?.map((link) => ({
+            label: link.label,
+            url: link.url,
+          })) || [],
+        profileRoles: toTaxonomy(profile.profileRoles),
+        profileSkills: toTaxonomy(profile.profileSkills),
+      }
+    }),
+    page: result.page,
+    totalDocs: result.totalDocs,
+    totalPages: result.totalPages,
+  }
 }
 
 const toTaxonomy = (items?: unknown[] | null) => {

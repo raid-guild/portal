@@ -3,19 +3,34 @@ import Link from 'next/link'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload } from 'payload'
+import { getPayload, type Where } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
+import { PageRange } from '@/components/PageRange'
 import type { Media, Profile, ProfileSkill, User } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import {
+  getListPageValue,
+  getListQueryValue,
+  PortalPagination,
+  PortalSearchForm,
+  type ListSearchParams,
+} from '../_components/PortalListControls'
 
 export const dynamic = 'force-dynamic'
+const PROJECTS_PER_PAGE = 24
 
-export default async function ProjectsPage() {
-  const user = await getCurrentUser()
+type Args = {
+  searchParams?: Promise<ListSearchParams>
+}
+
+export default async function ProjectsPage({ searchParams: searchParamsPromise }: Args) {
+  const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
   const canCreateProject = canContributeContent(user)
-  const projects = await getProjects(user)
+  const query = getListQueryValue(searchParams?.q)
+  const page = getListPageValue(searchParams?.page)
+  const projects = await getProjects(user, { page, query })
 
   return (
     <main className="container pb-24 pt-12">
@@ -35,9 +50,25 @@ export default async function ProjectsPage() {
         ) : null}
       </section>
 
+      <PortalSearchForm
+        action="/projects"
+        label="Search projects"
+        placeholder="Search by project title, summary, status, or skill"
+        query={query}
+      />
+
+      <div className="mt-8">
+        <PageRange
+          collectionLabels={{ plural: 'Projects', singular: 'Project' }}
+          currentPage={projects.page}
+          limit={PROJECTS_PER_PAGE}
+          totalDocs={projects.totalDocs}
+        />
+      </div>
+
       <section className="mt-10 grid gap-4 md:grid-cols-2">
-        {projects.length ? (
-          projects.map((project) => (
+        {projects.docs.length ? (
+          projects.docs.map((project) => (
             <article className="overflow-hidden portal-card p-0" key={project.id}>
               <ProjectCoverImage coverImage={project.coverImage} title={project.title} />
               <div className="p-6">
@@ -94,10 +125,19 @@ export default async function ProjectsPage() {
           ))
         ) : (
           <p className="text-sm text-muted-foreground">
-            No public projects yet. Add projects in Payload Admin to populate this showcase.
+            {query
+              ? 'No projects match that search.'
+              : 'No public projects yet. Add projects in Payload Admin to populate this showcase.'}
           </p>
         )}
       </section>
+
+      <PortalPagination
+        basePath="/projects"
+        page={projects.page}
+        query={query}
+        totalPages={projects.totalPages}
+      />
     </main>
   )
 }
@@ -161,22 +201,65 @@ const ContributorList: React.FC<{ contributors?: (number | Profile)[] | null }> 
   )
 }
 
-const getProjects = async (user: User | null) => {
+const getProjects = async (
+  user: User | null,
+  {
+    page,
+    query,
+  }: {
+    page: number
+    query: string
+  },
+) => {
   const payload = await getPayload({ config: configPromise })
+  const where: Where = {
+    and: [
+      {
+        _status: {
+          equals: 'published',
+        },
+      },
+    ],
+  }
+
+  if (query) {
+    where.and?.push({
+      or: [
+        {
+          title: {
+            like: query,
+          },
+        },
+        {
+          summary: {
+            like: query,
+          },
+        },
+        {
+          projectStatus: {
+            like: query,
+          },
+        },
+        {
+          'profileSkills.title': {
+            like: query,
+          },
+        },
+      ],
+    })
+  }
+
   const result = await payload.find({
     collection: 'projects',
     depth: 2,
     draft: false,
-    limit: 60,
+    limit: PROJECTS_PER_PAGE,
     overrideAccess: false,
+    page,
     sort: '-publishedAt',
     user: user || undefined,
-    where: {
-      _status: {
-        equals: 'published',
-      },
-    },
+    where,
   })
 
-  return result.docs
+  return result
 }

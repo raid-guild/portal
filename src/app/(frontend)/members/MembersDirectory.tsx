@@ -1,10 +1,8 @@
 'use client'
 
 import React, { useMemo, useState } from 'react'
-import { Search } from 'lucide-react'
 import Link from 'next/link'
 
-import { Input } from '@/components/ui/input'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { BadgeSummary } from './badgeData'
 
@@ -38,7 +36,6 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
   const [profileRole, setProfileRole] = useState('all')
   const [profileSkill, setProfileSkill] = useState('all')
   const [badge, setBadge] = useState('all')
-  const [query, setQuery] = useState('')
 
   const profileRoleOptions = useMemo(() => {
     return uniqueByTitle(profiles.flatMap((profile) => profile.profileRoles))
@@ -53,8 +50,6 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
   }, [profiles])
 
   const filteredProfiles = useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase()
-
     return profiles.filter((profile) => {
       const matchesAuthRole = authRole === 'all' || profile.authRoles.includes(authRole)
       const matchesProfileRole =
@@ -66,25 +61,9 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
       const matchesBadge =
         badge === 'all' || profile.badges.some((profileBadge) => String(profileBadge.id) === badge)
 
-      const searchable = [
-        profile.displayName,
-        profile.handle,
-        profile.bio,
-        ...profile.authRoles,
-        ...profile.badges.map((profileBadge) => profileBadge.title),
-        ...profile.profileRoles.map((role) => role.title),
-        ...profile.profileSkills.map((skill) => skill.title),
-      ]
-        .join(' ')
-        .toLowerCase()
-
-      const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery)
-
-      return (
-        matchesAuthRole && matchesProfileRole && matchesProfileSkill && matchesBadge && matchesQuery
-      )
+      return matchesAuthRole && matchesProfileRole && matchesProfileSkill && matchesBadge
     })
-  }, [authRole, badge, profileRole, profileSkill, profiles, query])
+  }, [authRole, badge, profileRole, profileSkill, profiles])
 
   if (!profiles.length) {
     return (
@@ -97,17 +76,7 @@ export const MembersDirectory: React.FC<MembersDirectoryProps> = ({ profiles }) 
 
   return (
     <>
-      <section className="mt-10 grid gap-3 portal-card lg:grid-cols-[1fr_12rem_12rem_12rem_12rem]">
-        <label className="relative block">
-          <span className="sr-only">Search members</span>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search members"
-            value={query}
-          />
-        </label>
+      <section className="mt-6 grid gap-3 portal-card md:grid-cols-2 lg:grid-cols-4">
         <DirectorySelect
           label="Auth role"
           onChange={setAuthRole}
