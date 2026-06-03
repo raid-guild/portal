@@ -36,6 +36,7 @@ Status labels:
 
 | Area | Spec | Status | Notes |
 | --- | --- | --- | --- |
+| Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | Planned / future | Admin-featured focus/announcement surface plus thread detail landing pages. |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
 | Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | Planned / future | Depends on reviewed memory/content pipeline and module boundaries. |
