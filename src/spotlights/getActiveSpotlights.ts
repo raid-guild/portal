@@ -18,7 +18,7 @@ export const getActiveSpotlights = async ({
     collection: 'spotlights',
     depth: 1,
     draft: false,
-    limit,
+    limit: Math.max(limit, 10),
     overrideAccess: false,
     pagination: false,
     sort: '-priority',
@@ -62,5 +62,11 @@ export const getActiveSpotlights = async ({
     },
   })
 
-  return result.docs
+  const featured = result.docs.find((spotlight) => spotlight.kind === 'featured')
+  const announcementLimit = Math.max(limit - (featured ? 1 : 0), 0)
+  const announcements = result.docs
+    .filter((spotlight) => spotlight.kind === 'announcement' && spotlight.id !== featured?.id)
+    .slice(0, announcementLimit)
+
+  return featured ? [featured, ...announcements] : announcements.slice(0, limit)
 }

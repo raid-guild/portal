@@ -708,7 +708,7 @@ const SpotlightSection: React.FC<{ className?: string; spotlights: Spotlight[] }
 
   return (
     <section className={className ? className : 'container py-8'}>
-      <div className="grid gap-4 lg:grid-cols-[1fr_22rem]">
+      <div className={announcements.length ? 'grid gap-4 lg:grid-cols-[1fr_22rem]' : 'grid gap-4'}>
         <SpotlightCard spotlight={featured} />
         {announcements.length ? (
           <div className="grid gap-4">

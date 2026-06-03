@@ -216,7 +216,8 @@ visibility is visible to current user
 
 Implemented first-slice layout:
 
-- up to three active spotlight records, sorted by highest `priority`
+- one active `featured` spotlight, selected by highest `priority`
+- up to two active `announcement` spotlights beside or below it
 - title, summary, target type, CTA, optional image
 - expired announcements do not render
 
@@ -272,7 +273,9 @@ Recommended:
 
 - Public users can read published public spotlights and public thread pages.
 - Authenticated users can read authenticated spotlights and threads.
-- Members can read member-only spotlights and threads.
+- Members can read member-only spotlights; member-only thread visibility is TBD
+  because the current thread model supports `public`, `authenticated`, and
+  `admin`.
 - Admins and editors can create, publish, archive, and reorder spotlights.
 - Agents can draft spotlights only if explicitly asked.
 - Contributors should not publish spotlights by default.

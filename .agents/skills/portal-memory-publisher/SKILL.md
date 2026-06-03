@@ -96,7 +96,7 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
   -d '{
     "title": "Workshop planning session",
     "summary": "Plan the next workshop format and owner handoff.",
-    "startsAt": "2026-05-29T18:00:00.000Z",
+    "startsAt": "2026-06-10T18:00:00.000Z",
     "durationMinutes": 60,
     "sessionType": "workshop",
     "visibility": "public",

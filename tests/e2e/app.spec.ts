@@ -1440,6 +1440,43 @@ async function verifySessionTypeCreation(page: Page) {
   expect(linkedDiscordBody.event.discordSyncStatus).toBe('synced')
   expect(linkedDiscordBody.event.joinURL).toBe(linkedDiscordURL)
 
+  const explicitDiscordURL = 'https://discord.com/events/684227450204323876/1392189117151973487'
+  const explicitDiscordResponse = await page.request.post('/api/events/create', {
+    data: {
+      discordEventURL: explicitDiscordURL,
+      durationMinutes: 30,
+      joinURL: 'https://example.com/backup-room',
+      sessionType: 'demo',
+      startsAt: new Date(Date.now() + 22 * 60 * 60 * 1000).toISOString(),
+      summary: 'Regression coverage for explicit Discord event URLs.',
+      syncDiscord: true,
+      title: `Playwright explicit Discord session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+
+  expect(explicitDiscordResponse.ok(), 'explicit Discord event URL should succeed').toBeTruthy()
+  const explicitDiscordBody = await explicitDiscordResponse.json()
+  expect(explicitDiscordBody.event.discordEventURL).toBe(explicitDiscordURL)
+  expect(explicitDiscordBody.event.discordScheduledEventID).toBe('1392189117151973487')
+  expect(explicitDiscordBody.event.discordSyncStatus).toBe('synced')
+  expect(explicitDiscordBody.event.joinURL).toBe('https://example.com/backup-room')
+
+  const invalidDiscordResponse = await page.request.post('/api/events/create', {
+    data: {
+      discordEventURL: 'ftp://discord.com/events/684227450204323876/1392189117151973487',
+      durationMinutes: 30,
+      sessionType: 'demo',
+      startsAt: new Date(Date.now() + 23 * 60 * 60 * 1000).toISOString(),
+      summary: 'Regression coverage for invalid explicit Discord event URLs.',
+      syncDiscord: true,
+      title: `Playwright invalid Discord session ${suffix}`,
+      visibility: 'public',
+    },
+  })
+
+  expect(invalidDiscordResponse.status()).toBe(400)
+
   const externalJoinURL = 'https://example.com/session-room'
   const externalJoinResponse = await page.request.post('/api/events/create', {
     data: {

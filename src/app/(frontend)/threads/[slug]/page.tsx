@@ -35,24 +35,17 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
 
   if (!thread) notFound()
 
-  const [
-    activeSpotlights,
-    activityItems,
-    contributionRequests,
-    events,
-    posts,
-  ] = await Promise.all([
-    getActiveSpotlightsForThread(thread.id, user),
-    getActivityItemsForThread(thread.id, user),
-    getContributionRequestsForThread(thread.id, user),
-    getEventsForThread(thread.id, user),
-    getPostsForThread(thread.id, user),
-  ])
+  const [activeSpotlights, activityItems, contributionRequests, pastEvents, posts, upcomingEvents] =
+    await Promise.all([
+      getActiveSpotlightsForThread(thread.id, user),
+      getActivityItemsForThread(thread.id, user),
+      getContributionRequestsForThread(thread.id, user),
+      getPastEventsForThread(thread.id, user),
+      getPostsForThread(thread.id, user),
+      getUpcomingEventsForThread(thread.id, user),
+    ])
   const projects = relationDocs<Project>(thread.relatedProjects)
   const participants = relationDocs<Profile>(thread.participants)
-  const now = Date.now()
-  const upcomingEvents = events.filter((event) => new Date(event.startsAt).getTime() >= now)
-  const pastEvents = events.filter((event) => new Date(event.startsAt).getTime() < now)
 
   return (
     <main className="container pb-24 pt-12">
@@ -165,7 +158,9 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
                 <article className="portal-card" key={item.id}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <p className="portal-kicker">{item.activityType}</p>
-                    <p className="text-xs text-muted-foreground">{formatDateTime(item.happenedAt)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatDateTime(item.happenedAt)}
+                    </p>
                   </div>
                   <h3 className="mt-2 font-bold text-foreground">{item.title}</h3>
                   {item.body ? (
@@ -365,16 +360,17 @@ const getActiveSpotlightsForThread = async (
   return result.docs
 }
 
-const getEventsForThread = async (
+const getUpcomingEventsForThread = async (
   threadID: number,
   user: Awaited<ReturnType<typeof getCurrentUser>>,
 ): Promise<Event[]> => {
   const payload = await getPayload({ config: configPromise })
+  const now = new Date().toISOString()
   const result = await payload.find({
     collection: 'events',
     depth: 1,
     draft: false,
-    limit: 20,
+    limit: 12,
     overrideAccess: false,
     pagination: false,
     sort: 'startsAt',
@@ -389,6 +385,50 @@ const getEventsForThread = async (
         {
           relatedThreads: {
             in: [threadID],
+          },
+        },
+        {
+          startsAt: {
+            greater_than_equal: now,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getPastEventsForThread = async (
+  threadID: number,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+): Promise<Event[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const now = new Date().toISOString()
+  const result = await payload.find({
+    collection: 'events',
+    depth: 1,
+    draft: false,
+    limit: 12,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-startsAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          relatedThreads: {
+            in: [threadID],
+          },
+        },
+        {
+          startsAt: {
+            less_than: now,
           },
         },
       ],
@@ -510,7 +550,11 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => (
     {event.summary ? (
       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{event.summary}</p>
     ) : null}
-    {event.recordingURL || event.summaryArtifactURL || event.resources?.length ? (
+    {event.recordingURL ||
+    event.transcriptArtifactURL ||
+    event.summaryArtifactURL ||
+    event.sourceArtifactURL ||
+    event.resources?.length ? (
       <p className="mt-3 portal-kicker text-primary">Resources attached</p>
     ) : null}
   </Link>
