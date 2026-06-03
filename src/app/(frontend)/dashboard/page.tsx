@@ -9,6 +9,7 @@ import type { User } from '@/payload-types'
 import { PortalDashboard } from '../_components/PortalShell'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
     recentPosts,
     upcomingEvents,
     recentProjects,
+    spotlights,
   ] =
     await Promise.all([
       getLatestDailyBrief(user),
@@ -34,6 +36,7 @@ export default async function DashboardPage() {
       getRecentPosts(),
       getUpcomingEvents(user),
       getRecentlyActiveProjects(user),
+      getActiveSpotlights({ user }),
     ])
 
   return (
@@ -45,6 +48,7 @@ export default async function DashboardPage() {
       profile={profile}
       recentProjects={recentProjects}
       recentPosts={recentPosts}
+      spotlights={spotlights}
       upcomingEvents={upcomingEvents}
       user={user}
     />

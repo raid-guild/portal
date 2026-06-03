@@ -80,6 +80,7 @@ export interface Config {
     badges: Badge;
     profileBadges: ProfileBadge;
     modules: Module;
+    spotlights: Spotlight;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
     feedbackSubmissions: FeedbackSubmission;
@@ -117,6 +118,7 @@ export interface Config {
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
+    spotlights: SpotlightsSelect<false> | SpotlightsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     feedbackSubmissions: FeedbackSubmissionsSelect<false> | FeedbackSubmissionsSelect<true>;
@@ -1480,6 +1482,38 @@ export interface Module {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "spotlights".
+ */
+export interface Spotlight {
+  id: number;
+  title: string;
+  summary?: string | null;
+  kind: 'featured' | 'announcement';
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  startsAt?: string | null;
+  /**
+   * Announcements should usually expire after the relevant event or deadline.
+   */
+  expiresAt?: string | null;
+  priority?: number | null;
+  targetType: 'thread' | 'event' | 'project' | 'post' | 'profile' | 'external' | 'artifact';
+  targetThread?: (number | null) | Thread;
+  targetEvent?: (number | null) | Event;
+  targetProject?: (number | null) | Project;
+  targetPost?: (number | null) | Post;
+  targetProfile?: (number | null) | Profile;
+  externalURL?: string | null;
+  artifactURL?: string | null;
+  ctaLabel?: string | null;
+  image?: (number | null) | Media;
+  createdBy?: (number | null) | User;
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "notifications".
  */
 export interface Notification {
@@ -1900,6 +1934,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'modules';
         value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'spotlights';
+        value: number | Spotlight;
       } | null)
     | ({
         relationTo: 'notifications';
@@ -2622,6 +2660,34 @@ export interface ModulesSelect<T extends boolean = true> {
   slugLock?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "spotlights_select".
+ */
+export interface SpotlightsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  kind?: T;
+  visibility?: T;
+  startsAt?: T;
+  expiresAt?: T;
+  priority?: T;
+  targetType?: T;
+  targetThread?: T;
+  targetEvent?: T;
+  targetProject?: T;
+  targetPost?: T;
+  targetProfile?: T;
+  externalURL?: T;
+  artifactURL?: T;
+  ctaLabel?: T;
+  image?: T;
+  createdBy?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

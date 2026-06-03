@@ -32,6 +32,7 @@ import { ProfileSkills } from './collections/ProfileSkills'
 import { Projects } from './collections/Projects'
 import { Posts } from './collections/Posts'
 import { SponsorInquiries } from './collections/SponsorInquiries'
+import { Spotlights } from './collections/Spotlights'
 import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
 import { Footer } from './Footer/config'
@@ -125,6 +126,7 @@ export default buildConfig({
     Badges,
     ProfileBadges,
     Modules,
+    Spotlights,
     Notifications,
     NotificationPreferences,
     FeedbackSubmissions,

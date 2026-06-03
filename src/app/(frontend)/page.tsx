@@ -9,6 +9,7 @@ import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
+import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 
 export const dynamic = 'force-dynamic'
 
@@ -16,7 +17,7 @@ export default async function HomePage() {
   const user = await getCurrentUser()
 
   if (user) {
-    const [dailyBrief, profile, pointSummary, recentPosts, upcomingEvents, recentProjects] =
+    const [dailyBrief, profile, pointSummary, recentPosts, upcomingEvents, recentProjects, spotlights] =
       await Promise.all([
         getLatestDailyBrief(user),
         getProfileForUser(user.id),
@@ -24,6 +25,7 @@ export default async function HomePage() {
         getRecentPosts(),
         getUpcomingEvents(user),
         getRecentlyActiveProjects(user),
+        getActiveSpotlights({ user }),
       ])
 
     return (
@@ -34,18 +36,20 @@ export default async function HomePage() {
         profile={profile}
         recentProjects={recentProjects}
         recentPosts={recentPosts}
+        spotlights={spotlights}
         upcomingEvents={upcomingEvents}
         user={user}
       />
     )
   }
 
-  const [copy, posts, projects, upcomingEvents, weeklyBrief] = await Promise.all([
+  const [copy, posts, projects, upcomingEvents, weeklyBrief, spotlights] = await Promise.all([
     getBriefPublicPageCopy(),
     getRecentPosts(),
     getProjects(),
     getPublicUpcomingEvents(),
     getLatestWeeklyBrief(),
+    getActiveSpotlights(),
   ])
 
   return (
@@ -53,6 +57,7 @@ export default async function HomePage() {
       copy={copy}
       posts={posts}
       projects={projects}
+      spotlights={spotlights}
       upcomingEvents={upcomingEvents}
       weeklyBrief={weeklyBrief}
     />

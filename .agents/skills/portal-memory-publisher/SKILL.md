@@ -37,6 +37,7 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 - `projects`: live collaboration surfaces; what is being built.
 - `dailyBriefs`: assembled current snapshot; what matters now.
 - `profiles`: people/contributors; who is involved.
+- `spotlights`: admin/editorial placement for what should be front and center.
 
 ## Workflow
 
@@ -95,7 +96,7 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
   -d '{
     "title": "Workshop planning session",
     "summary": "Plan the next workshop format and owner handoff.",
-    "startsAt": "2026-05-29T18:00:00.000Z",
+    "startsAt": "2026-06-10T18:00:00.000Z",
     "durationMinutes": 60,
     "sessionType": "workshop",
     "visibility": "public",
@@ -108,6 +109,13 @@ Payload differences for `/api/events/create`:
 - Send `durationMinutes` instead of `endsAt`; the endpoint calculates `endsAt`.
 - Send `hosts` instead of `hostProfiles`.
 - Send `guests` instead of `speakerProfiles`.
+- Send an existing Discord event URL in `joinURL` or `discordEventURL` when the
+  scheduled event already exists in Discord. Portal recognizes
+  `https://discord.com/events/<guildID>/<eventID>` URLs, stores the Discord
+  URL/ID, and skips creating a new scheduled event.
+- Non-Discord `joinURL` values stay normal join links. If `syncDiscord: true`
+  and no existing Discord event URL is supplied, Portal tries to create a new
+  Discord scheduled event while preserving the join link.
 - Do not send `_status` or `publishedAt`; the endpoint publishes the event.
 - Include `"syncDiscord": true` when the user asked for a Discord scheduled event.
 
@@ -115,6 +123,10 @@ Expected behavior:
 
 - `visibility` may be `public`, `authenticated`, `member`, or `admin`. Use `member` only when confirmed members should see the session.
 
+- If an existing Discord event URL is supplied in `joinURL` or
+  `discordEventURL`, Portal links that event, stores `discordScheduledEventID`,
+  sets `discordSyncStatus: synced`, and does not call Discord to create a new
+  event.
 - If Discord sync is configured and succeeds, Portal stores `discordScheduledEventID`, `discordEventURL`, `joinURL`, and `discordSyncStatus: synced`.
 - If Discord sync fails, Portal still creates the event and stores `discordSyncStatus: failed` with `discordSyncError`.
 - If `syncDiscord` is false or missing, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
@@ -221,6 +233,31 @@ comments from the Portal UI. Agents should not turn source material,
 transcripts, or meeting summaries into comments unless the user explicitly asks
 for a human-reviewable comment draft. Use activity items, resources, artifacts,
 briefs, or posts for memory publishing.
+
+## Spotlight Proposals
+
+Use `spotlights` only for admin/editorial emphasis: a featured focus,
+time-boxed announcement, important thread, upcoming session, active project, or
+external artifact that should be prominent on the home/dashboard surfaces.
+
+Agents should default to draft/review proposals. Publish a spotlight only when
+the user explicitly asks, the target environment is clear, and the source facts
+are concrete.
+
+Spotlight fields to consider:
+
+- `title`
+- `summary`
+- `kind`: `featured` or `announcement`
+- `visibility`: `public`, `authenticated`, `member`, or `admin`
+- `startsAt` / `expiresAt`
+- `priority`
+- `targetType` plus exactly one matching target field
+- `ctaLabel`
+
+Featured spotlights may have no expiry. Announcements should usually have
+`expiresAt`, especially when they point to an event or deadline. Do not invent
+urgency, deadlines, or participation claims to justify a spotlight.
 
 ## Post Draft Creation
 

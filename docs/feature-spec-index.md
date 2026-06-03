@@ -31,6 +31,7 @@ Status labels:
 | Onboarding and inquiries | [Onboarding and inquiry funnel](./onboarding-funnel-feature-spec.md) | First slice implemented | `/join`, `/inquire/[type]`, and `inquiries` exist; copy needs BD polish. |
 | CMS page copy | [CMS-managed page copy](./cms-managed-page-copy-feature-spec.md) | First slice implemented | `PageCopy` supports fixed product-flow pages. |
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
+| Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
 
 ## Planned / Future Modules
 
