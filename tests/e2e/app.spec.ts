@@ -1860,7 +1860,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
 
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
-  await expect(page.getByText('Email not verified')).toBeVisible()
+  await expect(page.getByText('Unverified', { exact: true })).toBeVisible()
 
   const emailVerificationToken = signAccountEmailVerificationToken({
     email,
@@ -1869,7 +1869,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
     userID: String(createdUserID),
   })
   await page.goto(`/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`)
-  await expect(page.getByText('Email verified', { exact: true })).toBeVisible()
+  await expect(page.getByText('Email verified.', { exact: true })).toBeVisible()
 
   const verifiedUserResponse = await page.request.get(`/api/users/${createdUserID}`)
   expect(verifiedUserResponse.ok()).toBeTruthy()
@@ -2090,7 +2090,7 @@ async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   await claimPage.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(claimPage.getByText('Profile connected')).toBeVisible()
   await expect(claimPage.getByText(displayName)).toBeVisible()
-  await expect(claimPage.getByText('Email verified', { exact: true })).toBeVisible()
+  await expect(claimPage.getByText('Verified', { exact: true })).toBeVisible()
 
   const claimedUserResponse = await adminPage.request.get(`/api/users/${createdUserID}`)
   expect(claimedUserResponse.ok()).toBeTruthy()
