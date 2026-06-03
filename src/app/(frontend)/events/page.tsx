@@ -3,7 +3,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload, type Payload, type Where } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
 import { PageRange } from '@/components/PageRange'
@@ -367,6 +367,12 @@ const getEvents = async (
   },
 ) => {
   const payload = await getPayload({ config: configPromise })
+  const [matchingProjectIDs, matchingThreadIDs] = query
+    ? await Promise.all([
+        getMatchingRelatedIDs(payload, 'projects', query),
+        getMatchingRelatedIDs(payload, 'threads', query),
+      ])
+    : [[], []]
   const where: Where = {
     and: [
       {
@@ -378,44 +384,47 @@ const getEvents = async (
   }
 
   if (query) {
+    const searchWhere: NonNullable<Where['or']> = [
+      {
+        title: {
+          like: query,
+        },
+      },
+      {
+        summary: {
+          like: query,
+        },
+      },
+      {
+        locationLabel: {
+          like: query,
+        },
+      },
+      {
+        seriesTitle: {
+          like: query,
+        },
+      },
+    ]
+
+    if (matchingProjectIDs.length) {
+      searchWhere.push({
+        relatedProjects: {
+          in: matchingProjectIDs,
+        },
+      })
+    }
+
+    if (matchingThreadIDs.length) {
+      searchWhere.push({
+        relatedThreads: {
+          in: matchingThreadIDs,
+        },
+      })
+    }
+
     where.and?.push({
-      or: [
-        {
-          title: {
-            like: query,
-          },
-        },
-        {
-          summary: {
-            like: query,
-          },
-        },
-        {
-          locationLabel: {
-            like: query,
-          },
-        },
-        {
-          sessionType: {
-            like: query,
-          },
-        },
-        {
-          seriesTitle: {
-            like: query,
-          },
-        },
-        {
-          'relatedProjects.title': {
-            like: query,
-          },
-        },
-        {
-          'relatedThreads.title': {
-            like: query,
-          },
-        },
-      ],
+      or: searchWhere,
     })
   }
 
@@ -432,4 +441,26 @@ const getEvents = async (
   })
 
   return result
+}
+
+const getMatchingRelatedIDs = async (
+  payload: Payload,
+  collection: 'projects' | 'threads',
+  query: string,
+): Promise<(number | string)[]> => {
+  const result = await payload.find({
+    collection,
+    depth: 0,
+    draft: false,
+    limit: 100,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      title: {
+        like: query,
+      },
+    },
+  })
+
+  return result.docs.map((doc) => doc.id)
 }

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload, type Payload, type Where } from 'payload'
 
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { PageRange } from '@/components/PageRange'
@@ -98,6 +98,12 @@ const getMemberProfiles = async (
   totalPages: number
 }> => {
   const payload = await getPayload({ config: configPromise })
+  const [matchingRoleIDs, matchingSkillIDs] = query
+    ? await Promise.all([
+        getMatchingProfileTaxonomyIDs(payload, 'profileRoles', query),
+        getMatchingProfileTaxonomyIDs(payload, 'profileSkills', query),
+      ])
+    : [[], []]
   const where: Where = {
     and: [
       {
@@ -114,34 +120,42 @@ const getMemberProfiles = async (
   }
 
   if (query) {
+    const searchWhere: NonNullable<Where['or']> = [
+      {
+        displayName: {
+          like: query,
+        },
+      },
+      {
+        handle: {
+          like: query,
+        },
+      },
+      {
+        bio: {
+          like: query,
+        },
+      },
+    ]
+
+    if (matchingRoleIDs.length) {
+      searchWhere.push({
+        profileRoles: {
+          in: matchingRoleIDs,
+        },
+      })
+    }
+
+    if (matchingSkillIDs.length) {
+      searchWhere.push({
+        profileSkills: {
+          in: matchingSkillIDs,
+        },
+      })
+    }
+
     where.and?.push({
-      or: [
-        {
-          displayName: {
-            like: query,
-          },
-        },
-        {
-          handle: {
-            like: query,
-          },
-        },
-        {
-          bio: {
-            like: query,
-          },
-        },
-        {
-          'profileRoles.title': {
-            like: query,
-          },
-        },
-        {
-          'profileSkills.title': {
-            like: query,
-          },
-        },
-      ],
+      or: searchWhere,
     })
   }
 
@@ -189,6 +203,27 @@ const getMemberProfiles = async (
     totalDocs: result.totalDocs,
     totalPages: result.totalPages,
   }
+}
+
+const getMatchingProfileTaxonomyIDs = async (
+  payload: Payload,
+  collection: 'profileRoles' | 'profileSkills',
+  query: string,
+): Promise<(number | string)[]> => {
+  const result = await payload.find({
+    collection,
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      title: {
+        like: query,
+      },
+    },
+  })
+
+  return result.docs.map((doc) => doc.id)
 }
 
 const toTaxonomy = (items?: unknown[] | null) => {

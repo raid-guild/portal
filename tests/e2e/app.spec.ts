@@ -323,6 +323,22 @@ async function verifySeededProjectSpike(page: Page) {
   await expect(page.getByText('Render the Update Brief')).toBeVisible()
 }
 
+async function verifyServerSideListSearch(authenticatedPage: Page, publicPage: Page) {
+  await authenticatedPage.goto('/members?q=Warrior')
+  await expect(authenticatedPage.getByRole('heading', { name: 'Member directory' })).toBeVisible()
+  await expect(authenticatedPage.getByRole('link', { name: /Playwright Admin/ })).toBeVisible()
+
+  await publicPage.goto('/projects?q=Cohort')
+  await expect(publicPage.getByRole('heading', { name: 'Active project spikes' })).toBeVisible()
+  await expect(
+    publicPage.getByRole('heading', { name: 'Cohort Project Spike Portal' }),
+  ).toBeVisible()
+
+  await publicPage.goto('/events?q=Cohort')
+  await expect(publicPage.getByRole('heading', { name: 'Cohort sessions' })).toBeVisible()
+  await expect(publicPage.getByText('Cohort Project Spike Sync')).toBeVisible()
+}
+
 async function verifyContributionRequests(adminPage: Page, browser: Browser, publicPage: Page) {
   const suffix = Date.now()
   const title = `Good first contribution ${suffix}`
@@ -3093,6 +3109,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifySeededPosts(publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
   await verifySeededProjectSpike(publicPage)
+  await verifyServerSideListSearch(page, publicPage)
   await verifyContributionRequests(page, browser, publicPage)
   await verifySeededSessions(publicPage)
   await verifySessionDetailVisibility(page, browser, publicPage)
