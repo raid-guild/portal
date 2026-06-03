@@ -3,7 +3,7 @@ import Link from 'next/link'
 import React from 'react'
 
 import configPromise from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload, type Payload, type Where } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
 import { PageRange } from '@/components/PageRange'
@@ -212,6 +212,7 @@ const getProjects = async (
   },
 ) => {
   const payload = await getPayload({ config: configPromise })
+  const matchingSkillIDs = query ? await getMatchingProfileSkillIDs(payload, query) : []
   const where: Where = {
     and: [
       {
@@ -223,29 +224,29 @@ const getProjects = async (
   }
 
   if (query) {
+    const searchWhere: NonNullable<Where['or']> = [
+      {
+        title: {
+          like: query,
+        },
+      },
+      {
+        summary: {
+          like: query,
+        },
+      },
+    ]
+
+    if (matchingSkillIDs.length) {
+      searchWhere.push({
+        profileSkills: {
+          in: matchingSkillIDs,
+        },
+      })
+    }
+
     where.and?.push({
-      or: [
-        {
-          title: {
-            like: query,
-          },
-        },
-        {
-          summary: {
-            like: query,
-          },
-        },
-        {
-          projectStatus: {
-            like: query,
-          },
-        },
-        {
-          'profileSkills.title': {
-            like: query,
-          },
-        },
-      ],
+      or: searchWhere,
     })
   }
 
@@ -262,4 +263,24 @@ const getProjects = async (
   })
 
   return result
+}
+
+const getMatchingProfileSkillIDs = async (
+  payload: Payload,
+  query: string,
+): Promise<(number | string)[]> => {
+  const result = await payload.find({
+    collection: 'profileSkills',
+    depth: 0,
+    limit: 100,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      title: {
+        like: query,
+      },
+    },
+  })
+
+  return result.docs.map((doc) => doc.id)
 }
