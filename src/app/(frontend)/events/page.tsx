@@ -70,6 +70,8 @@ export default async function EventsPage() {
   const past = events.filter(
     (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() < now,
   )
+  upcoming.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
+  past.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
   const canManageSessions = canContributeContent(user)
 
   return (
