@@ -4,6 +4,15 @@ import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { revalidatePath } from 'next/cache'
 import { shouldSkipRevalidation } from '@/utilities/revalidation'
 
+type CommentAccessCache = {
+  visibleCommentEventIDs?: (number | string)[]
+  visibleCommentProjectIDs?: (number | string)[]
+}
+
+type CachedPayloadRequest = PayloadRequest & {
+  commentAccessCache?: CommentAccessCache
+}
+
 export const Comments: CollectionConfig = {
   slug: 'comments',
   admin: {
@@ -19,9 +28,10 @@ export const Comments: CollectionConfig = {
         return true
       }
 
-      // Event comments should inherit event visibility because events can be public,
-      // authenticated, member-only, or admin-only.
+      // Event comments inherit event visibility. Project comments are authenticated-only
+      // and then inherit project visibility for member/admin scoped projects.
       const visibleEventIDs = await getVisibleEventIDs(req)
+      const visibleProjectIDs = await getVisibleProjectIDs(req)
 
       const publicReadWhere: Where = {
         and: [
@@ -35,11 +45,6 @@ export const Comments: CollectionConfig = {
               {
                 'parent.relationTo': {
                   equals: 'posts',
-                },
-              },
-              {
-                'parent.relationTo': {
-                  equals: 'projects',
                 },
               },
               {
@@ -61,6 +66,20 @@ export const Comments: CollectionConfig = {
                   },
                 ],
               },
+              {
+                and: [
+                  {
+                    'parent.relationTo': {
+                      equals: 'projects',
+                    },
+                  },
+                  {
+                    'parent.value': {
+                      in: visibleProjectIDs,
+                    },
+                  },
+                ],
+              },
             ],
           },
         ],
@@ -68,7 +87,7 @@ export const Comments: CollectionConfig = {
 
       return publicReadWhere
     },
-    create: authenticated,
+    create: canCreateComment,
     update: ({ req: { user } }) => canEditContent(user),
     delete: ({ req: { user } }) => canEditContent(user),
   },
@@ -217,6 +236,13 @@ const getParentPath = (
 }
 
 const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
+  const cachedReq = req as CachedPayloadRequest
+  cachedReq.commentAccessCache ||= {}
+
+  if (cachedReq.commentAccessCache.visibleCommentEventIDs) {
+    return cachedReq.commentAccessCache.visibleCommentEventIDs
+  }
+
   const ids: (number | string)[] = []
   let page = 1
   let hasNextPage = true
@@ -237,5 +263,73 @@ const getVisibleEventIDs = async (req: PayloadRequest): Promise<(number | string
     page += 1
   }
 
+  cachedReq.commentAccessCache.visibleCommentEventIDs = ids
+
   return ids
+}
+
+const getVisibleProjectIDs = async (req: PayloadRequest): Promise<(number | string)[]> => {
+  if (!req.user) return []
+
+  const cachedReq = req as CachedPayloadRequest
+  cachedReq.commentAccessCache ||= {}
+
+  if (cachedReq.commentAccessCache.visibleCommentProjectIDs) {
+    return cachedReq.commentAccessCache.visibleCommentProjectIDs
+  }
+
+  const ids: (number | string)[] = []
+  let page = 1
+  let hasNextPage = true
+
+  while (hasNextPage) {
+    const result = await req.payload.find({
+      collection: 'projects',
+      depth: 0,
+      limit: 100,
+      overrideAccess: false,
+      page,
+      pagination: true,
+      user: req.user,
+    })
+
+    ids.push(...result.docs.map((project) => project.id))
+    hasNextPage = Boolean(result.hasNextPage)
+    page += 1
+  }
+
+  cachedReq.commentAccessCache.visibleCommentProjectIDs = ids
+
+  return ids
+}
+
+async function canCreateComment({ data, req }: { data?: unknown; req: PayloadRequest }) {
+  if (!authenticated({ req })) return false
+
+  const parent =
+    data && typeof data === 'object' && 'parent' in data
+      ? (data.parent as { relationTo?: unknown; value?: unknown } | null)
+      : null
+
+  if (!parent || parent.relationTo !== 'projects') return true
+
+  const id =
+    typeof parent.value === 'object' && parent.value && 'id' in parent.value
+      ? parent.value.id
+      : parent.value
+
+  if (typeof id !== 'number' && typeof id !== 'string') return false
+
+  try {
+    await req.payload.findByID({
+      collection: 'projects',
+      id,
+      overrideAccess: false,
+      user: req.user,
+    })
+
+    return true
+  } catch {
+    return false
+  }
 }
