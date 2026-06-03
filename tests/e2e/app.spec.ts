@@ -1189,6 +1189,11 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
           resourceType: 'notes',
           url: 'https://example.com/session-notes',
         },
+        {
+          label: `Session recording ${suffix}`,
+          resourceType: 'artifact',
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        },
       ],
       visibility: 'public',
       _status: 'published',
@@ -1263,6 +1268,11 @@ async function verifySessionDetailVisibility(adminPage: Page, browser: Browser, 
   await expect(adminPage.getByRole('link', { name: 'Source artifact' })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Resources' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: `Session notes ${suffix}` })).toBeVisible()
+  await expect(adminPage.locator(`iframe[title="Session recording ${suffix}"]`)).toHaveAttribute(
+    'src',
+    'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+  )
+  await expect(adminPage.getByRole('link', { name: 'Open video' })).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Derived Posts' })).toBeVisible()
   await expect(adminPage.getByText('No published posts have been derived')).toBeVisible()
   await expect(adminPage.getByRole('heading', { name: 'Related Context' })).toBeVisible()
