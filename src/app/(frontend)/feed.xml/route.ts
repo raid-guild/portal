@@ -45,7 +45,7 @@ const collectLexicalText = (nodes: LexicalNode[] | undefined): string[] => {
 const truncateDescription = (value: string, maxLength = 280): string => {
   if (value.length <= maxLength) return value
 
-  const trimmed = value.slice(0, maxLength - 1).trimEnd()
+  const trimmed = value.slice(0, Math.max(0, maxLength - 3)).trimEnd()
   return `${trimmed}...`
 }
 
