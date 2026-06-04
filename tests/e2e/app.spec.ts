@@ -217,6 +217,68 @@ async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: 
   await expect(publicPage.getByRole('link', { name: oldPostTitles[0] })).toHaveCount(0)
 }
 
+async function verifyPublicPostsRSSFeed(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const publicTitle = `RSS public post ${suffix}`
+  const memberTitle = `RSS member post ${suffix}`
+  const draftTitle = `RSS draft post ${suffix}`
+  const publicDescription = `RSS public description ${suffix}`
+
+  const publicPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Public RSS post content fallback.'),
+      meta: {
+        description: publicDescription,
+      },
+      publishedAt: new Date().toISOString(),
+      slug: `rss-public-post-${suffix}`,
+      title: publicTitle,
+      visibility: 'public',
+    },
+  })
+
+  expect(publicPostResponse.status()).toBe(201)
+
+  const memberPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Member RSS post content should stay private.'),
+      publishedAt: new Date().toISOString(),
+      slug: `rss-member-post-${suffix}`,
+      title: memberTitle,
+      visibility: 'member',
+    },
+  })
+
+  expect(memberPostResponse.status()).toBe(201)
+
+  const draftPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'draft',
+      content: lexicalContent('Draft RSS post content should stay private.'),
+      slug: `rss-draft-post-${suffix}`,
+      title: draftTitle,
+      visibility: 'public',
+    },
+  })
+
+  expect(draftPostResponse.status()).toBe(201)
+
+  const feedResponse = await publicPage.request.get('/feed.xml')
+  expect(feedResponse.ok()).toBeTruthy()
+  expect(feedResponse.headers()['content-type']).toContain('application/rss+xml')
+
+  const feedXML = await feedResponse.text()
+  expect(feedXML).toContain('<rss version="2.0"')
+  expect(feedXML).toContain('RaidGuild Portal Posts')
+  expect(feedXML).toContain(targetPost.title)
+  expect(feedXML).toContain(publicTitle)
+  expect(feedXML).toContain(publicDescription)
+  expect(feedXML).not.toContain(memberTitle)
+  expect(feedXML).not.toContain(draftTitle)
+}
+
 async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page) {
   const suffix = Date.now()
   const title = `Admin publish persistence ${suffix}`
@@ -3105,6 +3167,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
   await verifyBadgesFeature(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
+  await verifyPublicPostsRSSFeed(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
