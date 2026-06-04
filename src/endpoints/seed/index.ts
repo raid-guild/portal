@@ -789,64 +789,59 @@ export const seed = async ({
           surface: 'join',
           status: 'published',
           eyebrow: 'Join the Portal',
-          headline: "Join RaidGuild's digital coworking space.",
+          headline: 'Create your RaidGuild Portal account.',
           intro:
-            'Create an account to connect your profile, follow live guild activity, join sessions, and find useful places to contribute.',
+            'The Portal is RaidGuild’s shared workspace for people, projects, sessions, posts, and opportunities.',
           secondaryIntro:
-            'The Portal shows the current brief, upcoming sessions, active projects, contributor requests, and the people building around them.',
-          benefitsHeading: 'Turn participation into skills, visibility, and opportunity.',
+            'Create an account to explore what is happening, meet contributors, and find your next step.',
+          benefitsHeading: 'Inside the Portal, you can:',
           benefits: [
             {
-              body: 'Follow real guild activity without digging through chat.',
+              body: 'Create a profile so guild members know who you are.',
             },
             {
-              body: 'Build a public profile connected to sessions, projects, posts, and badges.',
+              body: 'Explore live sessions, projects, posts, and member activity.',
             },
             {
-              body: 'Discover projects and contribution requests.',
+              body: 'Find people and teams working on things you care about.',
             },
             {
-              body: 'Join live sessions and keep track of context afterward.',
-            },
-            {
-              body: 'Bring client, sponsor, grant, or partnership opportunities into the right intake path.',
+              body: 'Share what you are working on and discover ways to get involved.',
             },
           ],
-          funnelEyebrow: 'Need a different path?',
-          funnelHeading: 'Start with the right intake.',
+          funnelEyebrow: 'Bringing something to RaidGuild?',
+          funnelHeading: 'Create an account first, then route it to the right place.',
           funnelLinks: [
             {
-              label: 'Request a build',
+              label: 'Bring a project',
               description:
-                'Talk through a client build, product spike, or technical implementation need.',
+                'For client work, product ideas, prototypes, or builds that need a team.',
               href: '/inquire/client',
             },
             {
-              label: 'Sponsor the guild',
-              description: 'Bring sponsorship, bounties, or paid work into the guild review path.',
+              label: 'Bring funding',
+              description: 'For grants, ecosystem support, bounties, or funded experiments.',
               href: '/inquire/sponsor',
             },
             {
-              label: 'Offer funding or grants',
-              description:
-                'Route grants, public goods funding, or ecosystem support to the right context.',
+              label: 'Share a grant',
+              description: 'For public goods funding or grant programs that need builders.',
               href: '/inquire/grant',
             },
             {
-              label: 'Bring a collaboration',
-              description:
-                'Start a partnership, collaboration, research, or community opportunity.',
+              label: 'Start a collaboration',
+              description: 'For partnerships, research, events, or community work.',
               href: '/inquire/opportunity',
             },
             {
-              label: 'Talk to the guild',
-              description: 'Ask a general question and get routed toward the right next step.',
+              label: 'Not sure yet?',
+              description: 'Join the Portal, look around, and ask for help when you are ready.',
               href: '/inquire/general',
             },
           ],
           seoTitle: 'Join the Portal',
           seoDescription:
-            'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+            'Create a RaidGuild Portal account to explore guild activity, meet contributors, and find ways to get involved.',
         },
         {
           key: 'inquire-general',
