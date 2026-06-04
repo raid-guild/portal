@@ -88,7 +88,9 @@ Hard rule: `syncDiscord` is not a field on the Payload `events` collection. Pass
 
 Use the raw Payload collection endpoint (`POST /api/events`) only for Portal-only records, imports, past-session enrichment, drafts, or records that already have external calendar/Discord links.
 
-When creating a future Portal session that should try to create a Discord scheduled event, use the Portal session endpoint instead:
+Default rule: when an agent creates a future session, it should try to create or link a Discord scheduled event by default. Use the Portal session endpoint and include `"syncDiscord": true` unless the user explicitly asks for a Portal-only session, the session is a past/imported record, or an existing Discord event URL is supplied in `joinURL` or `discordEventURL`.
+
+When creating a future Portal session, use the Portal session endpoint instead:
 
 ```bash
 curl -b cookies.txt -X POST "$PORTAL_URL/api/events/create" \
@@ -117,7 +119,7 @@ Payload differences for `/api/events/create`:
   and no existing Discord event URL is supplied, Portal tries to create a new
   Discord scheduled event while preserving the join link.
 - Do not send `_status` or `publishedAt`; the endpoint publishes the event.
-- Include `"syncDiscord": true` when the user asked for a Discord scheduled event.
+- Include `"syncDiscord": true` by default for future sessions created by agents, unless the user explicitly asks for a Portal-only record or provides an existing Discord event URL.
 
 Expected behavior:
 
@@ -132,7 +134,7 @@ Expected behavior:
 - If `syncDiscord` is false or missing, Portal creates a Portal-only event with `discordSyncStatus: not_configured`.
 - If `/api/events/create` receives `syncDiscord: true` and Discord env/config is missing or invalid, Portal should return the event with `discordSyncStatus: failed` and `discordSyncError`.
 
-Diagnostic rule: if the response has `discordSyncStatus: not_configured`, assume the request did not use `/api/events/create` with `syncDiscord: true`. Do not patch `syncDiscord` onto an existing event; it will not trigger sync.
+Diagnostic rule: if a future agent-created session response has `discordSyncStatus: not_configured`, treat that as a mistake unless the user explicitly requested a Portal-only session or supplied an existing external link. Assume the request did not use `/api/events/create` with `syncDiscord: true`. Do not patch `syncDiscord` onto an existing event; it will not trigger sync.
 
 Do not tell users a Discord scheduled event was created unless the response has `discordSyncStatus: synced` and a `discordEventURL`.
 
