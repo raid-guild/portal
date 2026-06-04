@@ -25,6 +25,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         <InitTheme />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        <link
+          href="/feed.xml"
+          rel="alternate"
+          title="RaidGuild Portal Posts"
+          type="application/rss+xml"
+        />
       </head>
       <body>
         <Providers>

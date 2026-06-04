@@ -43,50 +43,49 @@ export type InquiryType = 'client' | 'sponsor' | 'grant' | 'opportunity' | 'gene
 
 export const joinPageFallback: ProductPageCopy = {
   benefits: [
-    'Follow real guild activity without digging through chat.',
-    'Build a public profile connected to sessions, projects, posts, and badges.',
-    'Discover projects and contribution requests.',
-    'Join live sessions and keep track of context afterward.',
-    'Bring client, sponsor, grant, or partnership opportunities into the right intake path.',
+    'Create a profile so guild members know who you are.',
+    'Explore live sessions, projects, posts, and member activity.',
+    'Find people and teams working on things you care about.',
+    'Share what you are working on and discover ways to get involved.',
   ],
-  benefitsHeading: 'Turn participation into skills, visibility, and opportunity.',
+  benefitsHeading: 'Inside the Portal, you can:',
   eyebrow: 'Join the Portal',
-  funnelEyebrow: 'Need a different path?',
-  funnelHeading: 'Start with the right intake.',
+  funnelEyebrow: 'Bringing something to RaidGuild?',
+  funnelHeading: 'Create an account first, then route it to the right place.',
   funnelLinks: [
     {
-      description: 'Talk through a client build, product spike, or technical implementation need.',
+      description: 'For client work, product ideas, prototypes, or builds that need a team.',
       href: '/inquire/client',
-      label: 'Request a build',
+      label: 'Bring a project',
     },
     {
-      description: 'Bring sponsorship, bounties, or paid work into the guild review path.',
+      description: 'For grants, ecosystem support, bounties, or funded experiments.',
       href: '/inquire/sponsor',
-      label: 'Sponsor the guild',
+      label: 'Bring funding',
     },
     {
-      description: 'Route grants, public goods funding, or ecosystem support to the right context.',
+      description: 'For public goods funding or grant programs that need builders.',
       href: '/inquire/grant',
-      label: 'Offer funding or grants',
+      label: 'Share a grant',
     },
     {
-      description: 'Start a partnership, collaboration, research, or community opportunity.',
+      description: 'For partnerships, research, events, or community work.',
       href: '/inquire/opportunity',
-      label: 'Bring a collaboration',
+      label: 'Start a collaboration',
     },
     {
-      description: 'Ask a general question and get routed toward the right next step.',
+      description: 'Join the Portal, look around, and ask for help when you are ready.',
       href: '/inquire/general',
-      label: 'Talk to the guild',
+      label: 'Not sure yet?',
     },
   ],
-  headline: "Join RaidGuild's digital coworking space.",
+  headline: 'Create your RaidGuild Portal account.',
   intro:
-    'Create an account to connect your profile, follow live guild activity, join sessions, and find useful places to contribute.',
+    'The Portal is RaidGuild’s shared workspace for people, projects, sessions, posts, and opportunities.',
   secondaryIntro:
-    'The Portal shows the current brief, upcoming sessions, active projects, contributor requests, and the people building around them.',
+    'Create an account to explore what is happening, meet contributors, and find your next step.',
   seoDescription:
-    'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
+    'Create a RaidGuild Portal account to explore guild activity, meet contributors, and find ways to get involved.',
   seoTitle: 'Join the Portal',
 }
 
