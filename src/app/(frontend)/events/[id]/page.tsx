@@ -20,6 +20,7 @@ import type {
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { LocalDateTime } from '../../_components/LocalSessionTime'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,15 +32,6 @@ type Args = {
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
-
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
 
 const formatDate = (date?: string | null) => {
   if (!date) return null
@@ -180,9 +172,11 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
         <aside className="border border-border bg-card/30 p-5">
           <p className="portal-kicker">Session</p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {formatDateTime(event.startsAt)}
-          </p>
+          <LocalDateTime
+            className="mt-3 block text-sm leading-6 text-muted-foreground"
+            timestamp={event.startsAt}
+            variant="full"
+          />
           {event.locationLabel ? (
             <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
           ) : null}

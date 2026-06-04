@@ -18,18 +18,10 @@ import {
   PortalSearchForm,
   type ListSearchParams,
 } from '../_components/PortalListControls'
+import { LocalDateBadge, LocalDateTime } from '../_components/LocalSessionTime'
 
 export const dynamic = 'force-dynamic'
 const EVENTS_PER_PAGE = 24
-
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
@@ -209,15 +201,11 @@ const SessionRow: React.FC<{
           ? [speaker.displayName].filter(Boolean)
           : []
   const sessionType = event.sessionType || 'brownbag'
-  const startsAt = new Date(event.startsAt)
-  const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
-  const date = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(startsAt)
 
   return (
     <article className="grid gap-4 border-b border-border py-4 sm:grid-cols-[4rem_1fr]">
       <div className="flex items-baseline gap-2 sm:block">
-        <p className="font-mono text-xs uppercase text-muted-foreground">{day}</p>
-        <p className="font-display text-2xl font-bold leading-none text-foreground">{date}</p>
+        <LocalDateBadge timestamp={event.startsAt} />
       </div>
       <div
         className={`rounded-sm border p-5 ${
@@ -237,9 +225,7 @@ const SessionRow: React.FC<{
                     : ''}
                 </span>
               ) : null}
-              <span className="text-sm text-muted-foreground">
-                {formatDateTime(event.startsAt)}
-              </span>
+              <LocalDateTime className="text-sm text-muted-foreground" timestamp={event.startsAt} />
             </div>
             <h3 className="mt-3 portal-heading-sm">
               <Link className="transition-colors hover:text-primary" href={`/events/${event.id}`}>
