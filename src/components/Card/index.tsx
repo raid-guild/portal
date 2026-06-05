@@ -7,8 +7,11 @@ import React, { Fragment } from 'react'
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { PostVisibilityBadge } from '@/components/PostVisibilityBadge'
 
-export type CardPostData = Pick<Post, 'slug' | 'categories' | 'meta' | 'title'>
+export type CardPostData = Pick<Post, 'slug' | 'categories' | 'meta' | 'title'> & {
+  visibility?: Post['visibility']
+}
 
 export const Card: React.FC<{
   alignItems?: 'center'
@@ -21,7 +24,7 @@ export const Card: React.FC<{
   const { card, link } = useClickableCard({})
   const { className, doc, relationTo, showCategories, title: titleFromProps } = props
 
-  const { slug, categories, meta, title } = doc || {}
+  const { slug, categories, meta, title, visibility } = doc || {}
   const { description, image: metaImage } = meta || {}
 
   const hasCategories = categories && Array.isArray(categories) && categories.length > 0
@@ -39,6 +42,7 @@ export const Card: React.FC<{
         {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
       </div>
       <div className="p-4">
+        <PostVisibilityBadge className="mb-4" visibility={visibility} />
         {showCategories && hasCategories && (
           <div className="portal-kicker mb-4">
             {showCategories && hasCategories && (

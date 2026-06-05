@@ -4,22 +4,15 @@ import React from 'react'
 
 import { hasRole } from '@/access/roles'
 import type { User } from '@/payload-types'
-
-export const postVisibilityValues = ['public', 'authenticated', 'member', 'admin'] as const
-
-export type PostVisibility = (typeof postVisibilityValues)[number]
-export type PostVisibilityFilter = PostVisibility | 'all'
+import {
+  postVisibilityLabels,
+  postVisibilityValues,
+  type PostVisibility,
+  type PostVisibilityFilter,
+} from '@/utilities/postVisibility'
 
 type SearchParams = {
   visibility?: string | string[]
-}
-
-const visibilityLabels: Record<PostVisibilityFilter, string> = {
-  all: 'All visible',
-  public: 'Public',
-  authenticated: 'Portal',
-  member: 'Members',
-  admin: 'Admin',
 }
 
 export const canFilterPostVisibility = (user: User | null): boolean =>
@@ -90,7 +83,7 @@ export const PostVisibilityFilterNav: React.FC<{
             href={href}
             key={visibility}
           >
-            {visibilityLabels[visibility]}
+            {postVisibilityLabels[visibility]}
           </Link>
         )
       })}

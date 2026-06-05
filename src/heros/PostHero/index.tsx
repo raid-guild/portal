@@ -4,11 +4,19 @@ import React from 'react'
 import type { Post } from '@/payload-types'
 
 import { Media } from '@/components/Media'
+import { PostVisibilityBadge } from '@/components/PostVisibilityBadge'
 
 export const PostHero: React.FC<{
   post: Post
 }> = ({ post }) => {
-  const { categories, meta: { image: metaImage } = {}, populatedAuthors, publishedAt, title } = post
+  const {
+    categories,
+    meta: { image: metaImage } = {},
+    populatedAuthors,
+    publishedAt,
+    title,
+    visibility,
+  } = post
 
   return (
     <div className="relative -mt-[10.4rem] flex items-end">
@@ -33,6 +41,10 @@ export const PostHero: React.FC<{
               return null
             })}
           </div>
+          <PostVisibilityBadge
+            className="mb-4 border-white/30 bg-black/50 text-white"
+            visibility={visibility}
+          />
 
           <div className="">
             <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl">{title}</h1>
