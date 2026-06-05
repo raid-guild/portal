@@ -80,6 +80,49 @@ function lexicalContent(content: string) {
   }
 }
 
+function lexicalListContent(items: string[]) {
+  return {
+    root: {
+      children: [
+        {
+          children: items.map((item, index) => ({
+            children: [
+              {
+                detail: 0,
+                format: 0,
+                mode: 'normal',
+                style: '',
+                text: item,
+                type: 'text',
+                version: 1,
+              },
+            ],
+            direction: 'ltr',
+            format: '',
+            indent: 0,
+            type: 'listitem',
+            value: index + 1,
+            version: 1,
+          })),
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          listType: 'bullet',
+          start: 1,
+          tag: 'ul',
+          type: 'list',
+          version: 1,
+        },
+      ],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  }
+}
+
 async function expectSeedButton(page: Page, timeout = 15000) {
   await expect(page.getByText(/without clearing existing CMS content/i)).toBeVisible({ timeout })
   await expect(page.getByRole('button', { name: /upsert portal starter content/i })).toBeVisible({
@@ -335,6 +378,32 @@ async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page)
 
   await publicPage.goto(`/posts/${slug}`)
   await expect(publicPage.getByRole('heading', { exact: true, name: title })).toBeVisible()
+
+  const listTitle = `Lexical list regression ${suffix}`
+  const listSlug = `lexical-list-regression-${suffix}`
+  const listResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalListContent(['First list item', 'Second list item']),
+      publishedAt: new Date().toISOString(),
+      slug: listSlug,
+      title: listTitle,
+    },
+  })
+
+  expect(listResponse.status()).toBe(201)
+
+  const listResponseBody = await listResponse.json()
+  const listPost = listResponseBody.doc ?? listResponseBody
+
+  expect(listPost?.id).toBeTruthy()
+
+  await adminPage.goto(`/admin/collections/posts/${listPost.id}`)
+  await expect(adminPage.getByText(/Something went wrong/i)).toHaveCount(0)
+  await expect(adminPage.getByRole('heading', { exact: true, name: listTitle })).toBeVisible()
+
+  await publicPage.goto(`/posts/${listSlug}`)
+  await expect(publicPage.getByRole('listitem').filter({ hasText: 'First list item' })).toBeVisible()
 }
 
 async function verifyPublicHome(page: Page) {
