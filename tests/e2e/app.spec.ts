@@ -166,6 +166,12 @@ async function verifySeededPosts(page: Page) {
 
   for (const post of seededPosts) {
     await expect(page.getByRole('link', { name: post.title })).toBeVisible()
+    await expect(
+      page
+        .getByRole('article')
+        .filter({ has: page.getByRole('link', { name: post.title }) })
+        .getByLabel('Post visibility: Public'),
+    ).toBeVisible()
 
     const response = await page.goto(`/posts/${post.slug}`)
 
@@ -174,6 +180,7 @@ async function verifySeededPosts(page: Page) {
       `Expected seeded post page /posts/${post.slug} to respond successfully`,
     ).toBeTruthy()
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
+    await expect(page.getByLabel('Post visibility: Public')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
   }
 }
