@@ -6,6 +6,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
@@ -268,19 +269,19 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
       {canViewFullDetails && (isPast || posts.length) ? (
         <Section title="Derived Posts">
           {posts.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-8">
               {groupPosts(posts).map(([contentType, group]) => (
-                <div className="border border-border bg-card/20 p-5" key={contentType}>
+                <div key={contentType}>
                   <p className="portal-kicker">{contentTypeLabels[contentType] || contentType}</p>
-                  <div className="mt-4 grid gap-3">
+                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {group.map((post) => (
-                      <Link
-                        className="portal-link text-base"
-                        href={`/posts/${post.slug}`}
+                      <Card
+                        className="h-full"
+                        doc={post}
                         key={post.id}
-                      >
-                        {post.title}
-                      </Link>
+                        relationTo="posts"
+                        showCategories={false}
+                      />
                     ))}
                   </div>
                 </div>
