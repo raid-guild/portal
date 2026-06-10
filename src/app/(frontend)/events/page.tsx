@@ -11,6 +11,7 @@ import type { Event, Profile, Project, Thread } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { SessionDateBadge, SessionDateTime } from '../_components/SessionDateTime'
 import {
   getListPageValue,
   getListQueryValue,
@@ -21,15 +22,6 @@ import {
 
 export const dynamic = 'force-dynamic'
 const EVENTS_PER_PAGE = 24
-
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
@@ -85,7 +77,7 @@ export default async function EventsPage({ searchParams: searchParamsPromise }: 
   const past = events.docs.filter(
     (event) => !isLiveEvent(event, now) && new Date(event.startsAt).getTime() < now,
   )
-  upcoming.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
+  upcoming.sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())
   past.sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())
   const canManageSessions = canContributeContent(user)
 
@@ -209,15 +201,14 @@ const SessionRow: React.FC<{
           ? [speaker.displayName].filter(Boolean)
           : []
   const sessionType = event.sessionType || 'brownbag'
-  const startsAt = new Date(event.startsAt)
-  const day = new Intl.DateTimeFormat('en', { weekday: 'short' }).format(startsAt)
-  const date = new Intl.DateTimeFormat('en', { day: '2-digit' }).format(startsAt)
-
   return (
     <article className="grid gap-4 border-b border-border py-4 sm:grid-cols-[4rem_1fr]">
       <div className="flex items-baseline gap-2 sm:block">
-        <p className="font-mono text-xs uppercase text-muted-foreground">{day}</p>
-        <p className="font-display text-2xl font-bold leading-none text-foreground">{date}</p>
+        <SessionDateBadge
+          dateClassName="font-display text-2xl font-bold leading-none text-foreground"
+          dayClassName="font-mono text-xs uppercase text-muted-foreground"
+          startsAt={event.startsAt}
+        />
       </div>
       <div
         className={`rounded-sm border p-5 ${
@@ -237,9 +228,12 @@ const SessionRow: React.FC<{
                     : ''}
                 </span>
               ) : null}
-              <span className="text-sm text-muted-foreground">
-                {formatDateTime(event.startsAt)}
-              </span>
+              <SessionDateTime
+                className="text-sm text-muted-foreground"
+                dateStyle="medium"
+                endsAt={event.endsAt}
+                startsAt={event.startsAt}
+              />
             </div>
             <h3 className="mt-3 portal-heading-sm">
               <Link className="transition-colors hover:text-primary" href={`/events/${event.id}`}>

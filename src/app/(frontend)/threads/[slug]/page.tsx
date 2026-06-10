@@ -19,6 +19,7 @@ import type {
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { toSafeURL } from '@/utilities/safeURL'
+import { SessionDateTime } from '../../_components/SessionDateTime'
 
 export const dynamic = 'force-dynamic'
 
@@ -546,7 +547,12 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => (
   <Link className="block portal-card transition-colors hover:bg-card" href={`/events/${event.id}`}>
     <p className="portal-kicker">{event.sessionType}</p>
     <h3 className="mt-2 font-bold text-foreground">{event.title}</h3>
-    <p className="mt-2 text-sm text-muted-foreground">{formatDateTime(event.startsAt)}</p>
+    <SessionDateTime
+      className="mt-2 block text-sm text-muted-foreground"
+      dateStyle="medium"
+      endsAt={event.endsAt}
+      startsAt={event.startsAt}
+    />
     {event.summary ? (
       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">{event.summary}</p>
     ) : null}
