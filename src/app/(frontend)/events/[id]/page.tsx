@@ -165,7 +165,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           </div>
           <h1 className="portal-title mt-5">{event.title}</h1>
           {!isPast && event.summary ? (
-            <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
+            <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
               {event.summary}
             </p>
           ) : null}
@@ -209,7 +209,9 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
       {isPast && event.summary ? (
         <Section title="Session Notes">
-          <p className="max-w-3xl text-base leading-7 text-muted-foreground">{event.summary}</p>
+          <p className="max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
+            {event.summary}
+          </p>
         </Section>
       ) : null}
 
