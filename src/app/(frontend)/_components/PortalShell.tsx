@@ -27,6 +27,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
+import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
 
 type PortalHomeProps = {
@@ -137,7 +138,12 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
             </div>
             {nextEvent ? (
               <div className="mt-4">
-                <p className="portal-kicker">{formatDateTime(nextEvent.startsAt)}</p>
+                <SessionDateTime
+                  className="portal-kicker"
+                  dateStyle="medium"
+                  endsAt={nextEvent.endsAt}
+                  startsAt={nextEvent.startsAt}
+                />
                 <h2 className="mt-2 portal-heading-sm">{nextEvent.title}</h2>
                 {nextEvent.locationLabel ? (
                   <p className="mt-2 text-sm text-muted-foreground">{nextEvent.locationLabel}</p>
@@ -206,7 +212,12 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
             {upcomingEvents.length ? (
               upcomingEvents.slice(0, 3).map((event) => (
                 <article className="portal-card" key={event.id}>
-                  <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
+                  <SessionDateTime
+                    className="portal-kicker"
+                    dateStyle="medium"
+                    endsAt={event.endsAt}
+                    startsAt={event.startsAt}
+                  />
                   <h3 className="mt-2 portal-heading-sm">{event.title}</h3>
                   {event.summary ? (
                     <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
@@ -489,9 +500,12 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                   <div className="portal-card text-sm">
                     <p className="font-bold text-foreground">Next session</p>
                     <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
-                    <p className="mt-1 text-muted-foreground">
-                      {formatDateTime(nextEvent.startsAt)}
-                    </p>
+                    <SessionDateTime
+                      className="mt-1 block text-muted-foreground"
+                      dateStyle="medium"
+                      endsAt={nextEvent.endsAt}
+                      startsAt={nextEvent.startsAt}
+                    />
                     {nextEvent.locationLabel ? (
                       <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
                     ) : null}
@@ -592,7 +606,12 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             <div className="space-y-4">
               {upcomingEvents.slice(0, 3).map((event) => (
                 <article className="portal-card" key={event.id}>
-                  <p className="portal-kicker">{formatDateTime(event.startsAt)}</p>
+                  <SessionDateTime
+                    className="portal-kicker"
+                    dateStyle="medium"
+                    endsAt={event.endsAt}
+                    startsAt={event.startsAt}
+                  />
                   <h3 className="mt-2 font-bold text-foreground">{event.title}</h3>
                   {event.locationLabel ? (
                     <p className="mt-2 text-sm text-muted-foreground">{event.locationLabel}</p>
