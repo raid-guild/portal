@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload'
+import { APIError } from 'payload'
 
 import {
   BlocksFeature,
@@ -12,8 +13,8 @@ import {
   UnorderedListFeature,
 } from '@payloadcms/richtext-lexical'
 
-import { contentEditors } from '@/access/roles'
-import { manageWikiPages, readVisibleWikiPages } from '@/access/wikiPages'
+import { contentEditors, hasRole } from '@/access/roles'
+import { createWikiPages, readVisibleWikiPages, updateWikiPages } from '@/access/wikiPages'
 import { Banner } from '@/blocks/Banner/config'
 import { Code } from '@/blocks/Code/config'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
@@ -23,10 +24,10 @@ import { validateSafeURL } from '@/utilities/safeURL'
 export const WikiPages: CollectionConfig = {
   slug: 'wikiPages',
   access: {
-    create: manageWikiPages,
+    create: createWikiPages,
     delete: contentEditors,
     read: readVisibleWikiPages,
-    update: manageWikiPages,
+    update: updateWikiPages,
   },
   admin: {
     defaultColumns: ['title', 'reviewStatus', 'visibility', '_status', 'lastReviewedAt', 'updatedAt'],
@@ -419,6 +420,21 @@ export const WikiPages: CollectionConfig = {
       },
     }),
   ],
+  hooks: {
+    beforeValidate: [
+      ({ data, req }) => {
+        if (
+          data?.visibility === 'admin' &&
+          hasRole(req.user, ['agent']) &&
+          !hasRole(req.user, ['admin', 'editor'])
+        ) {
+          throw new APIError('Agents cannot create or update admin-only wiki pages.', 403)
+        }
+
+        return data
+      },
+    ],
+  },
   versions: {
     drafts: true,
     maxPerDoc: 50,

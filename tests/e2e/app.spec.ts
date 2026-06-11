@@ -988,10 +988,11 @@ async function verifyMemberOnlyProjectVisibility(
   expect(agentDraftBody.doc?.visibility || agentDraftBody.visibility).toBe('member')
   expect(agentDraftBody.doc?._status || agentDraftBody._status).toBe('draft')
 
+  const agentPublishedSuffix = Date.now()
   const agentPublishedResponse = await agentPage.request.post('/api/posts', {
     data: {
       title: 'Agent published visibility post',
-      slug: 'agent-published-visibility-post',
+      slug: `agent-published-visibility-post-${agentPublishedSuffix}`,
       content: lexicalContent('Agent-authored published post.'),
       publishedAt: new Date().toISOString(),
       visibility: 'member',
@@ -1073,6 +1074,18 @@ async function verifyAgentWikiPublish(agentPage: Page, publicPage: Page) {
   expect(response.status()).toBe(201)
   const body = await response.json()
   expect(body.doc?._status || body._status).toBe('published')
+
+  const adminVisibilityResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Admin Wiki ${suffix}`,
+      slug: `agent-admin-wiki-${suffix}`,
+      summary: 'Agents should not be able to create admin-only wiki pages.',
+      visibility: 'admin',
+      _status: 'draft',
+    },
+  })
+
+  expect(adminVisibilityResponse.status()).toBe(403)
 
   await publicPage.goto('/wiki')
   await expect(publicPage.getByRole('heading', { exact: true, name: 'Wiki' })).toBeVisible()
