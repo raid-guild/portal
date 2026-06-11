@@ -218,7 +218,9 @@ admin-only wiki pages.
 Rule: generated wiki artifacts must be normalized before writing: body content
 must be valid Payload Lexical JSON, `prompts` entries need `label` and `prompt`,
 and malformed optional arrays such as `sourceArtifacts` should be omitted rather
-than sent with invalid shapes.
+than sent with invalid shapes. Valid body content must preserve article
+structure: section titles should be `heading` nodes and bullet/numbered content
+should be `list` and `listitem` nodes, not one paragraph per Markdown line.
 
 ## comments
 

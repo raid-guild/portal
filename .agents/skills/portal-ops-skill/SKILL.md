@@ -372,7 +372,9 @@ freshness-dependent pages. Agents must not create or update wiki pages with
 Before `POST` or `PATCH /api/wikiPages`, normalize generated artifacts to the
 live schema:
 
-- Convert Markdown or prose bodies into valid Payload Lexical JSON.
+- Convert Markdown or prose bodies into valid Payload Lexical JSON with real
+  structure. Section titles must be Lexical `heading` nodes, bullets must be
+  `list` / `listitem` nodes, and article text should be paragraph nodes.
 - Ensure each `prompts` item has both `label` and `prompt`.
 - Ensure `sourceArtifacts` entries use the live fields: `label`, optional
   `artifactID`, `sourceType`, `url`, `sourceQuery`, and `observedAt`.
@@ -383,6 +385,71 @@ live schema:
 - If auth, schema validation, or public verification fails, save a blocked
   artifact and leave the workflow blocked or failed. Do not close it as
   successful.
+
+Do not flatten wiki pages into one paragraph per Markdown line. Before
+publishing, inspect `body.root.children`:
+
+- Section headings such as `Definition`, `Current State`, `Further Reading`, or
+  `Open Questions` must not be plain paragraph nodes.
+- Consecutive short items after a colon should usually become a bullet list.
+- A body where almost every node is `paragraph` should be treated as a failed
+  conversion unless the source truly contains no headings or lists.
+- If the converter cannot preserve heading/list structure, block the publish
+  step and save a conversion error artifact.
+
+Minimal Lexical structure examples:
+
+```json
+{
+  "type": "heading",
+  "tag": "h2",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "text",
+      "text": "Definition",
+      "detail": 0,
+      "format": 0,
+      "mode": "normal",
+      "style": "",
+      "version": 1
+    }
+  ]
+}
+```
+
+```json
+{
+  "type": "list",
+  "tag": "ul",
+  "listType": "bullet",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "listitem",
+      "value": 1,
+      "format": "",
+      "indent": 0,
+      "version": 1,
+      "children": [
+        {
+          "type": "text",
+          "text": "Contact records and relationship context",
+          "detail": 0,
+          "format": 0,
+          "mode": "normal",
+          "style": "",
+          "version": 1
+        }
+      ]
+    }
+  ]
+}
+```
 
 Example wiki draft:
 
