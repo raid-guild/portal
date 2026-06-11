@@ -192,15 +192,16 @@
 
 ## Phase 9: Infinite Wiki
 
-- [ ] Add `wikiPages` collection with source audit fields.
-- [ ] Put `wikiPages` in the Payload admin `Modules` group.
-- [ ] Link Infinite Wiki to the module registry or documented module convention.
-- [ ] Add wiki page access rules for reviewed status and visibility.
-- [ ] Add `/wiki` index for published pages.
-- [ ] Add `/wiki/[slug]` detail route with related portal context and sources.
-- [ ] Add possible-topic rendering without presenting possible pages as
+- [x] Add `wikiPages` collection with source audit fields.
+- [x] Put `wikiPages` in the Payload admin `Modules` group.
+- [x] Link Infinite Wiki to the module registry or documented module convention.
+- [x] Add wiki page access rules for reviewed status and visibility.
+- [x] Add `/wiki` index for published pages.
+- [x] Add `/wiki/[slug]` detail route with related portal context and sources.
+- [x] Add possible-topic rendering without presenting possible pages as
       canonical.
-- [ ] Add admin/editor review workflow for generated drafts.
+- [x] Add admin/editor/agent review workflow for generated drafts through
+      Payload admin.
 - [ ] Add Prism-backed generation endpoint or admin action for generated drafts.
 - [ ] Record source queries, source artifacts, prompt version, model, and
       confidence for every generated page.

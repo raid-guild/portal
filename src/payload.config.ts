@@ -35,6 +35,7 @@ import { SponsorInquiries } from './collections/SponsorInquiries'
 import { Spotlights } from './collections/Spotlights'
 import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
+import { WikiPages } from './collections/WikiPages'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -126,6 +127,7 @@ export default buildConfig({
     Badges,
     ProfileBadges,
     Modules,
+    WikiPages,
     Spotlights,
     Notifications,
     NotificationPreferences,
