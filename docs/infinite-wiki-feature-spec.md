@@ -548,14 +548,15 @@ Operational metrics:
 
 ## First Implementation Checklist
 
-- [ ] Add `wikiPages` collection with source audit fields.
-- [ ] Add access rules for published visibility and editor/admin review.
-- [ ] Add admin columns for status, visibility, confidence, and review dates.
-- [ ] Add `/wiki` index for published pages.
-- [ ] Add `/wiki/[slug]` detail route with source and related-context sections.
-- [ ] Keep first-version relationships owned by `wikiPages`; do not add wiki
+- [x] Add `wikiPages` collection with source audit fields.
+- [x] Add access rules for published visibility and editor/admin/agent review.
+- [x] Add admin columns for status, visibility, confidence, and review dates.
+- [x] Add `/wiki` index for published pages.
+- [x] Add `/wiki/[slug]` detail route with source and related-context sections.
+- [x] Keep first-version relationships owned by `wikiPages`; do not add wiki
       relationship fields directly to projects, events/sessions, posts, or
       threads.
+- [x] Link Infinite Wiki through the module registry.
 - [ ] Add a protected generation endpoint or admin action that creates generated
       drafts.
 - [ ] Record source queries and source references on every generated page.

@@ -46,6 +46,9 @@ export const canAccessAdmin = (user: UserWithRoles | null | undefined): boolean 
 export const canEditContent = (user: UserWithRoles | null | undefined): boolean =>
   hasRole(user, ['admin', 'editor'])
 
+export const canPublishContent = (user: UserWithRoles | null | undefined): boolean =>
+  hasRole(user, ['admin', 'editor', 'agent'])
+
 export const hideFromNonEditors = ({ user }: { user: UserWithRoles | null | undefined }) =>
   !canEditContent(user)
 

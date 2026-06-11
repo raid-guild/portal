@@ -527,6 +527,8 @@ export const seedPortalContent = async ({
           visibility: 'authenticated',
           enabled: true,
           featured: true,
+          entryRoute: '/wiki',
+          adminRoute: '/admin/collections/wikiPages',
           sortOrder: 15,
           specURL:
             'https://github.com/raid-guild/portal/blob/main/docs/infinite-wiki-feature-spec.md',

@@ -105,13 +105,24 @@ If a feature is only a label, link, CTA, or short list, start with an existing p
 
 The repo-owned portal skill lives at:
 
-- `.agents/skills/portal-memory-publisher/SKILL.md`
+- `.agents/skills/portal-ops-skill/SKILL.md`
 
 The app serves that skill from:
 
-- `/api/portal/skills/portal-memory-publisher`
+- `/api/portal/skills/portal-ops-skill`
 
-Use this skill when converting Discord summaries, meeting digests, community memory, project updates, event notes, or repo activity into portal CMS update proposals.
+Agents can discover available Portal skills from:
+
+- `/api/portal/skills`
+
+The old `/api/portal/skills/portal-memory-publisher` route remains as a
+compatibility alias.
+
+Use this skill when operating the Portal CMS through agent workflows: converting
+Discord summaries, meeting digests, community memory, project updates, event
+notes, repo activity, wiki research packets, session updates, CMS copy edits, or
+other sourced Portal operations into safe CMS update proposals or explicit
+writes.
 
 Default agent behavior should be review-first:
 

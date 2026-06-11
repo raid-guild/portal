@@ -987,6 +987,24 @@ async function verifyMemberOnlyProjectVisibility(
   const agentDraftBody = await agentDraftResponse.json()
   expect(agentDraftBody.doc?.visibility || agentDraftBody.visibility).toBe('member')
   expect(agentDraftBody.doc?._status || agentDraftBody._status).toBe('draft')
+
+  const agentPublishedSuffix = Date.now()
+  const agentPublishedResponse = await agentPage.request.post('/api/posts', {
+    data: {
+      title: 'Agent published visibility post',
+      slug: `agent-published-visibility-post-${agentPublishedSuffix}`,
+      content: lexicalContent('Agent-authored published post.'),
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(agentPublishedResponse.status()).toBe(201)
+  const agentPublishedBody = await agentPublishedResponse.json()
+  expect(agentPublishedBody.doc?.visibility || agentPublishedBody.visibility).toBe('member')
+  expect(agentPublishedBody.doc?._status || agentPublishedBody._status).toBe('published')
+  await verifyAgentWikiPublish(agentPage, publicPage)
   await agentContext.close()
 
   const editorContext = await browser.newContext()
@@ -1012,6 +1030,90 @@ async function verifyMemberOnlyProjectVisibility(
   expect(editorDraftBody.doc?.visibility || editorDraftBody.visibility).toBe('member')
   expect(editorDraftBody.doc?._status || editorDraftBody._status).toBe('draft')
   await editorContext.close()
+}
+
+async function verifyAgentWikiPublish(agentPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Agent Published Wiki ${suffix}`
+  const slug = `agent-published-wiki-${suffix}`
+  const claim = `Agent-authored wiki claim ${suffix}`
+  const possibleTopic = `Possible wiki topic ${suffix}`
+
+  const response = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title,
+      slug,
+      summary: 'A source-backed wiki page published by an agent role.',
+      body: lexicalContent('Agent-published wiki body.'),
+      keyClaims: [
+        {
+          claim,
+          sourceLabel: 'E2E source',
+        },
+      ],
+      possibleTopics: [
+        {
+          topic: possibleTopic,
+        },
+      ],
+      sourceArtifacts: [
+        {
+          label: 'E2E artifact',
+          sourceType: 'external',
+          url: 'https://example.com/wiki-source',
+        },
+      ],
+      lastReviewedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+      reviewStatus: 'reviewed',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+  const body = await response.json()
+  expect(body.doc?._status || body._status).toBe('published')
+
+  const adminVisibilityResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Admin Wiki ${suffix}`,
+      slug: `agent-admin-wiki-${suffix}`,
+      summary: 'Agents should not be able to create admin-only wiki pages.',
+      visibility: 'admin',
+      _status: 'draft',
+    },
+  })
+
+  expect(adminVisibilityResponse.status()).toBe(403)
+
+  const unreviewedPublishResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Unreviewed Published Wiki ${suffix}`,
+      slug: `agent-unreviewed-published-wiki-${suffix}`,
+      summary: 'Published wiki pages must be reviewed first.',
+      body: lexicalContent('Unreviewed wiki body.'),
+      publishedAt: new Date().toISOString(),
+      reviewStatus: 'needs_review',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(unreviewedPublishResponse.status()).toBe(400)
+
+  await publicPage.goto('/wiki')
+  await expect(publicPage.getByRole('heading', { exact: true, name: 'Wiki' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: title })).toBeVisible()
+
+  await publicPage.goto(`/wiki/${slug}`)
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(publicPage.getByText(claim)).toBeVisible()
+  await expect(publicPage.getByText(possibleTopic)).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Open source' })).toHaveAttribute(
+    'href',
+    'https://example.com/wiki-source',
+  )
 }
 
 async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
@@ -1812,21 +1914,66 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
-  const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
+  const discoveryResponse = await page.request.get('/api/portal/skills')
+
+  expect(discoveryResponse.ok()).toBeTruthy()
+
+  const discoveryBody = await discoveryResponse.json()
+  expect(discoveryBody.skills).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        aliases: expect.arrayContaining(['portal-memory-publisher']),
+        name: 'portal-ops-skill',
+        route: '/api/portal/skills/portal-ops-skill',
+      }),
+    ]),
+  )
+
+  const response = await page.request.get('/api/portal/skills/portal-ops-skill')
 
   expect(response.ok()).toBeTruthy()
 
   const body = await response.json()
 
-  expect(body.name).toBe('portal-memory-publisher')
-  expect(body.files['SKILL.md']).toContain('Portal Memory Publisher')
+  expect(body.name).toBe('portal-ops-skill')
+  expect(body.aliases).toContain('portal-memory-publisher')
+  expect(body.files['SKILL.md']).toContain('Portal Ops Skill')
+  expect(body.files['SKILL.md']).toContain('Wiki Page Creation')
   expect(body.files['references/portal-cms-model.md']).toContain('activityItems')
+  expect(body.files['references/portal-cms-model.md']).toContain('wikiPages')
   expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
+
+  const aliasResponse = await page.request.get('/api/portal/skills/portal-memory-publisher')
+  expect(aliasResponse.ok()).toBeTruthy()
+  expect((await aliasResponse.json()).name).toBe('portal-ops-skill')
 }
 
 async function verifyAgentRegistrationFlow(page: Page) {
   const email = 'portal-memory-agent@example.com'
   const password = 'PlaywrightAgentSecret123!'
+
+  const missingSecretResponse = await page.request.post('/api/agent/register', {
+    data: {
+      email: `missing-secret-${email}`,
+      name: 'Missing Secret Agent',
+      password,
+    },
+  })
+
+  expect(missingSecretResponse.status()).toBe(401)
+
+  const invalidSecretResponse = await page.request.post('/api/agent/register', {
+    data: {
+      email: `invalid-secret-${email}`,
+      name: 'Invalid Secret Agent',
+      password,
+    },
+    headers: {
+      Authorization: 'Bearer wrong-secret',
+    },
+  })
+
+  expect(invalidSecretResponse.status()).toBe(401)
 
   const registerResponse = await page.request.post('/api/agent/register', {
     data: {
@@ -1897,7 +2044,7 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   const email = `inquiry-${suffix}@example.com`
 
   await publicPage.goto('/join')
-  await expect(publicPage.getByRole('link', { name: 'Talk to the guild' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Not sure yet?' })).toBeVisible()
 
   await publicPage.goto('/inquire/general?utm_source=e2e&utm_medium=test&utm_campaign=funnel')
   await expect(publicPage.getByRole('heading', { name: 'Talk to the guild.' })).toBeVisible()
@@ -2079,7 +2226,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
   await expect(sidebar.getByRole('link', { name: 'Profiles' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Media' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Users' })).toHaveCount(0)
-  await expect(sidebar.getByRole('link', { name: 'Pages' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Pages' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Redirects' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Forms' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Form Submissions' })).toHaveCount(0)
@@ -2653,8 +2800,8 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await expect(adminPage.getByText('Bounty Board')).toBeVisible()
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
-  await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(1)
+  await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(2)
 
   await adminPage.goto('/portal-graph')
   await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
