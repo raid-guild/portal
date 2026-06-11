@@ -100,15 +100,20 @@ const getPublishedWikiPages = async (
           },
         },
         {
+          slug: {
+            exists: true,
+          },
+        },
+        {
           reviewStatus: {
-            not_equals: 'archived',
+            equals: 'reviewed',
           },
         },
       ],
     },
   })
 
-  return result.docs
+  return result.docs.filter((page) => page.slug)
 }
 
 const reviewStatusLabels: Record<NonNullable<WikiPage['reviewStatus']>, string> = {

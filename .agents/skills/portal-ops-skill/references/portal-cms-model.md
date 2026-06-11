@@ -146,8 +146,9 @@ Key fields:
 - `publishedAt`
 - `_status`
 
-Rule: agents can publish posts when the user explicitly asks or the workflow is
-trusted for that source. Otherwise create drafts and omit `publishedAt`.
+Rule: agents, editors, and admins can publish posts by role. Operationally,
+agents should create drafts unless the target environment is clear and the
+source facts are concrete.
 
 Rule: use `meta.image` for the cover/header image. Use a Lexical `mediaBlock`
 with a Payload media ID for images that should appear inline in the article body.
@@ -204,9 +205,9 @@ Rule: freshness-sensitive claims should include dates, observed-at timestamps,
 or review notes. Mark stale or low-confidence pages as `needs_refresh` or
 `needs_review`.
 
-Rule: agents, editors, and admins may create/update wiki pages. Agents may
-publish when source grounding is clear and the user/workflow explicitly allows
-publication. Prefer drafts for speculative or low-confidence pages.
+Rule: agents, editors, and admins may create/update wiki pages. Published wiki
+pages must have `reviewStatus = reviewed`. Prefer drafts for speculative or
+low-confidence pages.
 
 ## comments
 

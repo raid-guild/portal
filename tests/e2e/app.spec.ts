@@ -1087,6 +1087,21 @@ async function verifyAgentWikiPublish(agentPage: Page, publicPage: Page) {
 
   expect(adminVisibilityResponse.status()).toBe(403)
 
+  const unreviewedPublishResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Unreviewed Published Wiki ${suffix}`,
+      slug: `agent-unreviewed-published-wiki-${suffix}`,
+      summary: 'Published wiki pages must be reviewed first.',
+      body: lexicalContent('Unreviewed wiki body.'),
+      publishedAt: new Date().toISOString(),
+      reviewStatus: 'needs_review',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(unreviewedPublishResponse.status()).toBe(400)
+
   await publicPage.goto('/wiki')
   await expect(publicPage.getByRole('heading', { exact: true, name: 'Wiki' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: title })).toBeVisible()

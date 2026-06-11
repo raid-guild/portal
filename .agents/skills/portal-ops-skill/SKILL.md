@@ -87,10 +87,10 @@ curl -c cookies.txt -X POST "$PORTAL_URL/api/users/login" \
 
 Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /api/users/me`.
 
-Agent accounts are trusted automation identities. They may create sourced drafts
-and, where collection access allows, publish clear factual records when the user
-explicitly asks or the workflow is trusted for that source. They must not
-delete, manage users, or impersonate humans.
+Agent accounts are trusted automation identities. Where collection access
+allows, they can create and publish sourced records. Operationally, prefer
+review drafts unless the target environment is clear and the source facts are
+concrete. Agents must not delete, manage users, or impersonate humans.
 
 ## Event Creation And Discord Sync
 
@@ -324,10 +324,9 @@ Recommended research workflow:
 6. `review`: date freshness-sensitive claims and check citations.
 7. `publish`: optionally publish the reviewed wiki page or create a derived post.
 
-Agents, editors, and admins may create and update wiki pages. Agents may publish
-wiki pages when the source grounding is clear and the user/workflow explicitly
-allows publication. Prefer `draft` or `needs_review` for low-confidence,
-speculative, sensitive, or freshness-dependent pages.
+Agents, editors, and admins may create and update wiki pages. Published wiki
+pages must have `reviewStatus: "reviewed"`. Prefer `draft` or `needs_review` for
+low-confidence, speculative, sensitive, or freshness-dependent pages.
 
 Example wiki draft:
 
@@ -370,10 +369,10 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/wikiPages" \
 Posts are reviewed editorial or distribution artifacts. They may be derived from
 sessions, wiki pages, projects, threads, or other source-grounded context.
 
-Agents may publish posts when the user explicitly asks or the workflow is trusted
-for that source. Otherwise, create review drafts. When creating a draft through
-`POST /api/posts`, send `_status: "draft"` or omit `_status`, and omit
-`publishedAt`.
+Agents, editors, and admins can publish posts by role. Operationally, agents
+should create review drafts unless the target environment is clear and the
+source facts are concrete. When creating a draft through `POST /api/posts`, send
+`_status: "draft"` or omit `_status`, and omit `publishedAt`.
 
 Posts support `visibility`: `public`, `authenticated`, `member`, or `admin`.
 Agent accounts may set visibility and may read member-visible content. Do not use

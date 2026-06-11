@@ -279,7 +279,7 @@ const getWikiPageBySlug = async (
         },
         {
           reviewStatus: {
-            not_equals: 'archived',
+            equals: 'reviewed',
           },
         },
       ],

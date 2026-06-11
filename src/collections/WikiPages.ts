@@ -421,6 +421,18 @@ export const WikiPages: CollectionConfig = {
     }),
   ],
   hooks: {
+    beforeChange: [
+      ({ data, originalDoc }) => {
+        const nextStatus = data?._status ?? originalDoc?._status
+        const nextReviewStatus = data?.reviewStatus ?? originalDoc?.reviewStatus
+
+        if (nextStatus === 'published' && nextReviewStatus !== 'reviewed') {
+          throw new APIError('Wiki pages must be reviewed before publishing.', 400)
+        }
+
+        return data
+      },
+    ],
     beforeValidate: [
       ({ data, req }) => {
         if (

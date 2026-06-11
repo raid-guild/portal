@@ -51,9 +51,8 @@ Draft content is not visible through normal portal reads except to `editor` and
 
 Contributor-created posts are forced to `draft`, assigned to the creating user
 as author, and blocked from publishing. Agents may set visibility and publish
-when the user explicitly asks or the automation workflow is trusted for that
-source. Editors and admins remain responsible for deletion and broad editorial
-administration.
+sourced posts by role. Editors and admins remain responsible for deletion and
+broad editorial administration.
 
 ## Admin UI Access
 
