@@ -205,9 +205,20 @@ Rule: freshness-sensitive claims should include dates, observed-at timestamps,
 or review notes. Mark stale or low-confidence pages as `needs_refresh` or
 `needs_review`.
 
-Rule: agents, editors, and admins may create/update wiki pages. Published wiki
-pages must have `reviewStatus = reviewed`. Prefer drafts for speculative or
-low-confidence pages.
+Rule: agents, editors, and admins may create/update wiki pages only through a
+real Payload user session or `Authorization: JWT <token>` returned by
+`/api/users/login`. Workflow-specific service tokens, `x-service-token`, and
+generic bearer service tokens do not satisfy Payload collection access unless a
+custom endpoint explicitly maps them to `req.user`.
+
+Rule: published wiki pages must have `reviewStatus = reviewed`. Prefer drafts
+for speculative or low-confidence pages. Agents must not create or update
+admin-only wiki pages.
+
+Rule: generated wiki artifacts must be normalized before writing: body content
+must be valid Payload Lexical JSON, `prompts` entries need `label` and `prompt`,
+and malformed optional arrays such as `sourceArtifacts` should be omitted rather
+than sent with invalid shapes.
 
 ## comments
 
