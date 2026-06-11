@@ -80,6 +80,7 @@ export interface Config {
     badges: Badge;
     profileBadges: ProfileBadge;
     modules: Module;
+    wikiPages: WikiPage;
     spotlights: Spotlight;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
@@ -118,6 +119,7 @@ export interface Config {
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
+    wikiPages: WikiPagesSelect<false> | WikiPagesSelect<true>;
     spotlights: SpotlightsSelect<false> | SpotlightsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
@@ -1482,6 +1484,120 @@ export interface Module {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wikiPages".
+ */
+export interface WikiPage {
+  id: number;
+  title: string;
+  summary: string;
+  body?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  keyClaims?:
+    | {
+        claim: string;
+        sourceLabel?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  furtherReading?:
+    | {
+        label: string;
+        url?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  papers?:
+    | {
+        label: string;
+        url?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  tools?:
+    | {
+        label: string;
+        url?: string | null;
+        note?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  openQuestions?:
+    | {
+        question: string;
+        id?: string | null;
+      }[]
+    | null;
+  prompts?:
+    | {
+        label: string;
+        prompt: string;
+        id?: string | null;
+      }[]
+    | null;
+  relatedTopics?:
+    | {
+        topic: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Mentioned topic targets that do not yet have reviewed wiki pages. Render as possible, not canonical.
+   */
+  possibleTopics?:
+    | {
+        topic: string;
+        id?: string | null;
+      }[]
+    | null;
+  sourceSessions?: (number | Event)[] | null;
+  relatedPosts?: (number | Post)[] | null;
+  relatedProjects?: (number | Project)[] | null;
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  relatedActivityItems?: (number | ActivityItem)[] | null;
+  sourceArtifacts?:
+    | {
+        label: string;
+        artifactID?: string | null;
+        sourceType?: ('prism' | 'session' | 'post' | 'paper' | 'blog' | 'hackerNews' | 'tool' | 'external') | null;
+        url?: string | null;
+        sourceQuery?: string | null;
+        observedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  reviewStatus: 'generated_draft' | 'needs_review' | 'reviewed' | 'needs_refresh' | 'archived';
+  confidence: 'low' | 'medium' | 'high';
+  lastReviewedAt?: string | null;
+  lastRefreshedAt?: string | null;
+  generatedAt?: string | null;
+  promptVersion?: string | null;
+  model?: string | null;
+  publishedAt?: string | null;
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "spotlights".
  */
 export interface Spotlight {
@@ -1934,6 +2050,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'modules';
         value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'wikiPages';
+        value: number | WikiPage;
       } | null)
     | ({
         relationTo: 'spotlights';
@@ -2660,6 +2780,102 @@ export interface ModulesSelect<T extends boolean = true> {
   slugLock?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wikiPages_select".
+ */
+export interface WikiPagesSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  body?: T;
+  keyClaims?:
+    | T
+    | {
+        claim?: T;
+        sourceLabel?: T;
+        id?: T;
+      };
+  furtherReading?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        note?: T;
+        id?: T;
+      };
+  papers?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        note?: T;
+        id?: T;
+      };
+  tools?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        note?: T;
+        id?: T;
+      };
+  openQuestions?:
+    | T
+    | {
+        question?: T;
+        id?: T;
+      };
+  prompts?:
+    | T
+    | {
+        label?: T;
+        prompt?: T;
+        id?: T;
+      };
+  relatedTopics?:
+    | T
+    | {
+        topic?: T;
+        id?: T;
+      };
+  possibleTopics?:
+    | T
+    | {
+        topic?: T;
+        id?: T;
+      };
+  sourceSessions?: T;
+  relatedPosts?: T;
+  relatedProjects?: T;
+  relatedThreads?: T;
+  relatedProfiles?: T;
+  relatedActivityItems?: T;
+  sourceArtifacts?:
+    | T
+    | {
+        label?: T;
+        artifactID?: T;
+        sourceType?: T;
+        url?: T;
+        sourceQuery?: T;
+        observedAt?: T;
+        id?: T;
+      };
+  reviewStatus?: T;
+  confidence?: T;
+  lastReviewedAt?: T;
+  lastRefreshedAt?: T;
+  generatedAt?: T;
+  promptVersion?: T;
+  model?: T;
+  publishedAt?: T;
+  visibility?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

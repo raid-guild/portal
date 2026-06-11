@@ -39,7 +39,7 @@ Status labels:
 | --- | --- | --- | --- |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
-| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | Planned / future | Depends on reviewed memory/content pipeline and module boundaries. |
+| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; generation remains deferred. |
 
 ## Separate Product Direction
 

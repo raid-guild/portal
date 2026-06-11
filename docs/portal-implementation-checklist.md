@@ -4,9 +4,9 @@
 
 - [x] Add auth roles to `users`.
 - [x] Add reusable access helpers for admin/editor/contributor/member checks.
-- [x] Prevent non-editor users from publishing posts.
+- [x] Prevent contributors and unverified users from publishing posts.
 - [x] Allow contributors to create draft posts through the API.
-- [x] Add public/authenticated/member/admin visibility to posts, with editor/admin review and agent draft visibility support.
+- [x] Add public/authenticated/member/admin visibility to posts, with editor/admin/agent publishing and agent visibility support.
 - [x] Restrict contributors to editing their own drafts.
 - [ ] Add tests for draft creation and publish blocking.
 
@@ -78,7 +78,7 @@
 
 ## Phase 5B: Portal Agent Skill
 
-- [x] Create a `portal-memory-publisher` skill for converting community memory into CMS updates.
+- [x] Create a `portal-ops-skill` for safe Portal API operations and community memory updates.
 - [x] Define the skill's source inputs: Discord summaries, meeting digests, project updates, event notes, and repo activity.
 - [x] Encode the portal primitives in the skill: briefs, projects, threads, activity items, events, and profiles.
 - [x] Add rules for when to create vs update records, especially updating existing threads before creating new ones.
@@ -88,7 +88,8 @@
 - [x] Document the review workflow for agent-proposed CMS updates before publication.
 - [x] Add examples mapping one meeting digest into activity items, threads, event updates, and a daily brief.
 - [x] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
-- [x] Serve the skill from the API at `/api/portal/skills/portal-memory-publisher`.
+- [x] Serve the canonical skill from the API at `/api/portal/skills/portal-ops-skill`.
+- [x] Add `/api/portal/skills` discovery and keep `/api/portal/skills/portal-memory-publisher` as a compatibility alias.
 
 ## Phase 6: External API Hardening
 
@@ -192,15 +193,17 @@
 
 ## Phase 9: Infinite Wiki
 
-- [ ] Add `wikiPages` collection with source audit fields.
-- [ ] Put `wikiPages` in the Payload admin `Modules` group.
-- [ ] Link Infinite Wiki to the module registry or documented module convention.
-- [ ] Add wiki page access rules for reviewed status and visibility.
-- [ ] Add `/wiki` index for published pages.
-- [ ] Add `/wiki/[slug]` detail route with related portal context and sources.
-- [ ] Add possible-topic rendering without presenting possible pages as
+- [x] Add `wikiPages` collection with source audit fields.
+- [x] Put `wikiPages` in the Payload admin `Modules` group.
+- [x] Link Infinite Wiki to the module registry or documented module convention.
+- [x] Add wiki page access rules for reviewed status and visibility.
+- [x] Add `/wiki` index for published pages.
+- [x] Add `/wiki/[slug]` detail route with related portal context and sources.
+- [x] Add possible-topic rendering without presenting possible pages as
       canonical.
-- [ ] Add admin/editor review workflow for generated drafts.
+- [x] Add admin/editor/agent review workflow for generated drafts through
+      Payload admin.
+- [x] Add wiki guidance to the Portal ops skill.
 - [ ] Add Prism-backed generation endpoint or admin action for generated drafts.
 - [ ] Record source queries, source artifacts, prompt version, model, and
       confidence for every generated page.

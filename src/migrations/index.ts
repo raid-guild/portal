@@ -32,6 +32,7 @@ import * as migration_20260601_130000_page_copy from './20260601_130000_page_cop
 import * as migration_20260601_140000_feedback_submissions from './20260601_140000_feedback_submissions'
 import * as migration_20260602_130000_event_resources from './20260602_130000_event_resources'
 import * as migration_20260603_120000_brief_spotlights from './20260603_120000_brief_spotlights'
+import * as migration_20260611_131245_wiki_pages from './20260611_131245_wiki_pages'
 
 export const migrations = [
   {
@@ -203,5 +204,10 @@ export const migrations = [
     up: migration_20260603_120000_brief_spotlights.up,
     down: migration_20260603_120000_brief_spotlights.down,
     name: '20260603_120000_brief_spotlights',
+  },
+  {
+    up: migration_20260611_131245_wiki_pages.up,
+    down: migration_20260611_131245_wiki_pages.down,
+    name: '20260611_131245_wiki_pages',
   },
 ]
