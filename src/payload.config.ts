@@ -45,10 +45,35 @@ import { getServerSideURL } from './utilities/getURL'
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const rootDir = path.resolve(dirname, '..')
-const portalMemoryPublisherSkillDir = path.resolve(
-  rootDir,
-  '.agents/skills/portal-memory-publisher',
-)
+const portalOpsSkillDir = path.resolve(rootDir, '.agents/skills/portal-ops-skill')
+const portalOpsSkill = {
+  aliases: ['portal-memory-publisher'],
+  description:
+    'Operate the Portal CMS safely, including sessions, posts, wiki pages, briefs, projects, copy, and memory updates.',
+  name: 'portal-ops-skill',
+  route: '/api/portal/skills/portal-ops-skill',
+  version: '1',
+}
+
+const getPortalOpsSkillResponse = async () => {
+  const [skill, modelReference, exampleMapping] = await Promise.all([
+    readFile(path.join(portalOpsSkillDir, 'SKILL.md'), 'utf8'),
+    readFile(path.join(portalOpsSkillDir, 'references/portal-cms-model.md'), 'utf8'),
+    readFile(path.join(portalOpsSkillDir, 'references/example-digest-mapping.md'), 'utf8'),
+  ])
+
+  return Response.json({
+    aliases: portalOpsSkill.aliases,
+    description: portalOpsSkill.description,
+    name: portalOpsSkill.name,
+    version: portalOpsSkill.version,
+    files: {
+      'SKILL.md': skill,
+      'references/portal-cms-model.md': modelReference,
+      'references/example-digest-mapping.md': exampleMapping,
+    },
+  })
+}
 
 export default buildConfig({
   admin: {
@@ -158,31 +183,23 @@ export default buildConfig({
       },
     },
     {
-      path: '/portal/skills/portal-memory-publisher',
+      path: '/portal/skills',
       method: 'get',
       handler: async () => {
-        const [skill, modelReference, exampleMapping] = await Promise.all([
-          readFile(path.join(portalMemoryPublisherSkillDir, 'SKILL.md'), 'utf8'),
-          readFile(
-            path.join(portalMemoryPublisherSkillDir, 'references/portal-cms-model.md'),
-            'utf8',
-          ),
-          readFile(
-            path.join(portalMemoryPublisherSkillDir, 'references/example-digest-mapping.md'),
-            'utf8',
-          ),
-        ])
-
         return Response.json({
-          name: 'portal-memory-publisher',
-          version: '1',
-          files: {
-            'SKILL.md': skill,
-            'references/portal-cms-model.md': modelReference,
-            'references/example-digest-mapping.md': exampleMapping,
-          },
+          skills: [portalOpsSkill],
         })
       },
+    },
+    {
+      path: '/portal/skills/portal-ops-skill',
+      method: 'get',
+      handler: getPortalOpsSkillResponse,
+    },
+    {
+      path: '/portal/skills/portal-memory-publisher',
+      method: 'get',
+      handler: getPortalOpsSkillResponse,
     },
   ],
   secret: process.env.PAYLOAD_SECRET,

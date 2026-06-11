@@ -210,7 +210,7 @@ The editorial publishing flow is:
 
 - contributors can create draft posts through the API
 - contributors can edit their own drafts
-- agents can set visibility on their own draft posts for automation workflows
+- agents can set visibility and publish sourced posts for trusted automation workflows
 - editors and admins can review, set visibility, publish, and delete
 - public users can only read published content
 

@@ -1,13 +1,15 @@
 ---
-name: portal-memory-publisher
-description: Convert Discord summaries, meeting digests, community memory, project updates, event notes, or repo activity into reviewable Payload CMS update proposals for the RaidGuild portal. Use when Codex needs to update or propose updates for briefs, projects, threads, activity items, events/sessions, or profiles from real community activity while avoiding invented content and project-management drift.
+name: portal-ops-skill
+description: Operate the RaidGuild Portal through safe Payload API workflows. Use when an agent needs to discover Portal CMS primitives, create or update sessions, posts, wiki pages, briefs, projects, threads, activity items, profiles, spotlights, CMS-managed page copy, or source-grounded memory updates while avoiding invented content and project-management drift.
 ---
 
-# Portal Memory Publisher
+# Portal Ops Skill
 
 ## Operating Rule
 
-Convert observed community memory into portal records. Do not invent activity, project state, people, dates, links, or decisions.
+Use the Portal as the presentation and coordination layer for real community
+activity. Do not invent activity, project state, people, dates, links,
+sources, claims, or decisions.
 
 Default to a reviewable update plan. Write directly to Payload only when the user explicitly asks and the target environment is clear.
 
@@ -23,6 +25,9 @@ Use this skill for:
 - event/session notes
 - repo activity summaries
 - community memory rollups
+- content or wiki research packets
+- CMS-managed copy changes
+- session resources, comments, and artifact updates
 
 If the input lacks timestamps, participants, or sources, preserve uncertainty and draft the record instead of publishing it.
 
@@ -38,6 +43,7 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 - `dailyBriefs`: assembled current snapshot; what matters now.
 - `profiles`: people/contributors; who is involved.
 - `spotlights`: admin/editorial placement for what should be front and center.
+- `wikiPages`: durable, source-backed topic pages; what the community has learned.
 
 ## Workflow
 
@@ -48,7 +54,8 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 5. Create activity items for specific dated events, decisions, blockers, insights, or contributions.
 6. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
 7. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
-8. Output a reviewable plan with create/update operations and confidence.
+8. Create or update wiki pages only when the source supports durable topic knowledge, not transient recap content.
+9. Output a reviewable plan with create/update operations and confidence.
 
 ## Agent Account Flow
 
@@ -80,7 +87,10 @@ curl -c cookies.txt -X POST "$PORTAL_URL/api/users/login" \
 
 Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /api/users/me`.
 
-Agent accounts are contributor-level publishers. They may create draft/proposal records from sourced memory, but they must not publish, delete, manage users, or impersonate humans.
+Agent accounts are trusted automation identities. They may create sourced drafts
+and, where collection access allows, publish clear factual records when the user
+explicitly asks or the workflow is trusted for that source. They must not
+delete, manage users, or impersonate humans.
 
 ## Event Creation And Discord Sync
 
@@ -259,16 +269,115 @@ Featured spotlights may have no expiry. Announcements should usually have
 `expiresAt`, especially when they point to an event or deadline. Do not invent
 urgency, deadlines, or participation claims to justify a spotlight.
 
-## Post Draft Creation
+## Wiki Page Creation
 
-Agent-created posts are review drafts. When writing posts through `POST /api/posts`,
-send `_status: "draft"` or omit `_status`, and omit `publishedAt`. A `publishedAt`
-date does not publish the post; only an editor or admin should publish through
-Payload review.
+Use `wikiPages` for durable, source-backed knowledge pages. A session can spark
+the page, but the wiki page is allowed to include broader evidence from Prism,
+papers, official docs, HN/blog signal, tools, and other external sources.
+
+Good wiki candidates:
+
+- technical topic deep dives
+- further reading packs
+- dated latest-signal briefs
+- prompt packs
+- research maps
+- evergreen practice notes
+
+Do not use wiki pages for simple session recaps, announcements, private notes,
+or generic SEO content.
+
+Key fields:
+
+- `title`
+- `slug`
+- `summary`
+- `body`
+- `sourceSessions`: sessions/events that sparked or support the page
+- `relatedPosts`: posts derived from or related to the page
+- `relatedProjects`, `relatedThreads`, `relatedProfiles`,
+  `relatedActivityItems`
+- `keyClaims`: claim ledger entries with source labels
+- `furtherReading`, `papers`, `tools`
+- `openQuestions`
+- `prompts`
+- `relatedTopics`
+- `possibleTopics`: candidate page links that are not yet canonical
+- `sourceArtifacts`: source links/artifacts with `sourceType`, `url`,
+  `sourceQuery`, and `observedAt`
+- `reviewStatus`: `generated_draft`, `needs_review`, `reviewed`,
+  `needs_refresh`, or `archived`
+- `confidence`: `low`, `medium`, or `high`
+- `lastReviewedAt`, `lastRefreshedAt`, `generatedAt`, `promptVersion`, `model`
+- `visibility`: `public`, `authenticated`, `member`, or `admin`
+- `_status`: `draft` or `published`
+
+Recommended research workflow:
+
+1. `topic-intake`: pick one narrow technical question from a session or source.
+2. `source-scan`: gather Prism memory, papers, official docs, HN/blog/news, and
+   product/tool sources.
+3. `claim-ledger`: separate session claims, external claims, opinions, and
+   speculation.
+4. `synthesis`: write a focused deep dive, not a recap.
+5. `reading-pack`: attach annotated further reading.
+6. `review`: date freshness-sensitive claims and check citations.
+7. `publish`: optionally publish the reviewed wiki page or create a derived post.
+
+Agents, editors, and admins may create and update wiki pages. Agents may publish
+wiki pages when the source grounding is clear and the user/workflow explicitly
+allows publication. Prefer `draft` or `needs_review` for low-confidence,
+speculative, sensitive, or freshness-dependent pages.
+
+Example wiki draft:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/wikiPages" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Planning Loops and Agent Coordinators",
+    "slug": "planning-loops-and-agent-coordinators",
+    "summary": "A source-backed topic page on planning loops, agent coordination, and current research signals.",
+    "visibility": "public",
+    "reviewStatus": "needs_review",
+    "confidence": "medium",
+    "_status": "draft",
+    "keyClaims": [
+      {
+        "claim": "Planning loops need observable checkpoints so humans can inspect intermediate agent reasoning and state.",
+        "sourceLabel": "Session 49 plus external docs scan"
+      }
+    ],
+    "sourceArtifacts": [
+      {
+        "label": "Session 49 summary",
+        "sourceType": "session",
+        "url": "https://example.com/session-summary",
+        "sourceQuery": "planning loops agent coordinators"
+      }
+    ],
+    "possibleTopics": [
+      {
+        "topic": "Context engineering"
+      }
+    ],
+    "body": { "root": { "type": "root", "children": [] } }
+  }'
+```
+
+## Post Creation
+
+Posts are reviewed editorial or distribution artifacts. They may be derived from
+sessions, wiki pages, projects, threads, or other source-grounded context.
+
+Agents may publish posts when the user explicitly asks or the workflow is trusted
+for that source. Otherwise, create review drafts. When creating a draft through
+`POST /api/posts`, send `_status: "draft"` or omit `_status`, and omit
+`publishedAt`.
 
 Posts support `visibility`: `public`, `authenticated`, `member`, or `admin`.
-Agent accounts may set visibility and may read member-visible content, but they
-must not use `member` unless the source material is meant for confirmed members.
+Agent accounts may set visibility and may read member-visible content. Do not use
+`member` unless the source material is meant for confirmed members.
 
 Do not use draft/autosave query params or version endpoints for normal agent
 post proposals. Use the canonical collection endpoint:
@@ -461,6 +570,28 @@ Create new records when the source introduces a distinct real object:
 - new thread that will likely recur
 - new dated activity item
 - new scheduled session
+
+## Skill Discovery
+
+Agents can discover available Portal skills through:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills"
+```
+
+Fetch this skill directly through:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills/portal-ops-skill"
+```
+
+The legacy alias remains available for older agents:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills/portal-memory-publisher"
+```
+
+Prefer the canonical `portal-ops-skill` name in new workflows.
 
 ## Output Format
 

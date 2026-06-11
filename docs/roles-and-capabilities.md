@@ -11,8 +11,9 @@ identity metadata on `profiles`.
 - `contributor`: baseline authenticated contributor. Can access the admin UI
   and create draft editorial content.
 - `member`: confirmed RaidGuild member. Can view member-only portal content.
-- `agent`: automation or trusted agent identity. Can contribute draft content
-  and view member-level non-admin portal content.
+- `agent`: automation or trusted agent identity. Can create and publish sourced
+  content where collection access allows, and view member-level non-admin portal
+  content.
 - `editor`: editorial reviewer. Can read, edit, publish, and delete editorial
   content.
 - `admin`: system administrator. Can manage users, roles, and all editorial
@@ -45,13 +46,14 @@ Draft content is not visible through normal portal reads except to `editor` and
 | Edit own post drafts | no | no | yes | no | yes | yes | yes |
 | Edit any post | no | no | no | no | no | yes | yes |
 | Set post visibility | no | no | no | no | yes | yes | yes |
-| Publish posts | no | no | no | no | no | yes | yes |
+| Publish posts | no | no | no | no | yes | yes | yes |
 | Delete posts | no | no | no | no | no | yes | yes |
 
-Contributor-created and agent-created posts are forced to `draft`, assigned to
-the creating user as author, and blocked from publishing. Agents may set
-visibility on their drafts for automation workflows, but editors and admins are
-responsible for final publishing and deletion.
+Contributor-created posts are forced to `draft`, assigned to the creating user
+as author, and blocked from publishing. Agents may set visibility and publish
+when the user explicitly asks or the automation workflow is trusted for that
+source. Editors and admins remain responsible for deletion and broad editorial
+administration.
 
 ## Admin UI Access
 
