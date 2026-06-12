@@ -1,8 +1,27 @@
 import type { CollectionConfig } from 'payload'
 
 import { deleteModules, manageModules, readVisibleModules } from '@/access/modules'
+import { authRoleOptions } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
+
+const envKeyPattern = /^[A-Z][A-Z0-9_]*$/
+
+const validateEnvKey = (value: unknown): true | string => {
+  if (!value) return true
+
+  return typeof value === 'string' && envKeyPattern.test(value)
+    ? true
+    : 'Use an uppercase environment variable key such as CRM_MODULE_LAUNCH_SECRET.'
+}
+
+const validateTTL = (value: unknown): true | string => {
+  if (value == null) return true
+
+  return typeof value === 'number' && Number.isFinite(value) && value >= 30 && value <= 600
+    ? true
+    : 'Launch token TTL must be between 30 and 600 seconds.'
+}
 
 export const Modules: CollectionConfig = {
   slug: 'modules',
@@ -135,6 +154,137 @@ export const Modules: CollectionConfig = {
         description: 'Member-facing route when the module has a usable surface.',
       },
       validate: (value) => validateSafeURL(value, { allowRelative: true }),
+    },
+    {
+      name: 'moduleKind',
+      type: 'select',
+      admin: {
+        description: 'Internal modules open Portal routes. External modules launch another app.',
+        position: 'sidebar',
+      },
+      defaultValue: 'internal',
+      index: true,
+      options: [
+        {
+          label: 'Internal',
+          value: 'internal',
+        },
+        {
+          label: 'External',
+          value: 'external',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'authMode',
+      type: 'select',
+      admin: {
+        description: 'Signed launch redirects through Portal and hands off a short-lived token.',
+        position: 'sidebar',
+      },
+      defaultValue: 'none',
+      index: true,
+      options: [
+        {
+          label: 'None',
+          value: 'none',
+        },
+        {
+          label: 'Signed launch',
+          value: 'signed_launch',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'externalCallbackURL',
+      type: 'text',
+      admin: {
+        description: 'HTTPS callback URL that receives the launch token.',
+      },
+      validate: (value) =>
+        validateSafeURL(value, { allowRelative: false, protocols: ['https:'] }),
+    },
+    {
+      name: 'launchSecretEnvKey',
+      type: 'text',
+      admin: {
+        description: 'Environment variable key containing this module launch signing secret.',
+      },
+      validate: validateEnvKey,
+    },
+    {
+      name: 'launchAudience',
+      type: 'text',
+      admin: {
+        description: 'Audience claim expected by the external app. Defaults to the module slug.',
+      },
+    },
+    {
+      name: 'launchTokenTTLSeconds',
+      type: 'number',
+      admin: {
+        description: 'Short-lived launch token TTL. Keep this low.',
+      },
+      defaultValue: 120,
+      validate: validateTTL,
+    },
+    {
+      name: 'launchRequiredRoles',
+      type: 'select',
+      admin: {
+        description: 'Optional additional user roles required to launch this external module.',
+      },
+      hasMany: true,
+      options: authRoleOptions,
+    },
+    {
+      name: 'includeEmailInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include the user email claim in signed launch tokens.',
+      },
+      defaultValue: true,
+    },
+    {
+      name: 'includeRolesInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include Portal auth roles in signed launch tokens.',
+      },
+      defaultValue: true,
+    },
+    {
+      name: 'includeProfileInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include the linked Portal profile ID/name when one exists.',
+      },
+      defaultValue: true,
+    },
+    {
+      name: 'includeHandleInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include the linked public profile handle when one exists.',
+      },
+      defaultValue: true,
+    },
+    {
+      name: 'includeAvatarInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include a public avatar URL when the linked profile has one.',
+      },
+      defaultValue: false,
+    },
+    {
+      name: 'integrationNotes',
+      type: 'textarea',
+      admin: {
+        description: 'Internal notes for the external app integration.',
+      },
     },
     {
       name: 'adminRoute',
