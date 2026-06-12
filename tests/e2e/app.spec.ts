@@ -1,11 +1,13 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 
 import {
   adminEmail,
   adminPassword,
   agentRegistrationSecret,
   commentText,
+  externalModuleLaunchSecret,
   payloadSecret,
   seededPosts,
   targetPost,
@@ -2714,6 +2716,9 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   const explorerSkillSlug = `explorer-skill-${moduleSuffix}`
   const explorerProfileHandle = `graph-profile-${moduleSuffix}`
   const explorerProfileName = `Graph Profile ${moduleSuffix}`
+  const externalModuleSlug = `external-e2e-module-${moduleSuffix}`
+  const externalModuleAudience = `external-e2e-audience-${moduleSuffix}`
+  const externalModuleCallbackURL = `https://external.example.com/portal/callback/${moduleSuffix}`
   const archivedModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: 'Archived E2E Module',
@@ -2725,6 +2730,44 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
     },
   })
   expect(archivedModuleResponse.status()).toBe(201)
+
+  const invalidExternalModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: `Invalid External E2E Module ${moduleSuffix}`,
+      slug: `invalid-external-e2e-module-${moduleSuffix}`,
+      summary: 'A signed external module missing required launch configuration.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: true,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+    },
+  })
+  expect(invalidExternalModuleResponse.status()).toBe(400)
+
+  const externalModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'External E2E Module',
+      slug: externalModuleSlug,
+      summary: 'An external module that should launch through a signed Portal token.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: true,
+      featured: true,
+      sortOrder: 10,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+      externalCallbackURL: externalModuleCallbackURL,
+      launchAudience: externalModuleAudience,
+      launchSecretEnvKey: 'E2E_EXTERNAL_MODULE_LAUNCH_SECRET',
+      launchTokenTTLSeconds: 120,
+      includeEmailInLaunch: true,
+      includeRolesInLaunch: true,
+      includeProfileInLaunch: true,
+      includeHandleInLaunch: true,
+    },
+  })
+  expect(externalModuleResponse.status()).toBe(201)
 
   const explorerRoleResponse = await adminPage.request.post('/api/profileRoles', {
     data: {
@@ -2780,6 +2823,14 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
   await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
 
+  const publicLaunchResponse = await publicPage.request.get(
+    `/api/modules/${externalModuleSlug}/launch`,
+    {
+      maxRedirects: 0,
+    },
+  )
+  expect(publicLaunchResponse.status()).toBe(401)
+
   await publicPage.goto('/portal-graph')
   await expect(publicPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
@@ -2796,12 +2847,37 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
+  await expect(adminPage.getByText('External E2E Module')).toBeVisible()
+  await expect(adminPage.getByText('External app')).toBeVisible()
+  await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
   await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
   await expect(adminPage.getByText('Bounty Board')).toBeVisible()
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
   await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(2)
+
+  const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
+    maxRedirects: 0,
+  })
+  expect(launchResponse.status()).toBe(302)
+  const location = launchResponse.headers().location
+  expect(location).toBeTruthy()
+  const redirectURL = new URL(location!)
+  expect(`${redirectURL.origin}${redirectURL.pathname}`).toBe(externalModuleCallbackURL)
+  const launchToken = redirectURL.searchParams.get('token')
+  expect(launchToken).toBeTruthy()
+  const launchClaims = jwt.verify(launchToken!, externalModuleLaunchSecret, {
+    algorithms: ['HS256'],
+    audience: externalModuleAudience,
+  }) as jwt.JwtPayload
+  expect(launchClaims.typ).toBe('portal_module_launch')
+  expect(launchClaims.moduleSlug).toBe(externalModuleSlug)
+  expect(launchClaims.email).toBe(adminEmail)
+  expect(launchClaims.roles).toContain('admin')
+  expect(launchClaims.sub).toMatch(/^user:/)
+  expect(launchClaims.userID).toBeTruthy()
 
   await adminPage.goto('/portal-graph')
   await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()

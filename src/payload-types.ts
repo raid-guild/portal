@@ -1437,6 +1437,58 @@ export interface Module {
    */
   entryRoute?: string | null;
   /**
+   * Internal modules open Portal routes. External modules launch another app.
+   */
+  moduleKind: 'internal' | 'external';
+  /**
+   * Signed launch redirects through Portal and hands off a short-lived token.
+   */
+  authMode: 'none' | 'signed_launch';
+  /**
+   * HTTPS callback URL that receives the launch token.
+   */
+  externalCallbackURL?: string | null;
+  /**
+   * Environment variable key containing this module launch signing secret.
+   */
+  launchSecretEnvKey?: string | null;
+  /**
+   * Audience claim expected by the external app. Defaults to the module slug.
+   */
+  launchAudience?: string | null;
+  /**
+   * Short-lived launch token TTL. Keep this low.
+   */
+  launchTokenTTLSeconds?: number | null;
+  /**
+   * Optional additional user roles required to launch this external module.
+   */
+  launchRequiredRoles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent' | 'unverified')[] | null;
+  /**
+   * Include the user email claim in signed launch tokens.
+   */
+  includeEmailInLaunch?: boolean | null;
+  /**
+   * Include Portal auth roles in signed launch tokens.
+   */
+  includeRolesInLaunch?: boolean | null;
+  /**
+   * Include the linked Portal profile ID/name when one exists.
+   */
+  includeProfileInLaunch?: boolean | null;
+  /**
+   * Include the linked public profile handle when one exists.
+   */
+  includeHandleInLaunch?: boolean | null;
+  /**
+   * Include a public avatar URL when the linked profile has one.
+   */
+  includeAvatarInLaunch?: boolean | null;
+  /**
+   * Internal notes for the external app integration.
+   */
+  integrationNotes?: string | null;
+  /**
    * Optional admin route for managing module-owned records.
    */
   adminRoute?: string | null;
@@ -2753,6 +2805,19 @@ export interface ModulesSelect<T extends boolean = true> {
   featured?: T;
   sortOrder?: T;
   entryRoute?: T;
+  moduleKind?: T;
+  authMode?: T;
+  externalCallbackURL?: T;
+  launchSecretEnvKey?: T;
+  launchAudience?: T;
+  launchTokenTTLSeconds?: T;
+  launchRequiredRoles?: T;
+  includeEmailInLaunch?: T;
+  includeRolesInLaunch?: T;
+  includeProfileInLaunch?: T;
+  includeHandleInLaunch?: T;
+  includeAvatarInLaunch?: T;
+  integrationNotes?: T;
   adminRoute?: T;
   specURL?: T;
   repositoryURL?: T;

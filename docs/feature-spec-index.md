@@ -55,6 +55,7 @@ Status labels:
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Implementation checklist](./portal-implementation-checklist.md)
+- [External module integration guide](./external-module-integration-guide.md)
 - [Prism / Portal memory handoff](./prism-portal-memory-handoff.md)
 - [Portal launch announcement draft](./portal-launch-announcement-draft.md)
 

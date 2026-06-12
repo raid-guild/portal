@@ -11,6 +11,8 @@ export const databaseURL =
   `postgres://${postgresUser}:${postgresPassword}@127.0.0.1:${postgresPort}/${postgresDb}`
 
 export const payloadSecret = process.env.PAYLOAD_SECRET ?? 'playwright-secret'
+export const externalModuleLaunchSecret =
+  process.env.E2E_EXTERNAL_MODULE_LAUNCH_SECRET ?? 'playwright-external-module-secret'
 
 export const adminEmail = 'admin@example.com'
 export const adminPassword = 'ChangeMe123!'
