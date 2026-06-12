@@ -12,6 +12,11 @@ See also:
 - [External module launch auth spec](./external-module-launch-auth-feature-spec.md)
 - [Portal modules spec](./modules-feature-spec.md)
 
+Walkthrough videos:
+
+- [External module intro](https://youtu.be/9eGhCHzFWGE)
+- [External module change request flow](https://youtu.be/Pud9YJ5_CCI)
+
 ## Portal Configuration
 
 Create or update a `modules` record in Payload:
