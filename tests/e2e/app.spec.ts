@@ -424,6 +424,7 @@ async function verifyPublicHome(page: Page) {
   await expect(
     page.getByRole('heading', { name: 'A digital coworking space for builders' }),
   ).toBeVisible()
+  await expect(page.getByText('hello demo')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByText('Bringing a project or bounty?')).toBeVisible()
   await expect(page.getByRole('link', { name: 'Sponsor an opportunity' })).toBeVisible()

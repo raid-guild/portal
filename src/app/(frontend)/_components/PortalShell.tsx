@@ -119,6 +119,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
             <p className="mb-4 portal-kicker">{copy.eyebrow}</p>
             <h1 className="mb-6 portal-title-lg">{copy.headline}</h1>
             <p className="max-w-2xl text-lg leading-8 text-muted-foreground">{copy.intro}</p>
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">hello demo</p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Button asChild size="lg">
                 <Link href="/join">
