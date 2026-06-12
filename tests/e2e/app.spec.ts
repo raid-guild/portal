@@ -2731,6 +2731,20 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   })
   expect(archivedModuleResponse.status()).toBe(201)
 
+  const invalidExternalModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: `Invalid External E2E Module ${moduleSuffix}`,
+      slug: `invalid-external-e2e-module-${moduleSuffix}`,
+      summary: 'A signed external module missing required launch configuration.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: true,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+    },
+  })
+  expect(invalidExternalModuleResponse.status()).toBe(400)
+
   const externalModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: 'External E2E Module',

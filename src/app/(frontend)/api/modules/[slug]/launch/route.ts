@@ -34,6 +34,8 @@ const DEFAULT_LAUNCH_TTL_SECONDS = 120
 const MAX_LAUNCH_TTL_SECONDS = 600
 const MIN_LAUNCH_TTL_SECONDS = 30
 
+const getLaunchIssuer = (): string => getServerSideURL().replace(/\/+$/, '')
+
 export async function GET(_request: Request, { params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
@@ -171,7 +173,7 @@ const signLaunchToken = ({
   secret: string
   user: User
 }): string => {
-  const issuer = getServerSideURL()
+  const issuer = getLaunchIssuer()
   const audience = module.launchAudience?.trim() || module.slug || String(module.id)
   const ttlSeconds = normalizeTTL(module.launchTokenTTLSeconds)
   const claims: LaunchTokenPayload = {
@@ -221,7 +223,7 @@ const getMediaURL = (media: number | Media | null | undefined): string | undefin
   if (!media || typeof media !== 'object' || !media.url) return undefined
 
   if (media.url.startsWith('/')) {
-    return `${getServerSideURL()}${media.url}`
+    return `${getLaunchIssuer()}${media.url}`
   }
 
   return toSafeURL(media.url, { allowRelative: false, protocols: ['http:', 'https:'] }) || undefined

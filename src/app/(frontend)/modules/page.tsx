@@ -189,7 +189,11 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {moduleRoute ? (
+        {launchRoute ? (
+          <a className="portal-admin-link" href={launchRoute}>
+            {moduleActionLabel}
+          </a>
+        ) : moduleRoute ? (
           <Link className="portal-admin-link" href={moduleRoute}>
             {moduleActionLabel}
           </Link>

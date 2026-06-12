@@ -7,7 +7,33 @@ import { validateSafeURL } from '@/utilities/safeURL'
 
 const envKeyPattern = /^[A-Z][A-Z0-9_]*$/
 
-const validateEnvKey = (value: unknown): true | string => {
+const isSignedExternalLaunch = (siblingData: unknown): boolean =>
+  typeof siblingData === 'object' &&
+  siblingData !== null &&
+  'moduleKind' in siblingData &&
+  'authMode' in siblingData &&
+  siblingData.moduleKind === 'external' &&
+  siblingData.authMode === 'signed_launch'
+
+const validateExternalCallbackURL = (
+  value: unknown,
+  { siblingData }: { siblingData?: unknown } = {},
+): true | string => {
+  if (isSignedExternalLaunch(siblingData) && !value) {
+    return 'External signed-launch modules require an HTTPS callback URL.'
+  }
+
+  return validateSafeURL(value, { allowRelative: false, protocols: ['https:'] })
+}
+
+const validateEnvKey = (
+  value: unknown,
+  { siblingData }: { siblingData?: unknown } = {},
+): true | string => {
+  if (isSignedExternalLaunch(siblingData) && !value) {
+    return 'External signed-launch modules require a launch secret environment key.'
+  }
+
   if (!value) return true
 
   return typeof value === 'string' && envKeyPattern.test(value)
@@ -203,8 +229,7 @@ export const Modules: CollectionConfig = {
       admin: {
         description: 'HTTPS callback URL that receives the launch token.',
       },
-      validate: (value) =>
-        validateSafeURL(value, { allowRelative: false, protocols: ['https:'] }),
+      validate: validateExternalCallbackURL,
     },
     {
       name: 'launchSecretEnvKey',
