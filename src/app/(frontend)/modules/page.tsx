@@ -134,6 +134,16 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
   const owners = relationDocs<Profile>(module.owners)
   const sourceProject = relationDoc<Project>(module.sourceProject)
   const entryRoute = toSafeURL(module.entryRoute, { allowRelative: true })
+  const launchRoute =
+    module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug
+      ? `/api/modules/${module.slug}/launch`
+      : null
+  const moduleRoute = launchRoute || entryRoute
+  const moduleActionLabel = launchRoute
+    ? 'Launch app'
+    : module.moduleKind === 'external'
+      ? 'Open app'
+      : 'Open module'
   const specURL = toSafeURL(module.specURL, { allowRelative: true })
   const repositoryURL = toSafeURL(module.repositoryURL, { allowRelative: true })
 
@@ -170,12 +180,22 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
               .join(', ')}
           </p>
         ) : null}
+        {module.moduleKind === 'external' ? (
+          <p>
+            <span className="font-medium">External app</span>
+            {launchRoute ? <span className="text-muted-foreground"> - Uses Portal sign-in</span> : null}
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
-        {entryRoute ? (
-          <Link className="portal-admin-link" href={entryRoute}>
-            Open module
+        {launchRoute ? (
+          <a className="portal-admin-link" href={launchRoute}>
+            {moduleActionLabel}
+          </a>
+        ) : moduleRoute ? (
+          <Link className="portal-admin-link" href={moduleRoute}>
+            {moduleActionLabel}
           </Link>
         ) : (
           <span className="portal-pill">Coming soon</span>

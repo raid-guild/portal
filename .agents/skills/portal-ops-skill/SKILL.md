@@ -87,6 +87,41 @@ curl -c cookies.txt -X POST "$PORTAL_URL/api/users/login" \
 
 Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /api/users/me`.
 
+For automated workflows that are configured with Portal credentials, map the
+instance's environment variables into these values before making Payload
+requests:
+
+- `PORTAL_URL`: base URL for the Payload CMS/Portal instance
+- `PORTAL_EMAIL`: email for the Portal automation user
+- `PORTAL_PASSWORD`: password for the Portal automation user
+
+Some Prism instances use names such as `PAYLOAD_CMS_BASE_URL`,
+`PAYLOAD_CMS_EMAIL`, and `PAYLOAD_CMS_PASSWORD`; others may use different names.
+Use the configured values for the instance. The credentials must resolve to a
+Payload user with an allowed role for the target collection, usually `agent`,
+`editor`, or `admin`.
+
+If a workflow prefers bearer auth, log in first and use the returned token as a
+Payload JWT:
+
+```bash
+LOGIN_RESPONSE="$(curl -sS -X POST "$PORTAL_URL/api/users/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "'"$PORTAL_EMAIL"'",
+    "password": "'"$PORTAL_PASSWORD"'"
+  }')"
+
+PAYLOAD_JWT="$(printf '%s' "$LOGIN_RESPONSE" | jq -r '.token')"
+
+curl -H "Authorization: JWT $PAYLOAD_JWT" "$PORTAL_URL/api/users/me"
+```
+
+Do not use Prism service tokens, site service tokens, `x-service-token`, or
+generic bearer service tokens for normal Payload collection writes. Payload
+collection access checks require `req.user`; service tokens that are not
+converted into a Payload user session will fail with `403`.
+
 Agent accounts are trusted automation identities. Where collection access
 allows, they can create and publish sourced records. Operationally, prefer
 review drafts unless the target environment is clear and the source facts are
@@ -324,9 +359,97 @@ Recommended research workflow:
 6. `review`: date freshness-sensitive claims and check citations.
 7. `publish`: optionally publish the reviewed wiki page or create a derived post.
 
-Agents, editors, and admins may create and update wiki pages. Published wiki
-pages must have `reviewStatus: "reviewed"`. Prefer `draft` or `needs_review` for
-low-confidence, speculative, sensitive, or freshness-dependent pages.
+Agents, editors, and admins may create and update wiki pages. Wiki writes must
+use a real Payload user session or `Authorization: JWT <token>` from
+`/api/users/login`; unauthenticated requests and generic service-token requests
+will be rejected by collection access.
+
+Published wiki pages must have `reviewStatus: "reviewed"`. Prefer `draft` or
+`needs_review` for low-confidence, speculative, sensitive, or
+freshness-dependent pages. Agents must not create or update wiki pages with
+`visibility: "admin"`.
+
+Before `POST` or `PATCH /api/wikiPages`, normalize generated artifacts to the
+live schema:
+
+- Convert Markdown or prose bodies into valid Payload Lexical JSON with real
+  structure. Section titles must be Lexical `heading` nodes, bullets must be
+  `list` / `listitem` nodes, and article text should be paragraph nodes.
+- Ensure each `prompts` item has both `label` and `prompt`.
+- Ensure `sourceArtifacts` entries use the live fields: `label`, optional
+  `artifactID`, `sourceType`, `url`, `sourceQuery`, and `observedAt`.
+- Omit malformed optional arrays rather than sending invalid shapes.
+- If publishing, set both `_status: "published"` and
+  `reviewStatus: "reviewed"` after the human approval gate.
+- After publishing, verify the public `/wiki/<slug>` route returns `200`.
+- If auth, schema validation, or public verification fails, save a blocked
+  artifact and leave the workflow blocked or failed. Do not close it as
+  successful.
+
+Do not flatten wiki pages into one paragraph per Markdown line. Before
+publishing, inspect `body.root.children`:
+
+- Section headings such as `Definition`, `Current State`, `Further Reading`, or
+  `Open Questions` must not be plain paragraph nodes.
+- Consecutive short items after a colon should usually become a bullet list.
+- A body where almost every node is `paragraph` should be treated as a failed
+  conversion unless the source truly contains no headings or lists.
+- If the converter cannot preserve heading/list structure, block the publish
+  step and save a conversion error artifact.
+
+Minimal Lexical structure examples:
+
+```json
+{
+  "type": "heading",
+  "tag": "h2",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "text",
+      "text": "Definition",
+      "detail": 0,
+      "format": 0,
+      "mode": "normal",
+      "style": "",
+      "version": 1
+    }
+  ]
+}
+```
+
+```json
+{
+  "type": "list",
+  "tag": "ul",
+  "listType": "bullet",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "listitem",
+      "value": 1,
+      "format": "",
+      "indent": 0,
+      "version": 1,
+      "children": [
+        {
+          "type": "text",
+          "text": "Contact records and relationship context",
+          "detail": 0,
+          "format": 0,
+          "mode": "normal",
+          "style": "",
+          "version": 1
+        }
+      ]
+    }
+  ]
+}
+```
 
 Example wiki draft:
 
@@ -360,6 +483,24 @@ curl -b cookies.txt -X POST "$PORTAL_URL/api/wikiPages" \
         "topic": "Context engineering"
       }
     ],
+    "body": { "root": { "type": "root", "children": [] } }
+  }'
+```
+
+Example reviewed wiki publish with Payload JWT auth:
+
+```bash
+curl -X POST "$PORTAL_URL/api/wikiPages" \
+  -H "Authorization: JWT $PAYLOAD_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "AI and Open Source Security in the Agentic Coding Era",
+    "slug": "ai-and-open-source-security-agentic-coding-era",
+    "summary": "A source-backed topic page on open source security concerns in agentic coding workflows.",
+    "visibility": "public",
+    "reviewStatus": "reviewed",
+    "confidence": "medium",
+    "_status": "published",
     "body": { "root": { "type": "root", "children": [] } }
   }'
 ```
