@@ -1,10 +1,10 @@
 import type { CollectionBeforeChangeHook } from 'payload'
 
-import { canEditContent } from '@/access/roles'
+import { canPublishContent } from '@/access/roles'
 
 export const enforcePostWorkflow: CollectionBeforeChangeHook = ({ data, operation, req }) => {
   if (!req.user) return data
-  if (canEditContent(req.user)) return data
+  if (canPublishContent(req.user)) return data
 
   const nextData = {
     ...data,
@@ -18,7 +18,7 @@ export const enforcePostWorkflow: CollectionBeforeChangeHook = ({ data, operatio
   nextData.publishedAt = undefined
 
   if (nextData._status === 'published') {
-    throw new Error('Only editors and admins can publish posts.')
+    throw new Error('Only editors, admins, and agents can publish posts.')
   }
 
   return nextData

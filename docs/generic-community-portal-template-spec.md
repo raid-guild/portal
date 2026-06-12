@@ -190,7 +190,7 @@ Recommended split:
 
 ```txt
 .agents/skills/community-memory-publisher/
-.agents/skills/portal-memory-publisher/
+.agents/skills/portal-ops-skill/
 ```
 
 Generic skill:

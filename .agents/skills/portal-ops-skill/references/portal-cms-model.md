@@ -8,7 +8,7 @@ Use these Payload collections and fields when producing reviewable update plans.
 - `editor`: can publish/edit content.
 - `contributor`: human contributor; can create drafts/proposals.
 - `member`: authenticated member; can participate/read authenticated content.
-- `agent`: automated contributor; use for machine-authored draft/proposal updates.
+- `agent`: trusted automation identity; use for machine-authored sourced updates.
 
 Rule: automated publishers should use `agent` accounts, not human contributor accounts.
 
@@ -146,12 +146,81 @@ Key fields:
 - `publishedAt`
 - `_status`
 
-Rule: agent-created posts should be drafts. Omit `publishedAt` unless an editor
-or admin is publishing the post.
+Rule: agents, editors, and admins can publish posts by role. Operationally,
+agents should create drafts unless the target environment is clear and the
+source facts are concrete.
 
 Rule: use `meta.image` for the cover/header image. Use a Lexical `mediaBlock`
 with a Payload media ID for images that should appear inline in the article body.
 Markdown image syntax is not rendered as an inline image.
+
+## wikiPages
+
+Purpose: durable, source-backed topic pages distilled from sessions, posts,
+projects, community memory, and external research.
+
+Key fields:
+
+- `title`
+- `slug`
+- `summary`
+- `body`
+- `sourceSessions`
+- `relatedPosts`
+- `relatedProjects`
+- `relatedThreads`
+- `relatedProfiles`
+- `relatedActivityItems`
+- `keyClaims`
+- `furtherReading`
+- `papers`
+- `tools`
+- `openQuestions`
+- `prompts`
+- `relatedTopics`
+- `possibleTopics`
+- `sourceArtifacts`
+- `reviewStatus`: `generated_draft`, `needs_review`, `reviewed`,
+  `needs_refresh`, `archived`
+- `confidence`: `low`, `medium`, `high`
+- `lastReviewedAt`
+- `lastRefreshedAt`
+- `generatedAt`
+- `promptVersion`
+- `model`
+- `visibility`: `public`, `authenticated`, `member`, `admin`
+- `_status`
+
+Rule: use wiki pages for evergreen or research-backed topic knowledge, not
+simple recaps, announcements, or generic content.
+
+Rule: a session can be the spark for a wiki page, but the evidence boundary may
+include external papers, docs, HN/blog signal, tools, Prism memory, and other
+source artifacts.
+
+Rule: use `possibleTopics` for topic links that may deserve future pages but are
+not yet canonical.
+
+Rule: freshness-sensitive claims should include dates, observed-at timestamps,
+or review notes. Mark stale or low-confidence pages as `needs_refresh` or
+`needs_review`.
+
+Rule: agents, editors, and admins may create/update wiki pages only through a
+real Payload user session or `Authorization: JWT <token>` returned by
+`/api/users/login`. Workflow-specific service tokens, `x-service-token`, and
+generic bearer service tokens do not satisfy Payload collection access unless a
+custom endpoint explicitly maps them to `req.user`.
+
+Rule: published wiki pages must have `reviewStatus = reviewed`. Prefer drafts
+for speculative or low-confidence pages. Agents must not create or update
+admin-only wiki pages.
+
+Rule: generated wiki artifacts must be normalized before writing: body content
+must be valid Payload Lexical JSON, `prompts` entries need `label` and `prompt`,
+and malformed optional arrays such as `sourceArtifacts` should be omitted rather
+than sent with invalid shapes. Valid body content must preserve article
+structure: section titles should be `heading` nodes and bullet/numbered content
+should be `list` and `listitem` nodes, not one paragraph per Markdown line.
 
 ## comments
 

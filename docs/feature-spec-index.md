@@ -39,8 +39,9 @@ Status labels:
 | --- | --- | --- | --- |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
-| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | Planned / future | Depends on reviewed memory/content pipeline and module boundaries. |
 | External CRM | [External CRM module and Portal identity](./external-crm-module-identity-spec.md) | Planned / future | Portal remains profile/role authority; CRM is an external module with future launch-token SSO. |
+| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; generation remains deferred. |
+| External module launch auth | [External module launch auth](./external-module-launch-auth-feature-spec.md) | Planned / future | Signed launch handoff for external apps while Portal remains identity/profile source of truth. |
 
 ## Separate Product Direction
 
@@ -55,6 +56,7 @@ Status labels:
 - [Roles and capabilities](./roles-and-capabilities.md)
 - [Contributor guidelines](./contributor-guidelines.md)
 - [Implementation checklist](./portal-implementation-checklist.md)
+- [External module integration guide](./external-module-integration-guide.md)
 - [Prism / Portal memory handoff](./prism-portal-memory-handoff.md)
 - [Portal launch announcement draft](./portal-launch-announcement-draft.md)
 

@@ -6,6 +6,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
@@ -20,6 +21,7 @@ import type {
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { SessionDateTime } from '../../_components/SessionDateTime'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,15 +33,6 @@ type Args = {
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
-
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
 
 const formatDate = (date?: string | null) => {
   if (!date) return null
@@ -172,7 +165,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
           </div>
           <h1 className="portal-title mt-5">{event.title}</h1>
           {!isPast && event.summary ? (
-            <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
+            <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
               {event.summary}
             </p>
           ) : null}
@@ -180,9 +173,12 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
         <aside className="border border-border bg-card/30 p-5">
           <p className="portal-kicker">Session</p>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            {formatDateTime(event.startsAt)}
-          </p>
+          <SessionDateTime
+            className="mt-3 block text-sm leading-6 text-muted-foreground"
+            dateStyle="full"
+            endsAt={event.endsAt}
+            startsAt={event.startsAt}
+          />
           {event.locationLabel ? (
             <p className="mt-3 text-sm text-muted-foreground">{event.locationLabel}</p>
           ) : null}
@@ -213,7 +209,9 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
       {isPast && event.summary ? (
         <Section title="Session Notes">
-          <p className="max-w-3xl text-base leading-7 text-muted-foreground">{event.summary}</p>
+          <p className="max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
+            {event.summary}
+          </p>
         </Section>
       ) : null}
 
@@ -273,19 +271,19 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
       {canViewFullDetails && (isPast || posts.length) ? (
         <Section title="Derived Posts">
           {posts.length ? (
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-8">
               {groupPosts(posts).map(([contentType, group]) => (
-                <div className="border border-border bg-card/20 p-5" key={contentType}>
+                <div key={contentType}>
                   <p className="portal-kicker">{contentTypeLabels[contentType] || contentType}</p>
-                  <div className="mt-4 grid gap-3">
+                  <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {group.map((post) => (
-                      <Link
-                        className="portal-link text-base"
-                        href={`/posts/${post.slug}`}
+                      <Card
+                        className="h-full"
+                        doc={post}
                         key={post.id}
-                      >
-                        {post.title}
-                      </Link>
+                        relationTo="posts"
+                        showCategories={false}
+                      />
                     ))}
                   </div>
                 </div>

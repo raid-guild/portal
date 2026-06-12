@@ -22,6 +22,7 @@ import type {
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { SessionDateTime } from '../../_components/SessionDateTime'
 import { getProfileIDForUser, isProjectStewardProfile } from '../formData'
 
 export const dynamic = 'force-dynamic'
@@ -32,15 +33,6 @@ type Args = {
   }>
 }
 
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
-
 const formatDate = (date?: string | null) => {
   if (!date) return null
 
@@ -48,6 +40,15 @@ const formatDate = (date?: string | null) => {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
+  }).format(new Date(date))
+}
+
+const formatDateTime = (date?: string | null) => {
+  if (!date) return null
+
+  return new Intl.DateTimeFormat('en', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
   }).format(new Date(date))
 }
 
@@ -227,9 +228,12 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
                 {events.map((event) => (
                   <article className="portal-card" key={event.id}>
                     <h3 className="font-bold">{event.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                      {formatDateTime(event.startsAt)}
-                    </p>
+                    <SessionDateTime
+                      className="mt-2 block text-sm text-muted-foreground"
+                      dateStyle="medium"
+                      endsAt={event.endsAt}
+                      startsAt={event.startsAt}
+                    />
                     {event.locationLabel ? (
                       <p className="mt-1 text-sm text-muted-foreground">{event.locationLabel}</p>
                     ) : null}

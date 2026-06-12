@@ -1,11 +1,13 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 
 import {
   adminEmail,
   adminPassword,
   agentRegistrationSecret,
   commentText,
+  externalModuleLaunchSecret,
   payloadSecret,
   seededPosts,
   targetPost,
@@ -987,6 +989,24 @@ async function verifyMemberOnlyProjectVisibility(
   const agentDraftBody = await agentDraftResponse.json()
   expect(agentDraftBody.doc?.visibility || agentDraftBody.visibility).toBe('member')
   expect(agentDraftBody.doc?._status || agentDraftBody._status).toBe('draft')
+
+  const agentPublishedSuffix = Date.now()
+  const agentPublishedResponse = await agentPage.request.post('/api/posts', {
+    data: {
+      title: 'Agent published visibility post',
+      slug: `agent-published-visibility-post-${agentPublishedSuffix}`,
+      content: lexicalContent('Agent-authored published post.'),
+      publishedAt: new Date().toISOString(),
+      visibility: 'member',
+      _status: 'published',
+    },
+  })
+
+  expect(agentPublishedResponse.status()).toBe(201)
+  const agentPublishedBody = await agentPublishedResponse.json()
+  expect(agentPublishedBody.doc?.visibility || agentPublishedBody.visibility).toBe('member')
+  expect(agentPublishedBody.doc?._status || agentPublishedBody._status).toBe('published')
+  await verifyAgentWikiPublish(agentPage, publicPage)
   await agentContext.close()
 
   const editorContext = await browser.newContext()
@@ -1012,6 +1032,90 @@ async function verifyMemberOnlyProjectVisibility(
   expect(editorDraftBody.doc?.visibility || editorDraftBody.visibility).toBe('member')
   expect(editorDraftBody.doc?._status || editorDraftBody._status).toBe('draft')
   await editorContext.close()
+}
+
+async function verifyAgentWikiPublish(agentPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Agent Published Wiki ${suffix}`
+  const slug = `agent-published-wiki-${suffix}`
+  const claim = `Agent-authored wiki claim ${suffix}`
+  const possibleTopic = `Possible wiki topic ${suffix}`
+
+  const response = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title,
+      slug,
+      summary: 'A source-backed wiki page published by an agent role.',
+      body: lexicalContent('Agent-published wiki body.'),
+      keyClaims: [
+        {
+          claim,
+          sourceLabel: 'E2E source',
+        },
+      ],
+      possibleTopics: [
+        {
+          topic: possibleTopic,
+        },
+      ],
+      sourceArtifacts: [
+        {
+          label: 'E2E artifact',
+          sourceType: 'external',
+          url: 'https://example.com/wiki-source',
+        },
+      ],
+      lastReviewedAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+      reviewStatus: 'reviewed',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+  const body = await response.json()
+  expect(body.doc?._status || body._status).toBe('published')
+
+  const adminVisibilityResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Admin Wiki ${suffix}`,
+      slug: `agent-admin-wiki-${suffix}`,
+      summary: 'Agents should not be able to create admin-only wiki pages.',
+      visibility: 'admin',
+      _status: 'draft',
+    },
+  })
+
+  expect(adminVisibilityResponse.status()).toBe(403)
+
+  const unreviewedPublishResponse = await agentPage.request.post('/api/wikiPages', {
+    data: {
+      title: `Agent Unreviewed Published Wiki ${suffix}`,
+      slug: `agent-unreviewed-published-wiki-${suffix}`,
+      summary: 'Published wiki pages must be reviewed first.',
+      body: lexicalContent('Unreviewed wiki body.'),
+      publishedAt: new Date().toISOString(),
+      reviewStatus: 'needs_review',
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+
+  expect(unreviewedPublishResponse.status()).toBe(400)
+
+  await publicPage.goto('/wiki')
+  await expect(publicPage.getByRole('heading', { exact: true, name: 'Wiki' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: title })).toBeVisible()
+
+  await publicPage.goto(`/wiki/${slug}`)
+  await expect(publicPage.getByRole('heading', { name: title })).toBeVisible()
+  await expect(publicPage.getByText(claim)).toBeVisible()
+  await expect(publicPage.getByText(possibleTopic)).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Open source' })).toHaveAttribute(
+    'href',
+    'https://example.com/wiki-source',
+  )
 }
 
 async function verifyBadgesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
@@ -1812,21 +1916,66 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
-  const response = await page.request.get('/api/portal/skills/portal-memory-publisher')
+  const discoveryResponse = await page.request.get('/api/portal/skills')
+
+  expect(discoveryResponse.ok()).toBeTruthy()
+
+  const discoveryBody = await discoveryResponse.json()
+  expect(discoveryBody.skills).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        aliases: expect.arrayContaining(['portal-memory-publisher']),
+        name: 'portal-ops-skill',
+        route: '/api/portal/skills/portal-ops-skill',
+      }),
+    ]),
+  )
+
+  const response = await page.request.get('/api/portal/skills/portal-ops-skill')
 
   expect(response.ok()).toBeTruthy()
 
   const body = await response.json()
 
-  expect(body.name).toBe('portal-memory-publisher')
-  expect(body.files['SKILL.md']).toContain('Portal Memory Publisher')
+  expect(body.name).toBe('portal-ops-skill')
+  expect(body.aliases).toContain('portal-memory-publisher')
+  expect(body.files['SKILL.md']).toContain('Portal Ops Skill')
+  expect(body.files['SKILL.md']).toContain('Wiki Page Creation')
   expect(body.files['references/portal-cms-model.md']).toContain('activityItems')
+  expect(body.files['references/portal-cms-model.md']).toContain('wikiPages')
   expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
+
+  const aliasResponse = await page.request.get('/api/portal/skills/portal-memory-publisher')
+  expect(aliasResponse.ok()).toBeTruthy()
+  expect((await aliasResponse.json()).name).toBe('portal-ops-skill')
 }
 
 async function verifyAgentRegistrationFlow(page: Page) {
   const email = 'portal-memory-agent@example.com'
   const password = 'PlaywrightAgentSecret123!'
+
+  const missingSecretResponse = await page.request.post('/api/agent/register', {
+    data: {
+      email: `missing-secret-${email}`,
+      name: 'Missing Secret Agent',
+      password,
+    },
+  })
+
+  expect(missingSecretResponse.status()).toBe(401)
+
+  const invalidSecretResponse = await page.request.post('/api/agent/register', {
+    data: {
+      email: `invalid-secret-${email}`,
+      name: 'Invalid Secret Agent',
+      password,
+    },
+    headers: {
+      Authorization: 'Bearer wrong-secret',
+    },
+  })
+
+  expect(invalidSecretResponse.status()).toBe(401)
 
   const registerResponse = await page.request.post('/api/agent/register', {
     data: {
@@ -1897,7 +2046,7 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   const email = `inquiry-${suffix}@example.com`
 
   await publicPage.goto('/join')
-  await expect(publicPage.getByRole('link', { name: 'Talk to the guild' })).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Not sure yet?' })).toBeVisible()
 
   await publicPage.goto('/inquire/general?utm_source=e2e&utm_medium=test&utm_campaign=funnel')
   await expect(publicPage.getByRole('heading', { name: 'Talk to the guild.' })).toBeVisible()
@@ -2079,7 +2228,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
   await expect(sidebar.getByRole('link', { name: 'Profiles' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Media' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Users' })).toHaveCount(0)
-  await expect(sidebar.getByRole('link', { name: 'Pages' })).toHaveCount(0)
+  await expect(sidebar.getByRole('link', { name: 'Pages' })).toBeVisible()
   await expect(sidebar.getByRole('link', { name: 'Redirects' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Forms' })).toHaveCount(0)
   await expect(sidebar.getByRole('link', { name: 'Form Submissions' })).toHaveCount(0)
@@ -2567,6 +2716,9 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   const explorerSkillSlug = `explorer-skill-${moduleSuffix}`
   const explorerProfileHandle = `graph-profile-${moduleSuffix}`
   const explorerProfileName = `Graph Profile ${moduleSuffix}`
+  const externalModuleSlug = `external-e2e-module-${moduleSuffix}`
+  const externalModuleAudience = `external-e2e-audience-${moduleSuffix}`
+  const externalModuleCallbackURL = `https://external.example.com/portal/callback/${moduleSuffix}`
   const archivedModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: 'Archived E2E Module',
@@ -2578,6 +2730,44 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
     },
   })
   expect(archivedModuleResponse.status()).toBe(201)
+
+  const invalidExternalModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: `Invalid External E2E Module ${moduleSuffix}`,
+      slug: `invalid-external-e2e-module-${moduleSuffix}`,
+      summary: 'A signed external module missing required launch configuration.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: true,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+    },
+  })
+  expect(invalidExternalModuleResponse.status()).toBe(400)
+
+  const externalModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'External E2E Module',
+      slug: externalModuleSlug,
+      summary: 'An external module that should launch through a signed Portal token.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: true,
+      featured: true,
+      sortOrder: 10,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+      externalCallbackURL: externalModuleCallbackURL,
+      launchAudience: externalModuleAudience,
+      launchSecretEnvKey: 'E2E_EXTERNAL_MODULE_LAUNCH_SECRET',
+      launchTokenTTLSeconds: 120,
+      includeEmailInLaunch: true,
+      includeRolesInLaunch: true,
+      includeProfileInLaunch: true,
+      includeHandleInLaunch: true,
+    },
+  })
+  expect(externalModuleResponse.status()).toBe(201)
 
   const explorerRoleResponse = await adminPage.request.post('/api/profileRoles', {
     data: {
@@ -2633,6 +2823,14 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
   await expect(publicPage.getByText('Infinite Wiki')).toHaveCount(0)
 
+  const publicLaunchResponse = await publicPage.request.get(
+    `/api/modules/${externalModuleSlug}/launch`,
+    {
+      maxRedirects: 0,
+    },
+  )
+  expect(publicLaunchResponse.status()).toBe(401)
+
   await publicPage.goto('/portal-graph')
   await expect(publicPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Join to explore' })).toBeVisible()
@@ -2649,12 +2847,37 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
+  await expect(adminPage.getByText('External E2E Module')).toBeVisible()
+  await expect(adminPage.getByText('External app')).toBeVisible()
+  await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
   await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
   await expect(adminPage.getByText('Bounty Board')).toBeVisible()
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
-  await expect(adminPage.getByText('Coming soon')).toHaveCount(3)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(1)
+  await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(2)
+
+  const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
+    maxRedirects: 0,
+  })
+  expect(launchResponse.status()).toBe(302)
+  const location = launchResponse.headers().location
+  expect(location).toBeTruthy()
+  const redirectURL = new URL(location!)
+  expect(`${redirectURL.origin}${redirectURL.pathname}`).toBe(externalModuleCallbackURL)
+  const launchToken = redirectURL.searchParams.get('token')
+  expect(launchToken).toBeTruthy()
+  const launchClaims = jwt.verify(launchToken!, externalModuleLaunchSecret, {
+    algorithms: ['HS256'],
+    audience: externalModuleAudience,
+  }) as jwt.JwtPayload
+  expect(launchClaims.typ).toBe('portal_module_launch')
+  expect(launchClaims.moduleSlug).toBe(externalModuleSlug)
+  expect(launchClaims.email).toBe(adminEmail)
+  expect(launchClaims.roles).toContain('admin')
+  expect(launchClaims.sub).toMatch(/^user:/)
+  expect(launchClaims.userID).toBeTruthy()
 
   await adminPage.goto('/portal-graph')
   await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()

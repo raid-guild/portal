@@ -1,13 +1,15 @@
 ---
-name: portal-memory-publisher
-description: Convert Discord summaries, meeting digests, community memory, project updates, event notes, or repo activity into reviewable Payload CMS update proposals for the RaidGuild portal. Use when Codex needs to update or propose updates for briefs, projects, threads, activity items, events/sessions, or profiles from real community activity while avoiding invented content and project-management drift.
+name: portal-ops-skill
+description: Operate the RaidGuild Portal through safe Payload API workflows. Use when an agent needs to discover Portal CMS primitives, create or update sessions, posts, wiki pages, briefs, projects, threads, activity items, profiles, spotlights, CMS-managed page copy, or source-grounded memory updates while avoiding invented content and project-management drift.
 ---
 
-# Portal Memory Publisher
+# Portal Ops Skill
 
 ## Operating Rule
 
-Convert observed community memory into portal records. Do not invent activity, project state, people, dates, links, or decisions.
+Use the Portal as the presentation and coordination layer for real community
+activity. Do not invent activity, project state, people, dates, links,
+sources, claims, or decisions.
 
 Default to a reviewable update plan. Write directly to Payload only when the user explicitly asks and the target environment is clear.
 
@@ -23,6 +25,9 @@ Use this skill for:
 - event/session notes
 - repo activity summaries
 - community memory rollups
+- content or wiki research packets
+- CMS-managed copy changes
+- session resources, comments, and artifact updates
 
 If the input lacks timestamps, participants, or sources, preserve uncertainty and draft the record instead of publishing it.
 
@@ -38,6 +43,7 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 - `dailyBriefs`: assembled current snapshot; what matters now.
 - `profiles`: people/contributors; who is involved.
 - `spotlights`: admin/editorial placement for what should be front and center.
+- `wikiPages`: durable, source-backed topic pages; what the community has learned.
 
 ## Workflow
 
@@ -48,7 +54,8 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 5. Create activity items for specific dated events, decisions, blockers, insights, or contributions.
 6. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
 7. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
-8. Output a reviewable plan with create/update operations and confidence.
+8. Create or update wiki pages only when the source supports durable topic knowledge, not transient recap content.
+9. Output a reviewable plan with create/update operations and confidence.
 
 ## Agent Account Flow
 
@@ -80,7 +87,45 @@ curl -c cookies.txt -X POST "$PORTAL_URL/api/users/login" \
 
 Use `-b cookies.txt` for subsequent API requests. Verify the session with `GET /api/users/me`.
 
-Agent accounts are contributor-level publishers. They may create draft/proposal records from sourced memory, but they must not publish, delete, manage users, or impersonate humans.
+For automated workflows that are configured with Portal credentials, map the
+instance's environment variables into these values before making Payload
+requests:
+
+- `PORTAL_URL`: base URL for the Payload CMS/Portal instance
+- `PORTAL_EMAIL`: email for the Portal automation user
+- `PORTAL_PASSWORD`: password for the Portal automation user
+
+Some Prism instances use names such as `PAYLOAD_CMS_BASE_URL`,
+`PAYLOAD_CMS_EMAIL`, and `PAYLOAD_CMS_PASSWORD`; others may use different names.
+Use the configured values for the instance. The credentials must resolve to a
+Payload user with an allowed role for the target collection, usually `agent`,
+`editor`, or `admin`.
+
+If a workflow prefers bearer auth, log in first and use the returned token as a
+Payload JWT:
+
+```bash
+LOGIN_RESPONSE="$(curl -sS -X POST "$PORTAL_URL/api/users/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "'"$PORTAL_EMAIL"'",
+    "password": "'"$PORTAL_PASSWORD"'"
+  }')"
+
+PAYLOAD_JWT="$(printf '%s' "$LOGIN_RESPONSE" | jq -r '.token')"
+
+curl -H "Authorization: JWT $PAYLOAD_JWT" "$PORTAL_URL/api/users/me"
+```
+
+Do not use Prism service tokens, site service tokens, `x-service-token`, or
+generic bearer service tokens for normal Payload collection writes. Payload
+collection access checks require `req.user`; service tokens that are not
+converted into a Payload user session will fail with `403`.
+
+Agent accounts are trusted automation identities. Where collection access
+allows, they can create and publish sourced records. Operationally, prefer
+review drafts unless the target environment is clear and the source facts are
+concrete. Agents must not delete, manage users, or impersonate humans.
 
 ## Event Creation And Discord Sync
 
@@ -259,16 +304,220 @@ Featured spotlights may have no expiry. Announcements should usually have
 `expiresAt`, especially when they point to an event or deadline. Do not invent
 urgency, deadlines, or participation claims to justify a spotlight.
 
-## Post Draft Creation
+## Wiki Page Creation
 
-Agent-created posts are review drafts. When writing posts through `POST /api/posts`,
-send `_status: "draft"` or omit `_status`, and omit `publishedAt`. A `publishedAt`
-date does not publish the post; only an editor or admin should publish through
-Payload review.
+Use `wikiPages` for durable, source-backed knowledge pages. A session can spark
+the page, but the wiki page is allowed to include broader evidence from Prism,
+papers, official docs, HN/blog signal, tools, and other external sources.
+
+Good wiki candidates:
+
+- technical topic deep dives
+- further reading packs
+- dated latest-signal briefs
+- prompt packs
+- research maps
+- evergreen practice notes
+
+Do not use wiki pages for simple session recaps, announcements, private notes,
+or generic SEO content.
+
+Key fields:
+
+- `title`
+- `slug`
+- `summary`
+- `body`
+- `sourceSessions`: sessions/events that sparked or support the page
+- `relatedPosts`: posts derived from or related to the page
+- `relatedProjects`, `relatedThreads`, `relatedProfiles`,
+  `relatedActivityItems`
+- `keyClaims`: claim ledger entries with source labels
+- `furtherReading`, `papers`, `tools`
+- `openQuestions`
+- `prompts`
+- `relatedTopics`
+- `possibleTopics`: candidate page links that are not yet canonical
+- `sourceArtifacts`: source links/artifacts with `sourceType`, `url`,
+  `sourceQuery`, and `observedAt`
+- `reviewStatus`: `generated_draft`, `needs_review`, `reviewed`,
+  `needs_refresh`, or `archived`
+- `confidence`: `low`, `medium`, or `high`
+- `lastReviewedAt`, `lastRefreshedAt`, `generatedAt`, `promptVersion`, `model`
+- `visibility`: `public`, `authenticated`, `member`, or `admin`
+- `_status`: `draft` or `published`
+
+Recommended research workflow:
+
+1. `topic-intake`: pick one narrow technical question from a session or source.
+2. `source-scan`: gather Prism memory, papers, official docs, HN/blog/news, and
+   product/tool sources.
+3. `claim-ledger`: separate session claims, external claims, opinions, and
+   speculation.
+4. `synthesis`: write a focused deep dive, not a recap.
+5. `reading-pack`: attach annotated further reading.
+6. `review`: date freshness-sensitive claims and check citations.
+7. `publish`: optionally publish the reviewed wiki page or create a derived post.
+
+Agents, editors, and admins may create and update wiki pages. Wiki writes must
+use a real Payload user session or `Authorization: JWT <token>` from
+`/api/users/login`; unauthenticated requests and generic service-token requests
+will be rejected by collection access.
+
+Published wiki pages must have `reviewStatus: "reviewed"`. Prefer `draft` or
+`needs_review` for low-confidence, speculative, sensitive, or
+freshness-dependent pages. Agents must not create or update wiki pages with
+`visibility: "admin"`.
+
+Before `POST` or `PATCH /api/wikiPages`, normalize generated artifacts to the
+live schema:
+
+- Convert Markdown or prose bodies into valid Payload Lexical JSON with real
+  structure. Section titles must be Lexical `heading` nodes, bullets must be
+  `list` / `listitem` nodes, and article text should be paragraph nodes.
+- Ensure each `prompts` item has both `label` and `prompt`.
+- Ensure `sourceArtifacts` entries use the live fields: `label`, optional
+  `artifactID`, `sourceType`, `url`, `sourceQuery`, and `observedAt`.
+- Omit malformed optional arrays rather than sending invalid shapes.
+- If publishing, set both `_status: "published"` and
+  `reviewStatus: "reviewed"` after the human approval gate.
+- After publishing, verify the public `/wiki/<slug>` route returns `200`.
+- If auth, schema validation, or public verification fails, save a blocked
+  artifact and leave the workflow blocked or failed. Do not close it as
+  successful.
+
+Do not flatten wiki pages into one paragraph per Markdown line. Before
+publishing, inspect `body.root.children`:
+
+- Section headings such as `Definition`, `Current State`, `Further Reading`, or
+  `Open Questions` must not be plain paragraph nodes.
+- Consecutive short items after a colon should usually become a bullet list.
+- A body where almost every node is `paragraph` should be treated as a failed
+  conversion unless the source truly contains no headings or lists.
+- If the converter cannot preserve heading/list structure, block the publish
+  step and save a conversion error artifact.
+
+Minimal Lexical structure examples:
+
+```json
+{
+  "type": "heading",
+  "tag": "h2",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "text",
+      "text": "Definition",
+      "detail": 0,
+      "format": 0,
+      "mode": "normal",
+      "style": "",
+      "version": 1
+    }
+  ]
+}
+```
+
+```json
+{
+  "type": "list",
+  "tag": "ul",
+  "listType": "bullet",
+  "format": "",
+  "indent": 0,
+  "version": 1,
+  "children": [
+    {
+      "type": "listitem",
+      "value": 1,
+      "format": "",
+      "indent": 0,
+      "version": 1,
+      "children": [
+        {
+          "type": "text",
+          "text": "Contact records and relationship context",
+          "detail": 0,
+          "format": 0,
+          "mode": "normal",
+          "style": "",
+          "version": 1
+        }
+      ]
+    }
+  ]
+}
+```
+
+Example wiki draft:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/wikiPages" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Planning Loops and Agent Coordinators",
+    "slug": "planning-loops-and-agent-coordinators",
+    "summary": "A source-backed topic page on planning loops, agent coordination, and current research signals.",
+    "visibility": "public",
+    "reviewStatus": "needs_review",
+    "confidence": "medium",
+    "_status": "draft",
+    "keyClaims": [
+      {
+        "claim": "Planning loops need observable checkpoints so humans can inspect intermediate agent reasoning and state.",
+        "sourceLabel": "Session 49 plus external docs scan"
+      }
+    ],
+    "sourceArtifacts": [
+      {
+        "label": "Session 49 summary",
+        "sourceType": "session",
+        "url": "https://example.com/session-summary",
+        "sourceQuery": "planning loops agent coordinators"
+      }
+    ],
+    "possibleTopics": [
+      {
+        "topic": "Context engineering"
+      }
+    ],
+    "body": { "root": { "type": "root", "children": [] } }
+  }'
+```
+
+Example reviewed wiki publish with Payload JWT auth:
+
+```bash
+curl -X POST "$PORTAL_URL/api/wikiPages" \
+  -H "Authorization: JWT $PAYLOAD_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "AI and Open Source Security in the Agentic Coding Era",
+    "slug": "ai-and-open-source-security-agentic-coding-era",
+    "summary": "A source-backed topic page on open source security concerns in agentic coding workflows.",
+    "visibility": "public",
+    "reviewStatus": "reviewed",
+    "confidence": "medium",
+    "_status": "published",
+    "body": { "root": { "type": "root", "children": [] } }
+  }'
+```
+
+## Post Creation
+
+Posts are reviewed editorial or distribution artifacts. They may be derived from
+sessions, wiki pages, projects, threads, or other source-grounded context.
+
+Agents, editors, and admins can publish posts by role. Operationally, agents
+should create review drafts unless the target environment is clear and the
+source facts are concrete. When creating a draft through `POST /api/posts`, send
+`_status: "draft"` or omit `_status`, and omit `publishedAt`.
 
 Posts support `visibility`: `public`, `authenticated`, `member`, or `admin`.
-Agent accounts may set visibility and may read member-visible content, but they
-must not use `member` unless the source material is meant for confirmed members.
+Agent accounts may set visibility and may read member-visible content. Do not use
+`member` unless the source material is meant for confirmed members.
 
 Do not use draft/autosave query params or version endpoints for normal agent
 post proposals. Use the canonical collection endpoint:
@@ -461,6 +710,28 @@ Create new records when the source introduces a distinct real object:
 - new thread that will likely recur
 - new dated activity item
 - new scheduled session
+
+## Skill Discovery
+
+Agents can discover available Portal skills through:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills"
+```
+
+Fetch this skill directly through:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills/portal-ops-skill"
+```
+
+The legacy alias remains available for older agents:
+
+```bash
+curl "$PORTAL_URL/api/portal/skills/portal-memory-publisher"
+```
+
+Prefer the canonical `portal-ops-skill` name in new workflows.
 
 ## Output Format
 
