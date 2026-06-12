@@ -101,6 +101,11 @@ Module: Infinite Wiki
 - Module ratings, comments, or public proposals.
 - Cross-module dependency management.
 
+External app launch and auth handoff should follow the separate
+[External module launch auth](./external-module-launch-auth-feature-spec.md)
+spec. The recommended first pattern is a short-lived signed launch token, not a
+full OAuth/OIDC provider.
+
 ## Recommended User Surface
 
 Route:
@@ -197,6 +202,10 @@ a complete runtime feature flag.
 
 `entryRoute` should point to the module's actual product surface. It does not
 need to be nested under `/modules`.
+
+For external app modules, future fields should distinguish normal internal
+routes from signed launch handoffs. Do not overload `entryRoute` with secrets or
+raw auth tokens.
 
 ## Payload Admin Grouping
 
