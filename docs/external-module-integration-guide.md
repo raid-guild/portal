@@ -92,6 +92,10 @@ Current token shape:
 Only configured optional claims are included. Do not assume `email`, `roles`,
 `profileID`, `handle`, or `picture` are always present.
 
+If a module is configured with `includeEmailInLaunch`, Portal requires the
+user's account email to be verified before issuing a launch token. This prevents
+external apps from treating an unverified email address as trusted identity.
+
 ## Verification Requirements
 
 The external app must verify:
