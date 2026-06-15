@@ -2710,7 +2710,7 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('link', { name: 'Modules' })).toBeVisible()
 }
 
-async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
+async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
   const moduleSuffix = Date.now()
   const explorerRoleSlug = `explorer-role-${moduleSuffix}`
   const explorerSkillSlug = `explorer-skill-${moduleSuffix}`
@@ -2719,6 +2719,8 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
   const externalModuleSlug = `external-e2e-module-${moduleSuffix}`
   const externalModuleAudience = `external-e2e-audience-${moduleSuffix}`
   const externalModuleCallbackURL = `https://external.example.com/portal/callback/${moduleSuffix}`
+  const unverifiedLaunchEmail = `external-launch-unverified-${moduleSuffix}@example.com`
+  const unverifiedLaunchPassword = 'Password123!'
   const archivedModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: 'Archived E2E Module',
@@ -2768,6 +2770,28 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
     },
   })
   expect(externalModuleResponse.status()).toBe(201)
+
+  const adminMeResponse = await adminPage.request.get('/api/users/me')
+  expect(adminMeResponse.ok()).toBeTruthy()
+  const adminMe = await adminMeResponse.json()
+  const adminUserID = adminMe.user?.id || adminMe.id
+  expect(adminUserID).toBeTruthy()
+  const verifyAdminResponse = await adminPage.request.patch(`/api/users/${adminUserID}`, {
+    data: {
+      emailVerifiedAt: new Date().toISOString(),
+    },
+  })
+  expect(verifyAdminResponse.ok()).toBeTruthy()
+
+  const unverifiedLaunchUserResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email: unverifiedLaunchEmail,
+      name: 'Unverified External Launch User',
+      password: unverifiedLaunchPassword,
+      roles: ['contributor'],
+    },
+  })
+  expect(unverifiedLaunchUserResponse.status()).toBe(201)
 
   const explorerRoleResponse = await adminPage.request.post('/api/profileRoles', {
     data: {
@@ -2830,6 +2854,18 @@ async function verifyModulesFeature(adminPage: Page, publicPage: Page) {
     },
   )
   expect(publicLaunchResponse.status()).toBe(401)
+
+  const unverifiedContext = await browser.newContext()
+  const unverifiedPage = await unverifiedContext.newPage()
+  await loginPortalUser(unverifiedPage, unverifiedLaunchEmail, unverifiedLaunchPassword)
+  const unverifiedLaunchResponse = await unverifiedPage.request.get(
+    `/api/modules/${externalModuleSlug}/launch`,
+    {
+      maxRedirects: 0,
+    },
+  )
+  expect(unverifiedLaunchResponse.status()).toBe(403)
+  await unverifiedContext.close()
 
   await publicPage.goto('/portal-graph')
   await expect(publicPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()
@@ -3463,7 +3499,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicContext = await browser.newContext()
   const publicPage = await publicContext.newPage()
 
-  await verifyModulesFeature(page, publicPage)
+  await verifyModulesFeature(page, browser, publicPage)
   await verifyPublicHome(publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)

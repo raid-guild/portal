@@ -63,6 +63,13 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     return Response.json({ message: 'You do not have permission to launch this module.' }, { status: 403 })
   }
 
+  if (module.includeEmailInLaunch && !user.emailVerifiedAt) {
+    return Response.json(
+      { message: 'Verify your email before launching this module.' },
+      { status: 403 },
+    )
+  }
+
   const callbackURL = toSafeURL(module.externalCallbackURL, {
     allowRelative: false,
     protocols: ['https:'],
@@ -186,7 +193,7 @@ const signLaunchToken = ({
     userID: user.id,
   }
 
-  if (module.includeEmailInLaunch && user.email) {
+  if (module.includeEmailInLaunch && user.emailVerifiedAt && user.email) {
     claims.email = user.email
   }
 
