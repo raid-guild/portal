@@ -37,9 +37,16 @@ export const Card: React.FC<{
       className={cn('portal-card overflow-hidden hover:cursor-pointer', className)}
       ref={card.ref}
     >
-      <div className="relative w-full ">
-        {!metaImage && <div className="">No image</div>}
-        {metaImage && typeof metaImage !== 'string' && <Media resource={metaImage} size="33vw" />}
+      <div className="relative aspect-[1200/630] w-full overflow-hidden border-b border-border bg-muted/30">
+        {metaImage && typeof metaImage !== 'string' && (
+          <Media
+            className="h-full w-full"
+            imgClassName="block h-full w-full object-cover"
+            resource={metaImage}
+            size="33vw"
+            videoClassName="h-full w-full object-cover"
+          />
+        )}
       </div>
       <div className="p-4">
         <PostVisibilityBadge className="mb-4" visibility={visibility} />
