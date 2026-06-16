@@ -17,6 +17,7 @@ import type {
   Project,
   Thread,
   User,
+  WikiPage,
 } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -98,6 +99,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
   const canCreateRequests = canManageSessions || hasRole(user, 'member')
   const contributionRequests = await getOpenContributionRequestsForEvent(event.id, user)
   const posts = canViewFullDetails ? await getDerivedPosts(event.id, user) : []
+  const wikiPages = canViewFullDetails ? await getRelatedWikiPages(event.id, user) : []
   const startsAt = new Date(event.startsAt)
   const isPast = startsAt.getTime() < Date.now()
   const projects = relationDocs<Project>(event.relatedProjects)
@@ -291,6 +293,20 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
             </div>
           ) : (
             <EmptyState text="No published posts have been derived from this session yet." />
+          )}
+        </Section>
+      ) : null}
+
+      {canViewFullDetails && (isPast || wikiPages.length) ? (
+        <Section title="Related Wiki Pages">
+          {wikiPages.length ? (
+            <div className="grid gap-4 md:grid-cols-2">
+              {wikiPages.map((page) => (
+                <WikiPageCard key={page.id} page={page} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState text="No reviewed wiki pages have been linked to this session yet." />
           )}
         </Section>
       ) : null}
@@ -509,6 +525,20 @@ const ResourceCard: React.FC<{ resource: SessionResource }> = ({ resource }) => 
   )
 }
 
+const WikiPageCard: React.FC<{ page: WikiPage }> = ({ page }) => (
+  <Link
+    className="block border border-border bg-card/20 p-5 transition-colors hover:border-primary"
+    href={`/wiki/${page.slug}`}
+  >
+    <div className="flex flex-wrap items-center gap-2">
+      <p className="portal-kicker">Wiki</p>
+      <span className="portal-pill">{page.confidence} confidence</span>
+    </div>
+    <h3 className="portal-heading-sm mt-3">{page.title}</h3>
+    <p className="mt-3 text-sm leading-6 text-muted-foreground">{page.summary}</p>
+  </Link>
+)
+
 const getYouTubeEmbedURL = (href: string): string | null => {
   try {
     const url = new URL(href)
@@ -667,6 +697,43 @@ const getDerivedPosts = async (
         {
           sourceSession: {
             equals: eventID,
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getRelatedWikiPages = async (
+  eventID: number,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+): Promise<WikiPage[]> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    limit: 12,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-lastReviewedAt',
+    user: user || undefined,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          reviewStatus: {
+            equals: 'reviewed',
+          },
+        },
+        {
+          sourceSessions: {
+            in: [eventID],
           },
         },
       ],
