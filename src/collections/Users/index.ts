@@ -28,6 +28,7 @@ export const Users: CollectionConfig = {
     useAsTitle: 'name',
   },
   auth: {
+    tokenExpiration: 60 * 60 * 24 * 30,
     forgotPassword: {
       generateEmailHTML: (args) => {
         const token = args?.token
