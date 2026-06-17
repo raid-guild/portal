@@ -25,31 +25,42 @@ export default async function DashboardPage() {
     pointSummary,
     recentPosts,
     upcomingEvents,
-    recentProjects,
     spotlights,
-  ] =
-    await Promise.all([
-      getLatestDailyBrief(user),
-      getDailyEngagementSummary(user),
-      getProfileForUser(user.id),
-      getPointSummary(user),
-      getRecentPosts(),
-      getUpcomingEvents(user),
-      getRecentlyActiveProjects(user),
-      getActiveSpotlights({ user }),
-    ])
+    dashboardStats,
+    featuredModules,
+    recentWikiPages,
+    weekEvents,
+    activeProfiles,
+  ] = await Promise.all([
+    getLatestDailyBrief(user),
+    getDailyEngagementSummary(user),
+    getProfileForUser(user.id),
+    getPointSummary(user),
+    getRecentPosts(),
+    getUpcomingEvents(user),
+    getActiveSpotlights({ user }),
+    getDashboardStats(user),
+    getFeaturedModules(user),
+    getRecentWikiPages(user),
+    getWeekEvents(user),
+    getActiveProfiles(user),
+  ])
 
   return (
     <PortalDashboard
+      activeProfiles={activeProfiles}
+      dashboardStats={dashboardStats}
       dailyBrief={dailyBrief}
       dailyEngagementSummary={dailyEngagementSummary}
+      featuredModules={featuredModules}
       pointEvents={pointSummary.events}
       pointsTotal={pointSummary.total}
       profile={profile}
-      recentProjects={recentProjects}
       recentPosts={recentPosts}
+      recentWikiPages={recentWikiPages}
       spotlights={spotlights}
       upcomingEvents={upcomingEvents}
+      weekEvents={weekEvents}
       user={user}
     />
   )
@@ -114,11 +125,6 @@ const getLatestDailyBrief = async (user: User) => {
           },
         },
         {
-          briefType: {
-            equals: 'daily',
-          },
-        },
-        {
           visibility: {
             not_equals: 'admin',
           },
@@ -165,21 +171,210 @@ const getUpcomingEvents = async (user: User) => {
   return result.docs
 }
 
-const getRecentlyActiveProjects = async (user: User) => {
+const getDashboardStats = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const publishedOnly = {
+    _status: {
+      equals: 'published',
+    },
+  }
+  const nonAdminVisibility = {
+    visibility: {
+      not_equals: 'admin',
+    },
+  }
+
+  const [sessions, posts, modules, wikiPages] = await Promise.all([
+    payload.count({
+      collection: 'events',
+      overrideAccess: false,
+      user,
+      where: {
+        and: [publishedOnly, nonAdminVisibility],
+      },
+    }),
+    payload.count({
+      collection: 'posts',
+      overrideAccess: false,
+      user,
+      where: publishedOnly,
+    }),
+    payload.count({
+      collection: 'modules',
+      overrideAccess: false,
+      user,
+      where: {
+        and: [
+          {
+            enabled: {
+              equals: true,
+            },
+          },
+          {
+            status: {
+              not_equals: 'archived',
+            },
+          },
+        ],
+      },
+    }),
+    payload.count({
+      collection: 'wikiPages',
+      overrideAccess: false,
+      user,
+      where: {
+        and: [
+          publishedOnly,
+          {
+            reviewStatus: {
+              equals: 'reviewed',
+            },
+          },
+          nonAdminVisibility,
+        ],
+      },
+    }),
+  ])
+
+  return {
+    modules: modules.totalDocs,
+    posts: posts.totalDocs,
+    sessions: sessions.totalDocs,
+    wikiPages: wikiPages.totalDocs,
+  }
+}
+
+const getActiveProfiles = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
-    collection: 'projects',
+    collection: 'profiles',
     depth: 1,
-    draft: false,
+    limit: 8,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-updatedAt',
+    user,
+    where: {
+      and: [
+        {
+          status: {
+            equals: 'active',
+          },
+        },
+        {
+          visibility: {
+            not_equals: 'private',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getFeaturedModules = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'modules',
+    depth: 1,
     limit: 3,
     overrideAccess: false,
     pagination: false,
-    sort: '-lastActiveAt',
+    sort: '-featured,sortOrder,name',
     user,
     where: {
-      _status: {
-        equals: 'published',
-      },
+      and: [
+        {
+          enabled: {
+            equals: true,
+          },
+        },
+        {
+          status: {
+            not_equals: 'archived',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getRecentWikiPages = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    draft: false,
+    limit: 4,
+    overrideAccess: false,
+    pagination: false,
+    sort: '-lastReviewedAt',
+    user,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          reviewStatus: {
+            equals: 'reviewed',
+          },
+        },
+        {
+          visibility: {
+            not_equals: 'admin',
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs
+}
+
+const getWeekEvents = async (user: User) => {
+  const payload = await getPayload({ config: configPromise })
+  const now = new Date()
+  const weekEnd = new Date(now)
+  weekEnd.setDate(now.getDate() + 7)
+
+  const result = await payload.find({
+    collection: 'events',
+    depth: 1,
+    draft: false,
+    limit: 20,
+    overrideAccess: false,
+    pagination: false,
+    sort: 'startsAt',
+    user,
+    where: {
+      and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          startsAt: {
+            greater_than_equal: now.toISOString(),
+          },
+        },
+        {
+          startsAt: {
+            less_than: weekEnd.toISOString(),
+          },
+        },
+        {
+          visibility: {
+            not_equals: 'admin',
+          },
+        },
+      ],
     },
   })
 
