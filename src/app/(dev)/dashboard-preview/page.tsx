@@ -102,7 +102,13 @@ const createPreviewBrief = (date: Date, nextEvent?: Event): DailyBrief => {
 }
 
 const createPreviewEvents = (date: Date): Event[] => {
-  const starts = [1, 2, 4, 6].map((offset, index) => {
+  const eventData = [
+    { offset: 1, sessionType: 'fireside' as const, title: 'Fireside: How to RaidGuild' },
+    { offset: 2, sessionType: 'brownbag' as const, title: 'Builder Round Table' },
+    { offset: 4, sessionType: 'brownbag' as const, title: 'Demo Day' },
+    { offset: 6, sessionType: 'brownbag' as const, title: 'Agent Workflows' },
+  ]
+  const starts = eventData.map(({ offset }, index) => {
     const value = new Date(date)
     value.setDate(date.getDate() + offset)
     value.setHours(10 + index, 30, 0, 0)
@@ -119,12 +125,10 @@ const createPreviewEvents = (date: Date): Event[] => {
       endsAt: endsAt.toISOString(),
       id: index + 1,
       locationLabel: 'Discord / RaidGuild',
-      sessionType: index === 0 ? 'fireside' : 'brownbag',
+      sessionType: eventData[index].sessionType,
       startsAt: startsAt.toISOString(),
       summary: 'A live working session for members to compare notes and move active work forward.',
-      title: ['Fireside: How to RaidGuild', 'Builder Round Table', 'Demo Day', 'Agent Workflows'][
-        index
-      ],
+      title: eventData[index].title,
       updatedAt: date.toISOString(),
       visibility: 'authenticated',
     }
@@ -182,7 +186,7 @@ const createPreviewWikiPages = (date: Date): WikiPage[] => [
     title: 'Agentic Coding Security',
     updatedAt: date.toISOString(),
     visibility: 'authenticated',
-  } as WikiPage,
+  } satisfies WikiPage,
 ]
 
 const createPreviewProfiles = (date: Date): Profile[] =>
@@ -227,7 +231,7 @@ const createPreviewSpotlights = (date: Date): Spotlight[] => [
     title: 'How to RaidGuild - Field Experience From The Edge',
     updatedAt: date.toISOString(),
     visibility: 'authenticated',
-  } as Spotlight,
+  } satisfies Spotlight,
 ]
 
 const createPreviewPointEvents = (date: Date): PointEvent[] => [
@@ -241,7 +245,7 @@ const createPreviewPointEvents = (date: Date): PointEvent[] => [
     source: 'system',
     status: 'valid',
     updatedAt: date.toISOString(),
-  } as PointEvent,
+  } satisfies PointEvent,
 ]
 
 const emptyLexical = () => ({

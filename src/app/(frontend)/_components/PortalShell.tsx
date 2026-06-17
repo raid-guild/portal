@@ -26,6 +26,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
+import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
 
@@ -496,10 +497,14 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               </span>
             ) : null}
           </div>
-          {nextEvent ? (
+          {primaryEvent ? (
             <div className="flex flex-wrap gap-3">
-              <SafeAction href={nextEvent.joinURL} label="Join next session" />
-              <SafeAction href={nextEvent.calendarURL} label="Add to calendar" variant="outline" />
+              <SafeAction href={primaryEvent.joinURL} label="Join next session" />
+              <SafeAction
+                href={primaryEvent.calendarURL}
+                label="Add to calendar"
+                variant="outline"
+              />
             </div>
           ) : null}
         </div>
@@ -528,25 +533,25 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
                   brief={dailyBrief}
                   emptyText="The weekly media export will appear here when it is attached."
                 />
-                {nextEvent ? (
+                {primaryEvent ? (
                   <div className="portal-card text-sm">
                     <p className="font-bold text-foreground">Next session</p>
-                    <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
+                    <p className="mt-2 text-muted-foreground">{primaryEvent.title}</p>
                     <SessionDateTime
                       className="mt-1 block text-muted-foreground"
                       dateStyle="medium"
-                      endsAt={nextEvent.endsAt}
-                      startsAt={nextEvent.startsAt}
+                      endsAt={primaryEvent.endsAt}
+                      startsAt={primaryEvent.startsAt}
                     />
-                    {nextEvent.locationLabel ? (
-                      <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
+                    {primaryEvent.locationLabel ? (
+                      <p className="mt-1 text-muted-foreground">{primaryEvent.locationLabel}</p>
                     ) : null}
                   </div>
                 ) : null}
               </div>
             </div>
 
-            <WeeklySessionStrip
+            <DashboardWeeklySessionStrip
               className="mt-8"
               events={weekEvents.length ? weekEvents : upcomingEvents}
             />
@@ -592,7 +597,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </div>
         ) : (
           <p className="p-6 text-sm text-muted-foreground">
-            No daily brief has been published yet.
+            No weekly guild brief has been published yet.
           </p>
         )}
       </section>
@@ -643,6 +648,7 @@ const ExploreCard: React.FC<{
   <Link
     className="flex min-h-56 flex-col justify-between border border-border bg-card/20 p-5 transition-colors hover:border-primary hover:bg-card/40"
     href={href}
+    prefetch={href.startsWith('/api/') ? false : undefined}
   >
     <div>
       <div className="flex items-center justify-between gap-4">
@@ -659,55 +665,6 @@ const ExploreCard: React.FC<{
   </Link>
 )
 
-const WeeklySessionStrip: React.FC<{ className?: string; events: Event[] }> = ({
-  className,
-  events,
-}) => {
-  const weekDays = getDashboardWeekDays()
-
-  return (
-    <section className={className}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="portal-heading-sm">This Week&apos;s Sessions</h2>
-        <Link className="portal-link" href="/events">
-          Full schedule
-        </Link>
-      </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-7">
-        {weekDays.map((day) => {
-          const dayEvents = events.filter((event) => isSameDashboardDay(event.startsAt, day.date))
-
-          return (
-            <div className="min-h-28 border border-border bg-card/20 p-3" key={day.key}>
-              <p className="portal-kicker">{day.weekday}</p>
-              <p className="mt-1 text-2xl font-bold">{day.dayNumber}</p>
-              <div className="mt-3 space-y-2">
-                {dayEvents.length ? (
-                  dayEvents.slice(0, 2).map((event) => (
-                    <Link
-                      className="block border-l-2 border-primary pl-2 text-xs leading-5 text-muted-foreground transition-colors hover:text-foreground"
-                      href={`/events/${event.id}`}
-                      key={event.id}
-                    >
-                      <span className="font-medium text-foreground">
-                        {formatShortTime(event.startsAt)}
-                      </span>
-                      <br />
-                      {event.title}
-                    </Link>
-                  ))
-                ) : (
-                  <span className="text-xs text-muted-foreground">Open</span>
-                )}
-              </div>
-            </div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
-
 const getModuleHref = (module?: Module | null) => {
   if (!module) return null
 
@@ -716,44 +673,6 @@ const getModuleHref = (module?: Module | null) => {
   }
 
   return toSafeURL(module.entryRoute, { allowRelative: true })
-}
-
-const getDashboardWeekDays = () => {
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-
-  return Array.from({ length: 7 }, (_, index) => {
-    const date = new Date(today)
-    date.setDate(today.getDate() + index)
-
-    return {
-      date,
-      dayNumber: new Intl.DateTimeFormat('en', { day: 'numeric' }).format(date),
-      key: date.toISOString().slice(0, 10),
-      weekday: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(date),
-    }
-  })
-}
-
-const isSameDashboardDay = (value: string | null | undefined, date: Date) => {
-  if (!value) return false
-
-  const eventDate = new Date(value)
-
-  return (
-    eventDate.getFullYear() === date.getFullYear() &&
-    eventDate.getMonth() === date.getMonth() &&
-    eventDate.getDate() === date.getDate()
-  )
-}
-
-const formatShortTime = (value: string | null | undefined) => {
-  if (!value) return ''
-
-  return new Intl.DateTimeFormat('en', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date(value))
 }
 
 const SpotlightSection: React.FC<{ className?: string; spotlights: Spotlight[] }> = ({
