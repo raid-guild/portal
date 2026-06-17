@@ -3,30 +3,30 @@ import React from 'react'
 import {
   ArrowRight,
   Award,
+  BookOpen,
   CalendarDays,
   ClipboardList,
-  FolderKanban,
+  FileText,
   LayoutDashboard,
-  PenLine,
   Puzzle,
-  Users,
 } from 'lucide-react'
 
 import type {
-  ActivityItem,
   DailyBrief,
   Event,
+  Module,
   PointEvent,
   Post,
   Profile,
   Project,
   Spotlight,
-  Thread,
   User,
+  WikiPage,
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
+import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
 
@@ -46,12 +46,21 @@ type DashboardProps = {
     hasCheckedInToday: boolean
     todayVibe?: string | null
   }
+  dashboardStats?: {
+    modules: number
+    posts: number
+    sessions: number
+    wikiPages: number
+  }
+  featuredModules?: Module[]
   upcomingEvents?: Event[]
+  weekEvents?: Event[]
+  activeProfiles?: Profile[]
   pointEvents?: PointEvent[]
   pointsTotal?: number
   profile?: Profile | null
-  recentProjects?: Project[]
   recentPosts?: Post[]
+  recentWikiPages?: WikiPage[]
   spotlights?: Spotlight[]
   user: User
 }
@@ -65,18 +74,6 @@ const formatDate = (date?: string | null) => {
     year: 'numeric',
   }).format(new Date(date))
 }
-
-const formatDateTime = (date?: string | null) => {
-  if (!date) return null
-
-  return new Intl.DateTimeFormat('en', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(date))
-}
-
-const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
-  items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
 const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief, emptyText }) => {
   const mediaFile = brief.mediaFile && typeof brief.mediaFile === 'object' ? brief.mediaFile : null
@@ -342,12 +339,16 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
 export const PortalDashboard: React.FC<DashboardProps> = ({
   dailyBrief,
   dailyEngagementSummary,
+  dashboardStats,
+  featuredModules = [],
   upcomingEvents = [],
+  weekEvents = [],
+  activeProfiles = [],
   pointEvents = [],
   pointsTotal = 0,
   profile,
-  recentProjects = [],
   recentPosts = [],
+  recentWikiPages = [],
   spotlights = [],
   user,
 }) => {
@@ -358,10 +359,23 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
     hasCheckedInToday: false,
     todayVibe: null,
   }
-  const briefActivityItems = dailyBrief ? relationDocs<ActivityItem>(dailyBrief.activityItems) : []
-  const briefThreads = dailyBrief ? relationDocs<Thread>(dailyBrief.threads) : []
   const nextEvent =
     dailyBrief?.nextEvent && typeof dailyBrief.nextEvent === 'object' ? dailyBrief.nextEvent : null
+  const primaryEvent = nextEvent || upcomingEvents[0]
+  const latestPost = recentPosts[0]
+  const featuredModule = featuredModules[0]
+  const latestWikiPage = recentWikiPages[0]
+  const latestPointEvent = pointEvents[0]
+  const stats = dashboardStats || {
+    modules: featuredModules.length,
+    posts: recentPosts.length,
+    sessions: upcomingEvents.length,
+    wikiPages: recentWikiPages.length,
+  }
+  const highlightedThread =
+    spotlights.find(
+      (spotlight) => spotlight.targetType === 'thread' && spotlight.kind === 'featured',
+    ) || spotlights.find((spotlight) => spotlight.targetType === 'thread')
 
   return (
     <main className="container pb-24 pt-12">
@@ -373,8 +387,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
             {hasProfile
-              ? 'Use this page to catch the current brief, check in, find live sessions, follow active projects, and jump into useful Portal tools.'
-              : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, projects, and current community updates.'}
+              ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
+              : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
           </p>
         </div>
         <div className="border-l border-border pl-6 text-sm">
@@ -385,64 +399,83 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <DashboardLink href="/members" icon={<Users className="h-5 w-5" />} label="Members" />
-        <DashboardLink
-          href="/projects"
-          icon={<FolderKanban className="h-5 w-5" />}
-          label="Projects"
-        />
-        <DashboardLink
-          href="/events"
-          icon={<CalendarDays className="h-5 w-5" />}
-          label="Sessions"
-        />
-        <DashboardLink href="/modules" icon={<Puzzle className="h-5 w-5" />} label="Modules" />
-        <DashboardLink href="/posts" icon={<PenLine className="h-5 w-5" />} label="Posts" />
+      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardMetric href="/events" label="Sessions" value={stats.sessions} />
+        <DashboardMetric href="/modules" label="Modules" value={stats.modules} />
+        <DashboardMetric href="/posts" label="Posts" value={stats.posts} />
+        <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
       </section>
 
-      <SpotlightSection className="mt-12" spotlights={spotlights} />
-
-      <section className="mt-12 portal-panel">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              <h2 className="portal-heading-sm">Guild Points</h2>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Contribution signal for portal participation, publishing, sessions, and admin awards.
-            </p>
-          </div>
-          <p className="portal-heading">{pointsTotal}</p>
-        </div>
-        <div className="mt-5 border-y border-border py-4">
-          <VibeCheckButton
-            currentStreak={vibeSummary.currentStreak}
-            hasCheckedInToday={vibeSummary.hasCheckedInToday}
-            todayVibe={vibeSummary.todayVibe}
+      <section className="mt-12 grid gap-6 xl:grid-cols-[1fr_21rem]">
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <ExploreCard
+            action="View schedule"
+            description={
+              primaryEvent
+                ? `${primaryEvent.title} is the next calendar anchor.`
+                : 'No upcoming sessions are published yet.'
+            }
+            href="/events"
+            icon={<CalendarDays className="h-5 w-5" />}
+            label="Sessions"
+            title={primaryEvent?.title || 'Session schedule'}
+          />
+          <ExploreCard
+            action="Open module"
+            description={featuredModule?.summary || 'Explore Portal tools and experiments.'}
+            href={getModuleHref(featuredModule) || '/modules'}
+            icon={<Puzzle className="h-5 w-5" />}
+            label="Modules"
+            title={featuredModule?.name || 'Portal modules'}
+          />
+          <ExploreCard
+            action="Read latest"
+            description={latestPost?.meta?.description || 'Read recent posts from the guild.'}
+            href={latestPost?.slug ? `/posts/${latestPost.slug}` : '/posts'}
+            icon={<FileText className="h-5 w-5" />}
+            label="Posts"
+            title={latestPost?.title || 'Recent posts'}
+          />
+          <ExploreCard
+            action="Open wiki"
+            description={latestWikiPage?.summary || 'Browse reviewed source-backed wiki pages.'}
+            href={latestWikiPage?.slug ? `/wiki/${latestWikiPage.slug}` : '/wiki'}
+            icon={<BookOpen className="h-5 w-5" />}
+            label="Wiki"
+            title={latestWikiPage?.title || 'Knowledge base'}
           />
         </div>
-        <div className="mt-5 space-y-3">
-          {pointEvents.length ? (
-            pointEvents.map((event) => (
-              <div className="flex items-start justify-between gap-4 text-sm" key={event.id}>
-                <div>
-                  <p className="font-medium">{event.reason}</p>
-                  {event.description ? (
-                    <p className="mt-1 text-muted-foreground">{event.description}</p>
-                  ) : null}
-                </div>
-                <div className="text-right">
-                  <p className="font-mono font-bold">+{event.amount}</p>
-                  <p className="portal-kicker">{event.source}</p>
-                </div>
+
+        <section className="portal-panel">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5" />
+                <h2 className="portal-heading-sm">Guild Points</h2>
               </div>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">No point events yet.</p>
-          )}
-        </div>
+              <p className="mt-2 text-sm text-muted-foreground">Check in and keep your streak.</p>
+            </div>
+            <p className="portal-heading">{pointsTotal}</p>
+          </div>
+          <div className="mt-5">
+            <VibeCheckButton
+              currentStreak={vibeSummary.currentStreak}
+              hasCheckedInToday={vibeSummary.hasCheckedInToday}
+              todayVibe={vibeSummary.todayVibe}
+            />
+          </div>
+          {latestPointEvent ? (
+            <div className="mt-5 border-t border-border pt-4 text-sm">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="font-medium">{latestPointEvent.reason}</p>
+                  <p className="mt-1 portal-kicker">{latestPointEvent.source}</p>
+                </div>
+                <p className="font-mono font-bold">+{latestPointEvent.amount}</p>
+              </div>
+            </div>
+          ) : null}
+        </section>
       </section>
 
       <section className="mt-12 border border-border bg-background/70">
@@ -450,7 +483,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
             <div className="flex items-center gap-2">
               <ClipboardList className="h-5 w-5" />
-              <p className="portal-heading-sm">RaidGuild Cohort</p>
+              <p className="portal-heading-sm">This Week In The Guild</p>
             </div>
             {dailyBrief?.statusLabel ? (
               <span className="portal-pill">{dailyBrief.statusLabel}</span>
@@ -464,10 +497,14 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               </span>
             ) : null}
           </div>
-          {nextEvent ? (
+          {primaryEvent ? (
             <div className="flex flex-wrap gap-3">
-              <SafeAction href={nextEvent.joinURL} label="Join next session" />
-              <SafeAction href={nextEvent.calendarURL} label="Add to calendar" variant="outline" />
+              <SafeAction href={primaryEvent.joinURL} label="Join next session" />
+              <SafeAction
+                href={primaryEvent.calendarURL}
+                label="Add to calendar"
+                variant="outline"
+              />
             </div>
           ) : null}
         </div>
@@ -494,74 +531,46 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               <div className="space-y-4">
                 <BriefMedia
                   brief={dailyBrief}
-                  emptyText="The daily media export will appear here when it is attached."
+                  emptyText="The weekly media export will appear here when it is attached."
                 />
-                {nextEvent ? (
+                {primaryEvent ? (
                   <div className="portal-card text-sm">
                     <p className="font-bold text-foreground">Next session</p>
-                    <p className="mt-2 text-muted-foreground">{nextEvent.title}</p>
+                    <p className="mt-2 text-muted-foreground">{primaryEvent.title}</p>
                     <SessionDateTime
                       className="mt-1 block text-muted-foreground"
                       dateStyle="medium"
-                      endsAt={nextEvent.endsAt}
-                      startsAt={nextEvent.startsAt}
+                      endsAt={primaryEvent.endsAt}
+                      startsAt={primaryEvent.startsAt}
                     />
-                    {nextEvent.locationLabel ? (
-                      <p className="mt-1 text-muted-foreground">{nextEvent.locationLabel}</p>
+                    {primaryEvent.locationLabel ? (
+                      <p className="mt-1 text-muted-foreground">{primaryEvent.locationLabel}</p>
                     ) : null}
                   </div>
                 ) : null}
               </div>
             </div>
 
+            <DashboardWeeklySessionStrip
+              className="mt-8"
+              events={weekEvents.length ? weekEvents : upcomingEvents}
+            />
+
             <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-              <BriefPanel title="Recent Activity">
-                {briefActivityItems.length ? (
-                  <div className="space-y-3">
-                    {briefActivityItems.slice(0, 6).map((item) => (
-                      <article className="portal-card" key={item.id}>
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="portal-kicker">{item.activityType}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {formatDateTime(item.happenedAt)}
-                          </p>
-                        </div>
-                        <h3 className="mt-2 font-medium">{item.title}</h3>
-                        {item.body ? (
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                            {item.body}
-                          </p>
-                        ) : null}
-                      </article>
-                    ))}
-                  </div>
+              <BriefPanel title="Highlighted Thread">
+                {highlightedThread ? (
+                  <SpotlightCard compact spotlight={highlightedThread} />
                 ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No recent activity has been linked.
-                  </p>
+                  <p className="text-sm text-muted-foreground">No highlighted thread is set.</p>
                 )}
               </BriefPanel>
 
-              <BriefPanel title="Active Threads">
-                {briefThreads.length ? (
-                  <div className="space-y-3">
-                    {briefThreads.slice(0, 6).map((thread) => (
-                      <Link
-                        className="block portal-card transition-colors hover:bg-card"
-                        href={`/threads/${thread.slug}`}
-                        key={thread.id}
-                      >
-                        <p className="portal-kicker">{thread.threadStatus}</p>
-                        <h3 className="mt-2 font-medium">{thread.title}</h3>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                          {thread.summary}
-                        </p>
-                      </Link>
-                    ))}
-                  </div>
+              <BriefPanel title="Active Members">
+                {activeProfiles.length ? (
+                  <ActiveProfilesList profiles={activeProfiles} />
                 ) : (
                   <p className="text-sm text-muted-foreground">
-                    No active threads have been linked.
+                    No active member profiles have been updated recently.
                   </p>
                 )}
               </BriefPanel>
@@ -588,82 +597,12 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </div>
         ) : (
           <p className="p-6 text-sm text-muted-foreground">
-            No daily brief has been published yet.
+            No weekly guild brief has been published yet.
           </p>
         )}
       </section>
 
-      <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
-        <DashboardPanel
-          action={
-            <Link className="portal-link" href="/events">
-              View sessions
-            </Link>
-          }
-          title="Next Upcoming Sessions"
-        >
-          {upcomingEvents.length ? (
-            <div className="space-y-4">
-              {upcomingEvents.slice(0, 3).map((event) => (
-                <article className="portal-card" key={event.id}>
-                  <SessionDateTime
-                    className="portal-kicker"
-                    dateStyle="medium"
-                    endsAt={event.endsAt}
-                    startsAt={event.startsAt}
-                  />
-                  <h3 className="mt-2 font-bold text-foreground">{event.title}</h3>
-                  {event.locationLabel ? (
-                    <p className="mt-2 text-sm text-muted-foreground">{event.locationLabel}</p>
-                  ) : null}
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <SafeTextLink href={event.joinURL} label="Join" />
-                    <SafeTextLink href={event.calendarURL} label="Add to calendar" />
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No upcoming sessions are published yet.</p>
-          )}
-        </DashboardPanel>
-
-        <DashboardPanel
-          action={
-            <Link className="portal-link" href="/projects">
-              View projects
-            </Link>
-          }
-          title="Recently Active Projects"
-        >
-          {recentProjects.length ? (
-            <div className="space-y-4">
-              {recentProjects.slice(0, 3).map((project) => (
-                <Link
-                  className="block portal-card transition-colors hover:bg-card"
-                  href={`/projects/${project.slug}`}
-                  key={project.id}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="portal-kicker">{project.projectStatus || 'Project'}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatDate(project.lastActiveAt || project.updatedAt) || 'Recently active'}
-                    </p>
-                  </div>
-                  <h3 className="mt-2 font-bold text-foreground">{project.title}</h3>
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
-                    {project.summary}
-                  </p>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">No active projects are published yet.</p>
-          )}
-        </DashboardPanel>
-      </section>
-
-      <section className="mt-12 grid gap-8 lg:grid-cols-[1fr_1fr]">
+      <section className="mt-12 max-w-xl">
         <div className="portal-panel">
           <div className="flex items-center gap-2">
             <LayoutDashboard className="h-5 w-5" />
@@ -678,45 +617,63 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             <Link href="/me">{hasProfile ? 'Review profile' : 'Start profile'}</Link>
           </Button>
         </div>
-        <div className="portal-panel">
-          <h2 className="portal-heading-sm">Recent Public Posts</h2>
-          <div className="mt-4 space-y-4">
-            {recentPosts.length ? (
-              recentPosts.map((post) => (
-                <Link
-                  className="block text-sm hover:underline"
-                  href={`/posts/${post.slug}`}
-                  key={post.id}
-                >
-                  {post.title}
-                </Link>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground">No posts yet.</p>
-            )}
-          </div>
-        </div>
       </section>
     </main>
   )
 }
 
-const DashboardLink: React.FC<{ href: string; icon: React.ReactNode; label: string }> = ({
+const DashboardMetric: React.FC<{ href: string; label: string; value: number }> = ({
   href,
-  icon,
   label,
+  value,
 }) => (
   <Link
-    className="flex min-h-24 items-center justify-between portal-panel transition-colors hover:bg-card"
+    className="block border border-border bg-card/20 p-5 transition-colors hover:border-primary hover:bg-card/40"
     href={href}
   >
-    <span className="flex items-center gap-3 font-medium">
-      {icon}
-      {label}
-    </span>
-    <ArrowRight className="h-4 w-4" />
+    <p className="portal-kicker">{label}</p>
+    <p className="mt-3 font-serif text-5xl font-bold leading-none text-foreground">{value}</p>
+    <p className="mt-3 text-xs uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
   </Link>
 )
+
+const ExploreCard: React.FC<{
+  action: string
+  description: string
+  href: string
+  icon: React.ReactNode
+  label: string
+  title: string
+}> = ({ action, description, href, icon, label, title }) => (
+  <Link
+    className="flex min-h-56 flex-col justify-between border border-border bg-card/20 p-5 transition-colors hover:border-primary hover:bg-card/40"
+    href={href}
+    prefetch={href.startsWith('/api/') ? false : undefined}
+  >
+    <div>
+      <div className="flex items-center justify-between gap-4">
+        <p className="portal-kicker">{label}</p>
+        {icon}
+      </div>
+      <h2 className="mt-4 portal-heading-sm line-clamp-2">{title}</h2>
+      <p className="mt-3 line-clamp-4 text-sm leading-6 text-muted-foreground">{description}</p>
+    </div>
+    <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-primary">
+      {action}
+      <ArrowRight className="h-4 w-4" />
+    </p>
+  </Link>
+)
+
+const getModuleHref = (module?: Module | null) => {
+  if (!module) return null
+
+  if (module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug) {
+    return `/api/modules/${module.slug}/launch`
+  }
+
+  return toSafeURL(module.entryRoute, { allowRelative: true })
+}
 
 const SpotlightSection: React.FC<{ className?: string; spotlights: Spotlight[] }> = ({
   className,
@@ -904,18 +861,42 @@ const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
   </section>
 )
 
-const DashboardPanel: React.FC<{
-  action?: React.ReactNode
-  children: React.ReactNode
-  title: string
-}> = ({ action, children, title }) => (
-  <section className="portal-panel">
-    <div className="flex flex-wrap items-center justify-between gap-4">
-      <h2 className="portal-heading-sm">{title}</h2>
-      {action}
-    </div>
-    <div className="mt-4">{children}</div>
-  </section>
+const ActiveProfilesList: React.FC<{ profiles: Profile[] }> = ({ profiles }) => (
+  <div className="grid gap-3 sm:grid-cols-2">
+    {profiles.slice(0, 8).map((profile) => {
+      const avatar = profile.avatar && typeof profile.avatar === 'object' ? profile.avatar : null
+      const avatarURL = avatar?.url
+      const label = profile.displayName || profile.handle || 'Member'
+      const href = profile.handle ? `/members/${profile.handle}` : '/members'
+
+      return (
+        <Link
+          className="flex items-center gap-3 border border-border bg-card/20 p-3 transition-colors hover:border-primary hover:bg-card/40"
+          href={href}
+          key={profile.id}
+        >
+          {avatarURL ? (
+            <img
+              alt=""
+              className="h-11 w-11 shrink-0 rounded-full border border-border object-cover"
+              loading="lazy"
+              src={avatarURL}
+            />
+          ) : (
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-xs font-bold uppercase text-primary">
+              {getInitials(label)}
+            </span>
+          )}
+          <span className="min-w-0">
+            <span className="block truncate font-bold text-foreground">{label}</span>
+            <span className="mt-1 block truncate text-xs text-muted-foreground">
+              {profile.handle ? `@${profile.handle}` : 'Updated profile'}
+            </span>
+          </span>
+        </Link>
+      )
+    })}
+  </div>
 )
 
 const SafeTextLink: React.FC<{ className?: string; href?: string | null; label: string }> = ({
@@ -940,6 +921,15 @@ const SafeTextLink: React.FC<{ className?: string; href?: string | null; label: 
     </Link>
   )
 }
+
+const getInitials = (value: string) =>
+  value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
 
 const SafeAction: React.FC<{
   href?: string | null

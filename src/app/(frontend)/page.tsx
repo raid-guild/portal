@@ -4,8 +4,8 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 
-import type { User } from '@/payload-types'
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
+import { getAuthenticatedDashboardData } from './dashboard/dashboardData'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
@@ -17,27 +17,23 @@ export default async function HomePage() {
   const user = await getCurrentUser()
 
   if (user) {
-    const [dailyBrief, profile, pointSummary, recentPosts, upcomingEvents, recentProjects, spotlights] =
-      await Promise.all([
-        getLatestDailyBrief(user),
-        getProfileForUser(user.id),
-        getPointSummary(user),
-        getRecentPosts(),
-        getUpcomingEvents(user),
-        getRecentlyActiveProjects(user),
-        getActiveSpotlights({ user }),
-      ])
+    const dashboardData = await getAuthenticatedDashboardData(user)
 
     return (
       <PortalDashboard
-        dailyBrief={dailyBrief}
-        pointEvents={pointSummary.events}
-        pointsTotal={pointSummary.total}
-        profile={profile}
-        recentProjects={recentProjects}
-        recentPosts={recentPosts}
-        spotlights={spotlights}
-        upcomingEvents={upcomingEvents}
+        activeProfiles={dashboardData.activeProfiles}
+        dashboardStats={dashboardData.dashboardStats}
+        dailyBrief={dashboardData.dailyBrief}
+        dailyEngagementSummary={dashboardData.dailyEngagementSummary}
+        featuredModules={dashboardData.featuredModules}
+        pointEvents={dashboardData.pointSummary.events}
+        pointsTotal={dashboardData.pointSummary.total}
+        profile={dashboardData.profile}
+        recentPosts={dashboardData.recentPosts}
+        recentWikiPages={dashboardData.recentWikiPages}
+        spotlights={dashboardData.spotlights}
+        upcomingEvents={dashboardData.upcomingEvents}
+        weekEvents={dashboardData.weekEvents}
         user={user}
       />
     )
@@ -188,145 +184,4 @@ const getLatestWeeklyBrief = async () => {
   })
 
   return result.docs[0] || null
-}
-
-const getProfileForUser = async (userID: string | number) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'profiles',
-    depth: 1,
-    limit: 1,
-    overrideAccess: true,
-    pagination: false,
-    where: {
-      user: {
-        equals: userID,
-      },
-    },
-  })
-
-  return result.docs[0] || null
-}
-
-const getLatestDailyBrief = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'dailyBriefs',
-    depth: 1,
-    draft: false,
-    limit: 1,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-briefDate',
-    user,
-    where: {
-      and: [
-        {
-          _status: {
-            equals: 'published',
-          },
-        },
-        {
-          briefType: {
-            equals: 'daily',
-          },
-        },
-        {
-          visibility: {
-            not_equals: 'admin',
-          },
-        },
-      ],
-    },
-  })
-
-  return result.docs[0] || null
-}
-
-const getUpcomingEvents = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'events',
-    depth: 1,
-    draft: false,
-    limit: 3,
-    overrideAccess: false,
-    pagination: false,
-    sort: 'startsAt',
-    user,
-    where: {
-      and: [
-        {
-          _status: {
-            equals: 'published',
-          },
-        },
-        {
-          startsAt: {
-            greater_than_equal: new Date().toISOString(),
-          },
-        },
-        {
-          visibility: {
-            not_equals: 'admin',
-          },
-        },
-      ],
-    },
-  })
-
-  return result.docs
-}
-
-const getRecentlyActiveProjects = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'projects',
-    depth: 1,
-    draft: false,
-    limit: 3,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-lastActiveAt',
-    user,
-    where: {
-      _status: {
-        equals: 'published',
-      },
-    },
-  })
-
-  return result.docs
-}
-
-const getPointSummary = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'pointEvents',
-    depth: 1,
-    limit: 1000,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-issuedAt',
-    user,
-    where: {
-      and: [
-        {
-          recipient: {
-            equals: user.id,
-          },
-        },
-        {
-          status: {
-            equals: 'valid',
-          },
-        },
-      ],
-    },
-  })
-
-  return {
-    events: result.docs.slice(0, 5),
-    total: result.docs.reduce((sum, event) => sum + (event.amount || 0), 0),
-  }
 }
