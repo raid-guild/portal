@@ -415,7 +415,9 @@ async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page)
   await expect(adminPage.getByRole('heading', { exact: true, name: listTitle })).toBeVisible()
 
   await publicPage.goto(`/posts/${listSlug}`)
-  await expect(publicPage.getByRole('listitem').filter({ hasText: 'First list item' })).toBeVisible()
+  await expect(
+    publicPage.getByRole('listitem').filter({ hasText: 'First list item' }),
+  ).toBeVisible()
 }
 
 async function verifyPublicHome(page: Page) {
@@ -2081,6 +2083,7 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
       email,
       name: 'Inquiry Visitor',
       password: 'password123',
+      signupElapsedMs: 4000,
     },
   })
   expect(createResponse.ok()).toBeTruthy()
@@ -2180,6 +2183,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
       email,
       name: 'Contributor Create',
       password,
+      signupElapsedMs: 4000,
     },
   })
 

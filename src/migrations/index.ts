@@ -34,6 +34,7 @@ import * as migration_20260602_130000_event_resources from './20260602_130000_ev
 import * as migration_20260603_120000_brief_spotlights from './20260603_120000_brief_spotlights'
 import * as migration_20260611_131245_wiki_pages from './20260611_131245_wiki_pages'
 import * as migration_20260612_120000_external_module_launch_auth from './20260612_120000_external_module_launch_auth'
+import * as migration_20260618_120000_signup_spam_protection from './20260618_120000_signup_spam_protection'
 
 export const migrations = [
   {
@@ -215,5 +216,10 @@ export const migrations = [
     up: migration_20260612_120000_external_module_launch_auth.up,
     down: migration_20260612_120000_external_module_launch_auth.down,
     name: '20260612_120000_external_module_launch_auth',
+  },
+  {
+    up: migration_20260618_120000_signup_spam_protection.up,
+    down: migration_20260618_120000_signup_spam_protection.down,
+    name: '20260618_120000_signup_spam_protection',
   },
 ]

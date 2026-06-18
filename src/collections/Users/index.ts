@@ -12,6 +12,7 @@ import {
 } from '@/access/roles'
 import { anyone } from '@/access/anyone'
 import { getServerSideURL } from '@/utilities/getURL'
+import { enforceSignupProtection } from '@/utilities/signupProtection'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -90,7 +91,7 @@ export const Users: CollectionConfig = {
       },
     ],
     beforeValidate: [
-      async ({ data, operation, req }) => {
+      async ({ context, data, operation, req }) => {
         if (operation !== 'create') return data
 
         const existingUsers = await req.payload.count({
@@ -102,6 +103,10 @@ export const Users: CollectionConfig = {
             ...data,
             roles: ['admin'],
           }
+        }
+
+        if (!context?.skipSignupProtection && !isAdmin(req.user)) {
+          await enforceSignupProtection({ data, req })
         }
 
         if (!isAdmin(req.user)) {

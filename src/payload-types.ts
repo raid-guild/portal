@@ -85,6 +85,7 @@ export interface Config {
     notifications: Notification;
     notificationPreferences: NotificationPreference;
     feedbackSubmissions: FeedbackSubmission;
+    signupAttempts: SignupAttempt;
     pageCopy: PageCopy;
     profiles: Profile;
     profileSkills: ProfileSkill;
@@ -124,6 +125,7 @@ export interface Config {
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     feedbackSubmissions: FeedbackSubmissionsSelect<false> | FeedbackSubmissionsSelect<true>;
+    signupAttempts: SignupAttemptsSelect<false> | SignupAttemptsSelect<true>;
     pageCopy: PageCopySelect<false> | PageCopySelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
     profileSkills: ProfileSkillsSelect<false> | ProfileSkillsSelect<true>;
@@ -1785,6 +1787,32 @@ export interface FeedbackSubmission {
   createdAt: string;
 }
 /**
+ * Signup spam/rate-limit audit trail. Emails and IPs are stored as hashes.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "signupAttempts".
+ */
+export interface SignupAttempt {
+  id: number;
+  emailHash: string;
+  emailDomain: string;
+  ipHash: string;
+  outcome: 'allowed' | 'blocked';
+  reason: 'allowed' | 'honeypot' | 'too_fast' | 'missing_proof' | 'rate_limited' | 'blocked_domain';
+  userAgent?: string | null;
+  metadata?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Structured copy overrides for fixed Portal product-flow pages.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2122,6 +2150,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'feedbackSubmissions';
         value: number | FeedbackSubmission;
+      } | null)
+    | ({
+        relationTo: 'signupAttempts';
+        value: number | SignupAttempt;
       } | null)
     | ({
         relationTo: 'pageCopy';
@@ -3034,6 +3066,21 @@ export interface FeedbackSubmissionsSelect<T extends boolean = true> {
   viewport?: T;
   metadata?: T;
   adminNotes?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "signupAttempts_select".
+ */
+export interface SignupAttemptsSelect<T extends boolean = true> {
+  emailHash?: T;
+  emailDomain?: T;
+  ipHash?: T;
+  outcome?: T;
+  reason?: T;
+  userAgent?: T;
+  metadata?: T;
   updatedAt?: T;
   createdAt?: T;
 }

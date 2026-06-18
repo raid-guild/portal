@@ -680,6 +680,78 @@ prefer the smallest model change:
 4. Add a new `type` only when lifecycle, routing, permissions, notifications,
    or analytics need to differ from existing lanes.
 
+## Signup Spam And Feedback Cleanup
+
+Public signup is protected by passive checks in the `users` collection:
+
+- hidden honeypot field
+- minimum submit time
+- hashed email/IP signup-attempt rate limits
+- optional blocked email domains from `SIGNUP_BLOCKED_EMAIL_DOMAINS`
+
+Do not bypass these checks for normal human accounts. Trusted internal creation
+paths, such as seeds and `/api/agent/register`, set `skipSignupProtection` in
+Payload context.
+
+Feedback submissions require a verified account unless the user is an editor or
+admin. Unverified accounts should verify email before submitting feedback.
+
+Portal access policy:
+
+- `public` content can be read anonymously.
+- `authenticated` content requires a verified Portal account.
+- `member` content requires member access.
+- Fresh signups with the `unverified` role should be directed to `/me` to verify
+  email before using authenticated views, comments, feedback, modules, or other
+  write actions.
+
+Admins can inspect signup spam through:
+
+- `signupAttempts`: hashed signup attempt audit records
+- `feedbackSubmissions`: feedback triage records with `status = "spam"`
+- `users`: unverified accounts with `roles` containing `unverified`
+
+Cleanup is admin-only and dry-run by default:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/admin/spam-cleanup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "since": "2026-06-15T00:00:00.000Z",
+    "pageURL": "/join"
+  }'
+```
+
+Apply cleanup explicitly:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/admin/spam-cleanup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "since": "2026-06-15T00:00:00.000Z",
+    "pageURL": "/join",
+    "dryRun": false,
+    "deleteUsers": true
+  }'
+```
+
+The script form is:
+
+```bash
+SPAM_CLEANUP_SINCE=2026-06-15T00:00:00.000Z corepack pnpm spam:cleanup
+SPAM_CLEANUP_SINCE=2026-06-15T00:00:00.000Z SPAM_CLEANUP_DELETE_USERS=true corepack pnpm spam:cleanup:apply
+```
+
+Operational rules:
+
+- Run dry-run first and report counts before applying cleanup.
+- Do not dump raw emails, message bodies, or IPs into chat.
+- Prefer marking feedback as `spam` before deleting users.
+- Delete users only when they are unverified, recent, and tied to the spam
+  pattern under review.
+- Agents must not run cleanup unless a human explicitly asks and target
+  environment is clear.
+
 ## Confidence Rules
 
 - `publish`: source is clear, factual, dated, and non-sensitive.

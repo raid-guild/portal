@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { FeedbackForm } from './FeedbackForm'
+import { EmailVerificationCard } from '../_components/EmailVerificationCard'
+import { hasRole } from '@/access/roles'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
 type Args = {
@@ -32,8 +34,20 @@ export default async function FeedbackPage({ searchParams }: Args) {
           </div>
         </div>
 
-        {user ? (
+        {user && !hasRole(user, 'unverified') ? (
           <FeedbackForm defaultEmail={user.email} from={from} />
+        ) : user ? (
+          <div className="portal-panel">
+            <p className="portal-kicker">Verification required</p>
+            <h2 className="mt-3 portal-heading-sm">Verify your email first</h2>
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+              Feedback is connected to verified Portal accounts so admins can filter spam and
+              follow up safely.
+            </p>
+            <div className="mt-6">
+              <EmailVerificationCard email={user.email} emailVerifiedAt={user.emailVerifiedAt} />
+            </div>
+          </div>
         ) : (
           <div className="portal-panel">
             <p className="portal-kicker">Login required</p>

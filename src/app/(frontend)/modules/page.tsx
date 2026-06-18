@@ -5,7 +5,8 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canEditContent } from '@/access/roles'
+import { canEditContent, hasVerifiedAccount } from '@/access/roles'
+import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
 import type { Module, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -35,6 +36,11 @@ export default async function ModulesPage() {
   const user = await getCurrentUser()
 
   if (!user) return <ModulesTeaser />
+  if (!hasVerifiedAccount(user)) {
+    return (
+      <VerifyAccountNotice description="Verify your email to open Portal modules and launch connected tools." />
+    )
+  }
 
   const modules = await getModules(user)
   const groupedModules = groupModules(modules)

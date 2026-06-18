@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { canContributeContent } from '@/access/roles'
 import {
   getPostVisibilityQuery,
   getPostVisibilityWhere,
@@ -56,7 +57,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
           <div className="prose dark:prose-invert max-w-none">
             <h1>Posts</h1>
           </div>
-          {user ? (
+          {canContributeContent(user) ? (
             <Link className="portal-admin-link" href="/admin/collections/posts/create">
               Create post
             </Link>

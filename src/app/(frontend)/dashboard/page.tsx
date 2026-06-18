@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import React from 'react'
 
 import { PortalDashboard } from '../_components/PortalShell'
+import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
+import { hasVerifiedAccount } from '@/access/roles'
 import { getAuthenticatedDashboardData } from './dashboardData'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 
@@ -12,6 +14,12 @@ export default async function DashboardPage() {
   const user = await getCurrentUser()
 
   if (!user) redirect('/join')
+
+  if (!hasVerifiedAccount(user)) {
+    return (
+      <VerifyAccountNotice description="Verify your email to unlock the authenticated dashboard, weekly brief, points, modules, and member activity." />
+    )
+  }
 
   const dashboardData = await getAuthenticatedDashboardData(user)
 

@@ -174,6 +174,9 @@ export const seed = async ({
 
     const demoAuthor = await payload.create({
       collection: 'users',
+      context: {
+        skipSignupProtection: true,
+      },
       data: {
         name: 'Demo Author',
         email: 'demo-author@payloadcms.com',
