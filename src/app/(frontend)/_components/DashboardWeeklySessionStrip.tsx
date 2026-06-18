@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { cn } from '@/utilities/cn'
 import type { Event } from '@/payload-types'
 
 export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events: Event[] }> = ({
@@ -41,29 +42,54 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
           Full schedule
         </Link>
       </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-7">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
         {weekDays.map((day) => {
           const dayEvents = events.filter((event) => isSameDashboardDay(event.startsAt, day.date))
 
           return (
-            <div className="min-h-28 border border-border bg-card/20 p-3" key={day.key}>
-              <p className="portal-kicker">{day.weekday}</p>
-              <p className="mt-1 text-2xl font-bold">{day.dayNumber}</p>
+            <div
+              className={cn(
+                'min-h-28 border bg-card/20 p-3',
+                day.isToday ? 'border-primary bg-card/35' : 'border-border',
+              )}
+              key={day.key}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="portal-kicker">{day.weekday}</p>
+                {day.isToday ? <span className="portal-pill text-[10px]">Today</span> : null}
+              </div>
+              <p className={cn('mt-1 text-2xl font-bold', day.isToday ? 'text-primary' : null)}>
+                {day.dayNumber}
+              </p>
               <div className="mt-3 space-y-2">
                 {dayEvents.length ? (
-                  dayEvents.slice(0, 2).map((event) => (
-                    <Link
-                      className="block border-l-2 border-primary pl-2 text-xs leading-5 text-muted-foreground transition-colors hover:text-foreground"
-                      href={`/events/${event.id}`}
-                      key={event.id}
-                    >
-                      <span className="font-medium text-foreground">
-                        {formatShortTime(event.startsAt)}
-                      </span>
-                      <br />
-                      {event.title}
-                    </Link>
-                  ))
+                  dayEvents.slice(0, 2).map((event) => {
+                    const isPast = isPastDashboardEvent(event.endsAt || event.startsAt)
+
+                    return (
+                      <Link
+                        className={cn(
+                          'block border-l-2 pl-2 text-xs leading-5 transition-colors',
+                          isPast
+                            ? 'border-muted-foreground/40 text-muted-foreground/70 hover:text-muted-foreground'
+                            : 'border-primary text-muted-foreground hover:text-foreground',
+                        )}
+                        href={`/events/${event.id}`}
+                        key={event.id}
+                      >
+                        <span
+                          className={cn(
+                            'font-medium',
+                            isPast ? 'text-muted-foreground' : 'text-foreground',
+                          )}
+                        >
+                          {formatShortTime(event.startsAt)}
+                        </span>
+                        <br />
+                        {event.title}
+                      </Link>
+                    )
+                  })
                 ) : (
                   <span className="text-xs text-muted-foreground">Open</span>
                 )}
@@ -82,11 +108,12 @@ const getDashboardWeekDays = () => {
 
   return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today)
-    date.setDate(today.getDate() + index)
+    date.setDate(today.getDate() - 3 + index)
 
     return {
       date,
       dayNumber: new Intl.DateTimeFormat('en', { day: 'numeric' }).format(date),
+      isToday: date.getTime() === today.getTime(),
       key: date.toISOString().slice(0, 10),
       weekday: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(date),
     }
@@ -103,6 +130,12 @@ const isSameDashboardDay = (value: string | null | undefined, date: Date) => {
     eventDate.getMonth() === date.getMonth() &&
     eventDate.getDate() === date.getDate()
   )
+}
+
+const isPastDashboardEvent = (value: string | null | undefined) => {
+  if (!value) return false
+
+  return new Date(value).getTime() < Date.now()
 }
 
 const formatShortTime = (value: string | null | undefined) => {

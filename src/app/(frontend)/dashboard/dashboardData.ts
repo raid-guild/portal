@@ -320,14 +320,18 @@ const getRecentWikiPages = async (user: User) => {
 const getWeekEvents = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const now = new Date()
-  const weekEnd = new Date(now)
-  weekEnd.setDate(now.getDate() + 7)
+  const windowStart = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 4),
+  )
+  const windowEnd = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 5),
+  )
 
   const result = await payload.find({
     collection: 'events',
     depth: 1,
     draft: false,
-    limit: 20,
+    limit: 100,
     overrideAccess: false,
     pagination: false,
     sort: 'startsAt',
@@ -341,12 +345,12 @@ const getWeekEvents = async (user: User) => {
         },
         {
           startsAt: {
-            greater_than_equal: now.toISOString(),
+            greater_than_equal: windowStart.toISOString(),
           },
         },
         {
           startsAt: {
-            less_than: weekEnd.toISOString(),
+            less_than: windowEnd.toISOString(),
           },
         },
         {
