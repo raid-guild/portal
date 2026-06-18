@@ -907,7 +907,11 @@ async function verifyMemberOnlyProjectVisibility(
   await publicPage.goto('/posts')
   await expect(publicPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const publicPostDetailResponse = await publicPage.goto(`/posts/${memberOnlyPostSlug}`)
-  expect(publicPostDetailResponse?.status()).toBe(404)
+  expect(publicPostDetailResponse?.status()).toBe(200)
+  await expect(
+    publicPage.getByRole('heading', { name: 'This post requires Portal access' }),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: memberOnlyPostTitle })).toHaveCount(0)
 
   const contributorContext = await browser.newContext()
   const contributorPage = await contributorContext.newPage()
@@ -929,7 +933,11 @@ async function verifyMemberOnlyProjectVisibility(
   await contributorPage.goto('/posts')
   await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
-  expect(contributorPostDetailResponse?.status()).toBe(404)
+  expect(contributorPostDetailResponse?.status()).toBe(200)
+  await expect(
+    contributorPage.getByRole('heading', { name: 'This post requires Portal access' }),
+  ).toBeVisible()
+  await expect(contributorPage.getByRole('heading', { name: memberOnlyPostTitle })).toHaveCount(0)
   await contributorPage.goto('/modules')
   await expect(contributorPage.getByText('Member Only Module')).toHaveCount(0)
   await contributorContext.close()
@@ -2157,7 +2165,8 @@ async function verifyPortalLoginRedirect(page: Page) {
   await fillFirst(page.getByLabel(/^password$/i), adminPassword)
   await page.getByRole('button', { name: /log in to the brief/i }).click()
   await expect(page).toHaveURL(/\/dashboard/)
-  await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
+  await expect(page.getByText('Member Home')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
 }
 
 async function verifyPasswordResetPages(browser: Browser) {
@@ -2689,29 +2698,39 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('menuitem', { name: 'Inbox' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Admin' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
-  await expect(page.getByText('RaidGuild Cohort')).toBeVisible()
-  await expect(page.getByText('Active Now')).toBeVisible()
+
+  await expect(page.getByText('Member Home')).toBeVisible()
+  await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
+  await expect(page.getByRole('link', { name: /sessions/i }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /modules/i }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /^posts/i }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: /wiki pages/i }).first()).toBeVisible()
+
+  await expect(page.getByText('Guild Points')).toBeVisible()
+  await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
+  await expect(page.getByText('This Week In The Guild')).toBeVisible()
+  await expect(page.getByText('Weekly', { exact: true })).toBeVisible()
   await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()
   await expect(page.getByText('Cohort Project Spike Sync').first()).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join next session' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Add to calendar' }).first()).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Recent Activity' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Active Threads' })).toBeVisible()
-  await expect(page.getByText('Defining the project spike object')).toBeVisible()
   await expect(
-    page.getByText('Group narrowed the portal around project spikes instead of broad PM tooling.'),
+    page.getByRole('heading', { name: 'Weekly Brief: Project Spike Momentum' }),
+  ).toBeVisible()
+  await expect(page.getByText('Project spikes over project management:')).toBeVisible()
+  await expect(page.getByText('Calendar is the public pull:')).toBeVisible()
+  await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Highlighted Thread' })).toBeVisible()
+  await expect(page.getByText('No highlighted thread is set.')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Active Members' })).toBeVisible()
+  await expect(
+    page.getByText('No active member profiles have been updated recently.'),
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Next Upcoming Sessions' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'View sessions' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Recently Active Projects' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'View projects' })).toBeVisible()
-  await expect(
-    page.getByRole('heading', { exact: true, name: 'Cohort Project Spike Portal' }),
-  ).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Recent Public Posts' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Cohort Project Spike Portal Update' })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Modules' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Join RaidGuild' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'View sessions' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Next Profile Step' })).toBeVisible()
 }
 
 async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
