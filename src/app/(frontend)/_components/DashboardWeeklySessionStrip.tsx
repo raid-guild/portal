@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import React from 'react'
 
+import { cn } from '@/utilities/cn'
 import type { Event } from '@/payload-types'
 
 export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events: Event[] }> = ({
@@ -51,19 +52,33 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
               <p className="mt-1 text-2xl font-bold">{day.dayNumber}</p>
               <div className="mt-3 space-y-2">
                 {dayEvents.length ? (
-                  dayEvents.slice(0, 2).map((event) => (
-                    <Link
-                      className="block border-l-2 border-primary pl-2 text-xs leading-5 text-muted-foreground transition-colors hover:text-foreground"
-                      href={`/events/${event.id}`}
-                      key={event.id}
-                    >
-                      <span className="font-medium text-foreground">
-                        {formatShortTime(event.startsAt)}
-                      </span>
-                      <br />
-                      {event.title}
-                    </Link>
-                  ))
+                  dayEvents.slice(0, 2).map((event) => {
+                    const isPast = isPastDashboardEvent(event.endsAt || event.startsAt)
+
+                    return (
+                      <Link
+                        className={cn(
+                          'block border-l-2 pl-2 text-xs leading-5 transition-colors',
+                          isPast
+                            ? 'border-muted-foreground/40 text-muted-foreground/70 hover:text-muted-foreground'
+                            : 'border-primary text-muted-foreground hover:text-foreground',
+                        )}
+                        href={`/events/${event.id}`}
+                        key={event.id}
+                      >
+                        <span
+                          className={cn(
+                            'font-medium',
+                            isPast ? 'text-muted-foreground' : 'text-foreground',
+                          )}
+                        >
+                          {formatShortTime(event.startsAt)}
+                        </span>
+                        <br />
+                        {event.title}
+                      </Link>
+                    )
+                  })
                 ) : (
                   <span className="text-xs text-muted-foreground">Open</span>
                 )}
@@ -103,6 +118,12 @@ const isSameDashboardDay = (value: string | null | undefined, date: Date) => {
     eventDate.getMonth() === date.getMonth() &&
     eventDate.getDate() === date.getDate()
   )
+}
+
+const isPastDashboardEvent = (value: string | null | undefined) => {
+  if (!value) return false
+
+  return new Date(value).getTime() < Date.now()
 }
 
 const formatShortTime = (value: string | null | undefined) => {

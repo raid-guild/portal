@@ -319,9 +319,10 @@ const getRecentWikiPages = async (user: User) => {
 
 const getWeekEvents = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
-  const now = new Date()
-  const weekEnd = new Date(now)
-  weekEnd.setDate(now.getDate() + 7)
+  const weekStart = new Date()
+  weekStart.setHours(0, 0, 0, 0)
+  const weekEnd = new Date(weekStart)
+  weekEnd.setDate(weekStart.getDate() + 7)
 
   const result = await payload.find({
     collection: 'events',
@@ -341,7 +342,7 @@ const getWeekEvents = async (user: User) => {
         },
         {
           startsAt: {
-            greater_than_equal: now.toISOString(),
+            greater_than_equal: weekStart.toISOString(),
           },
         },
         {
