@@ -324,7 +324,7 @@ const getWeekEvents = async (user: User) => {
   windowStart.setDate(windowStart.getDate() - 3)
   const windowEnd = new Date()
   windowEnd.setHours(0, 0, 0, 0)
-  windowEnd.setDate(windowEnd.getDate() + 7)
+  windowEnd.setDate(windowEnd.getDate() + 4)
 
   const result = await payload.find({
     collection: 'events',

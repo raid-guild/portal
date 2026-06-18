@@ -42,7 +42,7 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
           Full schedule
         </Link>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-5 xl:grid-cols-10">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-7">
         {weekDays.map((day) => {
           const dayEvents = events.filter((event) => isSameDashboardDay(event.startsAt, day.date))
 
@@ -106,7 +106,7 @@ const getDashboardWeekDays = () => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  return Array.from({ length: 10 }, (_, index) => {
+  return Array.from({ length: 7 }, (_, index) => {
     const date = new Date(today)
     date.setDate(today.getDate() - 3 + index)
 
