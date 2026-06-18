@@ -42,14 +42,25 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
           Full schedule
         </Link>
       </div>
-      <div className="mt-4 grid gap-2 md:grid-cols-7">
+      <div className="mt-4 grid gap-2 sm:grid-cols-2 md:grid-cols-5 xl:grid-cols-10">
         {weekDays.map((day) => {
           const dayEvents = events.filter((event) => isSameDashboardDay(event.startsAt, day.date))
 
           return (
-            <div className="min-h-28 border border-border bg-card/20 p-3" key={day.key}>
-              <p className="portal-kicker">{day.weekday}</p>
-              <p className="mt-1 text-2xl font-bold">{day.dayNumber}</p>
+            <div
+              className={cn(
+                'min-h-28 border bg-card/20 p-3',
+                day.isToday ? 'border-primary bg-card/35' : 'border-border',
+              )}
+              key={day.key}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <p className="portal-kicker">{day.weekday}</p>
+                {day.isToday ? <span className="portal-pill text-[10px]">Today</span> : null}
+              </div>
+              <p className={cn('mt-1 text-2xl font-bold', day.isToday ? 'text-primary' : null)}>
+                {day.dayNumber}
+              </p>
               <div className="mt-3 space-y-2">
                 {dayEvents.length ? (
                   dayEvents.slice(0, 2).map((event) => {
@@ -95,13 +106,14 @@ const getDashboardWeekDays = () => {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  return Array.from({ length: 7 }, (_, index) => {
+  return Array.from({ length: 10 }, (_, index) => {
     const date = new Date(today)
-    date.setDate(today.getDate() + index)
+    date.setDate(today.getDate() - 3 + index)
 
     return {
       date,
       dayNumber: new Intl.DateTimeFormat('en', { day: 'numeric' }).format(date),
+      isToday: date.getTime() === today.getTime(),
       key: date.toISOString().slice(0, 10),
       weekday: new Intl.DateTimeFormat('en', { weekday: 'short' }).format(date),
     }
