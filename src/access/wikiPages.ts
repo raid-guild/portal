@@ -1,6 +1,6 @@
 import type { Access, Where } from 'payload'
 
-import { hasRole } from './roles'
+import { hasRole, hasVerifiedAccount } from './roles'
 
 const publishedOnly: Where = {
   _status: {
@@ -44,7 +44,7 @@ export const readVisibleWikiPages: Access = ({ req: { user } }) => {
     }
   }
 
-  if (user) {
+  if (hasVerifiedAccount(user)) {
     return {
       and: [
         publishedOnly,

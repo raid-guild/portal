@@ -40,6 +40,13 @@ export const hasRole = (
 
 export const isAdmin = (user: UserWithRoles | null | undefined): boolean => hasRole(user, 'admin')
 
+export const hasVerifiedAccount = (user: UserWithRoles | null | undefined): boolean => {
+  if (!user) return false
+  if (hasRole(user, ['admin', 'editor', 'agent'])) return true
+
+  return !hasRole(user, 'unverified')
+}
+
 export const canAccessAdmin = (user: UserWithRoles | null | undefined): boolean =>
   hasRole(user, ['admin', 'editor', 'contributor', 'member', 'agent'])
 

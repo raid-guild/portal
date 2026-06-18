@@ -1,8 +1,13 @@
 import type { Access } from 'payload'
 
-import { canEditContent, isAdmin } from './roles'
+import { canEditContent, hasRole, isAdmin } from './roles'
 
-export const createFeedbackSubmissions: Access = ({ req: { user } }) => Boolean(user?.id)
+export const createFeedbackSubmissions: Access = ({ req: { user } }) => {
+  if (canEditContent(user)) return true
+  if (!user?.id) return false
+
+  return !hasRole(user, 'unverified')
+}
 
 export const readFeedbackSubmissions: Access = ({ req: { user } }) => {
   if (canEditContent(user)) return true

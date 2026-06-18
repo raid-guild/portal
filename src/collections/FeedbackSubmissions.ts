@@ -6,7 +6,7 @@ import {
   readFeedbackSubmissions,
   updateFeedbackSubmissions,
 } from '@/access/feedbackSubmissions'
-import { canEditContent, hideFromNonEditors } from '@/access/roles'
+import { canEditContent, hasRole, hideFromNonEditors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
 
 export const feedbackTypeOptions = [
@@ -226,6 +226,36 @@ export const FeedbackSubmissions: CollectionConfig = {
             : data
 
         if (operation !== 'create' || !user?.id) return normalizedData
+
+        if (!canEditContent(user)) {
+          if (hasRole(user, 'unverified')) {
+            throw new Error('Verify your email before submitting feedback.')
+          }
+
+          const recentSubmissions = await req.payload.count({
+            collection: 'feedbackSubmissions',
+            overrideAccess: true,
+            req,
+            where: {
+              and: [
+                {
+                  submittedBy: {
+                    equals: user.id,
+                  },
+                },
+                {
+                  createdAt: {
+                    greater_than_equal: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+                  },
+                },
+              ],
+            },
+          })
+
+          if (recentSubmissions.totalDocs >= 1) {
+            throw new Error('You can submit another feedback item later.')
+          }
+        }
 
         const nextData: Record<string, unknown> = {
           ...normalizedData,

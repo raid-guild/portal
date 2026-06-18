@@ -5,7 +5,7 @@ import { notFound } from 'next/navigation'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { canContributeContent, canEditContent, hasRole } from '@/access/roles'
+import { canContributeContent, canEditContent, hasRole, hasVerifiedAccount } from '@/access/roles'
 import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
@@ -93,7 +93,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
   if (!event) notFound()
 
-  const canViewFullDetails = Boolean(user)
+  const canViewFullDetails = hasVerifiedAccount(user)
   const canManageSessions = canContributeContent(user)
   const canViewDiscordSyncErrors = canEditContent(user)
   const canCreateRequests = canManageSessions || hasRole(user, 'member')
@@ -352,7 +352,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
       <Section title="Comments">
         <Comments
-          canComment={Boolean(user)}
+          canComment={hasVerifiedAccount(user)}
           canHide={canHideSessionComments}
           className="py-0"
           commenterLabel={user?.name || user?.email}

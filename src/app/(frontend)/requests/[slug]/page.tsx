@@ -7,6 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { Comments } from '@/components/Comments'
+import { hasVerifiedAccount } from '@/access/roles'
 import type {
   ContributionRequest,
   Event,
@@ -193,7 +194,7 @@ export default async function ContributionRequestPage({ params: paramsPromise }:
       ) : null}
 
       <Comments
-        canComment={Boolean(user)}
+        canComment={hasVerifiedAccount(user)}
         commenterLabel={user?.name || user?.email}
         loginHref={`/login?next=${encodeURIComponent(`/requests/${request.slug}`)}`}
         parent={{ relationTo: 'contributionRequests', value: request.id }}

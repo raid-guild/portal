@@ -132,6 +132,7 @@ async function ensureLocalAdmin({
   return payload.create({
     collection: 'users',
     context: {
+      skipSignupProtection: true,
       skipWelcomeEmail: true,
     },
     data,

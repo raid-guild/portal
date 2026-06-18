@@ -7,6 +7,8 @@ import { getPayload } from 'payload'
 
 import type { Media, Profile, ProfileRole, ProfileSkill } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { hasVerifiedAccount } from '@/access/roles'
+import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
 
 import { PortalGraph, type ExplorerGraphData } from './PortalGraph'
 
@@ -34,6 +36,12 @@ export default async function PortalGraphPage() {
           </div>
         </section>
       </main>
+    )
+  }
+
+  if (!hasVerifiedAccount(user)) {
+    return (
+      <VerifyAccountNotice description="Verify your email to explore Portal Graph and other authenticated modules." />
     )
   }
 

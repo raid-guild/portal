@@ -16,6 +16,7 @@ import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import PageClient from './page.client'
+import { hasRole, hasVerifiedAccount } from '@/access/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -50,7 +51,15 @@ export default async function Post({ params: paramsPromise }: Args) {
   const user = await getCurrentUser()
   const post = await queryPostBySlug({ slug, user })
 
-  if (!post) return <PayloadRedirects url={url} />
+  if (!post) {
+    const restrictedPost = await queryRestrictedPublishedPostBySlug(slug)
+
+    if (restrictedPost) {
+      return <RestrictedPostAccess post={restrictedPost} slug={slug} user={user} />
+    }
+
+    return <PayloadRedirects url={url} />
+  }
 
   return (
     <article className="pt-16 pb-16">
@@ -75,7 +84,7 @@ export default async function Post({ params: paramsPromise }: Args) {
           {/* Add Comments section */}
           <div className="max-w-[48rem] mx-auto mt-16">
             <Comments
-              canComment={Boolean(user)}
+              canComment={hasVerifiedAccount(user)}
               commenterLabel={user?.name || user?.email}
               loginHref={`/login?next=${encodeURIComponent(`/posts/${post.slug}`)}`}
               postId={typeof post.id === 'string' ? parseInt(post.id, 10) : post.id}
@@ -118,6 +127,96 @@ const queryPostBySlug = cache(
     return result.docs?.[0] || null
   },
 )
+
+const queryRestrictedPublishedPostBySlug = cache(async (slug: string) => {
+  const payload = await getPayload({ config: configPromise })
+
+  const result = await payload.find({
+    collection: 'posts',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    select: {
+      slug: true,
+      title: true,
+      visibility: true,
+    },
+    where: {
+      and: [
+        {
+          slug: {
+            equals: slug,
+          },
+        },
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          visibility: {
+            in: ['authenticated', 'member'],
+          },
+        },
+      ],
+    },
+  })
+
+  return result.docs?.[0] || null
+})
+
+const RestrictedPostAccess: React.FC<{
+  post: Pick<Post, 'slug' | 'title' | 'visibility'>
+  slug: string
+  user: Awaited<ReturnType<typeof getCurrentUser>>
+}> = ({ post, slug, user }) => {
+  const postPath = `/posts/${slug}`
+  const isUnverified = user && !hasVerifiedAccount(user)
+  const needsMember = post.visibility === 'member' && !hasRole(user, ['admin', 'editor', 'member', 'agent'])
+
+  return (
+    <main className="container pb-24 pt-20">
+      <section className="max-w-3xl border border-border bg-card/30 p-8">
+        <p className="portal-kicker">Protected post</p>
+        <h1 className="portal-title mt-4">{post.title || 'This post requires Portal access'}</h1>
+        <p className="mt-5 text-base leading-7 text-muted-foreground">
+          This post is available to verified Portal accounts
+          {post.visibility === 'member' ? ' with member access' : ''}.
+        </p>
+        {needsMember ? (
+          <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            Your account is verified, but this post is marked member-only.
+          </p>
+        ) : null}
+        <div className="mt-8 flex flex-wrap gap-3">
+          {!user ? (
+            <>
+              <Link className="portal-admin-link" href={`/login?next=${encodeURIComponent(postPath)}`}>
+                Log in
+              </Link>
+              <Link className="portal-admin-link" href="/join">
+                Join
+              </Link>
+            </>
+          ) : isUnverified ? (
+            <Link className="portal-admin-link" href="/me">
+              Verify email
+            </Link>
+          ) : needsMember ? (
+            <Link className="portal-admin-link" href="/me">
+              Open account
+            </Link>
+          ) : (
+            <Link className="portal-admin-link" href="/posts">
+              Back to posts
+            </Link>
+          )}
+        </div>
+      </section>
+    </main>
+  )
+}
 
 const PostSourceContext: React.FC<{ post: Post }> = ({ post }) => {
   const sourceSession = typeof post.sourceSession === 'object' ? post.sourceSession : null

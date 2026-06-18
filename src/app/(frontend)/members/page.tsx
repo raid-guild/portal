@@ -7,7 +7,9 @@ import configPromise from '@payload-config'
 import { getPayload, type Payload, type Where } from 'payload'
 
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { hasVerifiedAccount } from '@/access/roles'
 import { PageRange } from '@/components/PageRange'
+import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
 import {
   getListPageValue,
   getListQueryValue,
@@ -29,6 +31,11 @@ export default async function MembersPage({ searchParams: searchParamsPromise }:
   const [user, searchParams] = await Promise.all([getCurrentUser(), searchParamsPromise])
 
   if (!user) redirect('/join')
+  if (!hasVerifiedAccount(user)) {
+    return (
+      <VerifyAccountNotice description="Verify your email to browse the member directory and connect with contributors." />
+    )
+  }
 
   const query = getListQueryValue(searchParams?.q)
   const page = getListPageValue(searchParams?.page)

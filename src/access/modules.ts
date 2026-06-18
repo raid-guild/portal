@@ -1,6 +1,6 @@
 import type { Access, Where } from 'payload'
 
-import { canEditContent, hasRole, isAdmin } from './roles'
+import { canEditContent, hasRole, hasVerifiedAccount, isAdmin } from './roles'
 
 const enabledAuthenticated: Where = {
   and: [
@@ -35,7 +35,7 @@ const enabledMember: Where = {
 export const readVisibleModules: Access = ({ req: { user } }) => {
   if (canEditContent(user)) return true
   if (hasRole(user, ['member', 'agent'])) return enabledMember
-  if (user) return enabledAuthenticated
+  if (hasVerifiedAccount(user)) return enabledAuthenticated
 
   return false
 }

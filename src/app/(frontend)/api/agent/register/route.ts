@@ -62,6 +62,7 @@ export async function POST(request: Request) {
   const createdUser = await payload.create({
     collection: 'users',
     context: {
+      skipSignupProtection: true,
       skipWelcomeEmail: true,
     },
     data: {
