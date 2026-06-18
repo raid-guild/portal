@@ -14,11 +14,13 @@ type CleanupUserCandidate = {
 }
 
 type CleanupFeedbackCandidate = {
+  adminNotes?: string | null
   createdAt?: string | null
   id: number | string
   submittedBy?: CleanupUserCandidate | number | string | null
 }
 
+const spamCleanupNote = 'Marked as spam by signup spam cleanup.'
 const defaultSince = () => new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
 export const cleanupSpamSignups = async (
@@ -111,7 +113,7 @@ export const cleanupSpamSignups = async (
     await payload.update({
       collection: 'feedbackSubmissions',
       data: {
-        adminNotes: 'Marked as spam by signup spam cleanup.',
+        adminNotes: appendAdminNote(feedback.adminNotes, spamCleanupNote),
         status: 'spam',
       },
       id: feedback.id,
@@ -139,4 +141,13 @@ const getRelationID = (relation: CleanupUserCandidate | number | string | null |
   if (typeof relation === 'number' || typeof relation === 'string') return String(relation)
 
   return String(relation.id)
+}
+
+const appendAdminNote = (existingNote: string | null | undefined, note: string) => {
+  const normalized = existingNote?.trim()
+
+  if (!normalized) return note
+  if (normalized.includes(note)) return normalized
+
+  return `${normalized}\n\n${note}`
 }

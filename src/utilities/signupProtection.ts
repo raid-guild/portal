@@ -3,11 +3,16 @@ import type { PayloadRequest } from 'payload'
 
 type SignupProtectionData = {
   email?: unknown
-  signupStartedAt?: unknown
+  signupElapsedMs?: unknown
   website?: unknown
 }
 
-type SignupBlockReason = 'blocked_domain' | 'honeypot' | 'missing_proof' | 'rate_limited' | 'too_fast'
+type SignupBlockReason =
+  | 'blocked_domain'
+  | 'honeypot'
+  | 'missing_proof'
+  | 'rate_limited'
+  | 'too_fast'
 
 const commonEmailDomains = new Set([
   'aol.com',
@@ -50,7 +55,7 @@ export const enforceSignupProtection = async ({
   const emailHash = hashValue(email || 'missing-email')
   const userAgent = req.headers.get('user-agent') || ''
   const metadata = {
-    hasStartedAt: Boolean(data?.signupStartedAt),
+    hasTimingProof: Boolean(data?.signupElapsedMs),
     source: 'users.beforeValidate',
   }
 
@@ -84,13 +89,11 @@ export const enforceSignupProtection = async ({
     await block('honeypot')
   }
 
-  const startedAt = Number(data?.signupStartedAt)
+  const elapsedMs = Number(data?.signupElapsedMs)
 
-  if (!Number.isFinite(startedAt) || startedAt <= 0) {
+  if (!Number.isFinite(elapsedMs) || elapsedMs <= 0) {
     await block('missing_proof')
   }
-
-  const elapsedMs = Date.now() - startedAt
 
   if (elapsedMs < minimumSignupMs) {
     await block('too_fast', { elapsedMs })
@@ -164,13 +167,7 @@ const recordSignupAttempt = async ({
   ipHash: string
   metadata?: Record<string, unknown>
   outcome: 'allowed' | 'blocked'
-  reason:
-    | 'allowed'
-    | 'blocked_domain'
-    | 'honeypot'
-    | 'missing_proof'
-    | 'rate_limited'
-    | 'too_fast'
+  reason: 'allowed' | 'blocked_domain' | 'honeypot' | 'missing_proof' | 'rate_limited' | 'too_fast'
   req: PayloadRequest
   userAgent: string
 }) => {
@@ -187,7 +184,6 @@ const recordSignupAttempt = async ({
         userAgent: userAgent.slice(0, 500),
       },
       overrideAccess: true,
-      req,
     })
   } catch (error) {
     req.payload.logger.warn({

@@ -34,7 +34,7 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
 
 export async function down({ db }: MigrateDownArgs): Promise<void> {
   await db.execute(sql`
-    ALTER TABLE "signup_attempts" DISABLE ROW LEVEL SECURITY;
+    ALTER TABLE IF EXISTS "signup_attempts" DISABLE ROW LEVEL SECURITY;
 
     DROP INDEX IF EXISTS "payload_locked_documents_rels_signup_attempts_id_idx";
     DROP INDEX IF EXISTS "signup_attempts_created_at_idx";

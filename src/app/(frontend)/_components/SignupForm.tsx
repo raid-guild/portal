@@ -53,7 +53,9 @@ export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> 
   nextPath,
 }) => {
   const router = useRouter()
-  const signupStartedAt = useRef(Date.now())
+  const signupStartedAt = useRef(
+    typeof performance !== 'undefined' ? performance.now() : Date.now(),
+  )
   const [errors, setErrors] = useState<SignupFieldErrors>({})
   const [isLoading, setIsLoading] = useState(false)
 
@@ -69,6 +71,8 @@ export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> 
     const name = String(formData.get('name') || '').trim()
     const password = String(formData.get('password') || '')
     const signupWebsite = String(formData.get('website') || '')
+    const now = typeof performance !== 'undefined' ? performance.now() : Date.now()
+    const signupElapsedMs = Math.max(0, Math.round(now - signupStartedAt.current))
 
     if (!email || !name || !password.trim()) {
       setErrors({
@@ -97,7 +101,7 @@ export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> 
           email,
           name,
           password,
-          signupStartedAt: signupStartedAt.current,
+          signupElapsedMs,
           website: signupWebsite,
         }),
       })
@@ -142,13 +146,7 @@ export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> 
     <form className="portal-panel" onSubmit={handleSubmit}>
       <div aria-hidden="true" className="hidden">
         <Label htmlFor="signup-website">Website</Label>
-        <Input
-          autoComplete="off"
-          id="signup-website"
-          name="website"
-          tabIndex={-1}
-          type="text"
-        />
+        <Input autoComplete="off" id="signup-website" name="website" tabIndex={-1} type="text" />
       </div>
       <div className="space-y-5">
         <div>

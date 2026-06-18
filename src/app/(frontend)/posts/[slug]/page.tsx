@@ -139,7 +139,6 @@ const queryRestrictedPublishedPostBySlug = cache(async (slug: string) => {
     pagination: false,
     select: {
       slug: true,
-      title: true,
       visibility: true,
     },
     where: {
@@ -167,32 +166,39 @@ const queryRestrictedPublishedPostBySlug = cache(async (slug: string) => {
 })
 
 const RestrictedPostAccess: React.FC<{
-  post: Pick<Post, 'slug' | 'title' | 'visibility'>
+  post: Pick<Post, 'slug' | 'visibility'>
   slug: string
   user: Awaited<ReturnType<typeof getCurrentUser>>
 }> = ({ post, slug, user }) => {
   const postPath = `/posts/${slug}`
   const isUnverified = user && !hasVerifiedAccount(user)
-  const needsMember = post.visibility === 'member' && !hasRole(user, ['admin', 'editor', 'member', 'agent'])
+  const needsMember =
+    Boolean(user) &&
+    hasVerifiedAccount(user) &&
+    post.visibility === 'member' &&
+    !hasRole(user, ['admin', 'editor', 'member', 'agent'])
 
   return (
     <main className="container pb-24 pt-20">
       <section className="max-w-3xl border border-border bg-card/30 p-8">
         <p className="portal-kicker">Protected post</p>
-        <h1 className="portal-title mt-4">{post.title || 'This post requires Portal access'}</h1>
+        <h1 className="portal-title mt-4">This post requires Portal access</h1>
         <p className="mt-5 text-base leading-7 text-muted-foreground">
-          This post is available to verified Portal accounts
-          {post.visibility === 'member' ? ' with member access' : ''}.
+          Log in or verify your account to continue. If you still cannot access this post, your
+          account may need additional permissions.
         </p>
         {needsMember ? (
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
-            Your account is verified, but this post is marked member-only.
+            Your account is verified, but it does not have access to this post.
           </p>
         ) : null}
         <div className="mt-8 flex flex-wrap gap-3">
           {!user ? (
             <>
-              <Link className="portal-admin-link" href={`/login?next=${encodeURIComponent(postPath)}`}>
+              <Link
+                className="portal-admin-link"
+                href={`/login?next=${encodeURIComponent(postPath)}`}
+              >
                 Log in
               </Link>
               <Link className="portal-admin-link" href="/join">
