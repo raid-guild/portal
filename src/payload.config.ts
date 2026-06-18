@@ -33,6 +33,7 @@ import { Projects } from './collections/Projects'
 import { Posts } from './collections/Posts'
 import { SponsorInquiries } from './collections/SponsorInquiries'
 import { Spotlights } from './collections/Spotlights'
+import { SignupAttempts } from './collections/SignupAttempts'
 import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
 import { WikiPages } from './collections/WikiPages'
@@ -52,7 +53,7 @@ const portalOpsSkill = {
     'Operate the Portal CMS safely, including sessions, posts, wiki pages, briefs, projects, copy, and memory updates.',
   name: 'portal-ops-skill',
   route: '/api/portal/skills/portal-ops-skill',
-  version: '1',
+  version: '3',
 }
 
 const getPortalOpsSkillResponse = async () => {
@@ -157,6 +158,7 @@ export default buildConfig({
     Notifications,
     NotificationPreferences,
     FeedbackSubmissions,
+    SignupAttempts,
     PageCopy,
     Profiles,
     ProfileSkills,

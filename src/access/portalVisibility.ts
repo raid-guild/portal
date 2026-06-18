@@ -1,6 +1,6 @@
 import type { Access, Where } from 'payload'
 
-import { canEditContent, hasRole } from './roles'
+import { canEditContent, hasRole, hasVerifiedAccount } from './roles'
 
 const publishedOnly: Where = {
   _status: {
@@ -24,7 +24,7 @@ export const readVisiblePortalContent: Access = ({ req: { user } }) => {
     }
   }
 
-  if (user) {
+  if (hasVerifiedAccount(user)) {
     return {
       and: [
         publishedOnly,

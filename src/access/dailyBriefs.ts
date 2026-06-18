@@ -1,13 +1,14 @@
 import type { Access, Where } from 'payload'
 
-import { canContributeContent, canEditContent } from './roles'
+import { canContributeContent, canEditContent, hasVerifiedAccount } from './roles'
 
 export const createDailyBriefs: Access = ({ req: { user } }) => canContributeContent(user)
 
 export const deleteDailyBriefs: Access = ({ req: { user } }) => canEditContent(user)
 
 export const readDailyBriefs: Access = ({ req: { user } }) => {
-  if (user) return true
+  if (canEditContent(user)) return true
+  if (hasVerifiedAccount(user)) return true
 
   const publicWeeklyBriefs: Where = {
     and: [

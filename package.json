@@ -10,6 +10,8 @@
     "db:reset:local:migrate": "pnpm db:reset:local && pnpm payload migrate",
     "db:reset:local:seed": "pnpm db:reset:local && pnpm payload migrate && pnpm db:seed:local",
     "db:seed:local": "payload run scripts/seedLocalDatabase.ts",
+    "spam:cleanup": "payload run scripts/cleanupSpamSignups.ts",
+    "spam:cleanup:apply": "cross-env SPAM_CLEANUP_APPLY=true payload run scripts/cleanupSpamSignups.ts",
     "deps:native": "corepack pnpm rebuild sharp esbuild",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
     "dev:prod": "cross-env NODE_OPTIONS=--no-deprecation rm -rf .next && pnpm build && pnpm start",

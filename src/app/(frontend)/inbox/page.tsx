@@ -7,7 +7,9 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { InboxActions } from './InboxActions'
+import { hasVerifiedAccount } from '@/access/roles'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,11 @@ export default async function InboxPage() {
   const user = await getCurrentUser()
 
   if (!user) redirect('/login?next=%2Finbox')
+  if (!hasVerifiedAccount(user)) {
+    return (
+      <VerifyAccountNotice description="Verify your email to use the Portal inbox and notification preferences." />
+    )
+  }
 
   const notifications = await getNotifications(user)
   const unreadCount = notifications.filter(

@@ -12,6 +12,11 @@ Use these Payload collections and fields when producing reviewable update plans.
 
 Rule: automated publishers should use `agent` accounts, not human contributor accounts.
 
+Rule: `authenticated` visibility means a verified Portal account. Fresh signups
+with only the `unverified` role should be treated like anonymous users for
+protected reads and should not perform write actions until email verification or
+profile claim removes the unverified role.
+
 ## activityItems
 
 Purpose: dated factual community signals.
@@ -320,6 +325,52 @@ and `general`.
 
 Rule: for a one-hour consultation MVP, prefer a consultation-flavored `client`
 inquiry page or source route before adding a new durable inquiry type.
+
+## feedbackSubmissions
+
+Purpose: private bug reports, product feedback, and account issue notes for
+admin triage.
+
+Key fields:
+
+- `type`: `bug`, `feedback`, `idea`, `content_issue`, `account_issue`, `other`
+- `status`: `new`, `triaged`, `planned`, `resolved`, `closed`, `spam`
+- `priority`: `low`, `normal`, `high`, `urgent`
+- `title`
+- `message`
+- `email`
+- `submittedBy`
+- `submittedProfile`
+- `pageURL`
+- `userAgent`
+- `viewport`
+- `metadata`
+- `adminNotes`
+
+Rule: feedback requires a verified account unless the user is an editor or
+admin. Mark spam as `status = "spam"` instead of deleting first.
+
+## signupAttempts
+
+Purpose: signup spam audit trail and rate-limit source of truth.
+
+Key fields:
+
+- `emailHash`
+- `emailDomain`
+- `ipHash`
+- `outcome`: `allowed`, `blocked`
+- `reason`: `allowed`, `honeypot`, `too_fast`, `missing_proof`,
+  `rate_limited`, `blocked_domain`
+- `userAgent`
+- `metadata`
+
+Rule: `emailHash` and `ipHash` are intentionally hashed. Do not ask agents to
+recover or expose raw emails or IP addresses from signup attempt records.
+
+Rule: admins can use `POST /api/admin/spam-cleanup` or env-driven
+`corepack pnpm spam:cleanup` for conservative cleanup of recent `/join` spam.
+Both are dry-run by default.
 
 ## profiles
 
