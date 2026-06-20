@@ -1,0 +1,19 @@
+{
+  "cell": {
+    "w": 54,
+    "h": 68
+  },
+  "names": [
+    "idle-down",
+    "idle-up",
+    "idle-left",
+    "idle-right",
+    "attack-down",
+    "attack-up",
+    "attack-left",
+    "attack-right",
+    "frozen",
+    "disconnected"
+  ],
+  "source": "assets-src/art-review/generated-poses/alchemist-pose-sheet-v1-chroma.png"
+}
