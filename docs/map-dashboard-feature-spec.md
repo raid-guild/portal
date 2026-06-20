@@ -2,11 +2,16 @@
 
 ## Status
 
-Planned / future.
+First slice implemented.
 
-This document evaluates the 8-bit map dashboard idea and proposes an
-implementation plan for an alternate authenticated landing view. No app code
-exists yet.
+Portal now includes an authenticated `/dashboard/map` route with a responsive
+map stage, role-based character selector, path/node movement, location dialogs
+backed by current Portal data, a display-safe point leaderboard endpoint, and
+`dashboard-map` CMS-managed page copy fallbacks/seeds.
+
+The remaining polish items are deeper visual QA, richer per-location CMS copy,
+expanded reduced-motion/mobile coverage, and any future free-walk collision
+work if the art pipeline gains collision metadata.
 
 ## Product Intent
 

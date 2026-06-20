@@ -1825,7 +1825,7 @@ export interface PageCopy {
    * Stable route key, for example join or inquire-client.
    */
   key: string;
-  surface: 'join' | 'inquiry' | 'brief' | 'other';
+  surface: 'join' | 'inquiry' | 'brief' | 'dashboard' | 'other';
   status: 'draft' | 'published';
   eyebrow?: string | null;
   headline?: string | null;
