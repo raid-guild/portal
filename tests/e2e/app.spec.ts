@@ -295,31 +295,33 @@ async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage:
   expect(profileResponse.status()).toBe(201)
 
   const context = await browser.newContext()
-  const mapPage = await context.newPage()
+  try {
+    const mapPage = await context.newPage()
 
-  await loginPortalUser(mapPage, email, password)
-  await mapPage.goto('/dashboard/map')
-  await expect(mapPage.getByRole('heading', { name: /walk the portal roads/i })).toBeVisible()
-  await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toBeVisible()
+    await loginPortalUser(mapPage, email, password)
+    await mapPage.goto('/dashboard/map')
+    await expect(mapPage.getByRole('heading', { name: /walk the portal roads/i })).toBeVisible()
+    await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toBeVisible()
 
-  await mapPage.getByRole('button', { name: /warrior/i }).click()
-  await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toHaveCount(0)
-  await expect(mapPage.getByLabel(/warrior form/i)).toBeVisible()
+    await mapPage.getByRole('button', { name: /warrior/i }).click()
+    await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toHaveCount(0)
+    await expect(mapPage.getByLabel(/warrior form/i)).toBeVisible()
 
-  await mapPage
-    .getByRole('navigation', { name: /map destinations/i })
-    .getByRole('button', { name: /slop swamp/i })
-    .click()
-  await expect(mapPage.getByRole('dialog', { name: /slop swamp/i })).toBeVisible({
-    timeout: 10000,
-  })
+    await mapPage
+      .getByRole('navigation', { name: /map destinations/i })
+      .getByRole('button', { name: /slop swamp/i })
+      .click()
+    await expect(mapPage.getByRole('dialog', { name: /slop swamp/i })).toBeVisible({
+      timeout: 10000,
+    })
 
-  const leaderboardResponse = await mapPage.request.get('/api/portal/leaderboard/points')
-  expect(leaderboardResponse.ok()).toBeTruthy()
-  const leaderboardBody = await leaderboardResponse.json()
-  expect(Array.isArray(leaderboardBody.entries)).toBeTruthy()
-
-  await context.close()
+    const leaderboardResponse = await mapPage.request.get('/api/portal/leaderboard/points')
+    expect(leaderboardResponse.ok()).toBeTruthy()
+    const leaderboardBody = await leaderboardResponse.json()
+    expect(Array.isArray(leaderboardBody.entries)).toBeTruthy()
+  } finally {
+    await context.close()
+  }
 }
 
 async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: Page) {

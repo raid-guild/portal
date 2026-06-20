@@ -66,6 +66,8 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
       return
     }
 
+    if (location.disabled) return
+
     movement.travelTo(location.nodeID, () => setActiveLocationID(location.id))
   }
 
@@ -110,7 +112,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
               <button
                 aria-label={`Travel to ${location.label}`}
                 className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-scroll-100"
-                disabled={movement.isMoving}
+                disabled={movement.isMoving || location.disabled}
                 key={location.id}
                 onClick={() => travelToLocation(location)}
                 style={{
@@ -142,7 +144,11 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
             <div className="absolute bottom-3 left-3 z-20 border border-border bg-neutral-black/85 px-3 py-2">
               <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase text-scroll-100">
                 <Compass className="h-4 w-4" />
-                {movement.isMoving ? 'Traveling...' : selectedRole ? selectedRole.title : 'Choose form'}
+                {movement.isMoving
+                  ? 'Traveling...'
+                  : selectedRole
+                    ? selectedRole.title
+                    : 'Choose form'}
               </p>
             </div>
           </div>
@@ -153,7 +159,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
             {mapLocations.map((location) => (
               <Button
                 className="h-auto min-h-12 justify-start whitespace-normal py-3 text-left leading-tight"
-                disabled={movement.isMoving}
+                disabled={movement.isMoving || location.disabled}
                 key={location.id}
                 onClick={() => travelToLocation(location)}
                 type="button"
@@ -191,4 +197,3 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
     </main>
   )
 }
-

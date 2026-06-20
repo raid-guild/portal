@@ -32,13 +32,13 @@ Status labels:
 | CMS page copy | [CMS-managed page copy](./cms-managed-page-copy-feature-spec.md) | First slice implemented | `PageCopy` supports fixed product-flow pages. |
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
 | Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
+| Interactive map dashboard | [Interactive map dashboard](./map-dashboard-feature-spec.md) | First slice implemented | Alternate authenticated dashboard landing view using existing Portal primitives. |
 
 ## Planned / Future Modules
 
 | Area | Spec | Status | Notes |
 | --- | --- | --- | --- |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
-| Interactive map dashboard | [Interactive map dashboard](./map-dashboard-feature-spec.md) | Planned / future | Alternate authenticated dashboard landing view using existing Portal primitives. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
 | External CRM | [External CRM module and Portal identity](./external-crm-module-identity-spec.md) | Planned / future | Portal remains profile/role authority; CRM is an external module with future launch-token SSO. |
 | Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; generation remains deferred. |
