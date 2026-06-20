@@ -300,20 +300,24 @@ async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage:
 
     await loginPortalUser(mapPage, email, password)
     await mapPage.goto('/dashboard/map')
-    await expect(mapPage.getByRole('heading', { name: /walk the portal roads/i })).toBeVisible()
+    await expect(mapPage.getByAltText(/raidguild adventure map with forests/i)).toBeVisible()
     await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toBeVisible()
 
     await mapPage.getByRole('button', { name: /warrior/i }).click()
     await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toHaveCount(0)
     await expect(mapPage.getByLabel(/warrior form/i)).toBeVisible()
 
-    await mapPage
-      .getByRole('navigation', { name: /map destinations/i })
-      .getByRole('button', { name: /slop swamp/i })
-      .click()
+    await mapPage.getByRole('button', { name: /travel to slop swamp/i }).click()
     await expect(mapPage.getByRole('dialog', { name: /slop swamp/i })).toBeVisible({
       timeout: 10000,
     })
+    await mapPage.getByRole('button', { name: /close/i }).click()
+
+    await mapPage.getByRole('button', { name: /travel to guild castle/i }).click()
+    await expect(mapPage.getByRole('dialog', { name: /guild castle/i })).toBeVisible({
+      timeout: 10000,
+    })
+    await expect(mapPage.getByText(/guild members go to work/i)).toBeVisible()
 
     const leaderboardResponse = await mapPage.request.get('/api/portal/leaderboard/points')
     expect(leaderboardResponse.ok()).toBeTruthy()

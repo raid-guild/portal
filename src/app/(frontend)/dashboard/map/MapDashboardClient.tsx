@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
-import { Compass, MapPin, UserRound } from 'lucide-react'
+import { ArrowLeft, MapPin, UserRound } from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { User } from '@/payload-types'
+import { cn } from '@/utilities/cn'
 import type { SelectableMapRole, MapDashboardData } from './mapData'
 import {
   mapBackgroundPath,
@@ -20,10 +21,15 @@ import { useMapMovement } from './useMapMovement'
 
 type MapDashboardClientProps = {
   data: MapDashboardData
+  fontClassName: string
   user: User
 }
 
-export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, user }) => {
+export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
+  data,
+  fontClassName,
+  user,
+}) => {
   const movement = useMapMovement()
   const storageKey = `portal-map-character:${data.profile?.id || user.id}`
   const [activeLocationID, setActiveLocationID] = useState<MapLocationID | null>(null)
@@ -35,6 +41,14 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
     [activeLocationID],
   )
   const selectedLabel = selectedRole ? `${selectedRole.title} form` : 'Guild character'
+
+  useEffect(() => {
+    document.body.classList.add('map-dashboard-fullscreen')
+
+    return () => {
+      document.body.classList.remove('map-dashboard-fullscreen')
+    }
+  }, [])
 
   useEffect(() => {
     const storedSprite = window.localStorage.getItem(storageKey)
@@ -72,106 +86,73 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({ data, us
   }
 
   return (
-    <main className="min-h-screen bg-neutral-black text-foreground">
-      <header className="border-b border-border bg-neutral-black/95">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div>
-            <p className="portal-kicker">{data.copy.eyebrow}</p>
-            <h1 className="mt-2 portal-heading">{data.copy.headline}</h1>
-            <p className="mt-2 max-w-2xl portal-body-sm">{data.copy.intro}</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button asChild size="sm" variant="outline">
-              <Link href="/dashboard">Dashboard</Link>
-            </Button>
-            <Button
-              onClick={() => setIsSelectorOpen(true)}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              <UserRound className="mr-2 h-4 w-4" />
-              Character
-            </Button>
-          </div>
+    <main className={cn('map-dashboard-screen fixed inset-0 z-40 bg-neutral-black', fontClassName)}>
+      <div className="map-dashboard-stage">
+        <img
+          alt="RaidGuild adventure map with forests, roads, villages, castles, a lake, and swamp."
+          className="absolute inset-0 h-full w-full object-cover"
+          draggable={false}
+          src={mapBackgroundPath}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-neutral-black/5 via-transparent to-neutral-black/20" />
+
+        {mapLocations.map((location) => (
+          <button
+            aria-label={`Travel to ${location.label}`}
+            className="map-location-marker"
+            disabled={movement.isMoving || location.disabled}
+            key={location.id}
+            onClick={() => travelToLocation(location)}
+            style={{
+              left: `${location.x}%`,
+              top: `${location.y}%`,
+            }}
+            type="button"
+          >
+            <span className="map-location-pin">
+              <MapPin className="h-4 w-4" />
+            </span>
+            <span className="map-location-label">{location.label}</span>
+          </button>
+        ))}
+
+        {hasLoadedCharacter && selectedRole?.spriteSlug ? (
+          <MapSprite
+            direction={movement.direction}
+            label={selectedLabel}
+            onActivate={() => setIsSelectorOpen(true)}
+            spriteSlug={selectedRole.spriteSlug}
+            x={movement.position.x}
+            y={movement.position.y}
+          />
+        ) : null}
+      </div>
+
+      <div className="map-dashboard-hud map-dashboard-hud-top">
+        <div className="map-dashboard-status">
+          <span>
+            {movement.isMoving ? 'Traveling' : selectedRole ? selectedRole.title : 'Choose form'}
+          </span>
         </div>
-      </header>
-
-      <section className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
-        <div className="overflow-x-auto border border-border bg-card/20 p-2">
-          <div className="relative aspect-video min-w-[860px] overflow-hidden bg-neutral-black">
-            <img
-              alt="RaidGuild adventure map with forests, roads, villages, castles, a lake, and swamp."
-              className="absolute inset-0 h-full w-full object-cover"
-              draggable={false}
-              src={mapBackgroundPath}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-neutral-black/10 via-transparent to-neutral-black/20" />
-
-            {mapLocations.map((location) => (
-              <button
-                aria-label={`Travel to ${location.label}`}
-                className="absolute z-10 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center gap-1 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-scroll-100"
-                disabled={movement.isMoving || location.disabled}
-                key={location.id}
-                onClick={() => travelToLocation(location)}
-                style={{
-                  left: `${location.x}%`,
-                  top: `${location.y}%`,
-                }}
-                type="button"
-              >
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-scroll-300 bg-neutral-black/80 text-scroll-100 shadow-lg">
-                  <MapPin className="h-4 w-4" />
-                </span>
-                <span className="max-w-[120px] border border-border bg-neutral-black/85 px-2 py-1 text-center font-mono text-[10px] font-bold uppercase leading-tight text-scroll-100 shadow-lg">
-                  {location.label}
-                </span>
-              </button>
-            ))}
-
-            {hasLoadedCharacter && selectedRole?.spriteSlug ? (
-              <MapSprite
-                direction={movement.direction}
-                label={selectedLabel}
-                onActivate={() => setIsSelectorOpen(true)}
-                spriteSlug={selectedRole.spriteSlug}
-                x={movement.position.x}
-                y={movement.position.y}
-              />
-            ) : null}
-
-            <div className="absolute bottom-3 left-3 z-20 border border-border bg-neutral-black/85 px-3 py-2">
-              <p className="flex items-center gap-2 font-mono text-xs font-bold uppercase text-scroll-100">
-                <Compass className="h-4 w-4" />
-                {movement.isMoving
-                  ? 'Traveling...'
-                  : selectedRole
-                    ? selectedRole.title
-                    : 'Choose form'}
-              </p>
-            </div>
-          </div>
+        <div className="map-dashboard-actions">
+          <Button asChild className="map-dashboard-button" size="sm" variant="outline">
+            <Link href="/dashboard">
+              <ArrowLeft className="h-4 w-4" />
+              Dashboard
+            </Link>
+          </Button>
+          <Button
+            className="map-dashboard-button"
+            onClick={() => setIsSelectorOpen(true)}
+            size="sm"
+            type="button"
+            variant="outline"
+          >
+            <UserRound className="h-4 w-4" />
+            Character
+          </Button>
         </div>
-
-        <nav aria-label="Map destinations" className="mt-4">
-          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-            {mapLocations.map((location) => (
-              <Button
-                className="h-auto min-h-12 justify-start whitespace-normal py-3 text-left leading-tight"
-                disabled={movement.isMoving || location.disabled}
-                key={location.id}
-                onClick={() => travelToLocation(location)}
-                type="button"
-                variant={location.disabled ? 'outline' : 'secondary'}
-              >
-                <MapPin className="mr-2 h-4 w-4 shrink-0" />
-                {location.label}
-              </Button>
-            ))}
-          </div>
-        </nav>
-      </section>
+      </div>
 
       {isSelectorOpen ? (
         <MapCharacterSelector

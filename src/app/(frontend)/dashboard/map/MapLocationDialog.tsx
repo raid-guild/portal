@@ -17,7 +17,11 @@ type MapLocationDialogProps = {
   onClose: () => void
 }
 
-export const MapLocationDialog: React.FC<MapLocationDialogProps> = ({ data, location, onClose }) => {
+export const MapLocationDialog: React.FC<MapLocationDialogProps> = ({
+  data,
+  location,
+  onClose,
+}) => {
   return (
     <MapDialog description={location.region} onClose={onClose} title={location.label}>
       <LocationContent data={data} location={location} />
@@ -160,11 +164,8 @@ const Village: React.FC<{ data: MapDashboardData }> = ({ data }) => (
 const GuildCastle = () => (
   <div>
     <p className="portal-body-sm">
-      This is where the guild does work. No work is posted here right now. Come back soon.
+      This is where guild members go to work. There is nothing to do here right now.
     </p>
-    <Button className="mt-5" disabled size="sm" type="button" variant="outline">
-      No destination yet
-    </Button>
   </div>
 )
 
@@ -261,7 +262,10 @@ const LunkerLake: React.FC<{ data: MapDashboardData }> = ({ data }) => {
   )
 }
 
-const DialogAction: React.FC<{ children: React.ReactNode; href: string }> = ({ children, href }) => (
+const DialogAction: React.FC<{ children: React.ReactNode; href: string }> = ({
+  children,
+  href,
+}) => (
   <Button asChild className="mt-5" size="sm">
     <Link href={href}>{children}</Link>
   </Button>
