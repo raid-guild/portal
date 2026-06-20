@@ -93,7 +93,7 @@ export const MapDialog: React.FC<MapDialogProps> = ({
     >
       <div
         className={cn(
-          'max-h-[92vh] w-full max-w-3xl overflow-y-auto border-4 border-scroll-300 bg-[#1a0d0b] p-1 shadow-2xl outline-none',
+          'map-dialog-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto bg-[#1a0d0b] p-1 outline-none',
           className,
         )}
         ref={dialogRef}
@@ -124,4 +124,3 @@ export const MapDialog: React.FC<MapDialogProps> = ({
     </div>
   )
 }
-

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { Press_Start_2P } from 'next/font/google'
 import { redirect } from 'next/navigation'
 import React from 'react'
 
@@ -9,6 +10,12 @@ import { getMapDashboardData } from './mapData'
 import { MapDashboardClient } from './MapDashboardClient'
 
 export const dynamic = 'force-dynamic'
+
+const mapPixelFont = Press_Start_2P({
+  subsets: ['latin'],
+  variable: '--font-map-pixel',
+  weight: '400',
+})
 
 export default async function DashboardMapPage() {
   const user = await getCurrentUser()
@@ -23,10 +30,9 @@ export default async function DashboardMapPage() {
 
   const mapData = await getMapDashboardData(user)
 
-  return <MapDashboardClient data={mapData} user={user} />
+  return <MapDashboardClient data={mapData} fontClassName={mapPixelFont.variable} user={user} />
 }
 
 export const metadata: Metadata = {
   title: 'Map Dashboard',
 }
-

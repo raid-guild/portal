@@ -174,7 +174,6 @@ export const mapLocations: MapLocationConfig[] = [
     y: 78,
   },
   {
-    disabled: true,
     id: 'guild-castle',
     label: 'Guild Castle',
     nodeID: 'mine',
@@ -225,4 +224,3 @@ export const findPath = (from: MapNodeID, to: MapNodeID): MapNodeID[] => {
 
   return [from, to]
 }
-

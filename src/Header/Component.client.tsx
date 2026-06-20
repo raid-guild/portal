@@ -30,7 +30,11 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ header }) => {
   }, [headerTheme])
 
   return (
-    <header className="container relative z-20" {...(theme ? { 'data-theme': theme } : {})}>
+    <header
+      className="container relative z-20"
+      data-portal-header
+      {...(theme ? { 'data-theme': theme } : {})}
+    >
       <div className="flex justify-between border-b border-border py-6">
         <Link href="/">
           <Logo loading="eager" priority="high" />
