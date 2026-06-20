@@ -797,6 +797,40 @@ export const seed = async ({
             'Join sessions, find a team, build your skills, and help turn ideas into shipped work with the RaidGuild community.',
         },
         {
+          key: 'dashboard-map',
+          label: 'Dashboard Map',
+          surface: 'dashboard',
+          status: 'published',
+          eyebrow: 'Guild Map',
+          headline: 'Walk the Portal roads.',
+          intro:
+            'Choose a guild form, travel between familiar places, and open the same Portal surfaces from a stranger, livelier angle.',
+          secondaryIntro:
+            'The map is an alternate dashboard view. Posts, sessions, wiki pages, modules, feedback, and points remain the source of truth.',
+          benefitsHeading: 'Map stops',
+          benefits: [
+            {
+              body: 'Slop Swamp bubbles up the newest post.',
+            },
+            {
+              body: 'Lava Castle shows early modules and prototypes.',
+            },
+            {
+              body: 'The Village points toward upcoming sessions.',
+            },
+            {
+              body: 'Lunker Lake keeps your daily check-in and guild points close.',
+            },
+          ],
+          contextHeading: 'Hut of Helpless Whispers',
+          contextBody:
+            'A little hut listens better than the void. Leave a request, a bug, a question, or a signal that needs a human look.',
+          submitLabel: 'Enter the map',
+          seoTitle: 'Map Dashboard',
+          seoDescription:
+            'Explore the RaidGuild Portal through an interactive authenticated map dashboard.',
+        },
+        {
           key: 'join',
           label: 'Join Page',
           surface: 'join',

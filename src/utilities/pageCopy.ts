@@ -103,6 +103,29 @@ export const briefPublicPageFallback: ProductPageCopy = {
   submitAnotherLabel: 'View sessions',
 }
 
+export const dashboardMapPageFallback: ProductPageCopy = {
+  benefits: [
+    'Slop Swamp bubbles up the newest post.',
+    'Lava Castle shows early modules and prototypes.',
+    'The Village points toward upcoming sessions.',
+    'Lunker Lake keeps your daily check-in and guild points close.',
+  ],
+  benefitsHeading: 'Map stops',
+  contextBody:
+    'A little hut listens better than the void. Leave a request, a bug, a question, or a signal that needs a human look.',
+  contextHeading: 'Hut of Helpless Whispers',
+  eyebrow: 'Guild Map',
+  headline: 'Walk the Portal roads.',
+  intro:
+    'Choose a guild form, travel between familiar places, and open the same Portal surfaces from a stranger, livelier angle.',
+  secondaryIntro:
+    'The map is an alternate dashboard view. Posts, sessions, wiki pages, modules, feedback, and points remain the source of truth.',
+  seoDescription:
+    'Explore the RaidGuild Portal through an interactive authenticated map dashboard.',
+  seoTitle: 'Map Dashboard',
+  submitLabel: 'Enter the map',
+}
+
 export const inquiryPageFallbacks: Record<InquiryType, ProductPageCopy> = {
   client: {
     backLinkLabel: 'Back to join',
@@ -209,6 +232,9 @@ export const inquiryPageFallbacks: Record<InquiryType, ProductPageCopy> = {
 export const getJoinPageCopy = () => getPageCopy('join', joinPageFallback)
 
 export const getBriefPublicPageCopy = () => getPageCopy('brief-public', briefPublicPageFallback)
+
+export const getDashboardMapPageCopy = () =>
+  getPageCopy('dashboard-map', dashboardMapPageFallback)
 
 export const getInquiryPageCopy = (type: InquiryType) =>
   getPageCopy(`inquire-${type}`, inquiryPageFallbacks[type])
