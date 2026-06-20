@@ -42,9 +42,9 @@ so v1 should include keyboard controls, focus-managed dialogs, reduced-motion
 handling, and a compact destination menu that exposes the same actions without
 requiring pointer movement.
 
-## Existing Assets
+## Initial Asset Review
 
-Backgrounds reviewed:
+Backgrounds reviewed before cleanup:
 
 ```txt
 public/assets/map/backgrounds/adventure-map-background.png
@@ -61,9 +61,10 @@ public/assets/map/backgrounds/adventure-map-background.webp
 The adventure map is the right asset for this surface. It is 1920x1080, already
 contains clear regions for lake, swamp, forest, village, mine, guild castle,
 volcano, and lava castle, and has visible paths that can support a node graph.
-Keep the PNG as the source-quality fallback and prefer the WebP in the UI.
+Use the WebP in the runtime UI. Keep source-quality art outside `public` if the
+art pipeline needs it.
 
-Character assets reviewed:
+Character assets reviewed before cleanup:
 
 ```txt
 public/assets/map/characters/*.svg
@@ -132,6 +133,109 @@ For v1, show missing-art roles in the selector as unavailable with lore copy and
 a profile link. Do not invent final art in code. If a user's only selected roles
 are unavailable, keep the selector open and point them to `/me` to adjust roles
 or wait for the art pass.
+
+## Asset Requirements
+
+The map directory should contain only assets that support the planned
+`/dashboard/map` implementation. Current app code does not reference these yet,
+so cleanup should be based on the planned runtime needs below.
+
+### Required For V1 Runtime
+
+Keep:
+
+```txt
+public/assets/map/backgrounds/adventure-map-background.webp
+public/assets/map/sprites/characters/alchemist.png
+public/assets/map/sprites/characters/archer.png
+public/assets/map/sprites/characters/cleric.png
+public/assets/map/sprites/characters/druid.png
+public/assets/map/sprites/characters/dwarf.png
+public/assets/map/sprites/characters/healer.png
+public/assets/map/sprites/characters/hunter.png
+public/assets/map/sprites/characters/monk.png
+public/assets/map/sprites/characters/necromancer.png
+public/assets/map/sprites/characters/paladin.png
+public/assets/map/sprites/characters/ranger.png
+public/assets/map/sprites/characters/rogue.png
+public/assets/map/sprites/characters/scribe.png
+public/assets/map/sprites/characters/tavern-keeper.png
+public/assets/map/sprites/characters/warrior.png
+public/assets/map/sprites/characters/wizard.png
+```
+
+The WebP background is the intended map stage image. The sprite sheets are the
+runtime character assets for path/node movement.
+
+### Recommended To Keep For V1
+
+Keep:
+
+```txt
+public/assets/map/sprites/characters/*.json
+```
+
+These files are tiny and document the sprite sheet cell size and frame names.
+The implementation can either load them or mirror the values in TypeScript
+config. Keeping them makes the sprite contract explicit.
+
+Keep the static character portraits if the character selector should feel like a
+larger fantasy character dialog rather than a compact sprite picker:
+
+```txt
+public/assets/map/characters/alchemist.svg
+public/assets/map/characters/archer.svg
+public/assets/map/characters/cleric.svg
+public/assets/map/characters/druid.svg
+public/assets/map/characters/dwarf.svg
+public/assets/map/characters/healer.svg
+public/assets/map/characters/hunter.svg
+public/assets/map/characters/monk.svg
+public/assets/map/characters/necromancer.svg
+public/assets/map/characters/paladin.svg
+public/assets/map/characters/ranger.svg
+public/assets/map/characters/rogue.svg
+public/assets/map/characters/scribe.svg
+public/assets/map/characters/tavern-keeper.svg
+public/assets/map/characters/warrior.svg
+public/assets/map/characters/wizard.svg
+```
+
+Recommendation: keep these portraits for the first implementation because the
+character selector/profile dialog is planned to show lore and profile context,
+and the portraits give that dialog more presence than a 54x68 sprite alone.
+
+### Not Needed For V1
+
+These can be removed from `public/assets/map` before implementation:
+
+```txt
+public/assets/map/backgrounds/adventure-map-background.png
+public/assets/map/backgrounds/arena-dungeon.png
+public/assets/map/sprites/characters/*-preview.png
+```
+
+Rationale:
+
+- `adventure-map-background.png` duplicates the WebP map background and is much
+  larger. Keep a source-quality PNG outside `public` only if the art pipeline
+  needs it.
+- `arena-dungeon.png` does not support the planned overworld dashboard map.
+- `*-preview.png` files duplicate the first sprite frame. The selector can show
+  the first frame directly from each sprite sheet or use the larger SVG
+  portraits.
+
+### Still Missing
+
+The planned role-gated selector still lacks final assets for:
+
+```txt
+apprentice
+bard
+```
+
+Until those exist, keep those roles visible as unavailable in the selector with
+a profile-edit link to `/me`.
 
 ## Recommended Route
 
@@ -259,7 +363,8 @@ Endpoint rules:
   they belong to the current user
 - do not expose raw event rows, user IDs, reasons, issued-by data, or private
   profile fields
-- start with a small limit such as top 10 or top 20
+- return only the top 10 entries
+- include only users/profiles with a positive valid point total
 
 Implementation can use Payload local API reads with `overrideAccess: true` in
 the route handler, then enforce the display policy in code before returning the
@@ -409,8 +514,8 @@ Requirements:
 - fantasy game border treatment implemented in CSS, not image-only UI
 - no hidden requirement to use a mouse
 
-Keep lore copy in code constants for the first version. Move copy to CMS-managed
-page copy only if non-engineers need to revise it frequently.
+Load lore copy from CMS-managed page copy, with code defaults as fallbacks so
+the map remains usable if the CMS record is missing or incomplete.
 
 ## CMS Fit
 
@@ -421,11 +526,11 @@ Recommendation:
 
 - Keep map locations, node graph, coordinates, routes, asset mapping, and data
   bindings in code.
-- For v1, keep lore copy in code constants with safe fallbacks.
-- If editors need to revise lore copy, extend the existing `PageCopy` pattern
-  with a fixed `dashboard-map` key.
-- Add a `dashboard` or `map` surface option to `PageCopy` only when implementing
-  CMS-managed map copy.
+- For v1, extend the existing `PageCopy` pattern with a fixed `dashboard-map`
+  key for lore copy.
+- Add a `dashboard` or `map` surface option to `PageCopy`.
+- Ship initial lore copy as code fallbacks and seed/default CMS copy that can be
+  revised after implementation.
 - Do not add a new collection unless map locations become independently managed
   records with their own lifecycle, permissions, ordering, filtering, or reuse
   outside this dashboard.
@@ -575,11 +680,14 @@ Suggested mobile approach:
 
 - Add `/dashboard/map` route with the same auth and verification gates as
   `/dashboard`.
+- Keep the route hidden from primary dashboard navigation until after visual QA.
 - Add `getMapDashboardData(user)` server loader.
 - Fetch profile roles, latest post, prototype modules, recent wiki pages,
   upcoming sessions, points, leaderboard entries, and daily engagement summary.
 - Add `GET /api/portal/leaderboard/points` for display-safe aggregate point
   totals.
+- Add `dashboard-map` `PageCopy` support for editable lore copy with code
+  fallbacks.
 - Add basic route-level e2e coverage that authenticated users can reach the map.
 
 ### Phase 2: Map Stage And Dialog Shell
@@ -665,21 +773,22 @@ Test scenarios:
 - Use `Slop Swamp`.
 - Use the forest hut shown in the supplied screenshot for the Hut of Helpless
   Whispers.
-- Plan a display-safe point leaderboard API for Lunker Lake.
-- Keep lore copy in code for the first implementation; use `PageCopy` with a
-  `dashboard-map` key if editor-managed copy becomes important.
+- Keep `/dashboard/map` hidden from primary dashboard navigation until after
+  visual QA.
+- Plan a display-safe point leaderboard API for Lunker Lake that returns the top
+  10 users/profiles with positive valid point totals.
+- Use `PageCopy` with a `dashboard-map` key for editable lore copy, seeded from
+  initial implementation copy and backed by code fallbacks.
 
 ## Remaining Open Questions
 
-- Should the map become a primary dashboard link immediately, or stay a hidden
-  route until after visual QA?
-- What exact lore copy should ship for each location and character role?
-- Should the leaderboard include all authenticated/public profiles, or require
-  an explicit profile opt-in before showing a member?
+- What exact lore copy should ship for each location and character role? The
+  first implementation should fill this in, then editors can revise it in CMS.
 
 ## Recommendation
 
 Build v1 as `/dashboard/map` with path/node movement, reusable game dialogs,
 role-limited character selection, browser-only character persistence, real
-dashboard data, and a display-safe point leaderboard endpoint. Keep free walking
-out of v1 unless the art pipeline gains collision metadata.
+dashboard data, CMS-editable lore copy, and a display-safe top-ten point
+leaderboard endpoint. Keep free walking out of v1 unless the art pipeline gains
+collision metadata.
