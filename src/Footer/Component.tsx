@@ -29,7 +29,7 @@ export async function Footer() {
   const navItems = footer?.navItems || []
 
   return (
-    <footer className="border-t border-border bg-moloch-900 text-scroll-100">
+    <footer className="border-t border-border bg-moloch-900 text-scroll-100" data-portal-footer>
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:justify-between">
         <Link className="flex items-center" href="/">
           <Logo className="brightness-0 invert" />
