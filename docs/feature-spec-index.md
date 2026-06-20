@@ -32,6 +32,7 @@ Status labels:
 | CMS page copy | [CMS-managed page copy](./cms-managed-page-copy-feature-spec.md) | First slice implemented | `PageCopy` supports fixed product-flow pages. |
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
 | Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
+| Interactive map dashboard | [Interactive map dashboard](./map-dashboard-feature-spec.md) | First slice implemented | Alternate authenticated dashboard landing view using existing Portal primitives. |
 
 ## Planned / Future Modules
 
