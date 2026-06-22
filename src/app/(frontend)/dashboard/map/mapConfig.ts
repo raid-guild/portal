@@ -1,3 +1,6 @@
+import { toPercentPoint } from './mapGeometry'
+import { mapManifest } from './mapManifest'
+
 export type MapLocationID =
   | 'slop-swamp'
   | 'lava-castle'
@@ -31,6 +34,7 @@ export type MapNode = MapPoint & {
 
 export type MapLocationConfig = MapPoint & {
   actionHref?: string
+  actionLabel?: string
   disabled?: boolean
   id: MapLocationID
   label: string
@@ -40,12 +44,9 @@ export type MapLocationConfig = MapPoint & {
 
 export type SpriteDirection = 'down' | 'up' | 'left' | 'right'
 
-export const mapBackgroundPath = '/assets/map/backgrounds/adventure-map-background.webp'
+export const mapBackgroundPath = mapManifest.background
 
-export const mapSpawnPoint: MapPoint = {
-  x: 49,
-  y: 64,
-}
+export const mapSpawnPoint: MapPoint = toPercentPoint(mapManifest.spawn, mapManifest.size)
 
 export const roleSpriteAliases: Record<string, string> = {
   'angry-dwarf': 'dwarf',
@@ -136,69 +137,54 @@ export const mapNodes: Record<MapNodeID, MapNode> = {
   },
 }
 
-export const mapLocations: MapLocationConfig[] = [
-  {
-    actionHref: '/posts',
-    id: 'slop-swamp',
-    label: 'Slop Swamp',
-    nodeID: 'swamp',
-    region: 'Lower-left swamp',
-    x: 18,
-    y: 75,
-  },
-  {
-    actionHref: '/modules',
-    id: 'lava-castle',
-    label: 'Lava Castle',
-    nodeID: 'lava-castle',
-    region: 'Far-right castle',
-    x: 91,
-    y: 51,
-  },
-  {
-    actionHref: '/wiki',
-    id: 'forest-knowledge',
-    label: 'Forest of Unknown Knowledge',
-    nodeID: 'forest',
-    region: 'Tree entry',
-    x: 33,
-    y: 23,
-  },
-  {
-    actionHref: '/events',
-    id: 'village',
-    label: 'The Village',
-    nodeID: 'village',
-    region: 'Lower-middle town',
-    x: 51,
-    y: 78,
-  },
-  {
-    id: 'guild-castle',
-    label: 'Guild Castle',
-    nodeID: 'mine',
-    region: 'Main mountain castle',
-    x: 58,
-    y: 15,
-  },
-  {
-    actionHref: '/feedback',
-    id: 'whispers-hut',
-    label: 'Hut of Helpless Whispers',
-    nodeID: 'hut',
-    region: 'Forest hut',
-    x: 29,
-    y: 34,
-  },
-  {
-    id: 'lunker-lake',
-    label: 'Lunker Lake',
-    nodeID: 'lake',
-    region: 'Lake on the left side',
-    x: 12,
-    y: 40,
-  },
-]
+const mapLocationIDs = new Set<MapLocationID>([
+  'forest-knowledge',
+  'guild-castle',
+  'lava-castle',
+  'lunker-lake',
+  'slop-swamp',
+  'village',
+  'whispers-hut',
+])
+
+const mapNodeIDs = new Set<MapNodeID>([
+  'forest',
+  'hut',
+  'lake',
+  'lava-castle',
+  'lava-road',
+  'mine',
+  'south-road',
+  'spawn',
+  'swamp',
+  'village',
+])
+
+const isMapLocationID = (value: string): value is MapLocationID =>
+  mapLocationIDs.has(value as MapLocationID)
+
+const toMapNodeID = (value: string): MapNodeID =>
+  mapNodeIDs.has(value as MapNodeID) ? (value as MapNodeID) : 'spawn'
+
+export const mapLocations: MapLocationConfig[] = mapManifest.pointsOfInterest
+  .filter((poi) => isMapLocationID(poi.id))
+  .sort((a, b) => a.menuOrder - b.menuOrder)
+  .map((poi) => {
+    const id = poi.id as MapLocationID
+    const point = toPercentPoint(poi, mapManifest.size)
+
+    return {
+      actionHref: poi.href || undefined,
+      actionLabel: poi.actionLabel || undefined,
+      disabled: !poi.enabled,
+      id,
+      label: poi.label,
+      nodeID: toMapNodeID(poi.nodeId),
+      region: poi.region,
+      x: point.x,
+      y: point.y,
+    }
+  })
 
 export const findPath = (from: MapNodeID, to: MapNodeID): MapNodeID[] => {
   if (from === to) return [from]

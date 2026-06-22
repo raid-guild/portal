@@ -1,13 +1,22 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft, MapPin, UserRound } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowLeft as ArrowLeftIcon,
+  ArrowRight,
+  ArrowUp,
+  MapPin,
+  UserRound,
+} from 'lucide-react'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import type { User } from '@/payload-types'
 import { cn } from '@/utilities/cn'
 import type { SelectableMapRole, MapDashboardData } from './mapData'
+import { getNearestTriggeredPOI } from './mapGeometry'
+import { mapManifest } from './mapManifest'
 import {
   mapBackgroundPath,
   mapLocations,
@@ -15,9 +24,11 @@ import {
   type MapLocationID,
 } from './mapConfig'
 import { MapCharacterSelector } from './MapCharacterSelector'
+import { MapDebugOverlay } from './MapDebugOverlay'
+import { MapInteractionPrompt } from './MapInteractionPrompt'
 import { MapLocationDialog } from './MapLocationDialog'
 import { MapSprite } from './MapSprite'
-import { useMapMovement } from './useMapMovement'
+import { useFreeWalkMovement } from './useFreeWalkMovement'
 
 type MapDashboardClientProps = {
   data: MapDashboardData
@@ -30,20 +41,34 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
   fontClassName,
   user,
 }) => {
-  const movement = useMapMovement()
   const storageKey = `portal-map-character:${data.profile?.id || user.id}`
   const [activeLocationID, setActiveLocationID] = useState<MapLocationID | null>(null)
   const [hasLoadedCharacter, setHasLoadedCharacter] = useState(false)
+  const [isDebugOverlayVisible, setIsDebugOverlayVisible] = useState(false)
   const [isSelectorOpen, setIsSelectorOpen] = useState(false)
   const [selectedRole, setSelectedRole] = useState<SelectableMapRole | null>(null)
+  const isMovementEnabled = Boolean(selectedRole) && !isSelectorOpen && !activeLocationID
+  const movement = useFreeWalkMovement({
+    enabled: isMovementEnabled,
+    manifest: mapManifest,
+  })
   const activeLocation = useMemo(
     () => mapLocations.find((location) => location.id === activeLocationID) || null,
     [activeLocationID],
+  )
+  const nearbyPOI = useMemo(
+    () => getNearestTriggeredPOI(movement.sourcePosition, mapManifest.pointsOfInterest),
+    [movement.sourcePosition],
+  )
+  const nearbyLocation = useMemo(
+    () => mapLocations.find((location) => location.id === nearbyPOI?.id) || null,
+    [nearbyPOI],
   )
   const selectedLabel = selectedRole ? `${selectedRole.title} form` : 'Guild character'
 
   useEffect(() => {
     document.body.classList.add('map-dashboard-fullscreen')
+    setIsDebugOverlayVisible(new URLSearchParams(window.location.search).get('mapDebug') === '1')
 
     return () => {
       document.body.classList.remove('map-dashboard-fullscreen')
@@ -66,6 +91,20 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
     setHasLoadedCharacter(true)
   }, [data.selectableRoles, storageKey])
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!nearbyLocation || !isMovementEnabled) return
+      if (event.key !== 'Enter' && event.key !== ' ') return
+
+      event.preventDefault()
+      setActiveLocationID(nearbyLocation.id)
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isMovementEnabled, nearbyLocation])
+
   const selectRole = (role: SelectableMapRole) => {
     if (!role.available || !role.spriteSlug) return
 
@@ -82,8 +121,15 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
 
     if (location.disabled) return
 
-    movement.travelTo(location.nodeID, () => setActiveLocationID(location.id))
+    setActiveLocationID(location.id)
   }
+
+  const directionButtons = [
+    { direction: 'up' as const, icon: ArrowUp, label: 'Move up' },
+    { direction: 'left' as const, icon: ArrowLeftIcon, label: 'Move left' },
+    { direction: 'right' as const, icon: ArrowRight, label: 'Move right' },
+    { direction: 'down' as const, icon: ArrowDown, label: 'Move down' },
+  ]
 
   return (
     <main className={cn('map-dashboard-screen fixed inset-0 z-40 bg-neutral-black', fontClassName)}>
@@ -95,12 +141,13 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
           src={mapBackgroundPath}
         />
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-black/5 via-transparent to-neutral-black/20" />
+        {isDebugOverlayVisible ? <MapDebugOverlay manifest={mapManifest} /> : null}
 
         {mapLocations.map((location) => (
           <button
             aria-label={`Travel to ${location.label}`}
             className="map-location-marker"
-            disabled={movement.isMoving || location.disabled}
+            disabled={location.disabled}
             key={location.id}
             onClick={() => travelToLocation(location)}
             style={{
@@ -122,8 +169,8 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
             label={selectedLabel}
             onActivate={() => setIsSelectorOpen(true)}
             spriteSlug={selectedRole.spriteSlug}
-            x={movement.position.x}
-            y={movement.position.y}
+            x={movement.renderPosition.x}
+            y={movement.renderPosition.y}
           />
         ) : null}
       </div>
@@ -131,13 +178,19 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
       <div className="map-dashboard-hud map-dashboard-hud-top">
         <div className="map-dashboard-status">
           <span>
-            {movement.isMoving ? 'Traveling' : selectedRole ? selectedRole.title : 'Choose form'}
+            {nearbyLocation
+              ? `Near ${nearbyLocation.label}`
+              : movement.isMoving
+                ? 'Free walking'
+                : selectedRole
+                  ? selectedRole.title
+                  : 'Choose form'}
           </span>
         </div>
         <div className="map-dashboard-actions">
           <Button asChild className="map-dashboard-button" size="sm" variant="outline">
             <Link href="/dashboard">
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeftIcon className="h-4 w-4" />
               Dashboard
             </Link>
           </Button>
@@ -153,6 +206,37 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
           </Button>
         </div>
       </div>
+
+      <div className="map-dashboard-hud map-dashboard-hud-bottom">
+        <div className="map-dpad" aria-label="Map movement controls">
+          {directionButtons.map(({ direction, icon: Icon, label }) => (
+            <button
+              aria-label={label}
+              className={`map-dpad-button map-dpad-button-${direction}`}
+              disabled={!isMovementEnabled}
+              key={direction}
+              onBlur={() => movement.setDirectionHeld(direction, false)}
+              onPointerCancel={() => movement.setDirectionHeld(direction, false)}
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId)
+                movement.setDirectionHeld(direction, true)
+              }}
+              onPointerLeave={() => movement.setDirectionHeld(direction, false)}
+              onPointerUp={() => movement.setDirectionHeld(direction, false)}
+              type="button"
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {nearbyPOI && nearbyLocation && isMovementEnabled ? (
+        <MapInteractionPrompt
+          onInteract={() => setActiveLocationID(nearbyLocation.id)}
+          poi={nearbyPOI}
+        />
+      ) : null}
 
       {isSelectorOpen ? (
         <MapCharacterSelector

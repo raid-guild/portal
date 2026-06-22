@@ -102,7 +102,7 @@ export const MapDialog: React.FC<MapDialogProps> = ({
         <div className="border border-moloch-500 bg-gradient-to-b from-[#27120f] to-[#0e0706] p-4 sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="portal-kicker">RaidGuild Map</p>
+              <p className="portal-kicker">RaidGuild Realm</p>
               <h2 className="mt-2 portal-heading" id={titleID}>
                 {title}
               </h2>

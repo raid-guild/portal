@@ -305,7 +305,17 @@ async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage:
 
     await mapPage.getByRole('button', { name: /warrior/i }).click()
     await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toHaveCount(0)
-    await expect(mapPage.getByLabel(/warrior form/i)).toBeVisible()
+    const warriorSprite = mapPage.getByLabel(/warrior form/i)
+    await expect(warriorSprite).toBeVisible()
+
+    const beforeWalk = await warriorSprite.boundingBox()
+    expect(beforeWalk).toBeTruthy()
+    await mapPage.keyboard.down('ArrowRight')
+    await mapPage.waitForTimeout(350)
+    await mapPage.keyboard.up('ArrowRight')
+    const afterWalk = await warriorSprite.boundingBox()
+    expect(afterWalk).toBeTruthy()
+    expect(afterWalk!.x).toBeGreaterThan(beforeWalk!.x + 8)
 
     await mapPage.getByRole('button', { name: /travel to slop swamp/i }).click()
     await expect(mapPage.getByRole('dialog', { name: /slop swamp/i })).toBeVisible({
