@@ -215,10 +215,18 @@ body.map-dashboard-fullscreen [data-portal-footer] {
   top: 0;
 }
 
+.map-dashboard-hud-bottom {
+  bottom: 0;
+  left: 0;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+}
+
 .map-dashboard-status,
 .map-dashboard-button,
 .map-location-label,
-.map-dialog-panel {
+.map-dialog-panel,
+.map-dpad-button,
+.map-interaction-prompt {
   background: rgba(10, 5, 4, 0.86);
   border: 2px solid hsl(var(--scroll-300));
   box-shadow:
@@ -248,6 +256,84 @@ body.map-dashboard-fullscreen [data-portal-footer] {
   line-height: 1.5;
   min-height: 2.5rem;
   padding: 0.6rem 0.75rem;
+}
+
+.map-dpad {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-areas:
+    '. up .'
+    'left . right'
+    '. down .';
+  grid-template-columns: repeat(3, 2.75rem);
+  grid-template-rows: repeat(3, 2.75rem);
+  touch-action: none;
+}
+
+.map-dpad-button {
+  align-items: center;
+  color: hsl(var(--scroll-100));
+  display: flex;
+  height: 2.75rem;
+  justify-content: center;
+  outline: none;
+  width: 2.75rem;
+}
+
+.map-dpad-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.map-dpad-button:focus-visible {
+  outline: 2px solid hsl(var(--scroll-100));
+  outline-offset: 3px;
+}
+
+.map-dpad-button-up {
+  grid-area: up;
+}
+
+.map-dpad-button-left {
+  grid-area: left;
+}
+
+.map-dpad-button-right {
+  grid-area: right;
+}
+
+.map-dpad-button-down {
+  grid-area: down;
+}
+
+.map-interaction-prompt {
+  align-items: center;
+  bottom: clamp(0.75rem, 2vw, 1.25rem);
+  color: hsl(var(--scroll-100));
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  left: 50%;
+  max-width: min(92vw, 34rem);
+  padding: 0.65rem 0.75rem;
+  position: absolute;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+  width: max-content;
+  z-index: 35;
+}
+
+.map-interaction-prompt p {
+  font-size: clamp(0.5rem, 1vw, 0.68rem);
+  line-height: 1.45;
+}
+
+.map-interaction-prompt span {
+  color: hsl(var(--scroll-200));
+  display: block;
+  font-size: clamp(0.42rem, 0.78vw, 0.52rem);
+  line-height: 1.45;
+  margin-top: 0.2rem;
 }
 
 .map-location-marker {
@@ -309,6 +395,31 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 
   .map-dashboard-actions {
     justify-content: flex-start;
+  }
+
+  .map-dashboard-hud-bottom {
+    bottom: 4.5rem;
+    padding-right: 0;
+  }
+
+  .map-dpad {
+    grid-template-columns: repeat(3, 2.35rem);
+    grid-template-rows: repeat(3, 2.35rem);
+  }
+
+  .map-dpad-button {
+    height: 2.35rem;
+    width: 2.35rem;
+  }
+
+  .map-interaction-prompt {
+    align-items: stretch;
+    bottom: 0.75rem;
+    flex-direction: column;
+    left: 0.75rem;
+    right: 0.75rem;
+    transform: none;
+    width: auto;
   }
 
   .map-location-label {

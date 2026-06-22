@@ -441,16 +441,302 @@ Cons:
 Allow arrow/WASD movement across the map and block movement with collision
 geometry.
 
-This needs one of:
+This should be treated as a map-data pipeline, not as one-off movement logic in
+React. The runtime should load a stable map manifest generated from a Tiled
+source file. The manifest should describe the map dimensions, background,
+spawn point, points of interest, walkable polygons, and blocked polygons in one
+shared coordinate system.
+
+The implemented repeatable map pipeline keeps the raw Tiled export and
+normalized runtime manifest at:
+
+```txt
+public/assets/map/maps/adventure/adventure.tiled.json
+public/assets/map/maps/adventure/map.json
+```
+
+It uses the correct `80 x 45` map size with `24px` tiles, which gives a
+`1920 x 1080` source-pixel coordinate space matching the background image.
+
+Supported authoring inputs:
 
 - a hand-authored collision mask image where walkable pixels are one color
 - a manual polygon/navmesh layer stored as JSON
 - a tile map exported from a map editor
 
+Preferred authoring input:
+
+```txt
+Tiled object layers exported as JSON
+```
+
+Use Tiled as the editable source of truth and convert it into an app-owned JSON
+manifest before runtime use. Do not make the React client depend directly on
+Tiled's full export shape.
+
+Recommended source/export layout:
+
+```txt
+public/assets/map/maps/adventure/adventure.tiled.tmj
+public/assets/map/maps/adventure/adventure.tiled.json
+public/assets/map/maps/adventure/map.json
+public/assets/map/maps/adventure/debug-preview.png
+```
+
+`adventure.tiled.tmj` is the editable Tiled source. `adventure.tiled.json` is
+the raw export. `map.json` is the normalized runtime manifest. The debug preview
+is optional but useful in PR review because collision geometry is otherwise hard
+to inspect.
+
+Recommended Tiled layers:
+
+```txt
+background
+spawn
+pointsOfInterest
+walkable
+blocked
+```
+
+Layer contracts:
+
+- `background`: image layer for `adventure-map-background.webp`.
+- `spawn`: one or more point objects. The first implementation should require a
+  `default` spawn.
+- `pointsOfInterest`: point or ellipse objects with stable app metadata.
+- `walkable`: polygon objects defining where character feet may move.
+- `blocked`: polygon objects that subtract obstacles from walkable areas.
+
+Recommended Tiled custom properties:
+
+Map-level properties:
+
+```txt
+schema: portal-map-v1
+schemaVersion: 1
+mapId: adventure
+coordinateSpace: source-pixels
+sourceWidth: 1920
+sourceHeight: 1080
+backgroundPath: /assets/map/backgrounds/adventure-map-background.webp
+movementKind: navmesh
+poiInteraction: proximity
+```
+
+Spawn object properties:
+
+```txt
+spawnId: default
+facing: down
+characterFootRadius: 14
+```
+
+Point-of-interest object properties:
+
+```txt
+locationId: slop-swamp | lava-castle | forest-knowledge | village
+  | guild-castle | whispers-hut | lunker-lake
+label: user-facing location label
+kind: posts | modules | wiki | events | static | feedback | daily-engagement
+dialogKey: stable dialog renderer key
+href: optional deeper route
+nodeId: optional path/node compatibility anchor
+region: short accessible region description
+menuOrder: integer sort order
+triggerShape: circle | ellipse
+triggerRadius: proximity distance in source pixels
+markerRadius: pointer/touch marker radius in source pixels
+enabled: boolean
+opensDialog: boolean
+actionLabel: button or prompt label
+```
+
+Walkable polygon properties:
+
+```txt
+navmeshId: stable polygon ID
+collisionKind: walkable
+blocksMovement: false
+movementCost: 1
+debugColor: #2ecc71
+```
+
+Blocked polygon properties:
+
+```txt
+obstacleId: stable obstacle ID
+collisionKind: blocked
+blocksMovement: true
+collisionPriority: 100
+debugColor: #e74c3c
+```
+
+Normalized runtime manifest shape:
+
+```json
+{
+  "schema": "portal-map-v1",
+  "schemaVersion": 1,
+  "id": "adventure",
+  "size": { "w": 1920, "h": 1080 },
+  "background": "/assets/map/backgrounds/adventure-map-background.webp",
+  "spawn": {
+    "id": "default",
+    "x": 786,
+    "y": 660,
+    "facing": "down",
+    "characterFootRadius": 14
+  },
+  "movement": {
+    "kind": "navmesh",
+    "walkable": [
+      {
+        "id": "core",
+        "points": [[6.67, 81.33], [56, 84], [84, 102.67]]
+      }
+    ],
+    "blocked": [
+      {
+        "id": "lake",
+        "points": [[88, 388], [152, 364], [189.33, 325.33]]
+      }
+    ]
+  },
+  "pointsOfInterest": [
+    {
+      "id": "slop-swamp",
+      "label": "Slop Swamp",
+      "kind": "posts",
+      "x": 334,
+      "y": 884,
+      "triggerShape": "ellipse",
+      "triggerRadius": 120,
+      "markerRadius": 52,
+      "dialogKey": "slop-swamp",
+      "href": "/posts",
+      "enabled": true
+    }
+  ]
+}
+```
+
+The converter should translate Tiled polygon points from local object
+coordinates into absolute source-pixel coordinates by adding each object's
+`x`/`y` to each polygon point. The runtime should not need to know that Tiled
+stores polygon vertices relative to their object origin.
+
+The converter should translate POI geometry into a single interaction position:
+
+- Point object: use the object's `x`/`y` directly.
+- Ellipse object: use the center point, `x + width / 2` and `y + height / 2`.
+- Rectangle object, if used later: use the center point unless the object has
+  explicit `markerX`/`markerY` custom properties.
+- Preserve the original object bounds as optional `triggerBounds` when the UI
+  needs ellipse or rectangle proximity instead of circular proximity.
+
+Movement model:
+
+- Keep the character position as a source-pixel coordinate.
+- Use the character's feet point as the primary collision coordinate.
+- Treat `characterFootRadius` as a small circle for edge testing so movement
+  does not feel like a single-pixel needle.
+- On every animation frame, build a desired movement vector from keyboard,
+  pointer, or virtual joystick input.
+- Normalize diagonal movement so diagonal speed is not faster.
+- Test the desired next position against the navmesh.
+- Permit movement only when the feet circle remains inside at least one
+  walkable polygon and outside all blocked polygons.
+- If full movement is blocked, test the horizontal and vertical components
+  separately to allow natural sliding along walls.
+- Clamp final position to the `1920 x 1080` source bounds.
+- Convert the source-pixel position to CSS percentages for DOM rendering.
+
+Input model:
+
+- Desktop: support arrow keys and WASD.
+- Pointer: allow click-to-walk or hold-to-move only if it does not conflict with
+  marker activation. Start with keyboard plus destination menu if pointer
+  semantics are unclear.
+- Mobile: add a small virtual D-pad or joystick outside the map stage instead of
+  requiring precise drag movement over the art.
+- Reduced motion: still allow direct position changes, but skip any decorative
+  movement effects.
+
+Point-of-interest proximity model:
+
+- On each movement update, compute distance from the character feet position to
+  each enabled point of interest.
+- If the character enters a POI's trigger area, mark it as nearby.
+- Show a compact interaction prompt for the nearest nearby POI.
+- Pressing Enter, Space, or the prompt button opens the mapped dialog.
+- Avoid automatically opening dialogs on proximity alone; auto-open can feel
+  jumpy when players are only passing through.
+- Keep the destination menu as the accessible non-spatial way to reach the same
+  dialogs.
+
+Collision implementation options:
+
+- Initial implementation can use a simple point-in-polygon helper plus segment
+  distance checks for the feet radius. This keeps dependencies light.
+- If polygon logic becomes complex, use a small geometry helper library, but do
+  not introduce a game engine solely for collision.
+- Do not use tile collision unless future maps are authored as tilemaps from the
+  start. The current painted raster fits polygon collision better.
+
+Validation requirements:
+
+- `map.json` must match the expected schema and version.
+- Source dimensions must match `1920 x 1080`.
+- Background path must exist.
+- Exactly one default spawn must exist.
+- Spawn must be inside a walkable polygon and outside blocked polygons.
+- Every enabled POI must have a stable `locationId`, `label`, `kind`,
+  `dialogKey`, `triggerRadius`, and `markerRadius`.
+- Every enabled POI must be reachable from walkable space or explicitly marked
+  as visual-only/disabled.
+- Walkable and blocked objects must be polygons with at least three points.
+- POI IDs must align with the map dialog IDs.
+
+Implementation phases for free walk:
+
+1. Preserve the existing path/node map as the stable shipped version.
+2. Add the Tiled source/export files under `public/assets/map/maps/adventure/`.
+3. Add a converter script that creates `map.json` from the Tiled export.
+4. Add schema validation for the normalized manifest.
+5. Add a debug renderer that can overlay walkable, blocked, spawn, and POI
+   geometry in development.
+6. Add a `useFreeWalkMovement` hook beside the existing path movement hook.
+7. Gate free walk behind a config flag until collision QA is complete.
+8. Wire POI proximity prompts to the existing location dialog system.
+9. Add keyboard, destination-menu, and mobile movement coverage.
+10. Run full e2e and headed/manual visual verification before replacing path
+    movement.
+
+Implemented pipeline/runtime files:
+
+```txt
+src/app/(frontend)/dashboard/map/mapManifest.ts
+src/app/(frontend)/dashboard/map/mapGeometry.ts
+src/app/(frontend)/dashboard/map/useFreeWalkMovement.ts
+src/app/(frontend)/dashboard/map/MapInteractionPrompt.tsx
+src/app/(frontend)/dashboard/map/MapDebugOverlay.tsx
+scripts/convert-tiled-map.mjs
+scripts/validate-map-manifest.mjs
+```
+
+Regenerate and validate the runtime manifest with:
+
+```txt
+corepack pnpm map:convert
+```
+
 Pros:
 
 - strongest game feel
 - allows wandering and discovery
+- keeps future maps repeatable if Tiled metadata is treated as the source
+- lets the same map data drive collision, markers, proximity prompts, and
+  destination menus
 
 Cons:
 
@@ -458,9 +744,12 @@ Cons:
 - hard to tune against raster art
 - easy to create frustrating invisible walls
 - more testing required on mobile and zoomed viewports
+- needs a converter and validation layer so editor output does not leak into
+  runtime code
 
-Decision: build path/node movement first. Add free movement only after the art
-pipeline includes a collision mask or navmesh.
+Decision: free movement is implemented as the active map movement model. It is
+integrated with the Tiled pipeline, validated `map.json` output, proximity POI
+prompts, keyboard/mobile movement controls, and the `?mapDebug=1` debug overlay.
 
 ## Client Architecture
 
