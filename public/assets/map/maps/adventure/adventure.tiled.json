@@ -187,7 +187,7 @@
             {
               "name": "characterFootRadius",
               "type": "int",
-              "value": 10
+              "value": 6
             }
           ]
         }
@@ -1285,32 +1285,36 @@
               "y": 0
             },
             {
-              "x": 144,
-              "y": 0
+              "x": 176,
+              "y": -6
             },
             {
-              "x": 402,
-              "y": 56
+              "x": 420,
+              "y": 38
             },
             {
-              "x": 458,
-              "y": 144
+              "x": 546,
+              "y": 154
             },
             {
-              "x": 354,
-              "y": 214
+              "x": 540,
+              "y": 320
             },
             {
-              "x": 184,
+              "x": 404,
+              "y": 390
+            },
+            {
+              "x": 128,
+              "y": 382
+            },
+            {
+              "x": -42,
               "y": 236
             },
             {
-              "x": 42,
-              "y": 176
-            },
-            {
-              "x": -18,
-              "y": 68
+              "x": -30,
+              "y": 70
             }
           ],
           "properties": [
@@ -1344,8 +1348,160 @@
           "type": "walkable",
           "visible": true,
           "width": 0,
-          "x": 748,
-          "y": 632
+          "x": 742,
+          "y": 628
+        },
+        {
+          "draworder": "topdown",
+          "height": 0,
+          "id": 23,
+          "name": "mineApproach",
+          "opacity": 1,
+          "rotation": 0,
+          "type": "walkable",
+          "visible": true,
+          "width": 0,
+          "polygon": [
+            {
+              "x": 0,
+              "y": 112
+            },
+            {
+              "x": 70,
+              "y": 56
+            },
+            {
+              "x": 168,
+              "y": 8
+            },
+            {
+              "x": 254,
+              "y": 34
+            },
+            {
+              "x": 314,
+              "y": 104
+            },
+            {
+              "x": 254,
+              "y": 166
+            },
+            {
+              "x": 118,
+              "y": 162
+            },
+            {
+              "x": 24,
+              "y": 146
+            }
+          ],
+          "properties": [
+            {
+              "name": "navmeshId",
+              "type": "string",
+              "value": "mineApproach"
+            },
+            {
+              "name": "collisionKind",
+              "type": "string",
+              "value": "walkable"
+            },
+            {
+              "name": "blocksMovement",
+              "type": "bool",
+              "value": false
+            },
+            {
+              "name": "movementCost",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "debugColor",
+              "type": "string",
+              "value": "#2ecc71"
+            }
+          ],
+          "x": 842,
+          "y": 500
+        },
+        {
+          "draworder": "topdown",
+          "height": 0,
+          "id": 24,
+          "name": "lavaBridge",
+          "opacity": 1,
+          "rotation": 0,
+          "type": "walkable",
+          "visible": true,
+          "width": 0,
+          "polygon": [
+            {
+              "x": 0,
+              "y": 34
+            },
+            {
+              "x": 118,
+              "y": 0
+            },
+            {
+              "x": 282,
+              "y": 96
+            },
+            {
+              "x": 448,
+              "y": 154
+            },
+            {
+              "x": 566,
+              "y": 230
+            },
+            {
+              "x": 520,
+              "y": 326
+            },
+            {
+              "x": 336,
+              "y": 290
+            },
+            {
+              "x": 174,
+              "y": 210
+            },
+            {
+              "x": 18,
+              "y": 116
+            }
+          ],
+          "properties": [
+            {
+              "name": "navmeshId",
+              "type": "string",
+              "value": "lavaBridge"
+            },
+            {
+              "name": "collisionKind",
+              "type": "string",
+              "value": "walkable"
+            },
+            {
+              "name": "blocksMovement",
+              "type": "bool",
+              "value": false
+            },
+            {
+              "name": "movementCost",
+              "type": "int",
+              "value": 1
+            },
+            {
+              "name": "debugColor",
+              "type": "string",
+              "value": "#2ecc71"
+            }
+          ],
+          "x": 1150,
+          "y": 608
         }
       ],
       "opacity": 1,
@@ -2710,7 +2866,7 @@
     }
   ],
   "nextlayerid": 8,
-  "nextobjectid": 22,
+  "nextobjectid": 25,
   "orientation": "orthogonal",
   "renderorder": "right-down",
   "tiledversion": "1.12.2-2-geb83ddb9",
