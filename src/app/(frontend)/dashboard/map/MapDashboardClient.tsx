@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button'
 import type { User } from '@/payload-types'
 import { cn } from '@/utilities/cn'
 import type { SelectableMapRole, MapDashboardData } from './mapData'
-import { getNearestTriggeredPOI } from './mapGeometry'
+import { getNearestTriggeredPOI, isPointInPOITrigger } from './mapGeometry'
 import { mapManifest } from './mapManifest'
 import {
   mapBackgroundPath,
@@ -68,6 +68,18 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
   )
   const nearbyPOI = useMemo(
     () => getNearestTriggeredPOI(movement.sourcePosition, mapManifest.pointsOfInterest),
+    [movement.sourcePosition],
+  )
+  const nearbyPOIIDs = useMemo(
+    () =>
+      new Set(
+        mapManifest.pointsOfInterest
+          .filter(
+            (poi) =>
+              poi.enabled && poi.opensDialog && isPointInPOITrigger(movement.sourcePosition, poi),
+          )
+          .map((poi) => poi.id),
+      ),
     [movement.sourcePosition],
   )
   const nearbyLocation = useMemo(
@@ -130,7 +142,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
       return
     }
 
-    if (location.disabled) return
+    if (location.disabled || !nearbyPOIIDs.has(location.id)) return
 
     setActiveLocationID(location.id)
   }
@@ -154,25 +166,28 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
         <div className="absolute inset-0 bg-gradient-to-b from-neutral-black/5 via-transparent to-neutral-black/20" />
         {isDebugOverlayVisible ? <MapDebugOverlay manifest={mapManifest} /> : null}
 
-        {mapLocations.map((location) => (
-          <button
-            aria-label={`Travel to ${location.label}`}
-            className="map-location-marker"
-            disabled={location.disabled}
-            key={location.id}
-            onClick={() => travelToLocation(location)}
-            style={{
-              left: `${location.x}%`,
-              top: `${location.y}%`,
-            }}
-            type="button"
-          >
-            <span className="map-location-pin">
-              <MapPin className="h-4 w-4" />
-            </span>
-            <span className="map-location-label">{location.label}</span>
-          </button>
-        ))}
+        {mapLocations.map((location) => {
+          const isLocationNearby = nearbyPOIIDs.has(location.id)
+
+          return (
+            <button
+              aria-label={`Travel to ${location.label}`}
+              className="map-location-marker"
+              disabled={!selectedRole || location.disabled || !isLocationNearby}
+              key={location.id}
+              onClick={() => travelToLocation(location)}
+              style={{
+                left: `${location.x}%`,
+                top: `${location.y}%`,
+              }}
+              type="button"
+            >
+              <span className="map-location-pin">
+                <MapPin className="h-4 w-4" />
+              </span>
+            </button>
+          )
+        })}
 
         {hasLoadedCharacter && selectedRole?.spriteSlug ? (
           <MapSprite

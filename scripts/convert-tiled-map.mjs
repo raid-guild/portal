@@ -7,6 +7,7 @@ const defaultOutput = 'public/assets/map/maps/adventure/map.json'
 
 const inputPath = process.argv[2] || defaultInput
 const outputPath = process.argv[3] || defaultOutput
+const walkableExpansionPixels = 12
 
 const round = (value) => Math.round(value * 100) / 100
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -24,14 +25,38 @@ const requireLayer = (map, name) => {
   return layer
 }
 
-const absolutePolygon = (object, size) => {
+const expandPolygon = (points, pixels) => {
+  if (!pixels) return points
+
+  const center = points.reduce(
+    (sum, point) => ({
+      x: sum.x + point[0],
+      y: sum.y + point[1],
+    }),
+    { x: 0, y: 0 },
+  )
+  center.x /= points.length
+  center.y /= points.length
+
+  return points.map(([x, y]) => {
+    const dx = x - center.x
+    const dy = y - center.y
+    const length = Math.hypot(dx, dy) || 1
+
+    return [x + (dx / length) * pixels, y + (dy / length) * pixels]
+  })
+}
+
+const absolutePolygon = (object, size, expansionPixels = 0) => {
   if (!Array.isArray(object.polygon) || object.polygon.length < 3) {
     throw new Error(`Object "${object.name}" must be a polygon with at least 3 points.`)
   }
 
-  return object.polygon.map((point) => [
-    round(clamp(object.x + point.x, 0, size.w)),
-    round(clamp(object.y + point.y, 0, size.h)),
+  const absolutePoints = object.polygon.map((point) => [object.x + point.x, object.y + point.y])
+
+  return expandPolygon(absolutePoints, expansionPixels).map(([x, y]) => [
+    round(clamp(x, 0, size.w)),
+    round(clamp(y, 0, size.h)),
   ])
 }
 
@@ -95,7 +120,11 @@ const convert = (tiledMap) => {
         return {
           id: String(properties.navmeshId || object.name),
           movementCost: Number(properties.movementCost || 1),
-          points: absolutePolygon(object, { h: sourceHeight, w: sourceWidth }),
+          points: absolutePolygon(
+            object,
+            { h: sourceHeight, w: sourceWidth },
+            walkableExpansionPixels,
+          ),
         }
       }),
     },
@@ -131,7 +160,7 @@ const convert = (tiledMap) => {
       w: sourceWidth,
     },
     spawn: {
-      characterFootRadius: Number(spawnProperties.characterFootRadius || 14),
+      characterFootRadius: Number(spawnProperties.characterFootRadius || 10),
       facing: String(spawnProperties.facing || 'down'),
       id: String(spawnProperties.spawnId || spawnObject.name || 'default'),
       x: spawnPoint.x,

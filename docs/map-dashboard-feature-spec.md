@@ -528,14 +528,14 @@ Spawn object properties:
 ```txt
 spawnId: default
 facing: down
-characterFootRadius: 14
+characterFootRadius: 10
 ```
 
 Point-of-interest object properties:
 
 ```txt
 locationId: slop-swamp | lava-castle | forest-knowledge | village
-  | guild-castle | whispers-hut | lunker-lake
+  | guild-castle | mine | whispers-hut | lunker-lake
 label: user-facing location label
 kind: posts | modules | wiki | events | static | feedback | daily-engagement
 dialogKey: stable dialog renderer key
@@ -585,7 +585,7 @@ Normalized runtime manifest shape:
     "x": 786,
     "y": 660,
     "facing": "down",
-    "characterFootRadius": 14
+    "characterFootRadius": 10
   },
   "movement": {
     "kind": "navmesh",
@@ -625,6 +625,10 @@ coordinates into absolute source-pixel coordinates by adding each object's
 `x`/`y` to each polygon point. The runtime should not need to know that Tiled
 stores polygon vertices relative to their object origin.
 
+The converter applies a small generated padding to walkable polygons so the
+hand-authored Tiled regions do not need to hug every visual road edge perfectly.
+Blocked polygons are not padded.
+
 The converter should translate POI geometry into a single interaction position:
 
 - Point object: use the object's `x`/`y` directly.
@@ -640,6 +644,9 @@ Movement model:
 - Use the character's feet point as the primary collision coordinate.
 - Treat `characterFootRadius` as a small circle for edge testing so movement
   does not feel like a single-pixel needle.
+- Keep narrow transition areas, such as the village entrance, as explicit
+  connector polygons in the Tiled `walkable` layer so adjacent walkable regions
+  overlap cleanly.
 - On every animation frame, build a desired movement vector from keyboard,
   pointer, or virtual joystick input.
 - Normalize diagonal movement so diagonal speed is not faster.

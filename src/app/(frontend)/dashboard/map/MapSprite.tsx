@@ -36,7 +36,7 @@ export const MapSprite: React.FC<{
   return (
     <button
       aria-label={`${label}. Change character.`}
-      className="absolute z-20 -translate-x-1/2 -translate-y-full rounded-sm outline-none ring-scroll-100 transition-transform focus-visible:ring-2"
+      className="absolute z-20 -translate-x-1/2 -translate-y-full scale-90 rounded-sm outline-none ring-scroll-100 transition-transform focus-visible:ring-2"
       onClick={onActivate}
       style={{
         left: `${x}%`,
@@ -49,4 +49,3 @@ export const MapSprite: React.FC<{
     </button>
   )
 }
-

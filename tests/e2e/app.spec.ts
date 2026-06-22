@@ -317,17 +317,23 @@ async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage:
     expect(afterWalk).toBeTruthy()
     expect(afterWalk!.x).toBeGreaterThan(beforeWalk!.x + 8)
 
-    await mapPage.getByRole('button', { name: /travel to slop swamp/i }).click()
-    await expect(mapPage.getByRole('dialog', { name: /slop swamp/i })).toBeVisible({
-      timeout: 10000,
-    })
-    await mapPage.getByRole('button', { name: /close/i }).click()
+    await expect(mapPage.getByRole('button', { name: /travel to slop swamp/i })).toBeDisabled()
 
-    await mapPage.getByRole('button', { name: /travel to guild castle/i }).click()
-    await expect(mapPage.getByRole('dialog', { name: /guild castle/i })).toBeVisible({
+    await mapPage.keyboard.down('ArrowRight')
+    await mapPage.keyboard.down('ArrowUp')
+    await mapPage.waitForTimeout(1150)
+    await mapPage.keyboard.up('ArrowUp')
+    await mapPage.keyboard.up('ArrowRight')
+
+    await expect(mapPage.getByRole('region', { name: /nearby map location/i })).toContainText(
+      'The Mine',
+      { timeout: 10000 },
+    )
+    await mapPage.getByRole('button', { name: /inspect cave-in/i }).click()
+    await expect(mapPage.getByRole('dialog', { name: /the mine/i })).toBeVisible({
       timeout: 10000,
     })
-    await expect(mapPage.getByText(/guild members go to work/i)).toBeVisible()
+    await expect(mapPage.getByText(/there has been a cave-in/i)).toBeVisible()
 
     const leaderboardResponse = await mapPage.request.get('/api/portal/leaderboard/points')
     expect(leaderboardResponse.ok()).toBeTruthy()
