@@ -98,14 +98,14 @@ export const MapCharacterSelector: React.FC<MapCharacterSelectorProps> = ({
           ) : null}
 
           {roles.length ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-3 xl:grid-cols-2">
               {roles.map((role) => {
                 const isSelected = role.spriteSlug === currentSpriteSlug
 
                 return (
                   <button
                     className={cn(
-                      'min-h-[156px] border p-4 text-left transition-colors',
+                      'min-h-[142px] border p-4 text-left transition-colors',
                       role.available
                         ? 'border-border bg-card/35 hover:border-primary hover:bg-card/60'
                         : 'cursor-not-allowed border-border/70 bg-neutral-black/40 opacity-70',
@@ -116,7 +116,7 @@ export const MapCharacterSelector: React.FC<MapCharacterSelectorProps> = ({
                     onClick={() => onSelect(role)}
                     type="button"
                   >
-                    <span className="flex items-start gap-3">
+                    <span className="flex min-w-0 items-start gap-3">
                       {role.spriteSlug ? (
                         <span
                           aria-hidden="true"
@@ -133,9 +133,11 @@ export const MapCharacterSelector: React.FC<MapCharacterSelectorProps> = ({
                           ?
                         </span>
                       )}
-                      <span>
-                        <span className="block font-display text-lg font-bold">{role.title}</span>
-                        <span className="mt-1 block text-sm leading-6 text-muted-foreground">
+                      <span className="min-w-0">
+                        <span className="block break-words font-display text-base font-bold leading-tight">
+                          {role.title}
+                        </span>
+                        <span className="mt-1 block break-words text-xs leading-5 text-muted-foreground">
                           {role.available
                             ? role.description || 'Ready to walk the painted roads.'
                             : 'Character art is still being forged. Keep the role, or adjust roles from your profile.'}
@@ -164,4 +166,3 @@ export const MapCharacterSelector: React.FC<MapCharacterSelectorProps> = ({
     </MapDialog>
   )
 }
-
