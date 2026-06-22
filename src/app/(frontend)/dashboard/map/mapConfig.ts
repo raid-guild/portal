@@ -7,6 +7,7 @@ export type MapLocationID =
   | 'forest-knowledge'
   | 'village'
   | 'guild-castle'
+  | 'mine'
   | 'whispers-hut'
   | 'lunker-lake'
 
@@ -142,6 +143,7 @@ const mapLocationIDs = new Set<MapLocationID>([
   'guild-castle',
   'lava-castle',
   'lunker-lake',
+  'mine',
   'slop-swamp',
   'village',
   'whispers-hut',

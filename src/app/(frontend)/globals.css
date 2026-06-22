@@ -223,7 +223,6 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 
 .map-dashboard-status,
 .map-dashboard-button,
-.map-location-label,
 .map-dialog-panel,
 .map-dpad-button,
 .map-interaction-prompt {
@@ -347,40 +346,45 @@ body.map-dashboard-fullscreen [data-portal-footer] {
   z-index: 12;
 }
 
-.map-location-marker:focus-visible .map-location-pin,
-.map-location-marker:focus-visible .map-location-label {
+.map-location-marker:focus-visible .map-location-pin {
   outline: 2px solid hsl(var(--scroll-100));
   outline-offset: 3px;
 }
 
 .map-location-marker:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
+  cursor: default;
+  opacity: 0.55;
 }
 
 .map-location-pin {
   align-items: center;
-  background: rgba(10, 5, 4, 0.86);
-  border: 2px solid hsl(var(--scroll-300));
-  box-shadow:
-    0 0 0 2px rgba(10, 5, 4, 0.9),
-    0 5px 0 rgba(10, 5, 4, 0.45);
-  color: hsl(var(--scroll-100));
+  animation: map-poi-pulse 2.8s ease-in-out infinite;
+  background: transparent;
+  border: 0;
+  color: #facc15;
   display: flex;
-  height: 2.25rem;
+  filter: drop-shadow(0 0 0.35rem rgba(250, 204, 21, 0.78))
+    drop-shadow(0 0.2rem 0 rgba(10, 5, 4, 0.7));
+  height: 2.5rem;
   justify-content: center;
-  width: 2.25rem;
+  width: 2.5rem;
 }
 
-.map-location-label {
-  color: hsl(var(--scroll-100));
-  font-size: clamp(0.42rem, 0.8vw, 0.58rem);
-  line-height: 1.55;
-  max-width: 10rem;
-  padding: 0.35rem 0.45rem;
-  text-align: center;
-  text-shadow: 1px 1px 0 #000;
-  text-transform: uppercase;
+.map-location-marker:disabled .map-location-pin {
+  filter: drop-shadow(0 0 0.2rem rgba(250, 204, 21, 0.45));
+}
+
+@keyframes map-poi-pulse {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(0) scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-0.08rem) scale(1.1);
+  }
 }
 
 @media (max-width: 640px) {
@@ -420,10 +424,6 @@ body.map-dashboard-fullscreen [data-portal-footer] {
     right: 0.75rem;
     transform: none;
     width: auto;
-  }
-
-  .map-location-label {
-    max-width: 7rem;
   }
 }
 

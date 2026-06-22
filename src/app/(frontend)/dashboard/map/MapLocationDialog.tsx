@@ -44,6 +44,8 @@ const LocationContent: React.FC<Pick<MapLocationDialogProps, 'data' | 'location'
       return <Village data={data} />
     case 'guild-castle':
       return <GuildCastle />
+    case 'mine':
+      return <Mine />
     case 'whispers-hut':
       return <WhispersHut data={data} />
     case 'lunker-lake':
@@ -165,6 +167,15 @@ const GuildCastle = () => (
   <div>
     <p className="portal-body-sm">
       This is where guild members go to work. There is nothing to do here right now.
+    </p>
+  </div>
+)
+
+const Mine = () => (
+  <div>
+    <p className="portal-body-sm">
+      This is where members go to work and get into the castle. There has been a cave-in,
+      and access is currently blocked.
     </p>
   </div>
 )

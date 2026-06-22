@@ -9,6 +9,7 @@ const mapLocationIds = new Set([
   'guild-castle',
   'lava-castle',
   'lunker-lake',
+  'mine',
   'slop-swamp',
   'village',
   'whispers-hut',
