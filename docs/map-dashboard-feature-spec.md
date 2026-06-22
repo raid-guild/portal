@@ -528,7 +528,7 @@ Spawn object properties:
 ```txt
 spawnId: default
 facing: down
-characterFootRadius: 10
+characterFootRadius: 6
 ```
 
 Point-of-interest object properties:
@@ -585,7 +585,7 @@ Normalized runtime manifest shape:
     "x": 786,
     "y": 660,
     "facing": "down",
-    "characterFootRadius": 10
+    "characterFootRadius": 6
   },
   "movement": {
     "kind": "navmesh",

@@ -7,7 +7,7 @@ const defaultOutput = 'public/assets/map/maps/adventure/map.json'
 
 const inputPath = process.argv[2] || defaultInput
 const outputPath = process.argv[3] || defaultOutput
-const walkableExpansionPixels = 12
+const walkableExpansionPixels = 20
 
 const round = (value) => Math.round(value * 100) / 100
 const clamp = (value, min, max) => Math.min(max, Math.max(min, value))
@@ -160,7 +160,7 @@ const convert = (tiledMap) => {
       w: sourceWidth,
     },
     spawn: {
-      characterFootRadius: Number(spawnProperties.characterFootRadius || 10),
+      characterFootRadius: Number(spawnProperties.characterFootRadius || 6),
       facing: String(spawnProperties.facing || 'down'),
       id: String(spawnProperties.spawnId || spawnObject.name || 'default'),
       x: spawnPoint.x,

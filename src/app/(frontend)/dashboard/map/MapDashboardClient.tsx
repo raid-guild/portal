@@ -183,7 +183,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
               type="button"
             >
               <span className="map-location-pin">
-                <MapPin className="h-4 w-4" />
+                <MapPin className="h-6 w-6" />
               </span>
             </button>
           )
