@@ -365,9 +365,9 @@ body.map-dashboard-fullscreen [data-portal-footer] {
   display: flex;
   filter: drop-shadow(0 0 0.35rem rgba(250, 204, 21, 0.78))
     drop-shadow(0 0.2rem 0 rgba(10, 5, 4, 0.7));
-  height: 2.5rem;
+  height: 5rem;
   justify-content: center;
-  width: 2.5rem;
+  width: 5rem;
 }
 
 .map-location-marker:disabled .map-location-pin {
