@@ -34,6 +34,38 @@ const pointInPolygon = (point, polygon) => {
   return inside
 }
 
+const distanceToSegment = (point, start, end) => {
+  const [x1, y1] = start
+  const [x2, y2] = end
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const lengthSquared = dx * dx + dy * dy
+
+  if (lengthSquared === 0) return Math.hypot(point.x - x1, point.y - y1)
+
+  const t = Math.max(0, Math.min(1, ((point.x - x1) * dx + (point.y - y1) * dy) / lengthSquared))
+  const projectionX = x1 + t * dx
+  const projectionY = y1 + t * dy
+
+  return Math.hypot(point.x - projectionX, point.y - projectionY)
+}
+
+const distanceToPolygonEdges = (point, polygon) => {
+  let closest = Number.POSITIVE_INFINITY
+
+  for (let i = 0; i < polygon.length; i += 1) {
+    closest = Math.min(closest, distanceToSegment(point, polygon[i], polygon[(i + 1) % polygon.length]))
+  }
+
+  return closest
+}
+
+const circleInsidePolygon = (point, polygon, radius) =>
+  pointInPolygon(point, polygon) && distanceToPolygonEdges(point, polygon) >= radius
+
+const circleIntersectsPolygon = (point, polygon, radius) =>
+  pointInPolygon(point, polygon) || distanceToPolygonEdges(point, polygon) <= radius
+
 const validatePolygon = (polygon, label, manifest) => {
   assert(Array.isArray(polygon), `${label} must be an array of points.`)
   assert(polygon.length >= 3, `${label} must have at least 3 points.`)
@@ -82,13 +114,14 @@ const validate = async (manifest) => {
   }
 
   const spawnPoint = { x: manifest.spawn.x, y: manifest.spawn.y }
+  const spawnRadius = manifest.spawn.characterFootRadius
   assert(
-    walkable.some((polygon) => pointInPolygon(spawnPoint, polygon.points)),
-    'Default spawn must be inside a walkable polygon.',
+    walkable.some((polygon) => circleInsidePolygon(spawnPoint, polygon.points, spawnRadius)),
+    'Default spawn footprint must fit inside a walkable polygon.',
   )
   assert(
-    !blocked.some((polygon) => pointInPolygon(spawnPoint, polygon.points)),
-    'Default spawn must be outside blocked polygons.',
+    !blocked.some((polygon) => circleIntersectsPolygon(spawnPoint, polygon.points, spawnRadius)),
+    'Default spawn footprint must avoid blocked polygons.',
   )
 
   for (const poi of manifest.pointsOfInterest || []) {
@@ -98,6 +131,19 @@ const validate = async (manifest) => {
     assert(poi.dialogKey, `POI ${poi.id} needs a dialogKey.`)
     assert(Number.isFinite(poi.x) && Number.isFinite(poi.y), `POI ${poi.id} needs coordinates.`)
     assert(Number.isFinite(poi.triggerRadius), `POI ${poi.id} needs a triggerRadius.`)
+    assert(
+      poi.triggerShape === 'circle' || poi.triggerShape === 'ellipse',
+      `POI ${poi.id} triggerShape must be circle or ellipse.`,
+    )
+    if (poi.triggerShape === 'ellipse') {
+      assert(
+        Number.isFinite(poi.triggerBounds?.w) &&
+          poi.triggerBounds.w > 0 &&
+          Number.isFinite(poi.triggerBounds?.h) &&
+          poi.triggerBounds.h > 0,
+        `POI ${poi.id} ellipse triggerBounds must have positive width and height.`,
+      )
+    }
     assert(Number.isFinite(poi.markerRadius), `POI ${poi.id} needs a markerRadius.`)
 
     if (poi.enabled) {

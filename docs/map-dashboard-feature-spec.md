@@ -747,9 +747,9 @@ Cons:
 - needs a converter and validation layer so editor output does not leak into
   runtime code
 
-Decision: build path/node movement first. Add free movement after the Tiled
-pipeline produces validated `map.json` output and the debug overlay confirms
-the authored collision feels fair.
+Decision: free movement is implemented as the active map movement model. It is
+integrated with the Tiled pipeline, validated `map.json` output, proximity POI
+prompts, keyboard/mobile movement controls, and the `?mapDebug=1` debug overlay.
 
 ## Client Architecture
 

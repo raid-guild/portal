@@ -36,6 +36,16 @@ type MapDashboardClientProps = {
   user: User
 }
 
+const isInteractiveEventTarget = (target: EventTarget | null) => {
+  if (!(target instanceof HTMLElement)) return false
+
+  return Boolean(
+    target.closest(
+      'a, button, input, textarea, select, summary, [role="button"], [role="link"], [tabindex]',
+    ),
+  )
+}
+
 export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
   data,
   fontClassName,
@@ -95,6 +105,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
     const onKeyDown = (event: KeyboardEvent) => {
       if (!nearbyLocation || !isMovementEnabled) return
       if (event.key !== 'Enter' && event.key !== ' ') return
+      if (nearbyLocation.disabled || isInteractiveEventTarget(event.target)) return
 
       event.preventDefault()
       setActiveLocationID(nearbyLocation.id)
@@ -231,7 +242,7 @@ export const MapDashboardClient: React.FC<MapDashboardClientProps> = ({
         </div>
       </div>
 
-      {nearbyPOI && nearbyLocation && isMovementEnabled ? (
+      {nearbyPOI && nearbyLocation && !nearbyLocation.disabled && isMovementEnabled ? (
         <MapInteractionPrompt
           onInteract={() => setActiveLocationID(nearbyLocation.id)}
           poi={nearbyPOI}

@@ -107,7 +107,7 @@ const convert = (tiledMap) => {
       return {
         actionLabel: String(properties.actionLabel || ''),
         dialogKey: String(properties.dialogKey || properties.locationId || object.name),
-        enabled: Boolean(properties.enabled),
+        enabled: properties.enabled !== false,
         href: String(properties.href || ''),
         id: String(properties.locationId || object.name),
         kind: String(properties.kind || 'static'),

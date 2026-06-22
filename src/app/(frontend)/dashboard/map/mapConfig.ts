@@ -163,8 +163,11 @@ const mapNodeIDs = new Set<MapNodeID>([
 const isMapLocationID = (value: string): value is MapLocationID =>
   mapLocationIDs.has(value as MapLocationID)
 
-const toMapNodeID = (value: string): MapNodeID =>
-  mapNodeIDs.has(value as MapNodeID) ? (value as MapNodeID) : 'spawn'
+const toMapNodeID = (value: string): MapNodeID => {
+  if (mapNodeIDs.has(value as MapNodeID)) return value as MapNodeID
+
+  throw new Error(`Unknown map node ID in map manifest: ${value}`)
+}
 
 export const mapLocations: MapLocationConfig[] = mapManifest.pointsOfInterest
   .filter((poi) => isMapLocationID(poi.id))

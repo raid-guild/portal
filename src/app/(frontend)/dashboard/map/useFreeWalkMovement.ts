@@ -24,7 +24,7 @@ const keyToDirection: Record<string, HeldDirection | undefined> = {
 const isEditableTarget = (target: EventTarget | null) => {
   if (!(target instanceof HTMLElement)) return false
 
-  return Boolean(target.closest('input, textarea, select, [contenteditable="true"]'))
+  return target.isContentEditable || Boolean(target.closest('input, textarea, select, [contenteditable]'))
 }
 
 const getVector = (directions: Set<HeldDirection>) => {
@@ -182,14 +182,27 @@ export const useFreeWalkMovement = ({
       heldDirectionsRef.current.delete(directionToHold)
     }
 
+    const clearHeldDirections = () => {
+      heldDirectionsRef.current.clear()
+      stopAnimation()
+    }
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== 'visible') clearHeldDirections()
+    }
+
     window.addEventListener('keydown', onKeyDown)
     window.addEventListener('keyup', onKeyUp)
+    window.addEventListener('blur', clearHeldDirections)
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     return () => {
       window.removeEventListener('keydown', onKeyDown)
       window.removeEventListener('keyup', onKeyUp)
+      window.removeEventListener('blur', clearHeldDirections)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
-  }, [enabled, ensureAnimation])
+  }, [enabled, ensureAnimation, stopAnimation])
 
   useEffect(() => {
     positionRef.current = sourcePosition
