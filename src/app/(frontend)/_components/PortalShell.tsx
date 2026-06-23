@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileText,
   LayoutDashboard,
+  Map,
   Puzzle,
 } from 'lucide-react'
 
@@ -604,9 +605,21 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
 
       <section className="mt-12 max-w-xl">
         <div className="portal-panel">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="h-5 w-5" />
-            <h2 className="portal-heading-sm">Next Profile Step</h2>
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <LayoutDashboard className="h-5 w-5" />
+              <h2 className="portal-heading-sm">Next Profile Step</h2>
+            </div>
+            {hasProfile ? (
+              <Link
+                aria-label="Open member map"
+                className="map-location-pin -m-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                href="/dashboard/map"
+                title="Member map"
+              >
+                <Map aria-hidden="true" className="h-8 w-8" />
+              </Link>
+            ) : null}
           </div>
           <p className="mt-4 text-sm leading-6 text-muted-foreground">
             {hasProfile
