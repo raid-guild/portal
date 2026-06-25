@@ -37,6 +37,7 @@ import { SignupAttempts } from './collections/SignupAttempts'
 import { Threads } from './collections/Threads'
 import { Users } from './collections/Users'
 import { WikiPages } from './collections/WikiPages'
+import { WikiTopics } from './collections/WikiTopics'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
@@ -154,6 +155,7 @@ export default buildConfig({
     ProfileBadges,
     Modules,
     WikiPages,
+    WikiTopics,
     Spotlights,
     Notifications,
     NotificationPreferences,

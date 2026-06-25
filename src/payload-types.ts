@@ -81,6 +81,7 @@ export interface Config {
     profileBadges: ProfileBadge;
     modules: Module;
     wikiPages: WikiPage;
+    wikiTopics: WikiTopic;
     spotlights: Spotlight;
     notifications: Notification;
     notificationPreferences: NotificationPreference;
@@ -121,6 +122,7 @@ export interface Config {
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
     wikiPages: WikiPagesSelect<false> | WikiPagesSelect<true>;
+    wikiTopics: WikiTopicsSelect<false> | WikiTopicsSelect<true>;
     spotlights: SpotlightsSelect<false> | SpotlightsSelect<true>;
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
@@ -1652,6 +1654,69 @@ export interface WikiPage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wikiTopics".
+ */
+export interface WikiTopic {
+  id: number;
+  title: string;
+  summary?: string | null;
+  kind: 'category' | 'topic' | 'subtopic' | 'possible';
+  /**
+   * Optional parent for discovery-tree zoom in/out behavior.
+   */
+  parentTopic?: (number | null) | WikiTopic;
+  /**
+   * Lateral graph links. Use parentTopic for hierarchy.
+   */
+  relatedTopics?: (number | WikiTopic)[] | null;
+  /**
+   * Primary wiki article for this topic, when one exists.
+   */
+  canonicalPage?: (number | null) | WikiPage;
+  /**
+   * Additional wiki articles connected to this topic.
+   */
+  relatedPages?: (number | WikiPage)[] | null;
+  sourceSessions?: (number | Event)[] | null;
+  /**
+   * Optional steering prompt used when Prism expands this topic. Falls back to the module default when empty.
+   */
+  expansionPrompt?: string | null;
+  sourceQueries?:
+    | {
+        query: string;
+        filters?: string | null;
+        resultCount?: number | null;
+        searchedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  sourceArtifacts?:
+    | {
+        label: string;
+        artifactID?: string | null;
+        sourceType?: ('prism' | 'session' | 'post' | 'paper' | 'blog' | 'hackerNews' | 'tool' | 'external') | null;
+        url?: string | null;
+        sourceQuery?: string | null;
+        observedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  reviewStatus: 'seed' | 'suggested' | 'needs_review' | 'reviewed' | 'archived';
+  confidence: 'low' | 'medium' | 'high';
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  sortOrder?: number | null;
+  lastExpandedAt?: string | null;
+  lastReviewedAt?: string | null;
+  generatedAt?: string | null;
+  generatedBy?: (number | null) | User;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "spotlights".
  */
 export interface Spotlight {
@@ -2137,6 +2202,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'wikiPages';
         value: number | WikiPage;
+      } | null)
+    | ({
+        relationTo: 'wikiTopics';
+        value: number | WikiTopic;
       } | null)
     | ({
         relationTo: 'spotlights';
@@ -2976,6 +3045,53 @@ export interface WikiPagesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wikiTopics_select".
+ */
+export interface WikiTopicsSelect<T extends boolean = true> {
+  title?: T;
+  summary?: T;
+  kind?: T;
+  parentTopic?: T;
+  relatedTopics?: T;
+  canonicalPage?: T;
+  relatedPages?: T;
+  sourceSessions?: T;
+  expansionPrompt?: T;
+  sourceQueries?:
+    | T
+    | {
+        query?: T;
+        filters?: T;
+        resultCount?: T;
+        searchedAt?: T;
+        id?: T;
+      };
+  sourceArtifacts?:
+    | T
+    | {
+        label?: T;
+        artifactID?: T;
+        sourceType?: T;
+        url?: T;
+        sourceQuery?: T;
+        observedAt?: T;
+        id?: T;
+      };
+  reviewStatus?: T;
+  confidence?: T;
+  visibility?: T;
+  sortOrder?: T;
+  lastExpandedAt?: T;
+  lastReviewedAt?: T;
+  generatedAt?: T;
+  generatedBy?: T;
+  slug?: T;
+  slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

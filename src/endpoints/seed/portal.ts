@@ -34,6 +34,203 @@ const inquirySharedCopy = {
   submitLabel: 'Start inquiry',
 }
 
+type WikiTopicSeed = {
+  children?: {
+    pageSlug?: string
+    summary: string
+    title: string
+  }[]
+  slug: string
+  summary: string
+  title: string
+}
+
+const wikiTopicSeeds: WikiTopicSeed[] = [
+  {
+    title: 'AI Agent Workflows',
+    slug: 'ai-agent-workflows',
+    summary:
+      'How agents, command surfaces, roles, memory, and human checkpoints shape AI-assisted work.',
+    children: [
+      {
+        title: 'Agent-Oriented Developer Workflows',
+        summary: 'Coding-agent workflows, context setup, command execution, and verification.',
+        pageSlug: 'agent-oriented-developer-workflows',
+      },
+      {
+        title: 'Agent-Ready Command Surfaces',
+        summary: 'Bounded CLIs, scripts, wrappers, APIs, and tool interfaces for agents.',
+        pageSlug: 'agent-ready-command-surfaces',
+      },
+      {
+        title: 'Agent Role Orchestration',
+        summary: 'Role assignment, handoffs, turn-taking, and persona boundaries in agent systems.',
+        pageSlug: 'agent-role-orchestration',
+      },
+      {
+        title: 'Multi-Agent Memory',
+        summary: 'Shared, isolated, refreshed, and cited memory across multiple agents.',
+        pageSlug: 'multi-agent-memory',
+      },
+      {
+        title: 'Codex Computer Use',
+        summary: 'Computer-use workflows, browser/CLI boundaries, and frontend QA affordances.',
+        pageSlug: 'codex-computer-use',
+      },
+      {
+        title: 'Voice-First Agent Workbenches',
+        summary: 'Spoken intent, visible agents, command surfaces, and local speech tooling.',
+        pageSlug: 'voice-first-agent-workbenches',
+      },
+      {
+        title: 'Voice-Controlled Agent Safety Patterns',
+        summary: 'Confirmation, risk classification, approval gates, and voice failure modes.',
+        pageSlug: 'voice-controlled-agent-safety-patterns',
+      },
+    ],
+  },
+  {
+    title: 'Context And Memory Systems',
+    slug: 'context-and-memory-systems',
+    summary:
+      'Personal, team, and community memory systems that preserve useful context across tools and time.',
+    children: [
+      {
+        title: 'Context Systems',
+        summary: 'AI context architecture, memory layers, and retrieval patterns.',
+        pageSlug: 'context-systems',
+      },
+      {
+        title: 'Personal CRM',
+        summary:
+          'Self-hosted relationship memory, follow-up context, and private communication archives.',
+        pageSlug: 'personal-crm',
+      },
+      {
+        title: 'Personal Context Portability',
+        summary:
+          'Moving, inspecting, and governing context across assistants, devices, and archives.',
+        pageSlug: 'personal-context-portability',
+      },
+      {
+        title: 'Structured Community Memory',
+        summary:
+          'Community-scale memory, provenance, asks, offers, and collaboration recommendations.',
+        pageSlug: 'structured-community-memory',
+      },
+      {
+        title: 'Shared AI Context For Teams',
+        summary: 'Team context sharing, scoping, governance, and handoff across people and agents.',
+        pageSlug: 'shared-ai-context-for-teams',
+      },
+    ],
+  },
+  {
+    title: 'Human Judgment And AI Work',
+    slug: 'human-judgment-and-ai-work',
+    summary:
+      'Where human taste, review, curation, architecture, and responsibility remain central in AI-heavy workflows.',
+    children: [
+      {
+        title: 'Human Judgment in AI-Assisted Software Delivery',
+        summary: 'Review boundaries, delivery judgment, and AI-assisted engineering quality.',
+        pageSlug: 'human-judgment-ai-assisted-software-delivery',
+      },
+      {
+        title: 'Human Architecture in AI-Assisted Engineering',
+        summary: 'System design, scoping, and architectural responsibility around AI coding tools.',
+        pageSlug: 'human-architecture-ai-assisted-engineering',
+      },
+      {
+        title: 'Human Curation After AI Expansion',
+        summary:
+          'Curation, filtering, and meaning-making when generation expands available options.',
+        pageSlug: 'human-curation-after-ai-expansion',
+      },
+      {
+        title: 'Human-In-The-Loop AI Workflows',
+        summary: 'Human checkpoints, review surfaces, and collaboration with AI systems.',
+        pageSlug: 'human-in-the-loop-ai-workflows',
+      },
+    ],
+  },
+  {
+    title: 'AI In Education And Assessment',
+    slug: 'ai-in-education-and-assessment',
+    summary:
+      'AI-supported learning and assessment patterns, with attention to rubrics, fairness, privacy, and evidence.',
+    children: [
+      {
+        title: 'Assessment After Proxy Collapse',
+        summary:
+          'How generative AI changes artifact-based assessment and evidence of understanding.',
+        pageSlug: 'assessment-after-proxy-collapse',
+      },
+      {
+        title: 'AI-Assisted Grading',
+        summary: 'Rubrics, educator review, privacy, fairness, and grading reliability.',
+        pageSlug: 'ai-assisted-grading',
+      },
+      {
+        title: 'Human-Calibrated Assessment Workflows',
+        summary: 'Calibration, review, and reliability in human-guided AI assessment.',
+        pageSlug: 'human-calibrated-assessment-workflows',
+      },
+      {
+        title: 'LLM-as-Judge Evaluation',
+        summary: 'Using language models as evaluators while preserving calibration and review.',
+        pageSlug: 'llm-as-judge-evaluation',
+      },
+    ],
+  },
+  {
+    title: 'AI Product Strategy',
+    slug: 'ai-product-strategy',
+    summary:
+      'Product defensibility, execution scarcity, economic agency, and strategy in AI-enabled markets.',
+    children: [
+      {
+        title: 'Defensibility in AI Products',
+        summary: 'Durability, distribution, workflow depth, and trust in AI products.',
+        pageSlug: 'defensibility-in-ai-products',
+      },
+      {
+        title: 'Product Judgment After Execution Scarcity',
+        summary: 'Sequencing, QA, trust, and distribution when execution becomes cheaper.',
+        pageSlug: 'product-judgment-after-execution-scarcity',
+      },
+      {
+        title: 'Economic Agency for AI Agents',
+        summary: 'Economic permissions, autonomy, account boundaries, and agent participation.',
+        pageSlug: 'economic-agency-for-ai-agents',
+      },
+    ],
+  },
+  {
+    title: 'AI Content And Discovery',
+    slug: 'ai-content-and-discovery',
+    summary:
+      'How AI changes search, content trust, facilitation, and collective discovery workflows.',
+    children: [
+      {
+        title: 'SEO and AI Search',
+        summary: 'SEO, GEO/AEO language, source trust, and AI-mediated discovery.',
+        pageSlug: 'seo-and-ai-search',
+      },
+      {
+        title: 'Human-Written Content As A Trust Signal',
+        summary: 'Human authorship, editorial signal, and trust in AI-shaped content systems.',
+        pageSlug: 'human-written-content-as-a-trust-signal',
+      },
+      {
+        title: 'AI-Assisted Facilitation',
+        summary: 'Summarization, clustering, participant reflection, and shared artifacts.',
+        pageSlug: 'ai-assisted-facilitation',
+      },
+    ],
+  },
+]
+
 const pageCopySeeds = [
   {
     contextBody: 'No public sessions are scheduled yet. Join to get access to member coordination.',
@@ -224,11 +421,16 @@ const findOne = async ({ collection, match, payload }: Omit<UpsertArgs, 'data'>)
 
 const upsert = async ({ collection, data, match, payload }: UpsertArgs) => {
   const existing = await findOne({ collection, match, payload })
+  const context = {
+    disableRevalidate: true,
+    disableSearchSync: true,
+  }
 
   if (existing) {
     return payload.update({
       id: existing.id,
       collection,
+      context,
       data,
       depth: 0,
       overrideAccess: true,
@@ -237,10 +439,62 @@ const upsert = async ({ collection, data, match, payload }: UpsertArgs) => {
 
   return payload.create({
     collection,
+    context,
     data,
     depth: 0,
     overrideAccess: true,
   })
+}
+
+const seedWikiTopicTree = async (payload: Payload) => {
+  for (const [categoryIndex, category] of wikiTopicSeeds.entries()) {
+    const categoryTopic = await upsert({
+      collection: 'wikiTopics',
+      match: { slug: category.slug },
+      payload,
+      data: {
+        title: category.title,
+        slug: category.slug,
+        summary: category.summary,
+        kind: 'category',
+        reviewStatus: 'seed',
+        confidence: 'medium',
+        visibility: 'public',
+        sortOrder: categoryIndex * 100,
+        lastReviewedAt: '2026-06-24T00:00:00.000Z',
+      },
+    })
+
+    for (const [childIndex, child] of (category.children || []).entries()) {
+      const canonicalPage = child.pageSlug
+        ? await findOne({
+            collection: 'wikiPages',
+            match: { slug: child.pageSlug },
+            payload,
+          })
+        : null
+
+      await upsert({
+        collection: 'wikiTopics',
+        match: { slug: child.pageSlug || child.title },
+        payload,
+        data: {
+          title: child.title,
+          slug: child.pageSlug,
+          summary: child.summary,
+          kind: 'topic',
+          parentTopic: categoryTopic.id,
+          canonicalPage: canonicalPage?.id,
+          relatedPages: canonicalPage ? [canonicalPage.id] : undefined,
+          reviewStatus: 'seed',
+          confidence: canonicalPage ? 'high' : 'medium',
+          visibility: 'public',
+          sortOrder: categoryIndex * 100 + childIndex + 1,
+          lastReviewedAt: '2026-06-24T00:00:00.000Z',
+        },
+      })
+    }
+  }
 }
 
 export const seedPortalContent = async ({
@@ -569,6 +823,9 @@ export const seedPortalContent = async ({
             {
               collectionSlug: 'wikiPages',
             },
+            {
+              collectionSlug: 'wikiTopics',
+            },
           ],
           corePrimitiveRelationships: [
             { primitive: 'project' },
@@ -636,6 +893,8 @@ export const seedPortalContent = async ({
         },
       }),
     ])
+
+    await seedWikiTopicTree(payload)
 
     const activityItems = await Promise.all([
       upsert({
@@ -715,6 +974,10 @@ export const seedPortalContent = async ({
     await payload.update({
       id: cohortProject.id,
       collection: 'projects',
+      context: {
+        disableRevalidate: true,
+        disableSearchSync: true,
+      },
       data: {
         activityItems: activityItems.map((item) => item.id),
         threads: [

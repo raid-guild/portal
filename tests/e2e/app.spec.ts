@@ -3039,7 +3039,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(2)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(3)
 
   const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
     maxRedirects: 0,
