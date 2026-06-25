@@ -209,11 +209,21 @@ Primary interactions:
 - click a source: open the source link when visible and safe
 - zoom out: move to the parent topic or previous graph scope
 - explore siblings: show other children of the same parent
-- expand with Prism: generate candidate children, siblings, article ideas, or
-  research queries
+- expand with Prism: generate candidate children, siblings, possible article
+  topics, or research queries
+- generate article: create a source-backed wiki page draft from a selected
+  topic that does not already have a canonical article
 
 Selection should use a persistent side panel. Do not rely on hover-only
 interactions.
+
+Topic nodes without articles should still be first-class graph nodes. They
+should render as long as they are connected through `parentTopic`,
+`relatedTopics`, or source metadata. Generated topics should not be orphaned:
+child suggestions should set `parentTopic` to the focus topic, lateral
+suggestions should add the focus topic to `relatedTopics`, and sibling
+suggestions should use the focus topic's parent plus a lateral relationship back
+to the focus topic.
 
 ## Optimistic Generation
 
@@ -225,6 +235,7 @@ Allowed optimistic writes:
 - create suggested `wikiTopics`
 - add child topics below the active node
 - add lateral `relatedTopics`
+- create `kind: possible` wiki topic nodes for article candidates
 - attach source queries and generation metadata
 - mark low-confidence suggestions visually
 - allow editors/admins/agents to archive, merge, or clean up later
@@ -240,16 +251,30 @@ confidence: low | medium
 They can appear in the graph immediately with generated/suggested styling. They
 should not appear as canonical reviewed topics until reviewed.
 
+The first topic expansion hook should create/update `wikiTopics` directly after
+creating its proposal artifact. It should not require a second user import step
+for the graph to change. The proposal artifact remains useful for audit,
+debugging, and later review, but the tactile UI expectation is that new topic
+nodes appear after expansion.
+
 ## Article Generation Boundary
 
 Articles should stay research-based. A topic name alone is not enough to create
 a publishable article.
 
+Article generation is a separate hook/action from topic expansion. It should be
+available on topic, subtopic, and possible nodes that do not already have a
+canonical article. It should usually be hidden for category, article, and source
+nodes.
+
 Allowed article-generation behavior:
 
-- generate article candidates from a topic
+- generate a wiki page draft from a selected topic
+- accept a short user steering comment from the UI
 - run source search through Prism
 - create `wikiPages` generated drafts when sources are sufficient
+- patch the source `wikiTopics` record with `canonicalPage` when empty, or
+  `relatedPages` when a canonical page already exists
 - save source artifacts, source queries, model, prompt version, and confidence
 - show the draft to editors/admins/agents for review
 
@@ -267,6 +292,39 @@ Minimum article evidence policy:
 
 If evidence is thin, Prism should return research questions and suggested
 queries rather than a draft article.
+
+Recommended article generation trigger payload:
+
+```ts
+type WikiArticleGenerateHookPayload = {
+  portalURL: string
+  requestedByUserID: number | string
+  topicID: number | string
+  topicTitle: string
+  topicSlug?: string
+  topicKind: 'topic' | 'subtopic' | 'possible'
+  topicSummary?: string
+  topicVisibility: 'public' | 'authenticated' | 'member' | 'admin'
+  parentPath: { id: number | string; title: string; slug?: string }[]
+  relatedTopics: { id: number | string; title: string; slug?: string; summary?: string }[]
+  sourceSessions: { id: number | string; title: string; startsAt?: string }[]
+  sourceArtifacts: { label: string; url?: string; artifactID?: string }[]
+  sourceQueries: string[]
+  steeringPrompt: string
+}
+```
+
+Recommended hook key:
+
+```txt
+wiki-article-generate
+```
+
+Portal environment:
+
+```txt
+PRISM_WIKI_ARTICLE_GENERATE_HOOK_KEY=wiki-article-generate
+```
 
 ## Steering Prompt
 
@@ -311,6 +369,7 @@ Useful Prism workflows/hooks:
 ```txt
 wiki-topic-extract-from-artifact
 wiki-topic-expand
+wiki-article-generate
 wiki-topic-research
 wiki-page-draft
 wiki-page-refresh-check
@@ -334,7 +393,21 @@ user clicks Expand with Prism
   -> Prism creates a workflow-backed request and stores hook-payload.json
   -> Prism searches memory and artifacts
   -> Prism writes a structured proposal artifact
-  -> Portal imports the proposal into suggested topics and draft research pages
+  -> Prism creates or updates suggested wikiTopics directly
+  -> Portal graph refreshes with the new nodes
+```
+
+Use a separate article generation action for turning a selected topic node into
+a draft article:
+
+```txt
+user clicks Generate article on a topic without canonicalPage
+  -> Portal triggers the wiki-article-generate Prism hook
+  -> Prism researches the selected topic using source sessions, artifacts,
+     queries, related topics, and steering comment
+  -> Prism creates a wikiPages draft through Portal auth
+  -> Prism patches the source wikiTopics record with canonicalPage or relatedPages
+  -> Portal shows the new article node and draft article detail
 ```
 
 ### Prism Hook Setup
@@ -386,6 +459,20 @@ Recommended hook:
 }
 ```
 
+The topic expansion hook should write the graph nodes itself after creating
+`wiki-topic-expansion-proposal.json`. For each suggested topic:
+
+```txt
+relationship = child   -> parentTopic = focusTopicID
+relationship = related -> relatedTopics includes focusTopicID
+relationship = sibling -> parentTopic = focusTopic.parentTopic and relatedTopics includes focusTopicID
+article candidate      -> kind = possible and relatedTopics includes focusTopicID
+```
+
+Do not create `wikiPages` in the topic expansion hook. Article candidates should
+be represented as `wikiTopics.kind = possible` until a user triggers article
+generation.
+
 Recommended Portal trigger payload:
 
 ```ts
@@ -431,12 +518,13 @@ The endpoint reads Prism request artifacts through
 `wiki-topic-expansion-proposal.json`, and imports:
 
 - `suggestedTopics` as suggested `wikiTopics`
-- `articleCandidates` as draft `wikiPages`
-- article candidates as possible topic nodes linked to their draft page
+- `articleCandidates` as possible `wikiTopics`
 - request/artifact provenance into `sourceArtifacts`
 - session IDs into `sourceSessions` when present
 
-The endpoint does not publish wiki pages.
+The endpoint is a fallback/manual import path. The preferred runtime behavior is
+for the Prism topic expansion hook to create the `wikiTopics` directly after it
+creates the proposal artifact. The endpoint does not publish wiki pages.
 
 ### Topic Map Artifacts
 
@@ -553,6 +641,50 @@ Mark reviewed
 Open wiki page
 ```
 
+### Article Page Topic Context
+
+The default `/wiki/[slug]` article view should also understand the topic tree.
+The article page should remain the primary reading surface, but it should expose
+enough context to continue discovery without forcing the user into the graph.
+
+Server lookup:
+
+```txt
+current wikiPage
+  -> find wikiTopic where canonicalPage = page.id
+  -> fallback: find wikiTopic where relatedPages includes page.id
+  -> fetch parent path, children, siblings, related topics, possible topics,
+     source sessions, and source artifacts visible to the current user
+```
+
+Recommended article page layout:
+
+- main article content remains centered on title, summary, body, claims,
+  sources, further reading, open questions, and prompts
+- right rail or below-article panel shows Topic Context
+- Topic Context shows parent path, current topic summary, sibling topics, child
+  topics, possible article topics, related topics, and source sessions
+- topics with an article show `Read article`
+- topics without an article show `Generate article`
+- current topic actions include `Open in graph`, `Expand children`, `Explore
+  siblings`, and, when no canonical page exists, `Generate article`
+
+Topic context should treat `Generate article` as an action on unresolved topic
+nodes, not as a generic article-page action. A reviewed article can still show
+possible child/sibling topics that invite article generation.
+
+Recommended topic row behavior:
+
+```txt
+topic has canonicalPage -> link to /wiki/[slug]
+topic has no article    -> open lightweight topic detail card/drawer
+possible topic          -> emphasize Generate article
+category topic          -> emphasize Open in graph / Expand children
+```
+
+The topic detail card should show summary, review status, confidence, source
+signals, `Open in graph`, `Expand topic`, and `Generate article` when eligible.
+
 ## Implementation Plan
 
 1. Add `wikiTopics` collection with hierarchy, relationships, review status,
@@ -566,11 +698,14 @@ Open wiki page
 5. Add topic-map artifact import for session resources, starting with the Event
    69 artifact shape.
 6. Add optimistic topic expansion against a stubbed/proposed Prism contract.
-7. Add Prism-backed topic expansion writes as `suggested` topics.
-8. Add article candidate research flow.
-9. Add generated `wikiPages` draft creation only when source evidence is
-   sufficient.
-10. Add editor cleanup affordances and e2e coverage for visibility, optimistic
+7. Add Prism-backed topic expansion writes as `suggested` topics, with article
+   candidates stored as `kind: possible` topic nodes.
+8. Add article page topic context for parent path, children, siblings, related
+   topics, possible articles, source sessions, and graph links.
+9. Add `wiki-article-generate` hook and Portal trigger endpoint.
+10. Add generated `wikiPages` draft creation only when source evidence is
+   sufficient, then patch `wikiTopics.canonicalPage` or `relatedPages`.
+11. Add editor cleanup affordances and e2e coverage for visibility, optimistic
    generation, and article review boundaries.
 
 ## Non-Goals
