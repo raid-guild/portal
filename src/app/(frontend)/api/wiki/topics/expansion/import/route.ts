@@ -3,7 +3,7 @@ import { headers } from 'next/headers'
 import { getPayload, type Payload } from 'payload'
 
 import { hasRole } from '@/access/roles'
-import type { WikiPage, WikiTopic } from '@/payload-types'
+import type { User, WikiPage, WikiTopic } from '@/payload-types'
 import {
   fetchPrismRequestArtifacts,
   getPrismRequestArtifactsURL,
@@ -86,6 +86,7 @@ export async function POST(request: Request) {
     )
   }
 
+  const canManageWiki = hasRole(user, ['admin', 'editor', 'agent'])
   const body = (await request.json().catch(() => null)) as ImportBody | null
   const requestNumber = numberValue(body?.requestNumber) || requestNumberFromURL(body?.requestURL)
 
@@ -94,7 +95,9 @@ export async function POST(request: Request) {
   }
 
   const focusTopicID = numberValue(body?.focusTopicID)
-  const focusTopic = focusTopicID ? await getTopic(payload, focusTopicID) : null
+  const focusTopic = focusTopicID
+    ? await getTopic(payload, focusTopicID, { canManageWiki, user })
+    : null
 
   if (focusTopicID && !focusTopic) {
     return Response.json({ message: 'No matching focus topic found.' }, { status: 404 })
@@ -124,7 +127,12 @@ export async function POST(request: Request) {
     }
     const inferredFocusTopic =
       focusTopic ||
-      (numberValue(proposal.focusTopic?.id) ? await getTopic(payload, numberValue(proposal.focusTopic?.id)!) : null)
+      (numberValue(proposal.focusTopic?.id)
+        ? await getTopic(payload, numberValue(proposal.focusTopic?.id)!, {
+            canManageWiki,
+            user,
+          })
+        : null)
     const sourceSessionIDs = uniqueNumbers([
       ...relationIDs(inferredFocusTopic?.sourceSessions),
       ...proposalSourceSessionIDs(proposal),
@@ -363,13 +371,24 @@ const upsertProposalPage = async (
   })
 }
 
-const getTopic = async (payload: Payload, topicID: number): Promise<WikiTopic | null> => {
+const getTopic = async (
+  payload: Payload,
+  topicID: number,
+  {
+    canManageWiki,
+    user,
+  }: {
+    canManageWiki: boolean
+    user: User
+  },
+): Promise<WikiTopic | null> => {
   try {
     return payload.findByID({
       id: topicID,
       collection: 'wikiTopics',
       depth: 1,
-      overrideAccess: true,
+      overrideAccess: canManageWiki,
+      user,
     })
   } catch {
     return null

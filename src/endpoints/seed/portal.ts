@@ -446,7 +446,7 @@ const upsert = async ({ collection, data, match, payload }: UpsertArgs) => {
   })
 }
 
-const seedWikiTopicTree = async (payload: Payload) => {
+export const seedWikiTopicTree = async (payload: Payload) => {
   for (const [categoryIndex, category] of wikiTopicSeeds.entries()) {
     const categoryTopic = await upsert({
       collection: 'wikiTopics',

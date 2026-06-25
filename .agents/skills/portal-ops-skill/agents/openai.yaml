@@ -1,4 +1,4 @@
 interface:
   display_name: "Portal Ops Skill"
-  short_description: "Operate the Portal CMS safely, including sessions, posts, wiki pages, briefs, projects, copy, and memory updates."
+  short_description: "Operate the Portal CMS safely, including sessions, posts, wiki pages/topics, briefs, projects, copy, and memory updates."
   default_prompt: "Use the portal-ops-skill to inspect Portal primitives and propose or apply sourced CMS updates. If writing directly, use a dedicated agent account."
