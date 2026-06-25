@@ -35,9 +35,11 @@ import * as migration_20260603_120000_brief_spotlights from './20260603_120000_b
 import * as migration_20260611_131245_wiki_pages from './20260611_131245_wiki_pages'
 import * as migration_20260612_120000_external_module_launch_auth from './20260612_120000_external_module_launch_auth'
 import * as migration_20260618_120000_signup_spam_protection from './20260618_120000_signup_spam_protection'
+import * as migration_20260620_120000_dashboard_map_page_copy from './20260620_120000_dashboard_map_page_copy'
 import * as migration_20260623_120000_module_launch_roles_enum from './20260623_120000_module_launch_roles_enum'
 import * as migration_20260623_130000_module_launch_roles_table from './20260623_130000_module_launch_roles_table'
 import * as migration_20260624_120000_wiki_topics from './20260624_120000_wiki_topics'
+import * as migration_20260625_120000_module_notification_signups from './20260625_120000_module_notification_signups'
 import * as migration_20260625_120000_wiki_topics_source_sessions from './20260625_120000_wiki_topics_source_sessions'
 
 export const migrations = [
@@ -227,6 +229,11 @@ export const migrations = [
     name: '20260618_120000_signup_spam_protection',
   },
   {
+    up: migration_20260620_120000_dashboard_map_page_copy.up,
+    down: migration_20260620_120000_dashboard_map_page_copy.down,
+    name: '20260620_120000_dashboard_map_page_copy',
+  },
+  {
     up: migration_20260623_120000_module_launch_roles_enum.up,
     down: migration_20260623_120000_module_launch_roles_enum.down,
     name: '20260623_120000_module_launch_roles_enum',
@@ -240,6 +247,11 @@ export const migrations = [
     up: migration_20260624_120000_wiki_topics.up,
     down: migration_20260624_120000_wiki_topics.down,
     name: '20260624_120000_wiki_topics',
+  },
+  {
+    up: migration_20260625_120000_module_notification_signups.up,
+    down: migration_20260625_120000_module_notification_signups.down,
+    name: '20260625_120000_module_notification_signups',
   },
   {
     up: migration_20260625_120000_wiki_topics_source_sessions.up,

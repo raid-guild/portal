@@ -2,6 +2,7 @@ import type { CollectionConfig } from 'payload'
 
 import { deleteModules, manageModules, readVisibleModules } from '@/access/modules'
 import { authRoleOptions } from '@/access/roles'
+import { createModulePublishedNotifications } from './Modules/hooks/createModulePublishedNotifications'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
 
@@ -449,5 +450,8 @@ export const Modules: CollectionConfig = {
       },
     }),
   ],
+  hooks: {
+    afterChange: [createModulePublishedNotifications],
+  },
   timestamps: true,
 }

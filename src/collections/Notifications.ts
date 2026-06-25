@@ -80,6 +80,10 @@ export const Notifications: CollectionConfig = {
           value: 'weekly_digest',
         },
         {
+          label: 'Module Published',
+          value: 'module_published',
+        },
+        {
           label: 'Badge Awarded',
           value: 'badge_awarded',
         },
@@ -248,6 +252,11 @@ export const Notifications: CollectionConfig = {
       name: 'relatedProject',
       type: 'relationship',
       relationTo: 'projects',
+    },
+    {
+      name: 'relatedModule',
+      type: 'relationship',
+      relationTo: 'modules',
     },
     {
       name: 'relatedThread',

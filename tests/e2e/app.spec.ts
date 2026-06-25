@@ -233,6 +233,117 @@ async function verifySeededPosts(page: Page) {
   }
 }
 
+async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage: Page) {
+  await publicPage.goto('/dashboard/map')
+  await expect(publicPage).toHaveURL(/\/join/)
+
+  const suffix = Date.now()
+  const password = `MapDashboard-${suffix}!`
+  const email = `map-dashboard-${suffix}@example.com`
+
+  const [roleResponse, skillResponse] = await Promise.all([
+    adminPage.request.get('/api/profileRoles', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[slug][equals]': 'warrior',
+      },
+    }),
+    adminPage.request.get('/api/profileSkills', {
+      params: {
+        depth: '0',
+        limit: '1',
+      },
+    }),
+  ])
+
+  expect(roleResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+
+  const role = (await roleResponse.json()).docs[0]
+  const skill = (await skillResponse.json()).docs[0]
+
+  expect(role?.id).toBeTruthy()
+  expect(skill?.id).toBeTruthy()
+
+  const userResponse = await adminPage.request.post('/api/users', {
+    data: {
+      email,
+      name: 'Map Dashboard Member',
+      password,
+      roles: ['member'],
+    },
+  })
+
+  expect(userResponse.status()).toBe(201)
+  const user = await userResponse.json()
+  const userID = user.doc?.id || user.id
+
+  const profileResponse = await adminPage.request.post('/api/profiles', {
+    data: {
+      bio: 'A member walking the map dashboard.',
+      displayName: 'Map Dashboard Member',
+      handle: `map-dashboard-${suffix}`,
+      profileRoles: [role.id],
+      profileSkills: [skill.id],
+      status: 'active',
+      user: userID,
+      visibility: 'authenticated',
+    },
+  })
+
+  expect(profileResponse.status()).toBe(201)
+
+  const context = await browser.newContext()
+  try {
+    const mapPage = await context.newPage()
+
+    await loginPortalUser(mapPage, email, password)
+    await mapPage.goto('/dashboard/map')
+    await expect(mapPage.getByAltText(/raidguild adventure map with forests/i)).toBeVisible()
+    await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toBeVisible()
+
+    await mapPage.getByRole('button', { name: /warrior/i }).click()
+    await expect(mapPage.getByRole('dialog', { name: /choose your guild form/i })).toHaveCount(0)
+    const warriorSprite = mapPage.getByLabel(/warrior form/i)
+    await expect(warriorSprite).toBeVisible()
+
+    const beforeWalk = await warriorSprite.boundingBox()
+    expect(beforeWalk).toBeTruthy()
+    await mapPage.keyboard.down('ArrowRight')
+    await mapPage.waitForTimeout(350)
+    await mapPage.keyboard.up('ArrowRight')
+    const afterWalk = await warriorSprite.boundingBox()
+    expect(afterWalk).toBeTruthy()
+    expect(afterWalk!.x).toBeGreaterThan(beforeWalk!.x + 8)
+
+    await expect(mapPage.getByRole('button', { name: /travel to slop swamp/i })).toBeDisabled()
+
+    await mapPage.keyboard.down('ArrowRight')
+    await mapPage.keyboard.down('ArrowUp')
+    await mapPage.waitForTimeout(1150)
+    await mapPage.keyboard.up('ArrowUp')
+    await mapPage.keyboard.up('ArrowRight')
+
+    await expect(mapPage.getByRole('region', { name: /nearby map location/i })).toContainText(
+      'The Mine',
+      { timeout: 10000 },
+    )
+    await mapPage.getByRole('button', { name: /inspect cave-in/i }).click()
+    await expect(mapPage.getByRole('dialog', { name: /the mine/i })).toBeVisible({
+      timeout: 10000,
+    })
+    await expect(mapPage.getByText(/there has been a cave-in/i)).toBeVisible()
+
+    const leaderboardResponse = await mapPage.request.get('/api/portal/leaderboard/points')
+    expect(leaderboardResponse.ok()).toBeTruthy()
+    const leaderboardBody = await leaderboardResponse.json()
+    expect(Array.isArray(leaderboardBody.entries)).toBeTruthy()
+  } finally {
+    await context.close()
+  }
+}
+
 async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: Page) {
   const suffix = Date.now()
   const oldPostTitles = Array.from(
@@ -2905,6 +3016,19 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await adminPage.goto('/modules')
   await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(
+    adminPage.getByRole('heading', { name: 'Get notified when new modules go live' }),
+  ).toBeVisible()
+  await expect(adminPage.getByText(`Email: ${adminEmail}`)).toBeVisible()
+  const moduleSignupButton = adminPage.getByRole('button', { name: 'Notify me by email' })
+  if (await moduleSignupButton.count()) {
+    await moduleSignupButton.click()
+    await expect(
+      adminPage.getByText(`Module announcement emails are on for ${adminEmail}.`),
+    ).toBeVisible()
+  } else {
+    await expect(adminPage.getByRole('button', { name: 'Email alerts on' })).toBeVisible()
+  }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
   await expect(adminPage.getByText('External app')).toBeVisible()
@@ -2915,7 +3039,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(2)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(3)
 
   const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
     maxRedirects: 0,
@@ -3261,6 +3385,49 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   expect(verifiedUserResponse.status()).toBe(201)
   const verifiedUserBody = await verifiedUserResponse.json()
   const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
+  const modulePreferenceResponse = await page.request.post('/api/notificationPreferences', {
+    data: {
+      emailEnabled: true,
+      moduleAnnouncements: 'email',
+      user: verifiedUserID,
+    },
+  })
+  expect(modulePreferenceResponse.status()).toBe(201)
+  const moduleNotificationTitle = `E2E Announced Module ${hookSuffix}`
+  const moduleNotificationSlug = `e2e-announced-module-${hookSuffix}`
+  const moduleNotificationResponse = await page.request.post('/api/modules', {
+    data: {
+      enabled: true,
+      entryRoute: '/modules',
+      name: moduleNotificationTitle,
+      slug: moduleNotificationSlug,
+      status: 'experimental',
+      summary: 'A module that should create an opted-in email notification.',
+      visibility: 'authenticated',
+    },
+  })
+  expect(moduleNotificationResponse.status()).toBe(201)
+  const moduleNotificationBody = await moduleNotificationResponse.json()
+  const moduleNotificationID = moduleNotificationBody.doc?.id || moduleNotificationBody.id
+  const moduleNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(verifiedUserID),
+      'where[relatedModule][equals]': String(moduleNotificationID),
+      'where[type][equals]': 'module_published',
+    },
+  })
+  expect(moduleNotificationsResponse.ok()).toBeTruthy()
+  const moduleNotificationsBody = await moduleNotificationsResponse.json()
+  const moduleNotification = moduleNotificationsBody.docs?.[0]
+  expect(moduleNotification).toMatchObject({
+    actionLabel: 'Open module',
+    actionURL: '/modules',
+    deliveryChannel: 'email',
+    emailStatus: 'pending',
+    title: `New module: ${moduleNotificationTitle}`,
+  })
   const sendableNotificationResponse = await page.request.post('/api/notifications', {
     data: {
       actionLabel: 'Open inbox',
@@ -3301,6 +3468,20 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     emailStatus: 'sent',
   })
   expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
+  const sentModuleNotificationResponse = await page.request.get(
+    `/api/notifications/${moduleNotification.id}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(sentModuleNotificationResponse.ok()).toBeTruthy()
+  const sentModuleNotificationBody = await sentModuleNotificationResponse.json()
+  expect(sentModuleNotificationBody).toMatchObject({
+    emailStatus: 'sent',
+  })
+  expect(sentModuleNotificationBody.emailedAt).toBeTruthy()
 
   const digestUnauthorizedResponse = await page.request.post(
     '/api/notifications/digests/weekly/run',
@@ -3532,6 +3713,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
+  await verifyMapDashboard(page, browser, publicPage)
   await verifySeededProjectSpike(publicPage)
   await verifyServerSideListSearch(page, publicPage)
   await verifyContributionRequests(page, browser, publicPage)

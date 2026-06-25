@@ -13,6 +13,7 @@ type NotificationPreferencesFormProps = {
     briefs?: Channel | null
     emailEnabled?: boolean | null
     id?: number | string
+    moduleAnnouncements?: Channel | null
     sessionAnnouncements?: Channel | null
     sessionReminders?: Channel | null
     weeklyDigest?: Channel | null
@@ -22,9 +23,20 @@ type NotificationPreferencesFormProps = {
 
 const channelFields: {
   description: string
-  key: 'badgeAwards' | 'briefs' | 'sessionAnnouncements' | 'sessionReminders' | 'weeklyDigest'
+  key:
+    | 'badgeAwards'
+    | 'briefs'
+    | 'moduleAnnouncements'
+    | 'sessionAnnouncements'
+    | 'sessionReminders'
+    | 'weeklyDigest'
   label: string
 }[] = [
+  {
+    description: 'New active and experimental Portal modules.',
+    key: 'moduleAnnouncements',
+    label: 'Module announcements',
+  },
   {
     description: 'New visible sessions and schedule additions.',
     key: 'sessionAnnouncements',
@@ -67,6 +79,7 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
   const [values, setValues] = useState<Record<(typeof channelFields)[number]['key'], Channel>>({
     badgeAwards: initialPreferences?.badgeAwards || 'in_app',
     briefs: initialPreferences?.briefs || 'in_app',
+    moduleAnnouncements: initialPreferences?.moduleAnnouncements || 'muted',
     sessionAnnouncements: initialPreferences?.sessionAnnouncements || 'in_app',
     sessionReminders: initialPreferences?.sessionReminders || 'in_app',
     weeklyDigest: initialPreferences?.weeklyDigest || 'in_app',

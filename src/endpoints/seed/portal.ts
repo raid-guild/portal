@@ -251,6 +251,32 @@ const pageCopySeeds = [
   },
   {
     benefits: [
+      { body: 'Slop Swamp bubbles up the newest post.' },
+      { body: 'Lava Castle shows early modules and prototypes.' },
+      { body: 'The Village points toward upcoming sessions.' },
+      { body: 'Lunker Lake keeps your daily check-in and guild points close.' },
+    ],
+    benefitsHeading: 'Map stops',
+    contextBody:
+      'A little hut listens better than the void. Leave a request, a bug, a question, or a signal that needs a human look.',
+    contextHeading: 'Hut of Helpless Whispers',
+    eyebrow: 'Guild Map',
+    headline: 'Walk the Portal roads.',
+    intro:
+      'Choose a guild form, travel between familiar places, and open the same Portal surfaces from a stranger, livelier angle.',
+    key: 'dashboard-map',
+    label: 'Dashboard Map',
+    secondaryIntro:
+      'The map is an alternate dashboard view. Posts, sessions, wiki pages, modules, feedback, and points remain the source of truth.',
+    seoDescription:
+      'Explore the RaidGuild Portal through an interactive authenticated map dashboard.',
+    seoTitle: 'Map Dashboard',
+    status: 'published',
+    submitLabel: 'Enter the map',
+    surface: 'dashboard',
+  },
+  {
+    benefits: [
       { body: 'Create a profile so guild members know who you are.' },
       { body: 'Explore live sessions, projects, posts, and member activity.' },
       { body: 'Find people and teams working on things you care about.' },

@@ -80,6 +80,7 @@ event_reminder
 brief_published
 activity_digest
 weekly_digest
+module_published
 badge_awarded
 profile_claim
 system
@@ -92,6 +93,8 @@ Examples:
 - `brief_published`: A daily or weekly brief was published.
 - `activity_digest`: A grouped summary of recent activity items.
 - `weekly_digest`: A weekly portal digest for an existing user.
+- `module_published`: A new active or experimental module became visible to an
+  opted-in user.
 - `badge_awarded`: A badge was issued to the user profile.
 - `profile_claim`: A profile claim was approved or needs action.
 - `system`: Account or portal notices that do not belong to another type.
@@ -128,6 +131,7 @@ relatedEvent: relationship -> events
 relatedBrief: relationship -> dailyBriefs
 relatedActivityItem: relationship -> activityItems
 relatedProject: relationship -> projects
+relatedModule: relationship -> modules
 relatedThread: relationship -> threads
 relatedBadgeAward: relationship -> profileBadges
 metadata: json
@@ -151,6 +155,7 @@ jobs, for example:
 event:123:published:user:456
 event:123:reminder:24h:user:456
 brief:99:published:user:456
+module:77:published:user:456
 ```
 
 ### Notification Preferences
@@ -169,6 +174,7 @@ emailEnabled: checkbox
 sessionAnnouncements: in_app / email / muted
 sessionReminders: in_app / email / muted
 briefs: in_app / email / muted
+moduleAnnouncements: in_app / email / muted
 activityDigestFrequency: none / daily / weekly
 weeklyDigest: in_app / email / muted
 badgeAwards: in_app / email / muted
@@ -183,6 +189,10 @@ Email preferences require a verified account email. Users without a verified
 email can still receive in-app notifications and use the inbox. The preference
 UI should disable email choices and point them to email verification until
 `emailVerifiedAt` is set.
+
+`moduleAnnouncements` defaults to `muted`. Users opt in from `/modules` or
+manage the preference from `/me#notifications`; the Portal should not silently
+email or inbox-notify all users when editors add modules.
 
 ### Notification Deliveries
 
@@ -231,6 +241,30 @@ This keeps notification creation auditable and prevents hidden bulk email sends
 inside content hooks.
 
 ## Initial Hooks
+
+### New Published Module
+
+Source collection:
+
+```txt
+modules
+```
+
+Trigger:
+
+- `afterChange`
+- module becomes enabled
+- module status becomes `active` or `experimental`
+- module visibility is not admin-only
+- previous module state was not already eligible
+
+Behavior:
+
+- create `module_published` notifications for eligible users who opted in to
+  module announcements
+- use dedupe keys such as `module:123:published:user:456`
+- link to the module entry route, signed launch route, or `/modules`
+- keep email delivery in the normal pending-email dispatcher
 
 ### New Published Session
 
@@ -678,12 +712,15 @@ first version, send only transactional, user-specific product email:
 - session reminder for a user who enabled reminders
 - badge awarded to that user's profile
 - brief notification for a user who enabled brief emails
+- module announcement for a verified existing user who explicitly enabled
+  module announcement email
 - weekly digest for a verified existing user who enabled weekly digest email
 
-Do not send broad launch announcements or campaign email from this module.
-Weekly digest email is allowed only for existing portal users and should respect
-the same verification, preference, suppression, and audit rules as other product
-notification email.
+Do not send broad launch announcements or campaign email from this module. Module
+announcement email is allowed only for existing verified portal users who opt in
+through notification preferences. Weekly digest email is allowed only for
+existing portal users and should respect the same verification, preference,
+suppression, and audit rules as other product notification email.
 
 Recommended delivery flow:
 

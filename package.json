@@ -1,6 +1,7 @@
 {
   "name": "payload-3-boilerplate",
   "version": "1.0.0",
+  "packageManager": "pnpm@10.18.3",
   "description": "Payload V3 Website builder boilerplate for Railway",
   "license": "MIT",
   "type": "module",
@@ -21,6 +22,7 @@
     "ii": "cross-env NODE_OPTIONS=--no-deprecation pnpm --ignore-workspace install",
     "lint": "cross-env NODE_OPTIONS=--no-deprecation next lint",
     "lint:fix": "cross-env NODE_OPTIONS=--no-deprecation next lint --fix",
+    "map:convert": "node scripts/convert-tiled-map.mjs && node scripts/validate-map-manifest.mjs",
     "payload": "cross-env NODE_OPTIONS=--no-deprecation payload",
     "reinstall": "cross-env NODE_OPTIONS=--no-deprecation rm -rf node_modules && rm pnpm-lock.yaml && pnpm --ignore-workspace install",
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",

@@ -182,6 +182,7 @@
 - [x] Add `/modules` discovery page for visible enabled modules.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
+- [x] Add verified-user email opt-in for newly available module announcements.
 - [ ] Add optional `/modules/[slug]` detail route if module cards need more
       context.
 - [x] Add Payload admin grouping guidance: core primitives in `Portal`,

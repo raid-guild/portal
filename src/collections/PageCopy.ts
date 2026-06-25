@@ -15,6 +15,7 @@ const pathForPageCopyKey = (key: string | null | undefined) => {
   if (!key) return null
   if (key === 'join') return '/join'
   if (key === 'brief-public') return '/'
+  if (key === 'dashboard-map') return '/dashboard/map'
   if (key.startsWith('inquire-')) return `/inquire/${key.replace('inquire-', '')}`
 
   return null
@@ -109,6 +110,10 @@ export const PageCopy: CollectionConfig = {
         {
           label: 'Brief',
           value: 'brief',
+        },
+        {
+          label: 'Dashboard',
+          value: 'dashboard',
         },
         {
           label: 'Other',
