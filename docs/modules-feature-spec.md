@@ -122,6 +122,9 @@ Initial exposure should be lightweight:
 - Keep module-specific routes discoverable from `/modules` first.
 - Show unauthenticated visitors a teaser with join/login CTAs, but keep module
   details authenticated.
+- Let verified users opt in to email alerts for new active or experimental
+  modules from `/modules`; store that intent in notification preferences, not in
+  a separate email-only list.
 - Let each module own the simplest product route for its experience, such as
   `/wiki`, `/bounty-board`, or `/leaderboard`. Do not force feature routes under
   `/modules`.
@@ -243,6 +246,9 @@ Rules:
   core pages.
 - Module hooks may create activity, notifications, or related records only when
   the module is enabled and the target primitive supports the relationship.
+- Module announcement notifications should only fire on the transition into an
+  enabled, visible `active` or `experimental` state and should respect explicit
+  user notification preferences.
 - A module can read core primitives according to their visibility rules, but it
   must not weaken those rules.
 

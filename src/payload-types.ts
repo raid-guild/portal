@@ -1697,6 +1697,7 @@ export interface Notification {
     | 'brief_published'
     | 'activity_digest'
     | 'weekly_digest'
+    | 'module_published'
     | 'badge_awarded'
     | 'profile_claim'
     | 'system';
@@ -1715,6 +1716,7 @@ export interface Notification {
   relatedBrief?: (number | null) | DailyBrief;
   relatedActivityItem?: (number | null) | ActivityItem;
   relatedProject?: (number | null) | Project;
+  relatedModule?: (number | null) | Module;
   relatedThread?: (number | null) | Thread;
   relatedBadgeAward?: (number | null) | ProfileBadge;
   metadata?:
@@ -1738,6 +1740,7 @@ export interface NotificationPreference {
   user: number | User;
   emailEnabled?: boolean | null;
   sessionAnnouncements: 'in_app' | 'email' | 'muted';
+  moduleAnnouncements: 'in_app' | 'email' | 'muted';
   sessionReminders: 'in_app' | 'email' | 'muted';
   briefs: 'in_app' | 'email' | 'muted';
   activityDigestFrequency: 'none' | 'daily' | 'weekly';
@@ -3026,6 +3029,7 @@ export interface NotificationsSelect<T extends boolean = true> {
   relatedBrief?: T;
   relatedActivityItem?: T;
   relatedProject?: T;
+  relatedModule?: T;
   relatedThread?: T;
   relatedBadgeAward?: T;
   metadata?: T;
@@ -3040,6 +3044,7 @@ export interface NotificationPreferencesSelect<T extends boolean = true> {
   user?: T;
   emailEnabled?: T;
   sessionAnnouncements?: T;
+  moduleAnnouncements?: T;
   sessionReminders?: T;
   briefs?: T;
   activityDigestFrequency?: T;
