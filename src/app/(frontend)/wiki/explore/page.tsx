@@ -5,7 +5,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { hasRole } from '@/access/roles'
-import type { Event, WikiPage, WikiTopic } from '@/payload-types'
+import type { Event, User, WikiPage, WikiTopic } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { VerifyAccountNotice } from '../../_components/VerifyAccountNotice'
 
@@ -47,7 +47,7 @@ export default async function WikiExplorePage() {
     )
   }
 
-  const graphData = await getWikiExplorerGraphData({ canManageWiki })
+  const graphData = await getWikiExplorerGraphData({ canManageWiki, user })
 
   return (
     <main className="mx-auto w-full max-w-[92rem] px-5 pb-24 pt-12 sm:px-8">
@@ -83,17 +83,20 @@ export const metadata: Metadata = {
 
 const getWikiExplorerGraphData = async ({
   canManageWiki,
+  user,
 }: {
   canManageWiki: boolean
+  user: User
 }): Promise<WikiExplorerGraphData> => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'wikiTopics',
-    depth: 2,
+    depth: canManageWiki ? 2 : 1,
     limit: 300,
-    overrideAccess: true,
+    overrideAccess: canManageWiki,
     pagination: false,
     sort: 'sortOrder,title',
+    user,
     where: canManageWiki
       ? undefined
       : {
@@ -112,7 +115,108 @@ const getWikiExplorerGraphData = async ({
         },
   })
 
-  return normalizeWikiGraph(result.docs)
+  if (!result.docs.length) {
+    const fallbackPages = await getReadableWikiPagesForGraph(payload, {
+      canManageWiki,
+      user,
+    })
+
+    return normalizeWikiPagesGraph(fallbackPages)
+  }
+
+  if (canManageWiki) {
+    return normalizeWikiGraph(result.docs)
+  }
+
+  const visiblePages = await getReadableWikiPagesForTopics(
+    payload,
+    result.docs,
+    user,
+  )
+
+  return normalizeWikiGraph(sanitizeTopicPages(result.docs, visiblePages))
+}
+
+const getReadableWikiPagesForGraph = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  {
+    canManageWiki,
+    user,
+  }: {
+    canManageWiki: boolean
+    user: User
+  },
+): Promise<WikiPage[]> => {
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    limit: 300,
+    overrideAccess: canManageWiki,
+    pagination: false,
+    sort: 'title',
+    user,
+    where: canManageWiki
+      ? {
+          reviewStatus: {
+            not_equals: 'archived',
+          },
+        }
+      : undefined,
+  })
+
+  return result.docs
+}
+
+const getReadableWikiPagesForTopics = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  topics: WikiTopic[],
+  user: User,
+): Promise<Map<number, WikiPage>> => {
+  const pageIDs = uniqueNumbers(
+    topics.flatMap((topic) => [
+      relationID(topic.canonicalPage),
+      ...relationIDs(topic.relatedPages),
+    ]),
+  )
+
+  if (!pageIDs.length) return new Map()
+
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    limit: pageIDs.length,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      id: {
+        in: pageIDs,
+      },
+    },
+  })
+
+  return new Map(result.docs.map((page) => [page.id, page]))
+}
+
+const sanitizeTopicPages = (
+  topics: WikiTopic[],
+  visiblePages: Map<number, WikiPage>,
+): WikiTopic[] =>
+  topics.map((topic) => ({
+    ...topic,
+    canonicalPage: visiblePageForRelation(topic.canonicalPage, visiblePages),
+    relatedPages: relationIDs(topic.relatedPages)
+      .map((id) => visiblePages.get(id))
+      .filter((page): page is WikiPage => Boolean(page)),
+  }))
+
+const visiblePageForRelation = (
+  relation: WikiTopic['canonicalPage'],
+  visiblePages: Map<number, WikiPage>,
+) => {
+  const id = relationID(relation)
+
+  return id ? visiblePages.get(id) || null : null
 }
 
 const normalizeWikiGraph = (topics: WikiTopic[]): WikiExplorerGraphData => {
@@ -256,11 +360,84 @@ const normalizeWikiGraph = (topics: WikiTopic[]): WikiExplorerGraphData => {
   }
 }
 
+const normalizeWikiPagesGraph = (pages: WikiPage[]): WikiExplorerGraphData => {
+  const nodes = new Map<string, WikiExplorerGraphData['nodes'][number]>()
+  const links = new Map<string, WikiExplorerGraphData['links'][number]>()
+  const sourceIDs = new Set<string>()
+
+  for (const page of pages) {
+    const articleID = articleNodeID(page.id)
+
+    nodes.set(articleID, {
+      bodySections: extractLexicalSections(page.body),
+      bodyText: extractLexicalText(page.body),
+      confidence: page.confidence,
+      discoveryLinks: {
+        furtherReading: normalizeDiscoveryLinks(page.furtherReading),
+        papers: normalizeDiscoveryLinks(page.papers),
+        tools: normalizeDiscoveryLinks(page.tools),
+      },
+      href: page.slug ? `/wiki/${page.slug}` : null,
+      id: articleID,
+      label: page.title,
+      lastReviewedAt: page.lastReviewedAt,
+      lastRefreshedAt: page.lastRefreshedAt,
+      reviewStatus: page.reviewStatus,
+      sourceSessions: relationDocs<Event>(page.sourceSessions).map(sessionSummary),
+      slug: page.slug,
+      sourceCount: page.sourceArtifacts?.length || 0,
+      status: page._status,
+      summary: page.summary,
+      type: 'article',
+      visibility: page.visibility,
+    })
+
+    for (const artifact of page.sourceArtifacts || []) {
+      const sourceID = sourceNodeID(artifact.url || artifact.artifactID || artifact.label)
+
+      if (!sourceIDs.has(sourceID)) {
+        sourceIDs.add(sourceID)
+        nodes.set(sourceID, {
+          artifactID: artifact.artifactID,
+          id: sourceID,
+          label: artifact.label,
+          observedAt: artifact.observedAt,
+          sourceType: artifact.sourceType || 'external',
+          sourceURL: artifact.url,
+          type: 'source',
+        })
+      }
+
+      links.set(`${articleID}->${sourceID}:has_source`, {
+        source: articleID,
+        target: sourceID,
+        type: 'has_source',
+      })
+    }
+  }
+
+  return {
+    links: Array.from(links.values()),
+    nodes: Array.from(nodes.values()),
+  }
+}
+
 const relationDoc = <T extends { id: number }>(item?: number | T | null): T | null =>
   item && typeof item === 'object' ? item : null
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
+
+const relationID = (item?: number | { id: number } | null): number | null =>
+  typeof item === 'number' ? item : item?.id || null
+
+const relationIDs = (items?: (number | { id: number })[] | null): number[] =>
+  (items || [])
+    .map(relationID)
+    .filter((id): id is number => Number.isSafeInteger(id))
+
+const uniqueNumbers = (items: (number | null)[]): number[] =>
+  Array.from(new Set(items.filter((id): id is number => Number.isSafeInteger(id))))
 
 const sessionSummary = (event: Event) => ({
   id: event.id,
