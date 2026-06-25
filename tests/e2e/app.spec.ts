@@ -3016,6 +3016,19 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await adminPage.goto('/modules')
   await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
+  await expect(
+    adminPage.getByRole('heading', { name: 'Get notified when new modules go live' }),
+  ).toBeVisible()
+  await expect(adminPage.getByText(`Email: ${adminEmail}`)).toBeVisible()
+  const moduleSignupButton = adminPage.getByRole('button', { name: 'Notify me by email' })
+  if (await moduleSignupButton.count()) {
+    await moduleSignupButton.click()
+    await expect(
+      adminPage.getByText(`Module announcement emails will go to ${adminEmail}.`),
+    ).toBeVisible()
+  } else {
+    await expect(adminPage.getByRole('button', { name: 'Email alerts on' })).toBeVisible()
+  }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
   await expect(adminPage.getByText('External app')).toBeVisible()
@@ -3372,6 +3385,49 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   expect(verifiedUserResponse.status()).toBe(201)
   const verifiedUserBody = await verifiedUserResponse.json()
   const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
+  const modulePreferenceResponse = await page.request.post('/api/notificationPreferences', {
+    data: {
+      emailEnabled: true,
+      moduleAnnouncements: 'email',
+      user: verifiedUserID,
+    },
+  })
+  expect(modulePreferenceResponse.status()).toBe(201)
+  const moduleNotificationTitle = `E2E Announced Module ${hookSuffix}`
+  const moduleNotificationSlug = `e2e-announced-module-${hookSuffix}`
+  const moduleNotificationResponse = await page.request.post('/api/modules', {
+    data: {
+      enabled: true,
+      entryRoute: '/modules',
+      name: moduleNotificationTitle,
+      slug: moduleNotificationSlug,
+      status: 'experimental',
+      summary: 'A module that should create an opted-in email notification.',
+      visibility: 'authenticated',
+    },
+  })
+  expect(moduleNotificationResponse.status()).toBe(201)
+  const moduleNotificationBody = await moduleNotificationResponse.json()
+  const moduleNotificationID = moduleNotificationBody.doc?.id || moduleNotificationBody.id
+  const moduleNotificationsResponse = await page.request.get('/api/notifications', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[recipient][equals]': String(verifiedUserID),
+      'where[relatedModule][equals]': String(moduleNotificationID),
+      'where[type][equals]': 'module_published',
+    },
+  })
+  expect(moduleNotificationsResponse.ok()).toBeTruthy()
+  const moduleNotificationsBody = await moduleNotificationsResponse.json()
+  const moduleNotification = moduleNotificationsBody.docs?.[0]
+  expect(moduleNotification).toMatchObject({
+    actionLabel: 'Open module',
+    actionURL: '/modules',
+    deliveryChannel: 'email',
+    emailStatus: 'pending',
+    title: `New module: ${moduleNotificationTitle}`,
+  })
   const sendableNotificationResponse = await page.request.post('/api/notifications', {
     data: {
       actionLabel: 'Open inbox',
@@ -3412,6 +3468,20 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     emailStatus: 'sent',
   })
   expect(sentEmailNotificationBody.emailedAt).toBeTruthy()
+  const sentModuleNotificationResponse = await page.request.get(
+    `/api/notifications/${moduleNotification.id}`,
+    {
+      params: {
+        depth: '0',
+      },
+    },
+  )
+  expect(sentModuleNotificationResponse.ok()).toBeTruthy()
+  const sentModuleNotificationBody = await sentModuleNotificationResponse.json()
+  expect(sentModuleNotificationBody).toMatchObject({
+    emailStatus: 'sent',
+  })
+  expect(sentModuleNotificationBody.emailedAt).toBeTruthy()
 
   const digestUnauthorizedResponse = await page.request.post(
     '/api/notifications/digests/weekly/run',

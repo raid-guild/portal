@@ -36,6 +36,7 @@ import * as migration_20260611_131245_wiki_pages from './20260611_131245_wiki_pa
 import * as migration_20260612_120000_external_module_launch_auth from './20260612_120000_external_module_launch_auth'
 import * as migration_20260618_120000_signup_spam_protection from './20260618_120000_signup_spam_protection'
 import * as migration_20260620_120000_dashboard_map_page_copy from './20260620_120000_dashboard_map_page_copy'
+import * as migration_20260625_120000_module_notification_signups from './20260625_120000_module_notification_signups'
 
 export const migrations = [
   {
@@ -227,5 +228,10 @@ export const migrations = [
     up: migration_20260620_120000_dashboard_map_page_copy.up,
     down: migration_20260620_120000_dashboard_map_page_copy.down,
     name: '20260620_120000_dashboard_map_page_copy',
+  },
+  {
+    up: migration_20260625_120000_module_notification_signups.up,
+    down: migration_20260625_120000_module_notification_signups.down,
+    name: '20260625_120000_module_notification_signups',
   },
 ]
