@@ -32,7 +32,13 @@ export const NotificationPreferences: CollectionConfig = {
     update: updateOwnNotificationPreferencesOrEditor,
   },
   admin: {
-    defaultColumns: ['user', 'sessionAnnouncements', 'sessionReminders', 'weeklyDigest'],
+    defaultColumns: [
+      'user',
+      'moduleAnnouncements',
+      'sessionAnnouncements',
+      'sessionReminders',
+      'weeklyDigest',
+    ],
     group: 'Portal',
     hidden: hideFromNonEditors,
     useAsTitle: 'user',
@@ -57,6 +63,13 @@ export const NotificationPreferences: CollectionConfig = {
       name: 'sessionAnnouncements',
       type: 'select',
       defaultValue: 'in_app',
+      options: channelOptions,
+      required: true,
+    },
+    {
+      name: 'moduleAnnouncements',
+      type: 'select',
+      defaultValue: 'muted',
       options: channelOptions,
       required: true,
     },

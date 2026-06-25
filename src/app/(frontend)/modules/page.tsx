@@ -6,8 +6,9 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canEditContent, hasVerifiedAccount } from '@/access/roles'
+import { ModuleNotificationSignup } from './ModuleNotificationSignup'
 import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
-import type { Module, Profile, Project } from '@/payload-types'
+import type { Module, NotificationPreference, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -43,6 +44,7 @@ export default async function ModulesPage() {
   }
 
   const modules = await getModules(user)
+  const notificationPreferences = await getNotificationPreferences(user)
   const groupedModules = groupModules(modules)
   const canManageModules = canEditContent(user)
 
@@ -63,6 +65,15 @@ export default async function ModulesPage() {
           </Link>
         ) : null}
       </section>
+
+      <div className="mt-10">
+        <ModuleNotificationSignup
+          email={user.email}
+          emailVerified={Boolean(user.emailVerifiedAt)}
+          initialPreferences={notificationPreferences}
+          userID={user.id}
+        />
+      </div>
 
       {modules.length ? (
         <div className="mt-10 space-y-10">
@@ -189,14 +200,21 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
         {module.moduleKind === 'external' ? (
           <p>
             <span className="font-medium">External app</span>
-            {launchRoute ? <span className="text-muted-foreground"> - Uses Portal sign-in</span> : null}
+            {launchRoute ? (
+              <span className="text-muted-foreground"> - Uses Portal sign-in</span>
+            ) : null}
           </p>
         ) : null}
       </div>
 
       <div className="mt-6 flex flex-wrap gap-3">
         {launchRoute ? (
-          <a className="portal-admin-link" href={launchRoute} rel="noopener noreferrer" target="_blank">
+          <a
+            className="portal-admin-link"
+            href={launchRoute}
+            rel="noopener noreferrer"
+            target="_blank"
+          >
             {moduleActionLabel}
           </a>
         ) : moduleRoute ? (
@@ -248,6 +266,27 @@ const getModules = async (user: NonNullable<Awaited<ReturnType<typeof getCurrent
   })
 
   return result.docs
+}
+
+const getNotificationPreferences = async (
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
+): Promise<NotificationPreference | null> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'notificationPreferences',
+    depth: 0,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      user: {
+        equals: user.id,
+      },
+    },
+  })
+
+  return result.docs[0] || null
 }
 
 const groupModules = (modules: Module[]) => ({

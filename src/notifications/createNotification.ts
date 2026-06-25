@@ -9,6 +9,7 @@ type PreferenceKey =
   | 'badgeAwards'
   | 'briefs'
   | 'activityDigest'
+  | 'moduleAnnouncements'
   | 'sessionAnnouncements'
   | 'sessionReminders'
   | 'weeklyDigest'
@@ -25,6 +26,7 @@ type NotificationIntent = Pick<
   | 'relatedBadgeAward'
   | 'relatedBrief'
   | 'relatedEvent'
+  | 'relatedModule'
   | 'title'
   | 'type'
 >
@@ -51,6 +53,7 @@ const DEFAULT_PREFERENCES: Record<PreferenceKey, ChannelPreference> = {
   activityDigest: 'in_app',
   badgeAwards: 'in_app',
   briefs: 'in_app',
+  moduleAnnouncements: 'muted',
   sessionAnnouncements: 'in_app',
   sessionReminders: 'in_app',
   weeklyDigest: 'in_app',
