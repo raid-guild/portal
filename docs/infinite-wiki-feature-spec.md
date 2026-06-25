@@ -589,6 +589,11 @@ Start small:
 4. Add Prism-backed generation as an admin action.
 5. Add refresh proposals after the first pages prove useful.
 
+The next planned slice is graph-based topic discovery. See
+[Infinite Wiki Graph Discovery](./infinite-wiki-graph-discovery-spec.md) for
+the proposed `wikiTopics` collection, optimistic Prism topic expansion, and the
+boundary between generated topic suggestions and reviewed research articles.
+
 Do not build a full dedicated wiki platform until the portal has enough real
 wiki traffic to justify inline editing, diffs, redirects, merge workflows, and
 backlink management.

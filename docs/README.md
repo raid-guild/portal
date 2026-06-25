@@ -71,3 +71,4 @@ grouping, and handoff links.
 - [Cohort project spike MVP spec](./cohort-spike-mvp-spec.md)
 - [Sessions MVP spec](./sessions-mvp-spec.md)
 - [Implementation checklist](./portal-implementation-checklist.md)
+- [Infinite Wiki graph discovery spec](./infinite-wiki-graph-discovery-spec.md)
