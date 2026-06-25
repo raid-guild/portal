@@ -5,7 +5,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { hasRole } from '@/access/roles'
-import type { Event, WikiPage, WikiTopic } from '@/payload-types'
+import type { Event, User, WikiPage, WikiTopic } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { VerifyAccountNotice } from '../../_components/VerifyAccountNotice'
 
@@ -47,7 +47,7 @@ export default async function WikiExplorePage() {
     )
   }
 
-  const graphData = await getWikiExplorerGraphData({ canManageWiki })
+  const graphData = await getWikiExplorerGraphData({ canManageWiki, user })
 
   return (
     <main className="mx-auto w-full max-w-[92rem] px-5 pb-24 pt-12 sm:px-8">
@@ -83,17 +83,20 @@ export const metadata: Metadata = {
 
 const getWikiExplorerGraphData = async ({
   canManageWiki,
+  user,
 }: {
   canManageWiki: boolean
+  user: User
 }): Promise<WikiExplorerGraphData> => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
     collection: 'wikiTopics',
-    depth: 2,
+    depth: canManageWiki ? 2 : 1,
     limit: 300,
-    overrideAccess: true,
+    overrideAccess: canManageWiki,
     pagination: false,
     sort: 'sortOrder,title',
+    user,
     where: canManageWiki
       ? undefined
       : {
@@ -112,7 +115,69 @@ const getWikiExplorerGraphData = async ({
         },
   })
 
-  return normalizeWikiGraph(result.docs)
+  if (canManageWiki) {
+    return normalizeWikiGraph(result.docs)
+  }
+
+  const visiblePages = await getReadableWikiPagesForTopics(
+    payload,
+    result.docs,
+    user,
+  )
+
+  return normalizeWikiGraph(sanitizeTopicPages(result.docs, visiblePages))
+}
+
+const getReadableWikiPagesForTopics = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  topics: WikiTopic[],
+  user: User,
+): Promise<Map<number, WikiPage>> => {
+  const pageIDs = uniqueNumbers(
+    topics.flatMap((topic) => [
+      relationID(topic.canonicalPage),
+      ...relationIDs(topic.relatedPages),
+    ]),
+  )
+
+  if (!pageIDs.length) return new Map()
+
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    limit: pageIDs.length,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      id: {
+        in: pageIDs,
+      },
+    },
+  })
+
+  return new Map(result.docs.map((page) => [page.id, page]))
+}
+
+const sanitizeTopicPages = (
+  topics: WikiTopic[],
+  visiblePages: Map<number, WikiPage>,
+): WikiTopic[] =>
+  topics.map((topic) => ({
+    ...topic,
+    canonicalPage: visiblePageForRelation(topic.canonicalPage, visiblePages),
+    relatedPages: relationIDs(topic.relatedPages)
+      .map((id) => visiblePages.get(id))
+      .filter((page): page is WikiPage => Boolean(page)),
+  }))
+
+const visiblePageForRelation = (
+  relation: WikiTopic['canonicalPage'],
+  visiblePages: Map<number, WikiPage>,
+) => {
+  const id = relationID(relation)
+
+  return id ? visiblePages.get(id) || null : null
 }
 
 const normalizeWikiGraph = (topics: WikiTopic[]): WikiExplorerGraphData => {
@@ -261,6 +326,17 @@ const relationDoc = <T extends { id: number }>(item?: number | T | null): T | nu
 
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
+
+const relationID = (item?: number | { id: number } | null): number | null =>
+  typeof item === 'number' ? item : item?.id || null
+
+const relationIDs = (items?: (number | { id: number })[] | null): number[] =>
+  (items || [])
+    .map(relationID)
+    .filter((id): id is number => Number.isSafeInteger(id))
+
+const uniqueNumbers = (items: (number | null)[]): number[] =>
+  Array.from(new Set(items.filter((id): id is number => Number.isSafeInteger(id))))
 
 const sessionSummary = (event: Event) => ({
   id: event.id,

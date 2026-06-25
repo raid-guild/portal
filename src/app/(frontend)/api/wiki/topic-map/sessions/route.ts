@@ -32,15 +32,25 @@ export async function GET() {
     collection: 'events',
     depth: 0,
     limit: 100,
-    overrideAccess: true,
+    overrideAccess: canManageWiki,
     pagination: false,
     sort: '-startsAt',
+    user,
     where: canManageWiki
       ? undefined
       : {
-          visibility: {
-            not_equals: 'admin',
-          },
+          and: [
+            {
+              _status: {
+                equals: 'published',
+              },
+            },
+            {
+              visibility: {
+                not_equals: 'admin',
+              },
+            },
+          ],
         },
   })
 
