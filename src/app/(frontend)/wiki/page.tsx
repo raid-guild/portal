@@ -32,8 +32,14 @@ export default async function WikiIndexPage() {
             Published pages are reviewed topic references. Generated drafts and possible pages stay
             out of the public index until reviewed.
           </p>
+          <Link className="portal-admin-link mt-5 inline-flex" href="/wiki/explore">
+            Explore graph
+          </Link>
           {canManageWiki ? (
-            <Link className="portal-admin-link mt-5 inline-flex" href="/admin/collections/wikiPages/create">
+            <Link
+              className="portal-admin-link mt-5 inline-flex"
+              href="/admin/collections/wikiPages/create"
+            >
               Create wiki page
             </Link>
           ) : null}

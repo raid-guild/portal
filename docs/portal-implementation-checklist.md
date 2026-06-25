@@ -205,6 +205,8 @@
       Payload admin.
 - [x] Add wiki guidance to the Portal ops skill.
 - [ ] Add Prism-backed generation endpoint or admin action for generated drafts.
+- [x] Add topic-map artifact import from session resources into suggested
+      `wikiTopics` and article candidates.
 - [ ] Record source queries, source artifacts, prompt version, model, and
       confidence for every generated page.
 - [ ] Add refresh proposal workflow without silently overwriting reviewed

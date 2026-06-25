@@ -40,7 +40,7 @@ Status labels:
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |
 | External CRM | [External CRM module and Portal identity](./external-crm-module-identity-spec.md) | Planned / future | Portal remains profile/role authority; CRM is an external module with future launch-token SSO. |
-| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; generation remains deferred. |
+| Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) and [Graph Discovery](./infinite-wiki-graph-discovery-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; topic graph discovery and Prism generation are planned next. |
 | External module launch auth | [External module launch auth](./external-module-launch-auth-feature-spec.md) | Planned / future | Signed launch handoff for external apps while Portal remains identity/profile source of truth. |
 
 ## Separate Product Direction
