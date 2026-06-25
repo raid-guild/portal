@@ -69,6 +69,7 @@ export default async function ModulesPage() {
       <div className="mt-10">
         <ModuleNotificationSignup
           email={user.email}
+          emailVerified={Boolean(user.emailVerifiedAt)}
           initialPreferences={notificationPreferences}
           userID={user.id}
         />

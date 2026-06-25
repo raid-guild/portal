@@ -3024,7 +3024,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   if (await moduleSignupButton.count()) {
     await moduleSignupButton.click()
     await expect(
-      adminPage.getByText(`Module announcement emails will go to ${adminEmail}.`),
+      adminPage.getByText(`Module announcement emails are on for ${adminEmail}.`),
     ).toBeVisible()
   } else {
     await expect(adminPage.getByRole('button', { name: 'Email alerts on' })).toBeVisible()

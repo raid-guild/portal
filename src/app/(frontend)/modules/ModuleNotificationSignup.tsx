@@ -7,6 +7,7 @@ type Channel = 'email' | 'in_app' | 'muted'
 
 type ModuleNotificationSignupProps = {
   email: string
+  emailVerified: boolean
   initialPreferences?: {
     emailEnabled?: boolean | null
     id?: number | string
@@ -17,6 +18,7 @@ type ModuleNotificationSignupProps = {
 
 export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> = ({
   email,
+  emailVerified,
   initialPreferences,
   userID,
 }) => {
@@ -31,6 +33,11 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
   )
 
   const savePreference = async (nextSubscribed: boolean) => {
+    if (nextSubscribed && !emailVerified) {
+      setSaveStatus('Verify your account email before enabling module announcement emails.')
+      return
+    }
+
     setIsSaving(true)
     setSaveStatus(null)
 
@@ -63,7 +70,7 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
       setSubscribed(nextSubscribed)
       setSaveStatus(
         nextSubscribed
-          ? `Module announcement emails will go to ${email}.`
+          ? `Module announcement emails are on for ${email}.`
           : 'Module announcement emails are off.',
       )
     } catch (error) {
@@ -86,6 +93,11 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             Use your verified Portal email for new active and experimental module announcements.
           </p>
+          {!emailVerified ? (
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Verify your account email before enabling module announcement emails.
+            </p>
+          ) : null}
           <p className="mt-3 text-sm">
             <span className="font-medium">Email:</span> {email}
           </p>
@@ -95,7 +107,7 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
             className={
               subscribed ? 'portal-admin-link border-primary text-primary' : 'portal-admin-link'
             }
-            disabled={isSaving}
+            disabled={isSaving || !emailVerified}
             onClick={() => void savePreference(true)}
             type="button"
           >
