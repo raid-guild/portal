@@ -227,6 +227,69 @@ than sent with invalid shapes. Valid body content must preserve article
 structure: section titles should be `heading` nodes and bullet/numbered content
 should be `list` and `listitem` nodes, not one paragraph per Markdown line.
 
+## wikiTopics
+
+Purpose: graph/discovery records for the Infinite Wiki. Topics organize
+categories, topics, subtopics, possible future articles, reviewed wiki pages,
+source sessions, and Prism-generated expansion candidates.
+
+Key fields:
+
+- `title`
+- `slug`
+- `summary`
+- `kind`: `category`, `topic`, `subtopic`, `possible`
+- `parentTopic`
+- `relatedTopics`
+- `canonicalPage`
+- `relatedPages`
+- `sourceSessions`
+- `sourceQueries`
+- `sourceArtifacts`
+- `expansionPrompt`
+- `reviewStatus`: `seed`, `suggested`, `needs_review`, `reviewed`,
+  `archived`
+- `confidence`: `low`, `medium`, `high`
+- `visibility`: `public`, `authenticated`, `member`, `admin`
+- `sortOrder`
+- `lastExpandedAt`
+- `lastReviewedAt`
+- `generatedAt`
+- `generatedBy`
+
+Rule: use `wikiTopics` for discovery structure and generation targets, not as
+article bodies. Durable prose belongs in `wikiPages`.
+
+Rule: `kind = category` is for high-level groupings; `kind = topic` or
+`subtopic` is for concrete subjects; `kind = possible` is for generated or
+session-derived candidates that may become articles later.
+
+Rule: connect reviewed pages through `canonicalPage` and `relatedPages`. A
+topic may exist before an article exists; do not invent article content just to
+fill a topic node.
+
+Rule: connect source sessions through `sourceSessions` and source artifacts
+through `sourceArtifacts` so graph nodes can preserve provenance.
+
+Rule: agents, editors, and admins may create/update visible wiki topics through
+Payload access. Members may use dedicated Portal endpoints for topic-map import
+and Prism expansion import. Generic service tokens do not satisfy collection
+access.
+
+Rule: Prism topic expansion is optimistic. It may create suggested topics and
+draft article candidates first, then humans can prune, review, archive, or
+publish. Published wiki articles still require source-backed review.
+
+Rule: if an environment has wiki pages but no wiki topics, initialize the graph
+with the guarded wiki-only seed command:
+
+```bash
+railway run corepack pnpm payload run scripts/seedWikiTopics.ts -- --apply
+```
+
+Do not run the broad Portal seed against production solely to initialize wiki
+topics.
+
 ## comments
 
 Purpose: lightweight discussion attached to Portal primitives.
