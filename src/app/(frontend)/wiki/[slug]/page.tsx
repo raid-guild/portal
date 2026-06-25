@@ -16,11 +16,13 @@ import type {
   Project,
   Thread,
   WikiPage,
+  WikiTopic,
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { toSafeURL } from '@/utilities/safeURL'
 import { SessionDateTime } from '../../_components/SessionDateTime'
+import { WikiArticleGenerateControl } from '../_components/WikiArticleGenerateControl'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,6 +35,25 @@ type Args = {
 const relationDocs = <T extends { id: number }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []
 
+type TopicContextTopic = {
+  articleHref: string | null
+  id: number
+  kind: WikiTopic['kind']
+  reviewStatus: WikiTopic['reviewStatus']
+  slug?: string | null
+  summary?: string | null
+  title: string
+}
+
+type WikiTopicContext = {
+  children: TopicContextTopic[]
+  current: TopicContextTopic
+  parentPath: TopicContextTopic[]
+  possible: TopicContextTopic[]
+  related: TopicContextTopic[]
+  siblings: TopicContextTopic[]
+}
+
 export default async function WikiDetailPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
   const user = await getCurrentUser()
@@ -41,6 +62,7 @@ export default async function WikiDetailPage({ params: paramsPromise }: Args) {
   if (!page) notFound()
 
   const canManageWiki = hasRole(user, ['admin', 'editor', 'agent'])
+  const topicContext = await getWikiTopicContextForPage(page, user)
   const sourceSessions = relationDocs<Event>(page.sourceSessions)
   const relatedPosts = relationDocs<Post>(page.relatedPosts)
   const relatedProjects = relationDocs<Project>(page.relatedProjects)
@@ -160,6 +182,8 @@ export default async function WikiDetailPage({ params: paramsPromise }: Args) {
         </div>
 
         <div className="space-y-6">
+          {topicContext ? <TopicContextPanel context={topicContext} /> : null}
+
           <LinkPanel items={page.furtherReading} title="Further Reading" />
           <LinkPanel items={page.papers} title="Papers" />
           <LinkPanel items={page.tools} title="Tools" />
@@ -289,6 +313,111 @@ const getWikiPageBySlug = async (
   return result.docs[0] || null
 }
 
+const getWikiTopicContextForPage = async (
+  page: WikiPage,
+  user: Awaited<ReturnType<typeof getCurrentUser>>,
+): Promise<WikiTopicContext | null> => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'wikiTopics',
+    depth: 2,
+    limit: 300,
+    overrideAccess: false,
+    pagination: false,
+    sort: 'sortOrder,title',
+    user: user || undefined,
+    where: {
+      reviewStatus: {
+        not_equals: 'archived',
+      },
+    },
+  })
+  const topics = result.docs
+  const current =
+    topics.find((topic) => relationID(topic.canonicalPage) === page.id) ||
+    topics.find((topic) => relationIDs(topic.relatedPages).includes(page.id))
+
+  if (!current) return null
+
+  const currentParentID = relationID(current.parentTopic)
+  const currentID = current.id
+  const parentPath = getTopicParentPath(current, topics)
+  const children = topics.filter((topic) => relationID(topic.parentTopic) === currentID)
+  const siblings = currentParentID
+    ? topics.filter(
+        (topic) => topic.id !== currentID && relationID(topic.parentTopic) === currentParentID,
+      )
+    : []
+  const relatedIDs = new Set(relationIDs(current.relatedTopics))
+  const related = topics.filter((topic) => relatedIDs.has(topic.id))
+  const possible = [...children, ...related, ...siblings].filter(
+    (topic) => topic.kind === 'possible',
+  )
+
+  return {
+    children: uniqueTopics(children).map(topicContextSummary),
+    current: topicContextSummary(current),
+    parentPath: parentPath.map(topicContextSummary),
+    possible: uniqueTopics(possible).map(topicContextSummary),
+    related: uniqueTopics(related).map(topicContextSummary),
+    siblings: uniqueTopics(siblings).map(topicContextSummary),
+  }
+}
+
+const getTopicParentPath = (topic: WikiTopic, topics: WikiTopic[]): WikiTopic[] => {
+  const byID = new Map(topics.map((item) => [item.id, item]))
+  const path: WikiTopic[] = []
+  let parentID = relationID(topic.parentTopic)
+  const seen = new Set<number>()
+
+  while (parentID && !seen.has(parentID)) {
+    seen.add(parentID)
+    const parent = byID.get(parentID)
+    if (!parent) break
+    path.unshift(parent)
+    parentID = relationID(parent.parentTopic)
+  }
+
+  return path
+}
+
+const topicContextSummary = (topic: WikiTopic): TopicContextTopic => {
+  const canonicalPage = relationDoc<WikiPage>(topic.canonicalPage)
+  const relatedPage = relationDocs<WikiPage>(topic.relatedPages).find((page) => page.slug)
+  const page = canonicalPage || relatedPage
+
+  return {
+    articleHref: page?.slug ? `/wiki/${page.slug}` : null,
+    id: topic.id,
+    kind: topic.kind,
+    reviewStatus: topic.reviewStatus,
+    slug: topic.slug,
+    summary: topic.summary,
+    title: topic.title,
+  }
+}
+
+const uniqueTopics = (topics: WikiTopic[]): WikiTopic[] => {
+  const seen = new Set<number>()
+
+  return topics.filter((topic) => {
+    if (seen.has(topic.id)) return false
+    seen.add(topic.id)
+    return true
+  })
+}
+
+const relationDoc = <T extends { id: number }>(item?: number | T | null): T | null =>
+  item && typeof item === 'object' ? item : null
+
+const relationID = (item?: number | { id: number } | null): number | null =>
+  typeof item === 'number' ? item : item?.id || null
+
+const relationIDs = (items?: (number | { id: number })[] | null): number[] =>
+  (items || [])
+    .map(relationID)
+    .filter((id): id is number => Number.isSafeInteger(id))
+
 const Panel = ({ children, title }: { children: React.ReactNode; title: string }) => (
   <section className="portal-panel">
     <h2 className="portal-heading-sm">{title}</h2>
@@ -323,6 +452,118 @@ const LinkPanel = ({
     )}
   </Panel>
 )
+
+const TopicContextPanel = ({ context }: { context: WikiTopicContext }) => (
+  <Panel title="Topic Context">
+    <div className="space-y-5">
+      {context.parentPath.length ? (
+        <div>
+          <p className="portal-kicker">Path</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {context.parentPath.map((topic) => (
+              <TopicChip key={topic.id} topic={topic} />
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <article className="border border-border bg-card/20 p-4">
+        <p className="portal-kicker">{context.current.kind}</p>
+        <h3 className="mt-2 font-bold">{context.current.title}</h3>
+        {context.current.summary ? (
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            {context.current.summary}
+          </p>
+        ) : null}
+        <Link
+          className="portal-admin-link mt-4 inline-flex"
+          href={`/wiki/explore?topic=${context.current.id}`}
+        >
+          Open in graph
+        </Link>
+      </article>
+
+      <TopicContextList title="Deeper Topics" topics={context.children} />
+      <TopicContextList title="Nearby Topics" topics={context.related} />
+      <TopicContextList title="Sibling Topics" topics={context.siblings} />
+      <TopicContextList title="Possible Articles" topics={context.possible} emphasizeGenerate />
+    </div>
+  </Panel>
+)
+
+const TopicContextList = ({
+  emphasizeGenerate = false,
+  title,
+  topics,
+}: {
+  emphasizeGenerate?: boolean
+  title: string
+  topics: TopicContextTopic[]
+}) => (
+  <div>
+    <p className="portal-kicker">{title}</p>
+    {topics.length ? (
+      <div className="mt-3 grid gap-3">
+        {topics.map((topic) => (
+          <TopicContextRow
+            emphasizeGenerate={emphasizeGenerate}
+            key={`${title}-${topic.id}`}
+            topic={topic}
+          />
+        ))}
+      </div>
+    ) : (
+      <p className="mt-2 text-sm leading-6 text-muted-foreground">No topics linked yet.</p>
+    )}
+  </div>
+)
+
+const TopicContextRow = ({
+  emphasizeGenerate,
+  topic,
+}: {
+  emphasizeGenerate: boolean
+  topic: TopicContextTopic
+}) => (
+  <article className="border border-border bg-card/20 p-4">
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="portal-pill">{topic.kind}</span>
+      <span className="portal-pill">{topic.reviewStatus}</span>
+    </div>
+    <h3 className="mt-3 font-bold">{topic.title}</h3>
+    {topic.summary ? (
+      <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{topic.summary}</p>
+    ) : null}
+    <div className="mt-4 flex flex-wrap gap-2">
+      {topic.articleHref ? (
+        <Link className="portal-admin-link inline-flex" href={topic.articleHref}>
+          Read article
+        </Link>
+      ) : topic.kind === 'category' ? (
+        <Link className="portal-admin-link inline-flex" href={`/wiki/explore?topic=${topic.id}`}>
+          Open in graph
+        </Link>
+      ) : (
+        <WikiArticleGenerateControl
+          className={emphasizeGenerate ? '' : 'opacity-95'}
+          compact
+          topicID={topic.id}
+        />
+      )}
+    </div>
+  </article>
+)
+
+const TopicChip = ({ topic }: { topic: TopicContextTopic }) =>
+  topic.articleHref ? (
+    <Link className="portal-pill transition-colors hover:bg-card" href={topic.articleHref}>
+      {topic.title}
+    </Link>
+  ) : (
+    <Link className="portal-pill transition-colors hover:bg-card" href={`/wiki/explore?topic=${topic.id}`}>
+      {topic.title}
+    </Link>
+  )
 
 const RelationPanel = ({
   items,

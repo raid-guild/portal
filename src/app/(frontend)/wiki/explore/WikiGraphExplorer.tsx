@@ -18,6 +18,8 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { WikiArticleGenerateControl } from '../_components/WikiArticleGenerateControl'
+
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
   ssr: false,
 }) as React.ComponentType<Record<string, unknown>>
@@ -133,7 +135,7 @@ export const WikiGraphExplorer: React.FC<{
   })
   const [dimensions, setDimensions] = useState({ height: 640, width: 960 })
   const [query, setQuery] = useState('')
-  const [focusedID, setFocusedID] = useState<string | null>(null)
+  const [focusedID, setFocusedID] = useState<string | null>(() => initialTopicNodeID())
   const [importEventID, setImportEventID] = useState(() => initialSessionID())
   const [importResourceURL, setImportResourceURL] = useState('')
   const [importStatus, setImportStatus] = useState<{
@@ -150,7 +152,7 @@ export const WikiGraphExplorer: React.FC<{
   const [isImporting, setIsImporting] = useState(false)
   const [importingExpansionNodeID, setImportingExpansionNodeID] = useState<string | null>(null)
   const [expandingNodeID, setExpandingNodeID] = useState<string | null>(null)
-  const [selectedID, setSelectedID] = useState<string | null>(null)
+  const [selectedID, setSelectedID] = useState<string | null>(() => initialTopicNodeID())
   const [hoveredID, setHoveredID] = useState<string | null>(null)
   const [sourceSessionFilter, setSourceSessionFilter] = useState(() => initialSessionID())
   const [topicMapSessions, setTopicMapSessions] = useState<TopicMapSession[]>([])
@@ -187,6 +189,15 @@ export const WikiGraphExplorer: React.FC<{
       })
     }
   }, [])
+
+  useEffect(() => {
+    const initialTopic = initialTopicNodeID()
+    if (!initialTopic || !data.nodes.some((node) => node.id === initialTopic)) return
+
+    setFocusedID(initialTopic)
+    setSelectedID(initialTopic)
+    window.setTimeout(() => fitGraph(650), 150)
+  }, [data.nodes])
 
   useEffect(() => {
     let cancelled = false
@@ -937,6 +948,9 @@ const TopicDetails = ({
         )}
         Expand with Prism
       </button>
+      {node.type !== 'category' && node.articleCount === 0 ? (
+        <WikiArticleGenerateControl topicID={topicIDFromNodeID(node.id)} />
+      ) : null}
       {status ? (
         <div className="space-y-3">
           <p
@@ -1309,7 +1323,16 @@ const initialSessionID = () => {
   return new URLSearchParams(window.location.search).get('session') || ''
 }
 
-const topicIDFromNodeID = (nodeID: `topic:${number}`) => nodeID.replace('topic:', '')
+const initialTopicNodeID = () => {
+  if (typeof window === 'undefined') return null
+
+  const topicID = new URLSearchParams(window.location.search).get('topic')
+  if (!topicID || !/^\d+$/.test(topicID)) return null
+
+  return `topic:${topicID}`
+}
+
+const topicIDFromNodeID = (nodeID: `topic:${number}`) => Number(nodeID.replace('topic:', ''))
 
 const getZoomOutID = (data: WikiExplorerGraphData, focusedID: string) => {
   const focusedNode = data.nodes.find((node) => node.id === focusedID)
