@@ -115,6 +115,15 @@ const getWikiExplorerGraphData = async ({
         },
   })
 
+  if (!result.docs.length) {
+    const fallbackPages = await getReadableWikiPagesForGraph(payload, {
+      canManageWiki,
+      user,
+    })
+
+    return normalizeWikiPagesGraph(fallbackPages)
+  }
+
   if (canManageWiki) {
     return normalizeWikiGraph(result.docs)
   }
@@ -126,6 +135,36 @@ const getWikiExplorerGraphData = async ({
   )
 
   return normalizeWikiGraph(sanitizeTopicPages(result.docs, visiblePages))
+}
+
+const getReadableWikiPagesForGraph = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  {
+    canManageWiki,
+    user,
+  }: {
+    canManageWiki: boolean
+    user: User
+  },
+): Promise<WikiPage[]> => {
+  const result = await payload.find({
+    collection: 'wikiPages',
+    depth: 1,
+    limit: 300,
+    overrideAccess: canManageWiki,
+    pagination: false,
+    sort: 'title',
+    user,
+    where: canManageWiki
+      ? {
+          reviewStatus: {
+            not_equals: 'archived',
+          },
+        }
+      : undefined,
+  })
+
+  return result.docs
 }
 
 const getReadableWikiPagesForTopics = async (
@@ -309,6 +348,68 @@ const normalizeWikiGraph = (topics: WikiTopic[]): WikiExplorerGraphData => {
 
       links.set(`${topicID}->${sourceID}:has_source`, {
         source: topicID,
+        target: sourceID,
+        type: 'has_source',
+      })
+    }
+  }
+
+  return {
+    links: Array.from(links.values()),
+    nodes: Array.from(nodes.values()),
+  }
+}
+
+const normalizeWikiPagesGraph = (pages: WikiPage[]): WikiExplorerGraphData => {
+  const nodes = new Map<string, WikiExplorerGraphData['nodes'][number]>()
+  const links = new Map<string, WikiExplorerGraphData['links'][number]>()
+  const sourceIDs = new Set<string>()
+
+  for (const page of pages) {
+    const articleID = articleNodeID(page.id)
+
+    nodes.set(articleID, {
+      bodySections: extractLexicalSections(page.body),
+      bodyText: extractLexicalText(page.body),
+      confidence: page.confidence,
+      discoveryLinks: {
+        furtherReading: normalizeDiscoveryLinks(page.furtherReading),
+        papers: normalizeDiscoveryLinks(page.papers),
+        tools: normalizeDiscoveryLinks(page.tools),
+      },
+      href: page.slug ? `/wiki/${page.slug}` : null,
+      id: articleID,
+      label: page.title,
+      lastReviewedAt: page.lastReviewedAt,
+      lastRefreshedAt: page.lastRefreshedAt,
+      reviewStatus: page.reviewStatus,
+      sourceSessions: relationDocs<Event>(page.sourceSessions).map(sessionSummary),
+      slug: page.slug,
+      sourceCount: page.sourceArtifacts?.length || 0,
+      status: page._status,
+      summary: page.summary,
+      type: 'article',
+      visibility: page.visibility,
+    })
+
+    for (const artifact of page.sourceArtifacts || []) {
+      const sourceID = sourceNodeID(artifact.url || artifact.artifactID || artifact.label)
+
+      if (!sourceIDs.has(sourceID)) {
+        sourceIDs.add(sourceID)
+        nodes.set(sourceID, {
+          artifactID: artifact.artifactID,
+          id: sourceID,
+          label: artifact.label,
+          observedAt: artifact.observedAt,
+          sourceType: artifact.sourceType || 'external',
+          sourceURL: artifact.url,
+          type: 'source',
+        })
+      }
+
+      links.set(`${articleID}->${sourceID}:has_source`, {
+        source: articleID,
         target: sourceID,
         type: 'has_source',
       })
