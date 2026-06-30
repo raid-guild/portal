@@ -38,12 +38,12 @@ const sessionTypeLabels: Record<SessionType, string> = {
 }
 
 const sessionTypeStyles: Record<SessionType, string> = {
-  'all-hands': 'border-moloch-500/30 bg-moloch-500/10',
-  brownbag: 'border-guild-olive/30 bg-guild-olive/10',
-  demo: 'border-success/30 bg-success/10',
-  fireside: 'border-primary/40 bg-primary/10',
-  pitch: 'border-warning/30 bg-warning/10',
-  workshop: 'border-scroll-200/30 bg-scroll-200/10',
+  'all-hands': 'border-moloch-500/25 bg-moloch-500/10',
+  brownbag: 'border-guild-olive/25 bg-guild-olive/10',
+  demo: 'border-success/25 bg-success/10',
+  fireside: 'border-primary/30 bg-primary/10',
+  pitch: 'border-warning/25 bg-warning/10',
+  workshop: 'border-scroll-200/25 bg-scroll-200/10',
 }
 
 const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, string> = {
@@ -191,6 +191,8 @@ const SessionRow: React.FC<{
   const hosts = relationDocs<Profile>(event.hostProfiles)
   const relatedProfiles = relationDocs<Profile>(event.relatedProfiles)
   const speaker = typeof event.speaker === 'object' ? event.speaker : null
+  const themes = event.themes?.map((item) => item.theme).filter(Boolean) || []
+  const showSessionActions = !isPast
   const hostNames = hosts.length
     ? hosts.map((profile) => profile.displayName).filter(Boolean)
     : speakers.length
@@ -202,20 +204,21 @@ const SessionRow: React.FC<{
           : []
   const sessionType = event.sessionType || 'brownbag'
   return (
-    <article className="grid gap-4 border-b border-border py-4 sm:grid-cols-[4rem_1fr]">
-      <div className="flex items-baseline gap-2 sm:block">
+    <article className="grid gap-4 border-b border-border/70 py-5 lg:grid-cols-[4rem_14rem_minmax(0,1fr)]">
+      <div className="flex items-baseline gap-2 lg:block">
         <SessionDateBadge
           dateClassName="font-display text-2xl font-bold leading-none text-foreground"
           dayClassName="font-mono text-xs uppercase text-muted-foreground"
           startsAt={event.startsAt}
         />
       </div>
+      <SessionVisual event={event} isLive={isLive} />
       <div
-        className={`rounded-sm border p-5 ${
+        className={`border px-5 py-4 ${
           isLive ? 'border-primary bg-primary/15' : sessionTypeStyles[sessionType]
         }`}
       >
-        <div className="grid gap-5 lg:grid-cols-[1fr_18rem]">
+        <div className="grid gap-5 xl:grid-cols-[1fr_auto]">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               {isLive ? <span className="portal-pill">Live now</span> : null}
@@ -229,7 +232,7 @@ const SessionRow: React.FC<{
                 </span>
               ) : null}
               <SessionDateTime
-                className="text-sm text-muted-foreground"
+                className="font-mono text-xs text-muted-foreground"
                 dateStyle="medium"
                 endsAt={event.endsAt}
                 startsAt={event.startsAt}
@@ -247,7 +250,9 @@ const SessionRow: React.FC<{
               </p>
             ) : null}
             {event.summary ? (
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.summary}</p>
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                {event.summary}
+              </p>
             ) : null}
             {event.sourceStatus && isPast ? (
               <p className="mt-3 inline-flex border border-border px-2 py-1 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
@@ -276,23 +281,63 @@ const SessionRow: React.FC<{
                 ))}
               </div>
             ) : null}
+            {themes.length ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {themes.slice(0, 4).map((theme) => (
+                  <span className="portal-pill" key={`theme-${event.id}-${theme}`}>
+                    {theme}
+                  </span>
+                ))}
+              </div>
+            ) : null}
           </div>
-          <div className="flex flex-wrap content-start gap-3 lg:justify-end">
+          <div className="flex flex-wrap content-start gap-3 xl:max-w-52 xl:justify-end">
             <Link className="portal-link" href={`/events/${event.id}`}>
               {isPast ? 'View archive' : 'Details'}
             </Link>
-            {!isPast ? <SafeLink href={event.joinURL} label="Join" /> : null}
-            {!isPast ? (
+            {showSessionActions ? <SafeLink href={event.joinURL} label="Join" /> : null}
+            {showSessionActions ? (
               <SafeLink
                 href={event.calendarURL || getCalendarFallbackURL(event)}
                 label="Add to calendar"
               />
             ) : null}
-            {!isPast ? <SafeLink href={event.discordEventURL} label="Discord event" /> : null}
+            {showSessionActions ? (
+              <SafeLink href={event.discordEventURL} label="Discord event" />
+            ) : null}
           </div>
         </div>
       </div>
     </article>
+  )
+}
+
+const SessionVisual: React.FC<{ event: Event; isLive: boolean }> = ({ event, isLive }) => {
+  const sessionType = event.sessionType || 'brownbag'
+  const visualTone: Record<SessionType, string> = {
+    'all-hands': 'bg-scroll-200',
+    brownbag: 'bg-guild-olive',
+    demo: 'bg-success',
+    fireside: 'bg-primary',
+    pitch: 'bg-moloch-500',
+    workshop: 'bg-warning',
+  }
+
+  return (
+    <Link
+      aria-label={`Open ${event.title}`}
+      className={`group relative flex aspect-[4/3] min-h-32 items-center justify-center overflow-hidden border border-border/60 ${visualTone[sessionType]} transition-opacity hover:opacity-90`}
+      href={`/events/${event.id}`}
+    >
+      {isLive ? (
+        <span className="absolute left-3 top-3 border border-primary bg-neutral-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-primary">
+          Live
+        </span>
+      ) : null}
+      <span className="flex size-16 items-center justify-center rounded-full bg-neutral-black/35 ring-1 ring-white/20 transition-transform group-hover:scale-105">
+        <img alt="" className="h-9 w-9 object-contain opacity-90" src="/assets/symbol-white.svg" />
+      </span>
+    </Link>
   )
 }
 
