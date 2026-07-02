@@ -44,7 +44,6 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
           : '/api/notificationPreferences',
         {
           body: JSON.stringify({
-            ...(nextSubscribed ? { emailEnabled: true } : {}),
             moduleAnnouncements: nextSubscribed ? 'email' : 'muted',
             user: userID,
           }),

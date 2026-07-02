@@ -23,6 +23,15 @@ const channelOptions = [
   },
 ]
 
+const emailChannelFields = [
+  'badgeAwards',
+  'briefs',
+  'moduleAnnouncements',
+  'sessionAnnouncements',
+  'sessionReminders',
+  'weeklyDigest',
+] as const
+
 export const NotificationPreferences: CollectionConfig = {
   slug: 'notificationPreferences',
   access: {
@@ -131,23 +140,43 @@ export const NotificationPreferences: CollectionConfig = {
       ({ data, operation, originalDoc, req }) => {
         if (!req.user?.id) return data
 
-        if (!canEditContent(req.user)) {
-          return {
-            ...data,
-            user: req.user.id,
-          }
+        const nextData = {
+          ...data,
         }
 
-        return {
-          ...data,
-          user:
+        if (!canEditContent(req.user)) {
+          nextData.user = req.user.id
+        } else {
+          nextData.user =
             data?.user ||
-            (operation === 'update' ? getRelationshipID(originalDoc?.user) : req.user.id),
+            (operation === 'update' ? getRelationshipID(originalDoc?.user) : req.user.id)
         }
+
+        return deriveEmailEnabled(nextData, originalDoc)
       },
     ],
   },
   timestamps: true,
+}
+
+const deriveEmailEnabled = (
+  data: Record<string, unknown>,
+  originalDoc?: Record<string, unknown>,
+) => {
+  const hasChannelUpdate = emailChannelFields.some((field) => field in data)
+
+  if (!hasChannelUpdate) return data
+
+  const emailEnabled = emailChannelFields.some((field) => {
+    const value = field in data ? data[field] : originalDoc?.[field]
+
+    return value === 'email'
+  })
+
+  return {
+    ...data,
+    emailEnabled,
+  }
 }
 
 const getRelationshipID = (value: unknown) => {

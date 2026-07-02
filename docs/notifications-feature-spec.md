@@ -191,7 +191,9 @@ email can still receive in-app notifications and use the inbox. The preference
 UI should disable email choices and point them to email verification until
 `emailVerifiedAt` is set. The legacy `emailEnabled` field may be derived for
 admin visibility or compatibility, but delivery must not depend on a separate
-global email checkbox.
+global email checkbox for newly saved preferences. Existing rows with
+`emailEnabled: false` must continue to behave as opted out until the user
+resaves notification channels in the new per-type model.
 
 `moduleAnnouncements` defaults to `muted`. Users opt in from `/modules` or
 manage the preference from `/me#notifications`; the Portal should not silently

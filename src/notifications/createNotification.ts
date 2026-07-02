@@ -198,6 +198,7 @@ const getDeliveryChannel = async ({
       : preferences?.[preferenceKey] || DEFAULT_PREFERENCES[preferenceKey]
 
   if (preferredChannel !== 'email') return preferredChannel
+  if (preferences?.emailEnabled === false) return 'in_app'
 
   return user.emailVerifiedAt ? 'email' : 'in_app'
 }
