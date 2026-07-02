@@ -170,7 +170,6 @@ Recommended fields:
 
 ```txt
 user: relationship -> users, required, unique
-emailEnabled: checkbox
 sessionAnnouncements: in_app / email / muted
 sessionReminders: in_app / email / muted
 briefs: in_app / email / muted
@@ -178,6 +177,7 @@ moduleAnnouncements: in_app / email / muted
 activityDigestFrequency: none / daily / weekly
 weeklyDigest: in_app / email / muted
 badgeAwards: in_app / email / muted
+emailEnabled: legacy/derived checkbox, not a delivery gate
 updatedAt
 createdAt
 ```
@@ -185,10 +185,13 @@ createdAt
 A separate collection is preferred over adding many fields to `users` because
 preferences are likely to grow and may need their own admin workflow.
 
+Choosing `email` for a notification type is the email opt-in for that type.
 Email preferences require a verified account email. Users without a verified
 email can still receive in-app notifications and use the inbox. The preference
 UI should disable email choices and point them to email verification until
-`emailVerifiedAt` is set.
+`emailVerifiedAt` is set. The legacy `emailEnabled` field may be derived for
+admin visibility or compatibility, but delivery must not depend on a separate
+global email checkbox.
 
 `moduleAnnouncements` defaults to `muted`. Users opt in from `/modules` or
 manage the preference from `/me#notifications`; the Portal should not silently

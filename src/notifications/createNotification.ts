@@ -199,7 +199,7 @@ const getDeliveryChannel = async ({
 
   if (preferredChannel !== 'email') return preferredChannel
 
-  return preferences?.emailEnabled && user.emailVerifiedAt ? 'email' : 'in_app'
+  return user.emailVerifiedAt ? 'email' : 'in_app'
 }
 
 const getActivityDigestChannel = (

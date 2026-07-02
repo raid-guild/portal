@@ -9,7 +9,6 @@ type ModuleNotificationSignupProps = {
   email: string
   emailVerified: boolean
   initialPreferences?: {
-    emailEnabled?: boolean | null
     id?: number | string
     moduleAnnouncements?: Channel | null
   } | null
@@ -23,13 +22,10 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
   userID,
 }) => {
   const [isSaving, setIsSaving] = useState(false)
-  const [emailEnabled, setEmailEnabled] = useState(Boolean(initialPreferences?.emailEnabled))
   const [preferencesID, setPreferencesID] = useState(initialPreferences?.id)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
   const [subscribed, setSubscribed] = useState(
-    Boolean(
-      initialPreferences?.emailEnabled && initialPreferences?.moduleAnnouncements === 'email',
-    ),
+    Boolean(emailVerified && initialPreferences?.moduleAnnouncements === 'email'),
   )
 
   const savePreference = async (nextSubscribed: boolean) => {
@@ -48,7 +44,7 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
           : '/api/notificationPreferences',
         {
           body: JSON.stringify({
-            emailEnabled: nextSubscribed ? true : emailEnabled,
+            ...(nextSubscribed ? { emailEnabled: true } : {}),
             moduleAnnouncements: nextSubscribed ? 'email' : 'muted',
             user: userID,
           }),
@@ -66,7 +62,6 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
 
       const json = await res.json().catch(() => null)
       setPreferencesID(json?.doc?.id || json?.id || preferencesID)
-      setEmailEnabled(nextSubscribed ? true : emailEnabled)
       setSubscribed(nextSubscribed)
       setSaveStatus(
         nextSubscribed

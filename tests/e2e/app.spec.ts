@@ -3387,7 +3387,6 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
   const modulePreferenceResponse = await page.request.post('/api/notificationPreferences', {
     data: {
-      emailEnabled: true,
       moduleAnnouncements: 'email',
       user: verifiedUserID,
     },

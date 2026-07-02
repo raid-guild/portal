@@ -56,6 +56,10 @@ export const NotificationPreferences: CollectionConfig = {
     },
     {
       name: 'emailEnabled',
+      admin: {
+        description:
+          'Legacy derived flag. Email delivery is controlled by each notification type set to Email plus verified account email.',
+      },
       type: 'checkbox',
       defaultValue: false,
     },

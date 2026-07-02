@@ -11,7 +11,6 @@ type NotificationPreferencesFormProps = {
     activityDigestFrequency?: DigestFrequency | null
     badgeAwards?: Channel | null
     briefs?: Channel | null
-    emailEnabled?: boolean | null
     id?: number | string
     moduleAnnouncements?: Channel | null
     sessionAnnouncements?: Channel | null
@@ -72,7 +71,6 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
   const [activityDigestFrequency, setActivityDigestFrequency] = useState<DigestFrequency>(
     initialPreferences?.activityDigestFrequency || 'weekly',
   )
-  const [emailEnabled, setEmailEnabled] = useState(Boolean(initialPreferences?.emailEnabled))
   const [isSaving, setIsSaving] = useState(false)
   const [preferencesID, setPreferencesID] = useState(initialPreferences?.id)
   const [saveStatus, setSaveStatus] = useState<string | null>(null)
@@ -97,7 +95,7 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
     const body = {
       ...sanitizedValues,
       activityDigestFrequency,
-      emailEnabled: emailVerified ? emailEnabled : false,
+      emailEnabled: emailVerified && Object.values(sanitizedValues).includes('email'),
       user: userID,
     }
 
@@ -157,16 +155,6 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
           still available.
         </p>
       ) : null}
-
-      <label className="mt-6 flex items-center gap-3 text-sm">
-        <input
-          checked={emailVerified && emailEnabled}
-          disabled={!emailVerified}
-          onChange={(event) => setEmailEnabled(event.target.checked)}
-          type="checkbox"
-        />
-        Enable email delivery for notification types set to Email
-      </label>
 
       <div className="mt-6 divide-y divide-border border-y border-border">
         {channelFields.map((field) => (
