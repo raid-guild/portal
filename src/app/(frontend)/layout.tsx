@@ -16,6 +16,11 @@ import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
+const plausibleInitScript = `
+  window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
+  plausible.init()
+`
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const { isEnabled } = await draftMode()
   const widgetBubbleEnabled = isWidgetBubbleEnabled()
@@ -24,6 +29,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
+        <script
+          async
+          src="https://plausible-production-78b3.up.railway.app/js/pa-GcMa0n3OprdetpF64tprs.js"
+        />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: plausibleInitScript,
+          }}
+        />
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
         <link
           href="/feed.xml"
