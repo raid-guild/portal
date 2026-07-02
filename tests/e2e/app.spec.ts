@@ -3387,12 +3387,13 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
   const verifiedUserID = verifiedUserBody.doc?.id || verifiedUserBody.id
   const modulePreferenceResponse = await page.request.post('/api/notificationPreferences', {
     data: {
-      emailEnabled: true,
       moduleAnnouncements: 'email',
       user: verifiedUserID,
     },
   })
   expect(modulePreferenceResponse.status()).toBe(201)
+  const modulePreferenceBody = await modulePreferenceResponse.json()
+  expect(modulePreferenceBody.doc?.emailEnabled ?? modulePreferenceBody.emailEnabled).toBe(true)
   const moduleNotificationTitle = `E2E Announced Module ${hookSuffix}`
   const moduleNotificationSlug = `e2e-announced-module-${hookSuffix}`
   const moduleNotificationResponse = await page.request.post('/api/modules', {

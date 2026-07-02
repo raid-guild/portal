@@ -1803,6 +1803,9 @@ export interface Notification {
 export interface NotificationPreference {
   id: number;
   user: number | User;
+  /**
+   * Legacy derived flag. Email delivery is controlled by each notification type set to Email plus verified account email.
+   */
   emailEnabled?: boolean | null;
   sessionAnnouncements: 'in_app' | 'email' | 'muted';
   moduleAnnouncements: 'in_app' | 'email' | 'muted';
