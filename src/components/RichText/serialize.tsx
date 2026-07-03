@@ -215,6 +215,7 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
                 />
               )
             }
+            case 'autolink':
             case 'link': {
               const fields = node.fields
 
