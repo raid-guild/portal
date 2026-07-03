@@ -2,6 +2,7 @@ import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { Media } from '@/components/Media'
 import React, { Fragment, JSX } from 'react'
 import { CMSLink } from '@/components/Link'
 import { DefaultNodeTypes, SerializedBlockNode } from '@payloadcms/richtext-lexical'
@@ -27,6 +28,11 @@ export type NodeTypes =
 
 type Props = {
   nodes: NodeTypes[]
+}
+
+type UploadNode = {
+  type: 'upload'
+  value?: unknown
 }
 
 export function serializeLexical({ nodes }: Props): JSX.Element {
@@ -190,6 +196,23 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
                 <blockquote className="col-start-2" key={index}>
                   {serializedChildren}
                 </blockquote>
+              )
+            }
+            case 'upload': {
+              const uploadNode = node as UploadNode
+              const media = uploadNode.value
+
+              if (!media || typeof media !== 'object') {
+                return null
+              }
+
+              return (
+                <Media
+                  className="col-start-1 col-span-3"
+                  imgClassName="m-0 border border-border rounded-sm"
+                  key={index}
+                  resource={media as any}
+                />
               )
             }
             case 'link': {
