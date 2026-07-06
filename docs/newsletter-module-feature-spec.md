@@ -107,6 +107,7 @@ content; listmonk is the delivery and review backend.
 3. Editor confirms campaign settings:
    - subject, defaulting to the post title
    - optional preheader
+   - content source: latest saved draft or published post
    - from email, defaulting to `RaidGuild <updates@updates.raidguild.org>`
    - template, defaulting to `RaidGuild Updates`
    - one or more allowlisted listmonk audience lists
@@ -136,6 +137,10 @@ warning before updating an existing draft.
 Draft Portal posts may be used for test emails. Production sends should require
 published or explicitly approved content unless a human admin overrides that
 rule.
+
+The default editor source should be the latest saved Payload draft. Unsaved
+admin editor changes are not available to the newsletter renderer; editors must
+save the post draft before clicking `Update Draft From Post`.
 
 ### Post Admin Action
 

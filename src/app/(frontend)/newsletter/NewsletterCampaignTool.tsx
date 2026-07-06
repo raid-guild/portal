@@ -3,6 +3,8 @@
 import { CheckCircle2, ExternalLink, MailCheck, RefreshCw, Send, TriangleAlert } from 'lucide-react'
 import React, { useState } from 'react'
 
+import type { NewsletterSourceMode } from '@/modules/newsletter/createOrUpdateCampaign'
+
 type DraftResponse = {
   campaign?: {
     id?: number
@@ -21,13 +23,19 @@ type DraftResponse = {
 type Props = {
   defaultListIDs: number[]
   defaultTestEmail: string
+  initialPostID?: string
 }
 
-export const NewsletterCampaignTool: React.FC<Props> = ({ defaultListIDs, defaultTestEmail }) => {
-  const [postID, setPostID] = useState('')
+export const NewsletterCampaignTool: React.FC<Props> = ({
+  defaultListIDs,
+  defaultTestEmail,
+  initialPostID = '',
+}) => {
+  const [postID, setPostID] = useState(initialPostID)
   const [subject, setSubject] = useState('')
   const [preheader, setPreheader] = useState('')
   const [listIDs, setListIDs] = useState(defaultListIDs.join(','))
+  const [sourceMode, setSourceMode] = useState<NewsletterSourceMode>('latestSavedDraft')
   const [testEmail, setTestEmail] = useState(defaultTestEmail)
   const [newsletterCampaignID, setNewsletterCampaignID] = useState<number | null>(null)
   const [listmonkCampaignURL, setListmonkCampaignURL] = useState('')
@@ -52,6 +60,7 @@ export const NewsletterCampaignTool: React.FC<Props> = ({ defaultListIDs, defaul
         body: JSON.stringify({
           listIDs,
           preheader,
+          sourceMode,
           subject,
         }),
         headers: {
@@ -151,6 +160,42 @@ export const NewsletterCampaignTool: React.FC<Props> = ({ defaultListIDs, defaul
                   />
                 </NewsletterField>
               </div>
+            </fieldset>
+
+            <fieldset className="border-t border-border pt-5">
+              <legend className="pr-3 font-mono text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground">
+                Content source
+              </legend>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <button
+                  aria-pressed={sourceMode === 'latestSavedDraft'}
+                  className={
+                    sourceMode === 'latestSavedDraft'
+                      ? sourceModeButtonActiveClassName
+                      : sourceModeButtonClassName
+                  }
+                  onClick={() => setSourceMode('latestSavedDraft')}
+                  type="button"
+                >
+                  Latest saved draft
+                </button>
+                <button
+                  aria-pressed={sourceMode === 'published'}
+                  className={
+                    sourceMode === 'published'
+                      ? sourceModeButtonActiveClassName
+                      : sourceModeButtonClassName
+                  }
+                  onClick={() => setSourceMode('published')}
+                  type="button"
+                >
+                  Published post
+                </button>
+              </div>
+              <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                Save changes in Payload first. Unsaved editor changes cannot be rendered into
+                listmonk.
+              </p>
             </fieldset>
 
             <fieldset className="border-t border-border pt-5">
@@ -281,6 +326,11 @@ export const NewsletterCampaignTool: React.FC<Props> = ({ defaultListIDs, defaul
 
 const inputClassName =
   'h-11 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
+const sourceModeButtonClassName =
+  'min-h-16 rounded-sm border border-border bg-transparent p-4 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+
+const sourceModeButtonActiveClassName = `${sourceModeButtonClassName} border-primary text-primary`
 
 const NewsletterField: React.FC<{
   children: React.ReactNode

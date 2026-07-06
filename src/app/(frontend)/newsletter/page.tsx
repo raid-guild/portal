@@ -10,7 +10,13 @@ import { NewsletterCampaignTool } from './NewsletterCampaignTool'
 
 export const dynamic = 'force-dynamic'
 
-export default async function NewsletterPage() {
+type NewsletterPageProps = {
+  searchParams?: Promise<{
+    postId?: string
+  }>
+}
+
+export default async function NewsletterPage({ searchParams }: NewsletterPageProps) {
   const user = await getCurrentUser()
 
   if (!user) {
@@ -36,6 +42,8 @@ export default async function NewsletterPage() {
 
   const canCreateCampaigns = canEditContent(user)
   const config = getNewsletterConfig()
+  const params = await searchParams
+  const initialPostID = typeof params?.postId === 'string' ? params.postId : ''
 
   return (
     <main className="container pb-24 pt-12">
@@ -56,6 +64,7 @@ export default async function NewsletterPage() {
           <NewsletterCampaignTool
             defaultListIDs={config.defaultListIDs}
             defaultTestEmail={config.defaultTestEmail}
+            initialPostID={initialPostID}
           />
         </div>
       ) : (

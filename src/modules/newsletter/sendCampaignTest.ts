@@ -1,6 +1,11 @@
 import type { Payload } from 'payload'
 
 import { assertNewsletterConfigured, getNewsletterConfig } from './config'
+import {
+  assertPublishedSourceAvailable,
+  parseSourceMode,
+  type NewsletterSourceMode,
+} from './createOrUpdateCampaign'
 import type { ListmonkCampaignInput } from './listmonkClient'
 import { ListmonkClient } from './listmonkClient'
 import { renderPortalPostEmail } from './renderPortalPostEmail'
@@ -20,6 +25,7 @@ type NewsletterCampaignRecord = {
   listmonkCampaignID?: number | null
   post?: number | { id?: number | null } | null
   preheader?: string | null
+  sourceMode?: NewsletterSourceMode | null
   subject?: string | null
   templateID?: number | null
   title?: string | null
@@ -55,10 +61,14 @@ export const sendNewsletterCampaignTest = async ({
   const post = await payload.findByID({
     collection: 'posts',
     depth: 3,
+    draft: parseSourceMode(campaign.sourceMode) === 'latestSavedDraft',
     id: postID,
     overrideAccess: false,
     user,
   })
+  const sourceMode = parseSourceMode(campaign.sourceMode)
+  assertPublishedSourceAvailable(post, sourceMode)
+
   const subject = campaign.subject || stringValue(post.title) || `Portal post ${postID}`
   const rendered = renderPortalPostEmail({
     portalURL: config.portalURL,
@@ -66,7 +76,7 @@ export const sendNewsletterCampaignTest = async ({
     preheader: campaign.preheader || '',
     subject,
   })
-  const listIDs = campaign.listIDs?.map((item) => item.listID).filter(isPositiveNumber)
+  const listIDs = (campaign.listIDs || []).map((item) => item.listID).filter(isPositiveNumber)
 
   const listmonk = new ListmonkClient({
     apiToken: config.listmonkAPIToken,

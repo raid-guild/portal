@@ -17,6 +17,8 @@ type NewsletterCampaignRecord = {
   listmonkCampaignID?: number | null
 }
 
+export type NewsletterSourceMode = 'latestSavedDraft' | 'published'
+
 export const createOrUpdateNewsletterCampaign = async ({
   payload,
   postID,
@@ -30,6 +32,7 @@ export const createOrUpdateNewsletterCampaign = async ({
   const subjectOverride = stringValue((body as { subject?: unknown }).subject)
   const preheader = stringValue((body as { preheader?: unknown }).preheader)
   const requestedListIDs = parseNumberListFromUnknown((body as { listIDs?: unknown }).listIDs)
+  const sourceMode = parseSourceMode((body as { sourceMode?: unknown }).sourceMode)
   const listIDs = requestedListIDs.length ? requestedListIDs : config.defaultListIDs
   const templateID = config.listmonkTemplateID
   const fromEmail = config.defaultFromEmail
@@ -39,10 +42,13 @@ export const createOrUpdateNewsletterCampaign = async ({
   const post = await payload.findByID({
     collection: 'posts',
     depth: 3,
+    draft: sourceMode === 'latestSavedDraft',
     id: postID,
     overrideAccess: false,
     user,
   })
+  assertPublishedSourceAvailable(post, sourceMode)
+
   const subject = subjectOverride || stringValue(post.title) || `Portal post ${postID}`
   const title = `Portal post ${postID}: ${subject}`
   const rendered = renderPortalPostEmail({
@@ -90,6 +96,7 @@ export const createOrUpdateNewsletterCampaign = async ({
       listmonkCampaignUUID: listmonkCampaign.uuid || null,
       post: postID,
       preheader: preheader || null,
+      sourceMode,
       status: 'draft' as const,
       subject,
       templateID,
@@ -182,6 +189,18 @@ const parseNumberListFromUnknown = (value: unknown): number[] => {
   }
 
   return parseNumberList(typeof value === 'string' ? value : undefined)
+}
+
+export const parseSourceMode = (value: unknown): NewsletterSourceMode =>
+  value === 'published' ? 'published' : 'latestSavedDraft'
+
+export const assertPublishedSourceAvailable = (
+  post: { _status?: string | null },
+  sourceMode: NewsletterSourceMode,
+): void => {
+  if (sourceMode === 'published' && post._status !== 'published') {
+    throw new Error('Published post source requires a published Portal post.')
+  }
 }
 
 const stringValue = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')

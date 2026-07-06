@@ -55,6 +55,11 @@ export const Posts: CollectionConfig<'posts'> = {
     },
   },
   admin: {
+    components: {
+      edit: {
+        beforeDocumentControls: ['@/components/AdminNewsletterAction'],
+      },
+    },
     defaultColumns: ['title', 'slug', 'visibility', '_status', 'publishedAt', 'updatedAt'],
     livePreview: {
       url: ({ data }) => {
