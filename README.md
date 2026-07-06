@@ -143,6 +143,22 @@ The public reset flow is available at `/forgot-password` and `/reset-password?to
 Logged-in users can verify their account email from `/me`; self-serve signups start as `unverified` and become `contributor` after verification.
 Legacy profile claims are requested from `/me`; matching unclaimed profiles send a verification link to the legacy `claimEmail` before the profile is attached to the logged-in user and the account is promoted to `member`.
 
+### Newsletter Module
+
+The optional Newsletter module at `/newsletter` lets editors create or update
+listmonk campaign drafts from Portal posts and send test emails. listmonk owns
+subscriber lists, unsubscribes, archives, bounces, and final production sends.
+
+Set these variables to enable the integration:
+
+- `LISTMONK_URL`
+- `LISTMONK_API_USER`
+- `LISTMONK_API_TOKEN`
+- `LISTMONK_TEMPLATE_ID`
+- `LISTMONK_DEFAULT_LIST_IDS`
+- `LISTMONK_FROM_EMAIL`
+- `NEWSLETTER_DEFAULT_TEST_EMAIL`
+
 ### Feedback Widget
 
 The frontend includes a small widget bubble that links to `/feedback` for

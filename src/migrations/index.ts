@@ -41,6 +41,8 @@ import * as migration_20260623_130000_module_launch_roles_table from './20260623
 import * as migration_20260624_120000_wiki_topics from './20260624_120000_wiki_topics'
 import * as migration_20260625_120000_module_notification_signups from './20260625_120000_module_notification_signups'
 import * as migration_20260625_120000_wiki_topics_source_sessions from './20260625_120000_wiki_topics_source_sessions'
+import * as migration_20260706_171000_newsletter_campaigns from './20260706_171000_newsletter_campaigns'
+import * as migration_20260706_172000_module_categories from './20260706_172000_module_categories'
 
 export const migrations = [
   {
@@ -257,5 +259,15 @@ export const migrations = [
     up: migration_20260625_120000_wiki_topics_source_sessions.up,
     down: migration_20260625_120000_wiki_topics_source_sessions.down,
     name: '20260625_120000_wiki_topics_source_sessions',
+  },
+  {
+    up: migration_20260706_171000_newsletter_campaigns.up,
+    down: migration_20260706_171000_newsletter_campaigns.down,
+    name: '20260706_171000_newsletter_campaigns',
+  },
+  {
+    up: migration_20260706_172000_module_categories.up,
+    down: migration_20260706_172000_module_categories.down,
+    name: '20260706_172000_module_categories',
   },
 ]

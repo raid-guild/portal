@@ -138,6 +138,7 @@ const createPreviewEvents = (date: Date): Event[] => {
 const createPreviewModules = (date: Date): Module[] => [
   {
     authMode: 'none',
+    category: 'analytics',
     createdAt: date.toISOString(),
     enabled: true,
     entryRoute: '/portal-graph',

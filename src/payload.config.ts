@@ -20,6 +20,7 @@ import { FeedbackSubmissions } from './collections/FeedbackSubmissions'
 import { Inquiries } from './collections/Inquiries'
 import { Media } from './collections/Media'
 import { Modules } from './collections/Modules'
+import { NewsletterCampaigns } from './collections/NewsletterCampaigns'
 import { NotificationPreferences } from './collections/NotificationPreferences'
 import { Notifications } from './collections/Notifications'
 import { PageCopy } from './collections/PageCopy'
@@ -154,6 +155,7 @@ export default buildConfig({
     Badges,
     ProfileBadges,
     Modules,
+    NewsletterCampaigns,
     WikiPages,
     WikiTopics,
     Spotlights,
