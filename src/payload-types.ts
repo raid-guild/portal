@@ -1554,6 +1554,10 @@ export interface NewsletterCampaign {
   post: number | Post;
   subject: string;
   preheader?: string | null;
+  /**
+   * Controls whether Portal renders the latest saved draft or the published post into listmonk.
+   */
+  sourceMode: 'latestSavedDraft' | 'published';
   status: 'draft' | 'test_sent' | 'sent' | 'archived' | 'error';
   listmonkCampaignID?: number | null;
   listmonkCampaignUUID?: string | null;
@@ -3002,6 +3006,7 @@ export interface NewsletterCampaignsSelect<T extends boolean = true> {
   post?: T;
   subject?: T;
   preheader?: T;
+  sourceMode?: T;
   status?: T;
   listmonkCampaignID?: T;
   listmonkCampaignUUID?: T;

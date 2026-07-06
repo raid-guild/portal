@@ -38,6 +38,27 @@ export const NewsletterCampaigns: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'sourceMode',
+      type: 'select',
+      admin: {
+        description:
+          'Controls whether Portal renders the latest saved draft or the published post into listmonk.',
+        position: 'sidebar',
+      },
+      defaultValue: 'latestSavedDraft',
+      options: [
+        {
+          label: 'Latest saved draft',
+          value: 'latestSavedDraft',
+        },
+        {
+          label: 'Published',
+          value: 'published',
+        },
+      ],
+      required: true,
+    },
+    {
       name: 'status',
       type: 'select',
       admin: {

@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 
 import { assertNewsletterConfigured, getNewsletterConfig } from './config'
+import { parseSourceMode, type NewsletterSourceMode } from './createOrUpdateCampaign'
 import type { ListmonkCampaignInput } from './listmonkClient'
 import { ListmonkClient } from './listmonkClient'
 import { renderPortalPostEmail } from './renderPortalPostEmail'
@@ -20,6 +21,7 @@ type NewsletterCampaignRecord = {
   listmonkCampaignID?: number | null
   post?: number | { id?: number | null } | null
   preheader?: string | null
+  sourceMode?: NewsletterSourceMode | null
   subject?: string | null
   templateID?: number | null
   title?: string | null
@@ -55,6 +57,7 @@ export const sendNewsletterCampaignTest = async ({
   const post = await payload.findByID({
     collection: 'posts',
     depth: 3,
+    draft: parseSourceMode(campaign.sourceMode) === 'latestSavedDraft',
     id: postID,
     overrideAccess: false,
     user,
