@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 
 import { assertNewsletterConfigured, getNewsletterConfig } from './config'
+import type { ListmonkCampaignInput } from './listmonkClient'
 import { ListmonkClient } from './listmonkClient'
 import { renderPortalPostEmail } from './renderPortalPostEmail'
 import type { User } from '@/payload-types'
@@ -73,26 +74,27 @@ export const sendNewsletterCampaignTest = async ({
     baseURL: config.listmonkURL,
   })
 
-  await listmonk.sendCampaignTest(
-    campaign.listmonkCampaignID,
-    {
-      altbody: rendered.text,
-      body: rendered.html,
-      fromEmail: campaign.fromEmail || config.defaultFromEmail,
-      listIDs: listIDs?.length ? listIDs : config.defaultListIDs,
-      name: campaign.title || `Portal post ${postID}: ${subject}`,
-      subject,
-      templateID: campaign.templateID || config.listmonkTemplateID,
-    },
-    emails,
-  )
+  const campaignInput: ListmonkCampaignInput = {
+    altbody: rendered.text,
+    body: rendered.html,
+    fromEmail: campaign.fromEmail || config.defaultFromEmail,
+    listIDs: listIDs?.length ? listIDs : config.defaultListIDs,
+    name: campaign.title || `Portal post ${postID}: ${subject}`,
+    subject,
+    templateID: campaign.templateID || config.listmonkTemplateID,
+  }
+  const listmonkCampaign = await listmonk.updateCampaign(campaign.listmonkCampaignID, campaignInput)
+
+  await listmonk.sendCampaignTest(campaign.listmonkCampaignID, campaignInput, emails)
 
   return payload.update({
     collection: 'newsletterCampaigns',
     data: {
       lastError: null,
+      lastSyncedAt: new Date().toISOString(),
       lastTestEmail: emails.join(', '),
       lastTestSentAt: new Date().toISOString(),
+      listmonkCampaignUUID: listmonkCampaign.uuid || null,
       status: 'test_sent',
       updatedBy: user.id,
     },
