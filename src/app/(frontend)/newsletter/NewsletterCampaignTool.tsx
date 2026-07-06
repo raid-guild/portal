@@ -3,6 +3,8 @@
 import { CheckCircle2, ExternalLink, MailCheck, RefreshCw, Send, TriangleAlert } from 'lucide-react'
 import React, { useState } from 'react'
 
+import type { NewsletterSourceMode } from '@/modules/newsletter/createOrUpdateCampaign'
+
 type DraftResponse = {
   campaign?: {
     id?: number
@@ -24,8 +26,6 @@ type Props = {
   initialPostID?: string
 }
 
-type SourceMode = 'latestSavedDraft' | 'published'
-
 export const NewsletterCampaignTool: React.FC<Props> = ({
   defaultListIDs,
   defaultTestEmail,
@@ -35,7 +35,7 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
   const [subject, setSubject] = useState('')
   const [preheader, setPreheader] = useState('')
   const [listIDs, setListIDs] = useState(defaultListIDs.join(','))
-  const [sourceMode, setSourceMode] = useState<SourceMode>('latestSavedDraft')
+  const [sourceMode, setSourceMode] = useState<NewsletterSourceMode>('latestSavedDraft')
   const [testEmail, setTestEmail] = useState(defaultTestEmail)
   const [newsletterCampaignID, setNewsletterCampaignID] = useState<number | null>(null)
   const [listmonkCampaignURL, setListmonkCampaignURL] = useState('')
@@ -168,6 +168,7 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
               </legend>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <button
+                  aria-pressed={sourceMode === 'latestSavedDraft'}
                   className={
                     sourceMode === 'latestSavedDraft'
                       ? sourceModeButtonActiveClassName
@@ -179,6 +180,7 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
                   Latest saved draft
                 </button>
                 <button
+                  aria-pressed={sourceMode === 'published'}
                   className={
                     sourceMode === 'published'
                       ? sourceModeButtonActiveClassName

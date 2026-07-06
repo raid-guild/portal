@@ -1,7 +1,11 @@
 import type { Payload } from 'payload'
 
 import { assertNewsletterConfigured, getNewsletterConfig } from './config'
-import { parseSourceMode, type NewsletterSourceMode } from './createOrUpdateCampaign'
+import {
+  assertPublishedSourceAvailable,
+  parseSourceMode,
+  type NewsletterSourceMode,
+} from './createOrUpdateCampaign'
 import type { ListmonkCampaignInput } from './listmonkClient'
 import { ListmonkClient } from './listmonkClient'
 import { renderPortalPostEmail } from './renderPortalPostEmail'
@@ -62,6 +66,9 @@ export const sendNewsletterCampaignTest = async ({
     overrideAccess: false,
     user,
   })
+  const sourceMode = parseSourceMode(campaign.sourceMode)
+  assertPublishedSourceAvailable(post, sourceMode)
+
   const subject = campaign.subject || stringValue(post.title) || `Portal post ${postID}`
   const rendered = renderPortalPostEmail({
     portalURL: config.portalURL,
@@ -69,7 +76,7 @@ export const sendNewsletterCampaignTest = async ({
     preheader: campaign.preheader || '',
     subject,
   })
-  const listIDs = campaign.listIDs?.map((item) => item.listID).filter(isPositiveNumber)
+  const listIDs = (campaign.listIDs || []).map((item) => item.listID).filter(isPositiveNumber)
 
   const listmonk = new ListmonkClient({
     apiToken: config.listmonkAPIToken,

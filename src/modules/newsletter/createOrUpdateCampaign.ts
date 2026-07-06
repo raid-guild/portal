@@ -47,6 +47,8 @@ export const createOrUpdateNewsletterCampaign = async ({
     overrideAccess: false,
     user,
   })
+  assertPublishedSourceAvailable(post, sourceMode)
+
   const subject = subjectOverride || stringValue(post.title) || `Portal post ${postID}`
   const title = `Portal post ${postID}: ${subject}`
   const rendered = renderPortalPostEmail({
@@ -191,5 +193,14 @@ const parseNumberListFromUnknown = (value: unknown): number[] => {
 
 export const parseSourceMode = (value: unknown): NewsletterSourceMode =>
   value === 'published' ? 'published' : 'latestSavedDraft'
+
+export const assertPublishedSourceAvailable = (
+  post: { _status?: string | null },
+  sourceMode: NewsletterSourceMode,
+): void => {
+  if (sourceMode === 'published' && post._status !== 'published') {
+    throw new Error('Published post source requires a published Portal post.')
+  }
+}
 
 const stringValue = (value: unknown): string => (typeof value === 'string' ? value.trim() : '')
