@@ -86,7 +86,7 @@ export const createOrUpdateNewsletterCampaign = async ({
       lastSyncedAt: new Date().toISOString(),
       listIDs: listIDs.map((listID) => ({ listID })),
       listmonkCampaignID: listmonkCampaign.id,
-      listmonkCampaignURL: `${config.listmonkURL}/campaigns/${listmonkCampaign.id}`,
+      listmonkCampaignURL: `${config.listmonkURL}/admin/campaigns/${listmonkCampaign.id}`,
       listmonkCampaignUUID: listmonkCampaign.uuid || null,
       post: postID,
       preheader: preheader || null,

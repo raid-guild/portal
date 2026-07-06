@@ -56,9 +56,14 @@ export class ListmonkClient {
     return response.data
   }
 
-  async sendCampaignTest(campaignID: number, emails: string[]): Promise<void> {
+  async sendCampaignTest(
+    campaignID: number,
+    input: ListmonkCampaignInput,
+    emails: string[],
+  ): Promise<void> {
     await this.request(`/api/campaigns/${campaignID}/test`, {
       body: {
+        ...this.toCampaignBody(input),
         subscribers: emails,
       },
       method: 'POST',
