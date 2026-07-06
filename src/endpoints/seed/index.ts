@@ -521,6 +521,7 @@ export const seed = async ({
           summary:
             'An interactive graph for exploring relationships between profiles, roles, skills, projects, sessions, and other Portal records.',
           status: 'experimental',
+          category: 'analytics',
           visibility: 'authenticated',
           moduleKind: 'internal',
           authMode: 'none',
@@ -548,6 +549,7 @@ export const seed = async ({
           summary:
             'A source-backed knowledge module for turning reviewed community memory into durable topic pages.',
           status: 'experimental',
+          category: 'knowledge',
           visibility: 'authenticated',
           moduleKind: 'internal',
           authMode: 'none',
@@ -585,11 +587,42 @@ export const seed = async ({
       payload.create({
         collection: 'modules',
         data: {
+          name: 'Newsletter',
+          slug: 'newsletter',
+          summary:
+            'A member-only publishing bridge for turning approved Portal posts into listmonk campaign drafts and test emails.',
+          status: 'experimental',
+          category: 'ops',
+          visibility: 'member',
+          moduleKind: 'internal',
+          authMode: 'none',
+          enabled: true,
+          sortOrder: 20,
+          entryRoute: '/newsletter',
+          adminRoute: '/admin/collections/newsletterCampaigns',
+          specURL:
+            'https://github.com/raid-guild/portal/blob/main/docs/newsletter-module-feature-spec.md',
+          ownedCollections: [
+            {
+              collectionSlug: 'newsletterCampaigns',
+            },
+          ],
+          corePrimitiveRelationships: [{ primitive: 'post' }, { primitive: 'profile' }],
+          graduationCriteria:
+            'Editors can reliably create listmonk drafts and test sends from Portal posts without bypassing subscriber consent or unsubscribe flows.',
+          riskNotes:
+            'Keep final production sends in listmonk until Portal has approval, audience, and deliverability safeguards.',
+        },
+      }),
+      payload.create({
+        collection: 'modules',
+        data: {
           name: 'Bounty Board',
           slug: 'bounty-board',
           summary:
             'A future contribution module for surfacing scoped opportunities, rewards, and claims without turning projects into task boards.',
           status: 'idea',
+          category: 'tools',
           visibility: 'authenticated',
           moduleKind: 'internal',
           authMode: 'none',
@@ -616,6 +649,7 @@ export const seed = async ({
           summary:
             'A future recognition module for exploring aggregate contribution signals without making points the primary community goal.',
           status: 'idea',
+          category: 'community',
           visibility: 'authenticated',
           moduleKind: 'internal',
           authMode: 'none',

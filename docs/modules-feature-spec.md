@@ -142,6 +142,7 @@ Each module card should show:
 
 - name
 - short summary
+- category
 - status
 - entry route
 - owner/champion
@@ -170,6 +171,7 @@ name: text, required
 slug: text, unique, required
 summary: textarea, required
 status: idea / prototype / experimental / active / graduated / archived
+category: ops / tools / analytics / games / knowledge / community
 visibility: public / authenticated / member / admin
 entryRoute: text
 adminRoute: text
@@ -193,6 +195,7 @@ Recommended admin columns:
 
 ```txt
 name
+category
 status
 enabled
 featured

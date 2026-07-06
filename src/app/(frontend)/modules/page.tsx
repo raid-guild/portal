@@ -23,6 +23,33 @@ const statusLabels: Record<NonNullable<Module['status']>, string> = {
   prototype: 'Prototype',
 }
 
+const categoryLabels: Record<NonNullable<Module['category']>, string> = {
+  analytics: 'Analytics',
+  community: 'Community',
+  games: 'Games',
+  knowledge: 'Knowledge',
+  ops: 'Ops',
+  tools: 'Tools',
+}
+
+const categoryDescriptions: Record<NonNullable<Module['category']>, string> = {
+  analytics: 'Dashboards, graphs, reporting, and discovery surfaces.',
+  community: 'Member-facing coordination, recognition, and participation modules.',
+  games: 'Playful, experimental, or game-like Portal experiences.',
+  knowledge: 'Research, wiki, memory, and durable context modules.',
+  ops: 'Internal workflows for publishing, communication, and operations.',
+  tools: 'Utility modules that help members take action or maintain Portal records.',
+}
+
+const categoryOrder: NonNullable<Module['category']>[] = [
+  'ops',
+  'tools',
+  'analytics',
+  'knowledge',
+  'community',
+  'games',
+]
+
 const primitiveLabels: Record<string, string> = {
   activityItem: 'Activity',
   brief: 'Briefs',
@@ -45,7 +72,7 @@ export default async function ModulesPage() {
 
   const modules = await getModules(user)
   const notificationPreferences = await getNotificationPreferences(user)
-  const groupedModules = groupModules(modules)
+  const groupedModules = groupModulesByCategory(modules)
   const canManageModules = canEditContent(user)
 
   return (
@@ -76,10 +103,15 @@ export default async function ModulesPage() {
       </div>
 
       {modules.length ? (
-        <div className="mt-10 space-y-10">
-          <ModuleSection modules={groupedModules.ready} title="Available and experimental" />
-          <ModuleSection modules={groupedModules.ideas} title="Ideas and prototypes" />
-          <ModuleSection modules={groupedModules.graduated} title="Graduated" />
+        <div className="mt-10 space-y-12">
+          {groupedModules.map((group) => (
+            <ModuleSection
+              description={categoryDescriptions[group.category]}
+              key={group.category}
+              modules={group.modules}
+              title={categoryLabels[group.category]}
+            />
+          ))}
         </div>
       ) : (
         <section className="mt-10 portal-panel">
@@ -132,12 +164,19 @@ const ModulesTeaser = () => (
   </main>
 )
 
-const ModuleSection: React.FC<{ modules: Module[]; title: string }> = ({ modules, title }) => {
+const ModuleSection: React.FC<{ description?: string; modules: Module[]; title: string }> = ({
+  description,
+  modules,
+  title,
+}) => {
   if (!modules.length) return null
 
   return (
     <section>
       <h2 className="portal-heading-sm">{title}</h2>
+      {description ? (
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
+      ) : null}
       <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (
           <ModuleCard key={module.id} module={module} />
@@ -168,7 +207,9 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
     <article className="portal-panel">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="portal-kicker">{statusLabels[module.status || 'idea']}</p>
+          <p className="portal-kicker">
+            {categoryLabels[module.category || 'tools']} / {statusLabels[module.status || 'idea']}
+          </p>
           <h3 className="mt-2 portal-heading-sm">{module.name}</h3>
         </div>
         {module.featured ? <span className="portal-pill">Featured</span> : null}
@@ -289,11 +330,13 @@ const getNotificationPreferences = async (
   return result.docs[0] || null
 }
 
-const groupModules = (modules: Module[]) => ({
-  graduated: modules.filter((module) => module.status === 'graduated'),
-  ideas: modules.filter((module) => module.status === 'idea' || module.status === 'prototype'),
-  ready: modules.filter((module) => module.status === 'active' || module.status === 'experimental'),
-})
+const groupModulesByCategory = (modules: Module[]) =>
+  categoryOrder
+    .map((category) => ({
+      category,
+      modules: modules.filter((module) => (module.category || 'tools') === category),
+    }))
+    .filter((group) => group.modules.length)
 
 const relationDocs = <T extends { id: number | string }>(items?: (number | T)[] | null): T[] =>
   items?.filter((item): item is T => item !== null && typeof item === 'object') || []

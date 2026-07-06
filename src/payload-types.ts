@@ -80,6 +80,7 @@ export interface Config {
     badges: Badge;
     profileBadges: ProfileBadge;
     modules: Module;
+    newsletterCampaigns: NewsletterCampaign;
     wikiPages: WikiPage;
     wikiTopics: WikiTopic;
     spotlights: Spotlight;
@@ -121,6 +122,7 @@ export interface Config {
     badges: BadgesSelect<false> | BadgesSelect<true>;
     profileBadges: ProfileBadgesSelect<false> | ProfileBadgesSelect<true>;
     modules: ModulesSelect<false> | ModulesSelect<true>;
+    newsletterCampaigns: NewsletterCampaignsSelect<false> | NewsletterCampaignsSelect<true>;
     wikiPages: WikiPagesSelect<false> | WikiPagesSelect<true>;
     wikiTopics: WikiTopicsSelect<false> | WikiTopicsSelect<true>;
     spotlights: SpotlightsSelect<false> | SpotlightsSelect<true>;
@@ -1429,6 +1431,10 @@ export interface Module {
   name: string;
   summary: string;
   status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
+  /**
+   * High-level product category used to group modules on member surfaces.
+   */
+  category: 'ops' | 'tools' | 'analytics' | 'games' | 'knowledge' | 'community';
   visibility: 'public' | 'authenticated' | 'member' | 'admin';
   /**
    * Enabled modules are listed on member-facing module surfaces.
@@ -1535,6 +1541,35 @@ export interface Module {
   lastReviewedAt?: string | null;
   slug?: string | null;
   slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletterCampaigns".
+ */
+export interface NewsletterCampaign {
+  id: number;
+  title: string;
+  post: number | Post;
+  subject: string;
+  preheader?: string | null;
+  status: 'draft' | 'test_sent' | 'sent' | 'archived' | 'error';
+  listmonkCampaignID?: number | null;
+  listmonkCampaignUUID?: string | null;
+  listmonkCampaignURL?: string | null;
+  templateID: number;
+  listIDs: {
+    listID: number;
+    id?: string | null;
+  }[];
+  fromEmail: string;
+  lastSyncedAt?: string | null;
+  lastTestSentAt?: string | null;
+  lastTestEmail?: string | null;
+  lastError?: string | null;
+  createdBy?: (number | null) | User;
+  updatedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -2201,6 +2236,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'modules';
         value: number | Module;
+      } | null)
+    | ({
+        relationTo: 'newsletterCampaigns';
+        value: number | NewsletterCampaign;
       } | null)
     | ({
         relationTo: 'wikiPages';
@@ -2907,6 +2946,7 @@ export interface ModulesSelect<T extends boolean = true> {
   name?: T;
   summary?: T;
   status?: T;
+  category?: T;
   visibility?: T;
   enabled?: T;
   featured?: T;
@@ -2950,6 +2990,36 @@ export interface ModulesSelect<T extends boolean = true> {
   lastReviewedAt?: T;
   slug?: T;
   slugLock?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "newsletterCampaigns_select".
+ */
+export interface NewsletterCampaignsSelect<T extends boolean = true> {
+  title?: T;
+  post?: T;
+  subject?: T;
+  preheader?: T;
+  status?: T;
+  listmonkCampaignID?: T;
+  listmonkCampaignUUID?: T;
+  listmonkCampaignURL?: T;
+  templateID?: T;
+  listIDs?:
+    | T
+    | {
+        listID?: T;
+        id?: T;
+      };
+  fromEmail?: T;
+  lastSyncedAt?: T;
+  lastTestSentAt?: T;
+  lastTestEmail?: T;
+  lastError?: T;
+  createdBy?: T;
+  updatedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }

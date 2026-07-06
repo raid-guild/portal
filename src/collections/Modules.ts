@@ -61,6 +61,7 @@ export const Modules: CollectionConfig = {
   admin: {
     defaultColumns: [
       'name',
+      'category',
       'status',
       'enabled',
       'featured',
@@ -115,6 +116,43 @@ export const Modules: CollectionConfig = {
         {
           label: 'Archived',
           value: 'archived',
+        },
+      ],
+      required: true,
+    },
+    {
+      name: 'category',
+      type: 'select',
+      admin: {
+        description: 'High-level product category used to group modules on member surfaces.',
+        position: 'sidebar',
+      },
+      defaultValue: 'tools',
+      index: true,
+      options: [
+        {
+          label: 'Ops',
+          value: 'ops',
+        },
+        {
+          label: 'Tools',
+          value: 'tools',
+        },
+        {
+          label: 'Analytics',
+          value: 'analytics',
+        },
+        {
+          label: 'Games',
+          value: 'games',
+        },
+        {
+          label: 'Knowledge',
+          value: 'knowledge',
+        },
+        {
+          label: 'Community',
+          value: 'community',
         },
       ],
       required: true,

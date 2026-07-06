@@ -179,6 +179,7 @@
       `modules` registry collection.
 - [x] Add `modules` collection with status, owner, route, related project,
       related primitives, and graduation criteria fields.
+- [x] Add module categories for grouping modules beyond lifecycle status.
 - [x] Add `/modules` discovery page for visible enabled modules.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
@@ -227,6 +228,22 @@
 - [x] Ensure `/modules` exposes the module with join/login CTAs for
       unauthenticated visitors and open CTA for authenticated users.
 - [x] Add e2e coverage for access, module listing, and profile links.
+
+## Phase 11: Newsletter Module
+
+- [x] Add `newsletterCampaigns` collection as a module-owned bridge to listmonk.
+- [x] Add `/newsletter` as a member-only module route with editor/admin campaign
+      controls.
+- [x] Add listmonk config and API client for campaign draft and test-send
+      operations.
+- [x] Add Portal post to email-safe HTML/text rendering for newsletter drafts.
+- [x] Add API route to create or update a listmonk draft from a Portal post.
+- [x] Add API route to send a listmonk test email from a newsletter campaign
+      record.
+- [x] Register Newsletter in module seed data as member-visible.
+- [ ] Add a Payload post edit action/panel for the same workflow.
+- [ ] Add focused tests for renderer, permissions, and API behavior.
+- [ ] Add e2e coverage for the `/newsletter` editor flow.
 
 ## Deferred
 
