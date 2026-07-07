@@ -15,6 +15,15 @@ export type ListmonkCampaign = {
   uuid?: string
 }
 
+export type ListmonkList = {
+  created_at?: string
+  id: number
+  name: string
+  subscriber_count?: number
+  type?: string
+  updated_at?: string
+}
+
 type ListmonkClientOptions = {
   apiToken: string
   apiUser: string
@@ -70,6 +79,19 @@ export class ListmonkClient {
     })
   }
 
+  async getLists(): Promise<ListmonkList[]> {
+    const response = await this.request<{ data?: { results?: ListmonkList[] } | ListmonkList[] }>(
+      '/api/lists?per_page=all',
+      {
+        method: 'GET',
+      },
+    )
+
+    if (Array.isArray(response.data)) return response.data
+
+    return response.data?.results || []
+  }
+
   private toCampaignBody(input: ListmonkCampaignInput) {
     return {
       altbody: input.altbody,
@@ -97,7 +119,7 @@ export class ListmonkClient {
       body: options.body === undefined ? undefined : JSON.stringify(options.body),
       headers: {
         authorization: `Basic ${Buffer.from(`${this.apiUser}:${this.apiToken}`).toString('base64')}`,
-        'content-type': 'application/json',
+        ...(options.body === undefined ? {} : { 'content-type': 'application/json' }),
       },
       method: options.method,
     })
