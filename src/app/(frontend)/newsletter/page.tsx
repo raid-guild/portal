@@ -49,6 +49,10 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
   const params = await searchParams
   const initialPostID = typeof params?.postId === 'string' ? params.postId : ''
   const recentCampaigns = canCreateCampaigns ? await getRecentNewsletterCampaigns(user) : []
+  const initialCampaign =
+    canCreateCampaigns && initialPostID
+      ? await getNewsletterCampaignByPostID(user, Number(initialPostID))
+      : null
 
   return (
     <main className="container pb-24 pt-12">
@@ -69,6 +73,7 @@ export default async function NewsletterPage({ searchParams }: NewsletterPagePro
           <NewsletterCampaignTool
             defaultListIDs={config.defaultListIDs}
             defaultTestEmail={config.defaultTestEmail}
+            initialCampaign={initialCampaign}
             initialPostID={initialPostID}
           />
           <NewsletterCampaignHistory campaigns={recentCampaigns} />
@@ -103,4 +108,27 @@ const getRecentNewsletterCampaigns = async (
   })
 
   return result.docs as NewsletterCampaign[]
+}
+
+const getNewsletterCampaignByPostID = async (
+  user: NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>,
+  postID: number,
+) => {
+  if (!Number.isInteger(postID) || postID <= 0) return null
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'newsletterCampaigns',
+    depth: 1,
+    limit: 1,
+    overrideAccess: false,
+    user,
+    where: {
+      post: {
+        equals: postID,
+      },
+    },
+  })
+
+  return (result.docs[0] as NewsletterCampaign | undefined) || null
 }
