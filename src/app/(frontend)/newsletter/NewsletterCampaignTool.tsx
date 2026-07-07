@@ -4,6 +4,7 @@ import { CheckCircle2, ExternalLink, MailCheck, RefreshCw, Send, TriangleAlert }
 import React, { useEffect, useState } from 'react'
 
 import type { NewsletterSourceMode } from '@/modules/newsletter/createOrUpdateCampaign'
+import type { NewsletterCampaign } from '@/payload-types'
 
 type DraftResponse = {
   campaign?: {
@@ -48,30 +49,42 @@ type ListsResponse = {
 type Props = {
   defaultListIDs: number[]
   defaultTestEmail: string
+  initialCampaign?: NewsletterCampaign | null
   initialPostID?: string
 }
 
 export const NewsletterCampaignTool: React.FC<Props> = ({
   defaultListIDs,
   defaultTestEmail,
+  initialCampaign = null,
   initialPostID = '',
 }) => {
   const [postID, setPostID] = useState(initialPostID)
-  const [postSearch, setPostSearch] = useState('')
+  const [postSearch, setPostSearch] = useState(getInitialPostSearch(initialCampaign))
   const [postOptions, setPostOptions] = useState<NewsletterPostOption[]>([])
   const [isLoadingPosts, setIsLoadingPosts] = useState(true)
   const [postLoadError, setPostLoadError] = useState('')
-  const [subject, setSubject] = useState('')
-  const [preheader, setPreheader] = useState('')
-  const [selectedListIDs, setSelectedListIDs] = useState(defaultListIDs)
+  const [subject, setSubject] = useState(initialCampaign?.subject || '')
+  const [preheader, setPreheader] = useState(initialCampaign?.preheader || '')
+  const [selectedListIDs, setSelectedListIDs] = useState(
+    initialCampaign?.listIDs?.map((item) => item.listID) || defaultListIDs,
+  )
   const [availableLists, setAvailableLists] = useState<NewsletterList[]>([])
   const [isLoadingLists, setIsLoadingLists] = useState(true)
   const [listLoadError, setListLoadError] = useState('')
-  const [sourceMode, setSourceMode] = useState<NewsletterSourceMode>('latestSavedDraft')
+  const [sourceMode, setSourceMode] = useState<NewsletterSourceMode>(
+    initialCampaign?.sourceMode || 'latestSavedDraft',
+  )
   const [testEmail, setTestEmail] = useState(defaultTestEmail)
-  const [newsletterCampaignID, setNewsletterCampaignID] = useState<number | null>(null)
-  const [listmonkCampaignURL, setListmonkCampaignURL] = useState('')
-  const [status, setStatus] = useState('')
+  const [newsletterCampaignID, setNewsletterCampaignID] = useState<number | null>(
+    initialCampaign?.id || null,
+  )
+  const [listmonkCampaignURL, setListmonkCampaignURL] = useState(
+    initialCampaign?.listmonkCampaignURL || '',
+  )
+  const [status, setStatus] = useState(
+    initialCampaign ? `Editing existing campaign record ${initialCampaign.id}.` : '',
+  )
   const [error, setError] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [isSendingTest, setIsSendingTest] = useState(false)
@@ -79,6 +92,19 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
   const listCount = selectedListIDs.length
   const canCreateDraft = Boolean(postID.trim()) && !isCreating
   const canSendTest = Boolean(newsletterCampaignID && testEmail.trim()) && !isSendingTest
+
+  useEffect(() => {
+    setPostID(initialPostID)
+    setPostSearch(getInitialPostSearch(initialCampaign))
+    setSubject(initialCampaign?.subject || '')
+    setPreheader(initialCampaign?.preheader || '')
+    setSelectedListIDs(initialCampaign?.listIDs?.map((item) => item.listID) || defaultListIDs)
+    setSourceMode(initialCampaign?.sourceMode || 'latestSavedDraft')
+    setNewsletterCampaignID(initialCampaign?.id || null)
+    setListmonkCampaignURL(initialCampaign?.listmonkCampaignURL || '')
+    setStatus(initialCampaign ? `Editing existing campaign record ${initialCampaign.id}.` : '')
+    setError('')
+  }, [defaultListIDs, initialCampaign, initialPostID])
 
   useEffect(() => {
     let cancelled = false
@@ -568,6 +594,12 @@ const postOptionButtonClassName =
   'flex min-h-14 w-full items-center justify-between gap-4 rounded-sm border border-transparent p-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
 
 const postOptionButtonActiveClassName = `${postOptionButtonClassName} border-primary text-primary`
+
+const getInitialPostSearch = (campaign?: NewsletterCampaign | null): string => {
+  if (!campaign || typeof campaign.post === 'number') return ''
+
+  return campaign.post.title || ''
+}
 
 const NewsletterField: React.FC<{
   children: React.ReactNode
