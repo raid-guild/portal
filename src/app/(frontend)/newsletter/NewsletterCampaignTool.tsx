@@ -1,7 +1,7 @@
 'use client'
 
 import { CheckCircle2, ExternalLink, MailCheck, RefreshCw, Send, TriangleAlert } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import type { NewsletterSourceMode } from '@/modules/newsletter/createOrUpdateCampaign'
 
@@ -20,6 +20,31 @@ type DraftResponse = {
   postURL?: string
 }
 
+type NewsletterList = {
+  id: number
+  name: string
+  subscriberCount: number
+  type?: string | null
+}
+
+type NewsletterPostOption = {
+  id: number
+  slug?: string | null
+  status?: string | null
+  title: string
+  updatedAt?: string | null
+}
+
+type PostsResponse = {
+  message?: string
+  posts?: NewsletterPostOption[]
+}
+
+type ListsResponse = {
+  lists?: NewsletterList[]
+  message?: string
+}
+
 type Props = {
   defaultListIDs: number[]
   defaultTestEmail: string
@@ -32,9 +57,16 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
   initialPostID = '',
 }) => {
   const [postID, setPostID] = useState(initialPostID)
+  const [postSearch, setPostSearch] = useState('')
+  const [postOptions, setPostOptions] = useState<NewsletterPostOption[]>([])
+  const [isLoadingPosts, setIsLoadingPosts] = useState(true)
+  const [postLoadError, setPostLoadError] = useState('')
   const [subject, setSubject] = useState('')
   const [preheader, setPreheader] = useState('')
-  const [listIDs, setListIDs] = useState(defaultListIDs.join(','))
+  const [selectedListIDs, setSelectedListIDs] = useState(defaultListIDs)
+  const [availableLists, setAvailableLists] = useState<NewsletterList[]>([])
+  const [isLoadingLists, setIsLoadingLists] = useState(true)
+  const [listLoadError, setListLoadError] = useState('')
   const [sourceMode, setSourceMode] = useState<NewsletterSourceMode>('latestSavedDraft')
   const [testEmail, setTestEmail] = useState(defaultTestEmail)
   const [newsletterCampaignID, setNewsletterCampaignID] = useState<number | null>(null)
@@ -43,12 +75,102 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
   const [error, setError] = useState('')
   const [isCreating, setIsCreating] = useState(false)
   const [isSendingTest, setIsSendingTest] = useState(false)
-  const listCount = listIDs
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean).length
+  const listIDs = selectedListIDs.join(',')
+  const listCount = selectedListIDs.length
   const canCreateDraft = Boolean(postID.trim()) && !isCreating
   const canSendTest = Boolean(newsletterCampaignID && testEmail.trim()) && !isSendingTest
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadLists = async () => {
+      setIsLoadingLists(true)
+      setListLoadError('')
+
+      try {
+        const response = await fetch('/api/newsletter/lists')
+        const body = (await response.json()) as ListsResponse
+
+        if (!response.ok) {
+          throw new Error(body.message || 'Failed to load newsletter lists.')
+        }
+
+        if (!cancelled) {
+          setAvailableLists(body.lists || [])
+        }
+      } catch (caughtError) {
+        if (!cancelled) {
+          setListLoadError(
+            caughtError instanceof Error ? caughtError.message : 'Failed to load newsletter lists.',
+          )
+        }
+      } finally {
+        if (!cancelled) setIsLoadingLists(false)
+      }
+    }
+
+    void loadLists()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    const timeout = window.setTimeout(() => {
+      const loadPosts = async () => {
+        setIsLoadingPosts(true)
+        setPostLoadError('')
+
+        try {
+          const params = new URLSearchParams()
+          if (postSearch.trim()) params.set('q', postSearch.trim())
+
+          const response = await fetch(`/api/newsletter/posts?${params.toString()}`)
+          const body = (await response.json()) as PostsResponse
+
+          if (!response.ok) {
+            throw new Error(body.message || 'Failed to load newsletter posts.')
+          }
+
+          if (!cancelled) {
+            setPostOptions(body.posts || [])
+          }
+        } catch (caughtError) {
+          if (!cancelled) {
+            setPostLoadError(
+              caughtError instanceof Error
+                ? caughtError.message
+                : 'Failed to load newsletter posts.',
+            )
+          }
+        } finally {
+          if (!cancelled) setIsLoadingPosts(false)
+        }
+      }
+
+      void loadPosts()
+    }, 200)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+    }
+  }, [postSearch])
+
+  const toggleList = (listID: number) => {
+    setSelectedListIDs((current) =>
+      current.includes(listID)
+        ? current.filter((id) => id !== listID)
+        : [...current, listID].sort(),
+    )
+  }
+
+  const selectPost = (post: NewsletterPostOption) => {
+    setPostID(String(post.id))
+    setPostSearch(post.title)
+  }
 
   const createDraft = async () => {
     setError('')
@@ -142,7 +264,11 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
                 Source
               </legend>
               <div className="mt-4 grid gap-4 md:grid-cols-[12rem_1fr]">
-                <NewsletterField help="Payload post numeric ID" label="Portal post ID" required>
+                <NewsletterField
+                  help="Filled by selecting a post, editable as a fallback"
+                  label="Post ID"
+                  required
+                >
                   <input
                     className={inputClassName}
                     inputMode="numeric"
@@ -151,7 +277,66 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
                     value={postID}
                   />
                 </NewsletterField>
-                <NewsletterField help="Blank uses the post title" label="Subject">
+                <div>
+                  <NewsletterField
+                    help="Search recent saved posts by title or slug"
+                    label="Select post"
+                  >
+                    <input
+                      className={inputClassName}
+                      onChange={(event) => setPostSearch(event.target.value)}
+                      placeholder="Search posts"
+                      value={postSearch}
+                    />
+                  </NewsletterField>
+                  <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto border border-border bg-background/30 p-2">
+                    {isLoadingPosts ? (
+                      <p className="px-2 py-2 text-sm text-muted-foreground">Loading posts...</p>
+                    ) : null}
+                    {postLoadError ? (
+                      <p className="px-2 py-2 text-sm leading-6 text-red-400">{postLoadError}</p>
+                    ) : null}
+                    {!isLoadingPosts && !postLoadError ? (
+                      postOptions.length ? (
+                        postOptions.map((post) => {
+                          const selected = postID === String(post.id)
+
+                          return (
+                            <button
+                              aria-pressed={selected}
+                              className={
+                                selected
+                                  ? postOptionButtonActiveClassName
+                                  : postOptionButtonClassName
+                              }
+                              key={post.id}
+                              onClick={() => selectPost(post)}
+                              type="button"
+                            >
+                              <span>
+                                <span className="block text-sm font-bold normal-case tracking-normal">
+                                  {post.title}
+                                </span>
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  ID {post.id}
+                                  {post.slug ? ` / ${post.slug}` : ''}
+                                </span>
+                              </span>
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {post.status || 'draft'}
+                              </span>
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <p className="px-2 py-2 text-sm text-muted-foreground">No posts found.</p>
+                      )
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4">
+                <NewsletterField help="Blank uses the selected post title" label="Subject">
                   <input
                     className={inputClassName}
                     onChange={(event) => setSubject(event.target.value)}
@@ -203,14 +388,56 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
                 Audience
               </legend>
               <div className="mt-4 grid gap-4 md:grid-cols-[1fr_16rem]">
-                <NewsletterField help="Comma-separated allowlisted list IDs" label="listmonk lists">
-                  <input
-                    className={inputClassName}
-                    onChange={(event) => setListIDs(event.target.value)}
-                    placeholder={defaultListIDs.join(',') || '3,4'}
-                    value={listIDs}
-                  />
-                </NewsletterField>
+                <div>
+                  <p className="text-sm font-bold text-foreground">listmonk lists</p>
+                  {isLoadingLists ? (
+                    <p className="mt-3 text-sm text-muted-foreground">Loading allowed lists...</p>
+                  ) : null}
+                  {listLoadError ? (
+                    <p className="mt-3 text-sm leading-6 text-red-400">{listLoadError}</p>
+                  ) : null}
+                  {!isLoadingLists && !listLoadError ? (
+                    <div className="mt-3 grid gap-3">
+                      {availableLists.length ? (
+                        availableLists.map((list) => {
+                          const selected = selectedListIDs.includes(list.id)
+
+                          return (
+                            <button
+                              aria-pressed={selected}
+                              className={
+                                selected ? audienceButtonActiveClassName : audienceButtonClassName
+                              }
+                              key={list.id}
+                              onClick={() => toggleList(list.id)}
+                              type="button"
+                            >
+                              <span>
+                                <span className="block text-sm font-bold normal-case tracking-normal">
+                                  {list.name}
+                                </span>
+                                <span className="mt-1 block text-xs text-muted-foreground">
+                                  ID {list.id}
+                                  {list.type ? ` / ${list.type}` : ''}
+                                </span>
+                              </span>
+                              <span className="text-right font-mono text-xs text-muted-foreground">
+                                {list.subscriberCount} subscribers
+                              </span>
+                            </button>
+                          )
+                        })
+                      ) : (
+                        <p className="text-sm text-muted-foreground">
+                          No allowlisted listmonk lists are available.
+                        </p>
+                      )}
+                    </div>
+                  ) : null}
+                  <p className="mt-3 text-xs leading-5 text-muted-foreground">
+                    Only lists allowlisted in Portal configuration are available here.
+                  </p>
+                </div>
                 <div className="border border-border bg-background/40 px-4 py-3">
                   <p className="font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground">
                     Selected lists
@@ -331,6 +558,16 @@ const sourceModeButtonClassName =
   'min-h-16 rounded-sm border border-border bg-transparent p-4 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
 
 const sourceModeButtonActiveClassName = `${sourceModeButtonClassName} border-primary text-primary`
+
+const audienceButtonClassName =
+  'flex min-h-16 w-full items-center justify-between gap-4 rounded-sm border border-border bg-background/40 p-4 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+
+const audienceButtonActiveClassName = `${audienceButtonClassName} border-primary text-primary`
+
+const postOptionButtonClassName =
+  'flex min-h-14 w-full items-center justify-between gap-4 rounded-sm border border-transparent p-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+
+const postOptionButtonActiveClassName = `${postOptionButtonClassName} border-primary text-primary`
 
 const NewsletterField: React.FC<{
   children: React.ReactNode
