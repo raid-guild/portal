@@ -70,7 +70,7 @@ export const renderPortalPostEmail = ({
   )
   chunks.push(renderNodes(nodes, context))
   chunks.push(
-    `<p style="margin:32px 0 0;"><a href="${escapeAttribute(postURL)}" style="display:inline-block;background:#d7a846;color:#16110d;padding:13px 18px;text-decoration:none;font-size:13px;font-weight:700;">Open in Portal</a></p>`,
+    `<p style="margin:32px 0 0;"><a href="${escapeAttribute(listmonkTrackedURL(postURL))}" style="display:inline-block;background:#d7a846;color:#16110d;padding:13px 18px;text-decoration:none;font-size:13px;font-weight:700;">Open in Portal</a></p>`,
   )
 
   const html = chunks.filter(Boolean).join('\n')
@@ -138,7 +138,7 @@ const renderNode = (node: RichTextNode, context: RenderContext): string => {
       const children = renderNodes(node.children, context).trim() || escapeHTML(url)
       if (!url) return children
 
-      return `<a href="${escapeAttribute(url)}" style="color:#d7a846;text-decoration:underline;">${children}</a>`
+      return `<a href="${escapeAttribute(listmonkTrackedURL(url))}" style="color:#d7a846;text-decoration:underline;">${children}</a>`
     }
     case 'upload':
       return renderMedia(node.value, context)
@@ -262,6 +262,19 @@ const absoluteURL = (value: string | undefined, baseURL: string): string => {
     return new URL(value, baseURL).toString()
   } catch {
     return ''
+  }
+}
+
+const listmonkTrackedURL = (value: string): string => {
+  try {
+    const url = new URL(value)
+
+    if (!['http:', 'https:'].includes(url.protocol)) return value
+    if (value.endsWith('@TrackLink')) return value
+
+    return `${value}@TrackLink`
+  } catch {
+    return value
   }
 }
 
