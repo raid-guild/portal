@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { consumeSignupAnalyticsContext, trackPortalEvent } from '@/utilities/analytics'
 
 type ProfileWizardFormProps = {
   accountEmail?: string | null
@@ -48,10 +49,7 @@ const handleBelongsToAccount = async (handle: string, accountUserID: number | st
 }
 
 const validationErrorFrom = (json: any) =>
-  json?.data?.errors?.[0] ||
-  json?.errors?.[0]?.data?.errors?.[0] ||
-  json?.errors?.[0] ||
-  null
+  json?.data?.errors?.[0] || json?.errors?.[0]?.data?.errors?.[0] || json?.errors?.[0] || null
 
 export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   accountEmail,
@@ -69,8 +67,20 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   const [step, setStep] = useState(0)
   const [success, setSuccess] = useState<string | null>(null)
   const isSubmittingRef = useRef(false)
+  const hasTrackedProfileCompletion = useRef(Boolean(profile))
   const initialRoleIDs = useMemo(() => selectedRoleIDs(profile), [profile])
   const initialSkillIDs = useMemo(() => selectedSkillIDs(profile), [profile])
+
+  const trackProfileCompletion = () => {
+    if (hasTrackedProfileCompletion.current) return
+
+    hasTrackedProfileCompletion.current = true
+    const signupAnalyticsContext = consumeSignupAnalyticsContext()
+    trackPortalEvent('Profile Completed', {
+      inquiry_type: signupAnalyticsContext?.inquiryType || 'not_applicable',
+      signup_context: signupAnalyticsContext?.signupContext || 'unknown',
+    })
+  }
 
   const claimProfile = async (profileID: number | string, token?: string | null) => {
     setClaimError(null)
@@ -254,11 +264,8 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
             .toLowerCase()
             .includes('handle')
 
-        if (
-          !profile &&
-          isHandleError &&
-          (await handleBelongsToAccount(handle, accountUserID))
-        ) {
+        if (!profile && isHandleError && (await handleBelongsToAccount(handle, accountUserID))) {
+          trackProfileCompletion()
           setSuccess('Profile saved.')
           return
         }
@@ -266,6 +273,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
         throw new Error(message)
       }
 
+      trackProfileCompletion()
       setSuccess('Profile saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save profile.')
@@ -414,11 +422,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
                 Select the capabilities you want to be found for in the member directory.
               </p>
             </div>
-            <TaxonomyPicker
-              defaultSelected={initialSkillIDs}
-              items={skills}
-              name="profileSkills"
-            />
+            <TaxonomyPicker defaultSelected={initialSkillIDs} items={skills} name="profileSkills" />
           </section>
 
           <section className={step === 3 ? 'space-y-5' : 'hidden'}>

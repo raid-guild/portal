@@ -1,12 +1,13 @@
 'use client'
 
 import { ArrowRight } from 'lucide-react'
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { trackPortalEvent } from '@/utilities/analytics'
 
 const sponsorTypes = [
   ['project-opportunity', 'Project opportunity'],
@@ -43,6 +44,7 @@ export const SponsorInquiryForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const hasTrackedStart = useRef(false)
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -76,10 +78,18 @@ export const SponsorInquiryForm: React.FC = () => {
     }
 
     if (!payload.name || !payload.email || !payload.organization || !payload.opportunity) {
+      trackPortalEvent('Inquiry Failed', {
+        error_stage: 'validation',
+        form_variant: 'legacy_sponsor',
+        inquiry_type: 'sponsor',
+        status_code: 'not_applicable',
+      })
       setError('Please fill in the required fields.')
       setIsLoading(false)
       return
     }
+
+    let hasTrackedFailure = false
 
     try {
       const response = await fetch('/api/sponsorInquiries', {
@@ -92,13 +102,35 @@ export const SponsorInquiryForm: React.FC = () => {
       })
 
       if (!response.ok) {
+        hasTrackedFailure = true
+        trackPortalEvent('Inquiry Failed', {
+          error_stage: 'api',
+          form_variant: 'legacy_sponsor',
+          inquiry_type: 'sponsor',
+          status_code: String(response.status),
+        })
         const json = await response.json().catch(() => null)
         throw new Error(json?.errors?.[0]?.message || json?.message || 'Unable to submit inquiry.')
       }
 
+      trackPortalEvent('Inquiry Submitted', {
+        budget_range: payload.budgetRange,
+        form_variant: 'legacy_sponsor',
+        has_link: linkURL ? 'yes' : 'no',
+        inquiry_type: 'sponsor',
+        timeline: payload.timeline,
+      })
       form.reset()
       setIsSubmitted(true)
     } catch (err) {
+      if (!hasTrackedFailure) {
+        trackPortalEvent('Inquiry Failed', {
+          error_stage: 'network',
+          form_variant: 'legacy_sponsor',
+          inquiry_type: 'sponsor',
+          status_code: 'not_applicable',
+        })
+      }
       setError(err instanceof Error ? err.message : 'Unable to submit inquiry.')
     } finally {
       setIsLoading(false)
@@ -121,7 +153,19 @@ export const SponsorInquiryForm: React.FC = () => {
   }
 
   return (
-    <form className="portal-panel" onSubmit={handleSubmit}>
+    <form
+      className="portal-panel"
+      onFocusCapture={() => {
+        if (hasTrackedStart.current) return
+
+        hasTrackedStart.current = true
+        trackPortalEvent('Inquiry Started', {
+          form_variant: 'legacy_sponsor',
+          inquiry_type: 'sponsor',
+        })
+      }}
+      onSubmit={handleSubmit}
+    >
       <div className="grid gap-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>

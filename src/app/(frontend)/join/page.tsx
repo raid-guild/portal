@@ -3,12 +3,15 @@ import Link from 'next/link'
 import React from 'react'
 
 import { SignupForm } from '../_components/SignupForm'
+import { TrackedInquiryLink } from '../_components/TrackedInquiryLink'
+import type { InquiryAnalyticsType } from '@/utilities/analytics'
 import { getJoinPageCopy } from '@/utilities/pageCopy'
 
 type Args = {
   searchParams?: Promise<{
     email?: string
     inquiry?: string
+    inquiryType?: string
   }>
 }
 
@@ -17,6 +20,7 @@ export default async function JoinPage({ searchParams }: Args) {
   const copy = await getJoinPageCopy()
   const initialEmail = normalizeEmail(params?.email)
   const hasInquiryContext = Boolean(params?.inquiry)
+  const inquiryType = normalizeInquiryType(params?.inquiryType)
 
   return (
     <main className="container pb-24 pt-12">
@@ -47,7 +51,11 @@ export default async function JoinPage({ searchParams }: Args) {
               profile and keep follow-up tied to your work.
             </div>
           ) : null}
-          <SignupForm initialEmail={initialEmail} />
+          <SignupForm
+            initialEmail={initialEmail}
+            inquiryType={inquiryType}
+            signupContext={hasInquiryContext ? 'inquiry' : 'direct'}
+          />
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link
@@ -66,16 +74,20 @@ export default async function JoinPage({ searchParams }: Args) {
         {copy.funnelHeading ? <h2 className="portal-heading mt-4">{copy.funnelHeading}</h2> : null}
         <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
           {copy.funnelLinks?.map((link) => (
-            <Link
+            <TrackedInquiryLink
               className="portal-panel block hover:border-primary"
               href={link.href}
+              inquiryType={
+                normalizeInquiryType(link.href.split('/').filter(Boolean).at(-1)) || 'general'
+              }
               key={link.href}
+              placement="join_funnel"
             >
               <span className="font-mono text-sm font-bold uppercase">{link.label}</span>
               <span className="mt-3 block text-sm leading-6 text-muted-foreground">
                 {link.description}
               </span>
-            </Link>
+            </TrackedInquiryLink>
           ))}
         </div>
       </section>
@@ -97,3 +109,16 @@ const normalizeEmail = (email: string | undefined) => {
 
   return normalized && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : undefined
 }
+
+const inquiryTypes = new Set<InquiryAnalyticsType>([
+  'client',
+  'general',
+  'grant',
+  'opportunity',
+  'sponsor',
+])
+
+const normalizeInquiryType = (value: string | undefined): InquiryAnalyticsType | undefined =>
+  value && inquiryTypes.has(value as InquiryAnalyticsType)
+    ? (value as InquiryAnalyticsType)
+    : undefined
