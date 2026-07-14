@@ -3245,6 +3245,7 @@ async function verifyDailyVibeCheck(page: Page) {
 
   await page.getByRole('button', { name: 'Vibe check' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Poopin/i })).toBeVisible()
   await page.getByRole('button', { name: /Learning/i }).click()
   await page.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
   await page.getByRole('button', { name: /Check in \+5/i }).click()
