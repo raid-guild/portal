@@ -8,6 +8,7 @@ export const dailyEngagementVibes = [
   'vibing',
   'blocked',
   'resting',
+  'poopin',
 ] as const
 
 export type DailyEngagementVibe = (typeof dailyEngagementVibes)[number]
@@ -20,6 +21,7 @@ export const dailyEngagementVibeLabels: Record<DailyEngagementVibe, string> = {
   resting: 'Resting',
   ripping: 'Ripping',
   vibing: 'Vibing',
+  poopin: 'Poopin',
 }
 
 export const dailyEngagementVibeEmojis: Record<DailyEngagementVibe, string> = {
@@ -30,6 +32,7 @@ export const dailyEngagementVibeEmojis: Record<DailyEngagementVibe, string> = {
   resting: '💤',
   ripping: '🔥',
   vibing: '🌊',
+  poopin: '💩',
 }
 
 export const normalizeEngagementDate = (date = new Date()): string => {
