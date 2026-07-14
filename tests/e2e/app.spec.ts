@@ -15,6 +15,51 @@ import {
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
 
+type CapturedPlausibleEvent = {
+  name: string
+  props?: Record<string, boolean | number | string>
+}
+
+async function installPlausibleCapture(page: Page) {
+  await page.route('**/js/pa-*.js', async (route) => {
+    await route.fulfill({
+      body: '',
+      contentType: 'application/javascript',
+      status: 200,
+    })
+  })
+  await page.addInitScript(() => {
+    const storageKey = 'playwright_plausible_events'
+    let capturedEvents: CapturedPlausibleEvent[] = []
+
+    try {
+      capturedEvents = JSON.parse(window.sessionStorage.getItem(storageKey) || '[]')
+    } catch {
+      capturedEvents = []
+    }
+
+    const plausible = (
+      name: string,
+      options?: { props?: Record<string, boolean | number | string> },
+    ) => {
+      capturedEvents.push({ name, props: options?.props })
+      window.sessionStorage.setItem(storageKey, JSON.stringify(capturedEvents))
+    }
+
+    Object.assign(plausible, { init: () => undefined })
+    window.plausible = plausible
+  })
+}
+
+async function capturedPlausibleEvents(page: Page, name?: string) {
+  const events = await page.evaluate(() => {
+    const value = window.sessionStorage.getItem('playwright_plausible_events') || '[]'
+    return JSON.parse(value) as CapturedPlausibleEvent[]
+  })
+
+  return name ? events.filter((event) => event.name === name) : events
+}
+
 async function maybeFill(page: Page, label: RegExp, value: string) {
   const field = page.getByLabel(label)
 
@@ -2130,6 +2175,7 @@ async function verifyAgentRegistrationFlow(page: Page) {
 }
 
 async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
+  await installPlausibleCapture(publicPage)
   await publicPage.goto('/sponsor')
   await expect(
     publicPage.getByRole('heading', { name: 'Bring an opportunity to the cohort.' }),
@@ -2155,6 +2201,30 @@ async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
   await publicPage.getByRole('button', { name: /submit sponsor inquiry/i }).click()
   await expect(publicPage.getByRole('heading', { name: 'Sponsor inquiry received' })).toBeVisible()
 
+  const startEvents = await capturedPlausibleEvents(publicPage, 'Inquiry Started')
+  expect(startEvents).toEqual([
+    {
+      name: 'Inquiry Started',
+      props: {
+        form_variant: 'legacy_sponsor',
+        inquiry_type: 'sponsor',
+      },
+    },
+  ])
+  const submissionEvents = await capturedPlausibleEvents(publicPage, 'Inquiry Submitted')
+  expect(submissionEvents).toEqual([
+    {
+      name: 'Inquiry Submitted',
+      props: {
+        budget_range: '1k-5k',
+        form_variant: 'legacy_sponsor',
+        has_link: 'yes',
+        inquiry_type: 'sponsor',
+        timeline: 'this-month',
+      },
+    },
+  ])
+
   await adminPage.goto('/admin/collections/sponsorInquiries')
   await expect(adminPage.getByText('OpenClaw Labs')).toBeVisible({
     timeout: 30000,
@@ -2166,8 +2236,11 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   const suffix = Date.now()
   const email = `inquiry-${suffix}@example.com`
 
+  await installPlausibleCapture(publicPage)
   await publicPage.goto('/join')
-  await expect(publicPage.getByRole('link', { name: 'Not sure yet?' })).toBeVisible()
+  const generalInquiryLink = publicPage.getByRole('link', { name: 'Not sure yet?' })
+  await expect(generalInquiryLink).toBeVisible()
+  await generalInquiryLink.click()
 
   await publicPage.goto('/inquire/general?utm_source=e2e&utm_medium=test&utm_campaign=funnel')
   await expect(publicPage.getByRole('heading', { name: 'Talk to the guild.' })).toBeVisible()
@@ -2181,6 +2254,24 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   )
   await fillFirst(publicPage.getByLabel(/link label/i), 'Context')
   await fillFirst(publicPage.getByLabel(/relevant link/i), 'https://example.com/context')
+
+  let shouldFailInquiry = true
+  await publicPage.route('**/api/inquiries', async (route) => {
+    if (shouldFailInquiry) {
+      shouldFailInquiry = false
+      await route.fulfill({
+        body: JSON.stringify({ message: 'Temporary test failure.' }),
+        contentType: 'application/json',
+        status: 503,
+      })
+      return
+    }
+
+    await route.continue()
+  })
+
+  await publicPage.getByRole('button', { name: /start inquiry/i }).click()
+  await expect(publicPage.getByText('Temporary test failure.')).toBeVisible()
   await publicPage.getByRole('button', { name: /start inquiry/i }).click()
 
   await expect(
@@ -2191,23 +2282,87 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
     'href',
     new RegExp(`/join\\?email=${encodeURIComponent(email)}`),
   )
+  await expect(createAccountLink).toHaveAttribute('href', /inquiryType=general/)
+
+  const inquiryEvents = await capturedPlausibleEvents(publicPage)
+  expect(inquiryEvents).toContainEqual({
+    name: 'Inquiry CTA Clicked',
+    props: {
+      form_variant: 'typed',
+      inquiry_type: 'general',
+      placement: 'join_funnel',
+    },
+  })
+  expect(inquiryEvents.filter((event) => event.name === 'Inquiry Started')).toEqual([
+    {
+      name: 'Inquiry Started',
+      props: {
+        form_variant: 'typed',
+        inquiry_type: 'general',
+      },
+    },
+  ])
+  expect(inquiryEvents.filter((event) => event.name === 'Inquiry Failed')).toEqual([
+    {
+      name: 'Inquiry Failed',
+      props: {
+        error_stage: 'api',
+        form_variant: 'typed',
+        inquiry_type: 'general',
+        status_code: '503',
+      },
+    },
+  ])
+  expect(inquiryEvents.filter((event) => event.name === 'Inquiry Submitted')).toEqual([
+    {
+      name: 'Inquiry Submitted',
+      props: {
+        budget_range: 'not_applicable',
+        form_variant: 'typed',
+        has_link: 'yes',
+        inquiry_type: 'general',
+        timeline: 'not_applicable',
+      },
+    },
+  ])
+  expect(JSON.stringify(inquiryEvents)).not.toContain(email)
+  expect(JSON.stringify(inquiryEvents)).not.toContain('Signal Workshop')
+  expect(JSON.stringify(inquiryEvents)).not.toContain('https://example.com/context')
+
+  await createAccountLink.click()
+  await expect(publicPage).toHaveURL(/\/join\?.*inquiryType=general/)
+  await fillFirst(publicPage.getByLabel(/^display name$/i), 'Inquiry Visitor')
+  await fillFirst(publicPage.getByLabel(/^password$/i), 'password123')
+  await publicPage.waitForTimeout(3100)
+  await publicPage.getByRole('button', { name: /create account/i }).click()
+  await expect(publicPage).toHaveURL(/\/dashboard\/?$/)
+
+  const completedEvents = await capturedPlausibleEvents(publicPage)
+  expect(completedEvents).toContainEqual({
+    name: 'Inquiry Account Clicked',
+    props: {
+      form_variant: 'typed',
+      inquiry_type: 'general',
+    },
+  })
+  expect(completedEvents).toContainEqual({
+    name: 'Account Created',
+    props: {
+      inquiry_type: 'general',
+      signup_context: 'inquiry',
+    },
+  })
 
   await adminPage.goto('/admin/collections/inquiries')
   await expect(adminPage.getByText('Signal Workshop')).toBeVisible({
     timeout: 30000,
   })
 
-  const createResponse = await publicPage.request.post('/api/users', {
-    data: {
-      email,
-      name: 'Inquiry Visitor',
-      password: 'password123',
-      signupElapsedMs: 4000,
-    },
-  })
-  expect(createResponse.ok()).toBeTruthy()
-  const createdUser = await createResponse.json()
-  const createdUserID = createdUser.doc?.id || createdUser.id
+  const createdUserResponse = await publicPage.request.get('/api/users/me')
+  expect(createdUserResponse.ok()).toBeTruthy()
+  const createdUser = await createdUserResponse.json()
+  const createdUserID = createdUser.user?.id
+  expect(createdUserID).toBeTruthy()
 
   const inquiryResponse = await adminPage.request.get('/api/inquiries', {
     params: {
@@ -2378,6 +2533,7 @@ async function verifyContributorAdminCreateAccess(page: Page) {
 async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   const profileHandle = `playwright-admin-${Date.now()}`
 
+  await installPlausibleCapture(page)
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
   await fillFirst(page.getByLabel(/^display name$/i), 'Playwright Admin')
@@ -2399,6 +2555,15 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await fillFirst(page.getByLabel(/^x$/i), 'playwright')
   await page.getByRole('button', { name: /save profile/i }).click()
   await expect(page.getByText('Profile saved.')).toBeVisible()
+  expect(await capturedPlausibleEvents(page, 'Profile Completed')).toEqual([
+    {
+      name: 'Profile Completed',
+      props: {
+        inquiry_type: 'not_applicable',
+        signup_context: 'unknown',
+      },
+    },
+  ])
 
   await page.goto('/members')
   await expect(page.getByRole('link', { name: 'Playwright Admin' })).toBeVisible()
@@ -3039,7 +3204,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Leaderboard')).toBeVisible()
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
-  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(3)
+  await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(4)
 
   const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
     maxRedirects: 0,
@@ -3080,6 +3245,7 @@ async function verifyDailyVibeCheck(page: Page) {
 
   await page.getByRole('button', { name: 'Vibe check' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('button', { name: /Poopin/i })).toBeVisible()
   await page.getByRole('button', { name: /Learning/i }).click()
   await page.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
   await page.getByRole('button', { name: /Check in \+5/i }).click()
