@@ -1,4 +1,4 @@
-import { MigrateDownArgs, MigrateUpArgs, sql } from '@payloadcms/db-postgres'
+import { MigrateUpArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
@@ -6,6 +6,6 @@ export async function up({ db }: MigrateUpArgs): Promise<void> {
   `)
 }
 
-export async function down({}: MigrateDownArgs): Promise<void> {
+export async function down(): Promise<void> {
   // PostgreSQL enum values cannot be safely removed without rewriting dependent rows.
 }

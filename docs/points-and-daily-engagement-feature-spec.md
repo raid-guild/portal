@@ -131,8 +131,8 @@ Choose today's vibe:
 🔎 Learning
 🌊 Vibing
 🧱 Blocked
-💩 Poopin
 💤 Resting
+💩 Poopin
 
 Optional comment
 Submit
