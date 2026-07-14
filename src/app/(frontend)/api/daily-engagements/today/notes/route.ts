@@ -5,23 +5,11 @@ import { getPayload } from 'payload'
 import { hasRole } from '@/access/roles'
 import type { DailyEngagement, Media } from '@/payload-types'
 import {
+  type VibeNote,
   dailyEngagementVibeEmojis,
   dailyEngagementVibeLabels,
   normalizeEngagementDate,
 } from '@/utilities/dailyEngagement'
-
-type VibeNote = {
-  avatarURL?: string
-  checkedInAt: string
-  displayName: string
-  handle?: string
-  id: number
-  isCurrentUser: boolean
-  note: string
-  vibe: string
-  vibeEmoji: string
-  vibeLabel: string
-}
 
 export async function GET() {
   const payload = await getPayload({ config: configPromise })
@@ -85,12 +73,9 @@ export async function GET() {
   }
 
   const [todayCheckIns, noteResult] = await Promise.all([
-    payload.find({
+    payload.count({
       collection: 'dailyEngagements',
-      depth: 0,
-      limit: 1000,
       overrideAccess: true,
-      pagination: false,
       where: {
         and: [
           {
@@ -141,6 +126,11 @@ export async function GET() {
             },
           },
           {
+            commentShareWithMembers: {
+              equals: true,
+            },
+          },
+          {
             comment: {
               exists: true,
             },
@@ -158,7 +148,7 @@ export async function GET() {
   })
 
   return Response.json({
-    checkedInCount: todayCheckIns.docs.length,
+    checkedInCount: todayCheckIns.totalDocs,
     entries,
     generatedAt: new Date().toISOString(),
     locked: false,

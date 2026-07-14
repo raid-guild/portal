@@ -80,9 +80,20 @@ export const DailyEngagements: CollectionConfig = {
       name: 'comment',
       type: 'textarea',
       admin: {
-        description: 'Optional member note. Review status controls whether this can be displayed.',
+        description:
+          'Optional member note. Member sharing and review status control whether this can be displayed.',
       },
       maxLength: 1000,
+    },
+    {
+      name: 'commentShareWithMembers',
+      type: 'checkbox',
+      admin: {
+        description:
+          'Member explicitly agreed that this note may be shown to other checked-in members.',
+        position: 'sidebar',
+      },
+      defaultValue: false,
     },
     {
       name: 'commentStatus',
@@ -262,7 +273,12 @@ export const DailyEngagements: CollectionConfig = {
             checkedIn: true,
             commentApprovedAt: undefined,
             commentApprovedBy: undefined,
-            commentStatus: data.comment ? 'approved' : 'none',
+            commentShareWithMembers: Boolean(data.comment && data.commentShareWithMembers),
+            commentStatus: data.comment
+              ? data.commentShareWithMembers
+                ? 'approved'
+                : 'pending_review'
+              : 'none',
             engagementDate,
             pointEvent: undefined,
             profile: profileID || undefined,
@@ -277,7 +293,10 @@ export const DailyEngagements: CollectionConfig = {
         return {
           ...data,
           checkedIn: true,
-          commentStatus: data.comment ? data.commentStatus || 'approved' : 'none',
+          commentShareWithMembers: Boolean(data.comment && data.commentShareWithMembers),
+          commentStatus: data.comment
+            ? data.commentStatus || (data.commentShareWithMembers ? 'approved' : 'pending_review')
+            : 'none',
           engagementDate,
           profile: profileID || undefined,
           status: data.status || 'valid',
@@ -300,10 +319,7 @@ const getRelationshipID = (value: unknown): number | string | undefined => {
   return undefined
 }
 
-const getProfileIDForUser = async (
-  payload: Payload,
-  userID: number | string,
-) => {
+const getProfileIDForUser = async (payload: Payload, userID: number | string) => {
   const result = await payload.find({
     collection: 'profiles',
     depth: 0,

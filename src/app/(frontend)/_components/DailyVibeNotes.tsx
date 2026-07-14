@@ -3,19 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
-
-type VibeNote = {
-  avatarURL?: string
-  checkedInAt: string
-  displayName: string
-  handle?: string
-  id: number
-  isCurrentUser: boolean
-  note: string
-  vibe: string
-  vibeEmoji: string
-  vibeLabel: string
-}
+import type { VibeNote } from '@/utilities/dailyEngagement'
 
 type VibeNotesResponse = {
   checkedInCount?: number

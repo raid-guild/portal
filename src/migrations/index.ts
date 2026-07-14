@@ -44,6 +44,7 @@ import * as migration_20260625_120000_wiki_topics_source_sessions from './202606
 import * as migration_20260706_171000_newsletter_campaigns from './20260706_171000_newsletter_campaigns'
 import * as migration_20260706_172000_module_categories from './20260706_172000_module_categories'
 import * as migration_20260706_184500_newsletter_source_mode from './20260706_184500_newsletter_source_mode'
+import * as migration_20260714_213900_daily_engagement_member_note_consent from './20260714_213900_daily_engagement_member_note_consent'
 
 export const migrations = [
   {
@@ -275,5 +276,10 @@ export const migrations = [
     up: migration_20260706_184500_newsletter_source_mode.up,
     down: migration_20260706_184500_newsletter_source_mode.down,
     name: '20260706_184500_newsletter_source_mode',
+  },
+  {
+    up: migration_20260714_213900_daily_engagement_member_note_consent.up,
+    down: migration_20260714_213900_daily_engagement_member_note_consent.down,
+    name: '20260714_213900_daily_engagement_member_note_consent',
   },
 ]

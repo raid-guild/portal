@@ -3073,7 +3073,79 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   )
 }
 
-async function verifyDailyVibeCheck(page: Page) {
+async function verifyDailyVibeCheck(page: Page, browser: Browser) {
+  const anonymousContext = await browser.newContext()
+  try {
+    const anonymousPage = await anonymousContext.newPage()
+    const anonymousResponse = await anonymousPage.request.get('/api/daily-engagements/today/notes')
+    expect(anonymousResponse.status()).toBe(401)
+  } finally {
+    await anonymousContext.close()
+  }
+
+  const suffix = Date.now()
+  const today = new Date().toISOString()
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
+  const password = `DailyNotes-${suffix}!`
+
+  const unverifiedEmail = `daily-notes-unverified-${suffix}@example.com`
+  const unverifiedResponse = await page.request.post('/api/users', {
+    data: {
+      email: unverifiedEmail,
+      name: 'Daily Notes Unverified',
+      password,
+      roles: [],
+    },
+  })
+  expect(unverifiedResponse.status()).toBe(201)
+
+  const unverifiedContext = await browser.newContext()
+  try {
+    const unverifiedPage = await unverifiedContext.newPage()
+    const loginResponse = await unverifiedPage.request.post('/api/users/login', {
+      data: {
+        email: unverifiedEmail,
+        password,
+      },
+    })
+    expect(loginResponse.ok()).toBeTruthy()
+    const notesResponse = await unverifiedPage.request.get('/api/daily-engagements/today/notes')
+    expect(notesResponse.status()).toBe(403)
+  } finally {
+    await unverifiedContext.close()
+  }
+
+  const lockedEmail = `daily-notes-locked-${suffix}@example.com`
+  const lockedUserResponse = await page.request.post('/api/users', {
+    data: {
+      email: lockedEmail,
+      name: 'Daily Notes Locked',
+      password,
+      roles: ['member'],
+    },
+  })
+  expect(lockedUserResponse.status()).toBe(201)
+
+  const lockedContext = await browser.newContext()
+  try {
+    const lockedPage = await lockedContext.newPage()
+    const loginResponse = await lockedPage.request.post('/api/users/login', {
+      data: {
+        email: lockedEmail,
+        password,
+      },
+    })
+    expect(loginResponse.ok()).toBeTruthy()
+    const notesResponse = await lockedPage.request.get('/api/daily-engagements/today/notes')
+    expect(notesResponse.status()).toBe(403)
+    const notesBody = await notesResponse.json()
+    expect(notesBody).toMatchObject({
+      locked: true,
+    })
+  } finally {
+    await lockedContext.close()
+  }
+
   await page.goto('/dashboard')
   await expect(page.getByRole('heading', { name: 'Guild Points' })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
@@ -3082,9 +3154,11 @@ async function verifyDailyVibeCheck(page: Page) {
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.getByRole('button', { name: /Learning/i }).click()
   await page.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
+  await page.getByLabel(/Show my note to other checked-in members today/i).check()
   await page.getByRole('button', { name: /Check in \+5/i }).click()
 
   await expect(page.getByRole('button', { name: 'Vibe checked' })).toBeVisible()
+  await expect(page.getByText('E2E vibe note for point award.')).toBeVisible()
   await expect(page.getByText('Current streak: 1 day')).toBeVisible()
   await expect(page.getByText('+5')).toBeVisible()
   await expect(page.getByText('Daily vibe check')).toBeVisible()
@@ -3118,6 +3192,176 @@ async function verifyDailyVibeCheck(page: Page) {
     source: 'system',
     status: 'valid',
   })
+
+  const checkedInMemberEmail = `daily-notes-checked-${suffix}@example.com`
+  const checkedInMemberResponse = await page.request.post('/api/users', {
+    data: {
+      email: checkedInMemberEmail,
+      name: 'Daily Notes Checked',
+      password,
+      roles: ['member'],
+    },
+  })
+  expect(checkedInMemberResponse.status()).toBe(201)
+  const checkedInMember = await checkedInMemberResponse.json()
+  const checkedInMemberID = checkedInMember.doc?.id || checkedInMember.id
+
+  const noteVariants = [
+    {
+      comment: `Visible shared note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'approved',
+      engagementDate: today,
+      name: 'Visible Member',
+      profileVisibility: 'authenticated',
+      status: 'valid',
+    },
+    {
+      comment: `Private shared note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'approved',
+      engagementDate: today,
+      name: 'Private Note Member',
+      profileVisibility: 'private',
+      status: 'valid',
+    },
+    {
+      comment: `Hidden note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'hidden',
+      engagementDate: today,
+      name: 'Hidden Note Member',
+      profileVisibility: 'authenticated',
+      status: 'valid',
+    },
+    {
+      comment: `Rejected note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'rejected',
+      engagementDate: today,
+      name: 'Rejected Note Member',
+      profileVisibility: 'authenticated',
+      status: 'valid',
+    },
+    {
+      comment: `No consent note ${suffix}`,
+      commentShareWithMembers: false,
+      commentStatus: 'approved',
+      engagementDate: today,
+      name: 'No Consent Member',
+      profileVisibility: 'authenticated',
+      status: 'valid',
+    },
+    {
+      comment: `Old note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'approved',
+      engagementDate: yesterday,
+      name: 'Old Note Member',
+      profileVisibility: 'authenticated',
+      status: 'valid',
+    },
+    {
+      comment: `Void note ${suffix}`,
+      commentShareWithMembers: true,
+      commentStatus: 'approved',
+      engagementDate: today,
+      name: 'Void Note Member',
+      profileVisibility: 'authenticated',
+      status: 'void',
+    },
+  ] as const
+
+  for (const [index, variant] of noteVariants.entries()) {
+    const userResponse = await page.request.post('/api/users', {
+      data: {
+        email: `daily-notes-source-${index}-${suffix}@example.com`,
+        name: variant.name,
+        password,
+        roles: ['member'],
+      },
+    })
+    expect(userResponse.status()).toBe(201)
+    const userBody = await userResponse.json()
+    const userID = userBody.doc?.id || userBody.id
+
+    const profileResponse = await page.request.post('/api/profiles', {
+      data: {
+        displayName: variant.name,
+        handle: `daily-notes-${index}-${suffix}`,
+        status: 'active',
+        user: userID,
+        visibility: variant.profileVisibility,
+      },
+    })
+    expect(profileResponse.status()).toBe(201)
+    const profileBody = await profileResponse.json()
+    const profileID = profileBody.doc?.id || profileBody.id
+
+    const engagementResponse = await page.request.post('/api/dailyEngagements', {
+      data: {
+        checkedIn: true,
+        comment: variant.comment,
+        commentShareWithMembers: variant.commentShareWithMembers,
+        commentStatus: variant.commentStatus,
+        engagementDate: variant.engagementDate,
+        profile: profileID,
+        status: variant.status,
+        user: userID,
+        vibe: 'raiding',
+      },
+    })
+    expect(engagementResponse.status()).toBe(201)
+  }
+
+  const checkedInContext = await browser.newContext()
+  try {
+    const checkedInPage = await checkedInContext.newPage()
+    const loginResponse = await checkedInPage.request.post('/api/users/login', {
+      data: {
+        email: checkedInMemberEmail,
+        password,
+      },
+    })
+    expect(loginResponse.ok()).toBeTruthy()
+
+    const checkInResponse = await checkedInPage.request.post('/api/daily-engagements/check-in', {
+      data: {
+        comment: 'Checked-in viewer note without sharing.',
+        vibe: 'vibing',
+      },
+    })
+    expect(checkInResponse.ok()).toBeTruthy()
+    const checkInBody = await checkInResponse.json()
+    expect(checkInBody.dailyEngagement).toMatchObject({
+      commentShareWithMembers: false,
+      commentStatus: 'pending_review',
+    })
+
+    const notesResponse = await checkedInPage.request.get('/api/daily-engagements/today/notes')
+    expect(notesResponse.ok()).toBeTruthy()
+    const notesBody = await notesResponse.json()
+    const notes = notesBody.entries as Array<{ displayName: string; handle?: string; note: string }>
+    const noteTexts = notes.map((note) => note.note)
+
+    expect(noteTexts).toContain('E2E vibe note for point award.')
+    expect(noteTexts).toContain(`Visible shared note ${suffix}`)
+    expect(noteTexts).toContain(`Private shared note ${suffix}`)
+    expect(noteTexts).not.toContain(`Hidden note ${suffix}`)
+    expect(noteTexts).not.toContain(`Rejected note ${suffix}`)
+    expect(noteTexts).not.toContain(`No consent note ${suffix}`)
+    expect(noteTexts).not.toContain(`Old note ${suffix}`)
+    expect(noteTexts).not.toContain(`Void note ${suffix}`)
+    expect(noteTexts).not.toContain('Checked-in viewer note without sharing.')
+
+    const privateNote = notes.find((note) => note.note === `Private shared note ${suffix}`)
+    expect(privateNote).toMatchObject({
+      displayName: 'Member',
+    })
+    expect(privateNote?.handle).toBeUndefined()
+  } finally {
+    await checkedInContext.close()
+  }
 }
 
 async function verifyInboxAndNotificationPreferences(page: Page) {
@@ -3684,7 +3928,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await createFirstAdmin(page)
   await seedDatabase(page)
   await verifyDashboardBrief(page)
-  await verifyDailyVibeCheck(page)
+  await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)
   await verifyFeedbackWidget(page)
   await createProfileAndVerifyContributorCreateLinks(page)
