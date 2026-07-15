@@ -1290,7 +1290,7 @@ export interface DailyEngagement {
    * Normalized UTC day for once-per-day check-ins.
    */
   engagementDate: string;
-  vibe: 'raiding' | 'ripping' | 'meeting' | 'learning' | 'vibing' | 'blocked' | 'resting';
+  vibe: 'raiding' | 'ripping' | 'meeting' | 'learning' | 'vibing' | 'blocked' | 'resting' | 'poopin';
   checkedIn: boolean;
   /**
    * Optional member note. Member sharing and review status control whether this can be displayed.

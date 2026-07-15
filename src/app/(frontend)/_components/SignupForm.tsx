@@ -7,6 +7,8 @@ import React, { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import type { InquiryAnalyticsType } from '@/utilities/analytics'
+import { rememberSignupAnalyticsContext, trackPortalEvent } from '@/utilities/analytics'
 
 type SignupFieldErrors = {
   email?: string
@@ -48,10 +50,12 @@ const formatSignupError = (message: string): SignupFieldErrors => {
   }
 }
 
-export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> = ({
-  initialEmail,
-  nextPath,
-}) => {
+export const SignupForm: React.FC<{
+  initialEmail?: string
+  inquiryType?: InquiryAnalyticsType
+  nextPath?: string
+  signupContext?: 'direct' | 'inquiry'
+}> = ({ initialEmail, inquiryType, nextPath, signupContext = 'direct' }) => {
   const router = useRouter()
   const signupStartedAt = useRef(
     typeof performance !== 'undefined' ? performance.now() : Date.now(),
@@ -115,6 +119,12 @@ export const SignupForm: React.FC<{ initialEmail?: string; nextPath?: string }> 
         )
         return
       }
+
+      trackPortalEvent('Account Created', {
+        inquiry_type: inquiryType || 'not_applicable',
+        signup_context: signupContext,
+      })
+      rememberSignupAnalyticsContext({ inquiryType, signupContext })
 
       const loginRes = await fetch('/api/users/login', {
         method: 'POST',

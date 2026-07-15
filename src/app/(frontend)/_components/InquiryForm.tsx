@@ -2,12 +2,13 @@
 
 import { ArrowRight } from 'lucide-react'
 import Link from 'next/link'
-import React, { useMemo, useState } from 'react'
+import React, { useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { trackPortalEvent } from '@/utilities/analytics'
 
 type InquiryType = 'client' | 'sponsor' | 'grant' | 'opportunity' | 'general'
 
@@ -51,6 +52,7 @@ export const InquiryForm: React.FC<{
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [submitted, setSubmitted] = useState<{ email: string; id: number | string } | null>(null)
+  const hasTrackedStart = useRef(false)
   const showBudgetFields = type !== 'general'
 
   const joinHref = useMemo(() => {
@@ -59,6 +61,7 @@ export const InquiryForm: React.FC<{
     const params = new URLSearchParams({
       email: submitted.email,
       inquiry: String(submitted.id),
+      inquiryType: type,
     })
 
     return `/join?${params.toString()}`
@@ -101,10 +104,18 @@ export const InquiryForm: React.FC<{
     }
 
     if (!payload.name || !payload.email || !payload.message) {
+      trackPortalEvent('Inquiry Failed', {
+        error_stage: 'validation',
+        form_variant: 'typed',
+        inquiry_type: type,
+        status_code: 'not_applicable',
+      })
       setError('Please fill in the required fields.')
       setIsLoading(false)
       return
     }
+
+    let hasTrackedFailure = false
 
     try {
       const response = await fetch('/api/inquiries', {
@@ -117,14 +128,36 @@ export const InquiryForm: React.FC<{
       })
 
       if (!response.ok) {
+        hasTrackedFailure = true
+        trackPortalEvent('Inquiry Failed', {
+          error_stage: 'api',
+          form_variant: 'typed',
+          inquiry_type: type,
+          status_code: String(response.status),
+        })
         const json = await response.json().catch(() => null)
         throw new Error(json?.errors?.[0]?.message || json?.message || 'Unable to submit inquiry.')
       }
 
       const json = await response.json()
+      trackPortalEvent('Inquiry Submitted', {
+        budget_range: payload.budgetRange || 'not_applicable',
+        form_variant: 'typed',
+        has_link: linkURL ? 'yes' : 'no',
+        inquiry_type: type,
+        timeline: payload.timeline || 'not_applicable',
+      })
       form.reset()
       setSubmitted({ email, id: json.doc?.id || json.id })
     } catch (err) {
+      if (!hasTrackedFailure) {
+        trackPortalEvent('Inquiry Failed', {
+          error_stage: 'network',
+          form_variant: 'typed',
+          inquiry_type: type,
+          status_code: 'not_applicable',
+        })
+      }
       setError(err instanceof Error ? err.message : 'Unable to submit inquiry.')
     } finally {
       setIsLoading(false)
@@ -138,7 +171,16 @@ export const InquiryForm: React.FC<{
         <h2 className="mt-3 portal-heading-sm">{postSubmitHeading}</h2>
         <p className="mt-4 text-sm leading-6 text-muted-foreground">{postSubmitBody}</p>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link className="portal-admin-link" href={joinHref}>
+          <Link
+            className="portal-admin-link"
+            href={joinHref}
+            onClick={() =>
+              trackPortalEvent('Inquiry Account Clicked', {
+                form_variant: 'typed',
+                inquiry_type: type,
+              })
+            }
+          >
             {createAccountLabel}
           </Link>
           <button className="portal-admin-link" onClick={() => setSubmitted(null)} type="button">
@@ -150,7 +192,19 @@ export const InquiryForm: React.FC<{
   }
 
   return (
-    <form className="portal-panel" onSubmit={handleSubmit}>
+    <form
+      className="portal-panel"
+      onFocusCapture={() => {
+        if (hasTrackedStart.current) return
+
+        hasTrackedStart.current = true
+        trackPortalEvent('Inquiry Started', {
+          form_variant: 'typed',
+          inquiry_type: type,
+        })
+      }}
+      onSubmit={handleSubmit}
+    >
       <div className="grid gap-5">
         <div className="grid gap-4 md:grid-cols-2">
           <div>

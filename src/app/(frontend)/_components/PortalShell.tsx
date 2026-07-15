@@ -31,6 +31,7 @@ import { DailyVibeNotes } from './DailyVibeNotes'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
+import { TrackedInquiryLink } from './TrackedInquiryLink'
 
 type PortalHomeProps = {
   copy: ProductPageCopy
@@ -324,12 +325,15 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
           </div>
           <p className="text-sm text-muted-foreground lg:text-right">
             Bringing a project or bounty?{' '}
-            <Link
+            <TrackedInquiryLink
               className="font-bold text-foreground underline decoration-primary/50"
+              formVariant="legacy_sponsor"
               href="/sponsor"
+              inquiryType="sponsor"
+              placement="portal_home"
             >
               Sponsor an opportunity
-            </Link>
+            </TrackedInquiryLink>
             .
           </p>
         </div>

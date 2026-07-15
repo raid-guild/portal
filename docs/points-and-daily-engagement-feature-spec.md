@@ -62,7 +62,7 @@ profile: relationship -> profiles, required
 user: relationship -> users, required
 engagementDate: date, required
 checkedIn: checkbox, required, default true
-vibe: raiding / ripping / meeting / learning / vibing / blocked / resting
+vibe: raiding / ripping / meeting / learning / vibing / blocked / resting / poopin
 comment: textarea
 commentStatus: none / pending_review / approved / hidden / rejected
 commentApprovedBy: relationship -> users
@@ -132,6 +132,7 @@ Choose today's vibe:
 🌊 Vibing
 🧱 Blocked
 💤 Resting
+💩 Poopin
 
 Optional comment
 Submit
