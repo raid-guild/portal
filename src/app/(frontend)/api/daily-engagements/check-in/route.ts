@@ -25,6 +25,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null)
   const vibe = body?.vibe
   const comment = stringValue(body?.comment)
+  const commentShareWithMembers = Boolean(comment && body?.commentShareWithMembers === true)
   const engagementDate = normalizeEngagementDate()
 
   if (!isDailyEngagementVibe(vibe)) {
@@ -48,7 +49,12 @@ export async function POST(request: Request) {
   const profile = await getProfileForUser(payload, user.id)
   const dailyEngagementData = {
     checkedIn: true as const,
-    commentStatus: comment ? ('approved' as const) : ('none' as const),
+    commentShareWithMembers,
+    commentStatus: comment
+      ? commentShareWithMembers
+        ? ('approved' as const)
+        : ('pending_review' as const)
+      : ('none' as const),
     engagementDate,
     status: 'valid' as const,
     vibe,
@@ -146,7 +152,9 @@ const isDuplicateDailyEngagementError = (err: unknown): boolean => {
     const maybeError = err as { code?: string; message?: string }
     const message = maybeError.message?.toLowerCase() || ''
 
-    return maybeError.code === '23505' || message.includes('duplicate') || message.includes('unique')
+    return (
+      maybeError.code === '23505' || message.includes('duplicate') || message.includes('unique')
+    )
   }
 
   return false

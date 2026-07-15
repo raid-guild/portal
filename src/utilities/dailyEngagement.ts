@@ -13,6 +13,19 @@ export const dailyEngagementVibes = [
 
 export type DailyEngagementVibe = (typeof dailyEngagementVibes)[number]
 
+export type VibeNote = {
+  avatarURL?: string
+  checkedInAt: string
+  displayName: string
+  handle?: string
+  id: number
+  isCurrentUser: boolean
+  note: string
+  vibe: string
+  vibeEmoji: string
+  vibeLabel: string
+}
+
 export const dailyEngagementVibeLabels: Record<DailyEngagementVibe, string> = {
   blocked: 'Blocked',
   meeting: 'Meeting',

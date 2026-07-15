@@ -173,32 +173,46 @@ Examples:
 - "Feeling heads-down today."
 - "Blocked and could use another set of eyes."
 
-The check-in and the comment display state should be separate.
+The check-in, member-sharing consent, and the comment display state should be
+separate.
 
 - `status` controls whether the check-in is valid.
 - `pointEvent.status` controls whether the point award is valid.
+- `commentShareWithMembers` records whether the author explicitly agreed that
+  the optional note may be shown to other checked-in members for the current
+  daily note surface.
 - `commentStatus` controls whether the optional comment can be shown.
 
-Points should be awarded immediately for a valid check-in. Comments should be
-approved by default so the first version stays lightweight. If a comment becomes
-an issue, admins can hide or reject the comment later. Rejecting or hiding a
-comment should not remove the daily point unless an admin voids the whole
-engagement or reverses the point event.
+Points should be awarded immediately for a valid check-in. Notes may only appear
+in the member-facing daily notes surface when the author opted into member
+sharing and the comment is approved. Notes without member-sharing consent remain
+review-only for moderators and must not be shown retroactively if a new display
+surface is added later. If a comment becomes an issue, admins can hide or reject
+the comment later. Rejecting or hiding a comment should not remove the daily
+point unless an admin voids the whole engagement or reverses the point event.
 
 Recommended comment defaults:
 
 ```txt
 no comment -> commentStatus: none
-with comment -> commentStatus: approved
+with comment, no member-sharing consent -> commentStatus: pending_review
+with comment and member-sharing consent -> commentStatus: approved
 ```
 
 Admins and editors can hide or reject comments after the fact. Public/member
-surfaces should only show comments where `commentStatus = approved`. Separate
-comment visibility can be added later if public and member display rules diverge.
+surfaces should only show comments where `commentStatus = approved` and
+`commentShareWithMembers = true`. Separate public comment visibility can be
+added later if public and member display rules diverge.
 
 Do not use daily engagement comments as a broad public feed in the first version.
 Admins may review comments in Payload for moderation, learning, or future product
 tuning.
+
+The first member-facing notes surface is Today's Vibe Notes on the authenticated
+dashboard. It is gated by a valid same-day check-in. Anonymous users receive
+`401`, verified users without a same-day check-in remain locked, and checked-in
+members only see approved, opted-in notes from the current UTC engagement day.
+Private profiles are anonymized for other members.
 
 ## Access Model
 
@@ -209,6 +223,8 @@ Recommended default:
 - Admins can read all daily engagements.
 - Admins can void daily engagements if needed.
 - Admins and editors can approve, hide, or reject optional comments.
+- Checked-in members can read same-day approved notes only when the author opted
+  into member sharing.
 - Public users cannot read engagement records.
 - Public users can only read approved public comment excerpts if a public display
   surface is added later.
@@ -268,6 +284,7 @@ Member-facing:
 - today's check-in card
 - current point total
 - short recent check-in history
+- same-day Vibe Notes, gated by the viewer's own check-in and author opt-in
 
 Admin:
 
@@ -293,6 +310,8 @@ Keep the first slice narrow:
 6. Add admin controls to hide or reject optional comments.
 7. Add e2e coverage for first check-in, duplicate prevention, point award, and
    comment visibility.
+8. Add Today's Vibe Notes with explicit author member-sharing consent,
+   same-day check-in gating, and e2e coverage for auth/privacy behavior.
 
 Defer streaks, leaderboards, categories, configurable point amounts, and public
 engagement feeds.

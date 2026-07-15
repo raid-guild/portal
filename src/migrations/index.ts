@@ -45,6 +45,7 @@ import * as migration_20260706_171000_newsletter_campaigns from './20260706_1710
 import * as migration_20260706_172000_module_categories from './20260706_172000_module_categories'
 import * as migration_20260706_184500_newsletter_source_mode from './20260706_184500_newsletter_source_mode'
 import * as migration_20260714_210000_daily_engagement_poopin_vibe from './20260714_210000_daily_engagement_poopin_vibe'
+import * as migration_20260714_213900_daily_engagement_member_note_consent from './20260714_213900_daily_engagement_member_note_consent'
 
 export const migrations = [
   {
@@ -281,5 +282,10 @@ export const migrations = [
     up: migration_20260714_210000_daily_engagement_poopin_vibe.up,
     down: migration_20260714_210000_daily_engagement_poopin_vibe.down,
     name: '20260714_210000_daily_engagement_poopin_vibe',
+  },
+  {
+    up: migration_20260714_213900_daily_engagement_member_note_consent.up,
+    down: migration_20260714_213900_daily_engagement_member_note_consent.down,
+    name: '20260714_213900_daily_engagement_member_note_consent',
   },
 ]

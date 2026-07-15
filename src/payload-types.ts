@@ -1293,9 +1293,13 @@ export interface DailyEngagement {
   vibe: 'raiding' | 'ripping' | 'meeting' | 'learning' | 'vibing' | 'blocked' | 'resting' | 'poopin';
   checkedIn: boolean;
   /**
-   * Optional member note. Review status controls whether this can be displayed.
+   * Optional member note. Member sharing and review status control whether this can be displayed.
    */
   comment?: string | null;
+  /**
+   * Member explicitly agreed that this note may be shown to other checked-in members.
+   */
+  commentShareWithMembers?: boolean | null;
   commentStatus: 'none' | 'pending_review' | 'approved' | 'hidden' | 'rejected';
   commentApprovedBy?: (number | null) | User;
   commentApprovedAt?: string | null;
@@ -2635,6 +2639,7 @@ export interface DailyEngagementsSelect<T extends boolean = true> {
   vibe?: T;
   checkedIn?: T;
   comment?: T;
+  commentShareWithMembers?: T;
   commentStatus?: T;
   commentApprovedBy?: T;
   commentApprovedAt?: T;

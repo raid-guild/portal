@@ -28,6 +28,7 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
   const descriptionID = useId()
   const titleID = useId()
   const [comment, setComment] = useState('')
+  const [commentShareWithMembers, setCommentShareWithMembers] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -64,6 +65,7 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
       const res = await fetch('/api/daily-engagements/check-in', {
         body: JSON.stringify({
           comment,
+          commentShareWithMembers,
           vibe: selectedVibe,
         }),
         credentials: 'include',
@@ -82,6 +84,7 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
       setCheckedIn(true)
       setIsOpen(false)
       setComment('')
+      setCommentShareWithMembers(false)
       router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to complete vibe check.')
@@ -93,12 +96,7 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
   return (
     <>
       <div className="flex flex-wrap items-center gap-3">
-        <Button
-          disabled={checkedIn}
-          onClick={() => setIsOpen(true)}
-          size="sm"
-          type="button"
-        >
+        <Button disabled={checkedIn} onClick={() => setIsOpen(true)} size="sm" type="button">
           {checkedIn ? 'Vibe checked' : 'Vibe check'}
         </Button>
         <p className="text-xs text-muted-foreground">
@@ -124,7 +122,8 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
                   What are you on today?
                 </h3>
                 <p className="sr-only" id={descriptionID}>
-                  Choose today's vibe and optionally leave a note for moderator review.
+                  Choose today's vibe and optionally leave a note for moderator review or member
+                  sharing.
                 </p>
               </div>
               <Button
@@ -167,10 +166,30 @@ export const VibeCheckButton: React.FC<VibeCheckButtonProps> = ({
               <Textarea
                 className="mt-2"
                 maxLength={1000}
-                onChange={(event) => setComment(event.target.value)}
+                onChange={(event) => {
+                  const nextComment = event.target.value
+                  setComment(nextComment)
+                  if (!nextComment.trim()) {
+                    setCommentShareWithMembers(false)
+                  }
+                }}
                 placeholder="What did you notice today?"
                 value={comment}
               />
+            </label>
+
+            <label className="mt-4 flex items-start gap-3 text-sm leading-6 text-muted-foreground">
+              <input
+                checked={commentShareWithMembers}
+                className="mt-1"
+                disabled={!comment.trim()}
+                onChange={(event) => setCommentShareWithMembers(event.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                Show my note to other checked-in members today. If unchecked, the note stays
+                review-only for moderators.
+              </span>
             </label>
 
             {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
