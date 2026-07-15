@@ -27,6 +27,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
+import { DailyVibeNotes } from './DailyVibeNotes'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
@@ -469,6 +470,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               todayVibe={vibeSummary.todayVibe}
             />
           </div>
+          <DailyVibeNotes hasCheckedInToday={vibeSummary.hasCheckedInToday} />
           {latestPointEvent ? (
             <div className="mt-5 border-t border-border pt-4 text-sm">
               <div className="flex items-start justify-between gap-4">
