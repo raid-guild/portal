@@ -413,44 +413,35 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       </section>
 
       <section className="mt-12 grid gap-6 xl:grid-cols-[1fr_21rem]">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <ExploreCard
-            action="View schedule"
-            description={
-              primaryEvent
-                ? `${primaryEvent.title} is the next calendar anchor.`
-                : 'No upcoming sessions are published yet.'
-            }
-            href="/events"
-            icon={<CalendarDays className="h-5 w-5" />}
-            label="Sessions"
-            title={primaryEvent?.title || 'Session schedule'}
-          />
-          <ExploreCard
-            action="Open module"
-            description={featuredModule?.summary || 'Explore Portal tools and experiments.'}
-            href={getModuleHref(featuredModule) || '/modules'}
-            icon={<Puzzle className="h-5 w-5" />}
-            label="Modules"
-            title={featuredModule?.name || 'Portal modules'}
-          />
-          <ExploreCard
-            action="Read latest"
-            description={latestPost?.meta?.description || 'Read recent posts from the guild.'}
-            href={latestPost?.slug ? `/posts/${latestPost.slug}` : '/posts'}
-            icon={<FileText className="h-5 w-5" />}
-            label="Posts"
-            title={latestPost?.title || 'Recent posts'}
-          />
-          <ExploreCard
-            action="Open wiki"
-            description={latestWikiPage?.summary || 'Browse reviewed source-backed wiki pages.'}
-            href={latestWikiPage?.slug ? `/wiki/${latestWikiPage.slug}` : '/wiki'}
-            icon={<BookOpen className="h-5 w-5" />}
-            label="Wiki"
-            title={latestWikiPage?.title || 'Knowledge base'}
-          />
-        </div>
+        <nav aria-label="Portal navigation" className="border-y border-border bg-card/20">
+          <ul className="divide-y divide-border md:grid md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+            <DashboardNavItem
+              href="/events"
+              icon={<CalendarDays className="h-5 w-5" />}
+              label="Sessions"
+              summary={primaryEvent?.title || 'Session schedule'}
+            />
+            <DashboardNavItem
+              href={getModuleHref(featuredModule) || '/modules'}
+              icon={<Puzzle className="h-5 w-5" />}
+              label="Modules"
+              prefetch={getModuleHref(featuredModule)?.startsWith('/api/') ? false : undefined}
+              summary={featuredModule?.name || 'Portal modules'}
+            />
+            <DashboardNavItem
+              href={latestPost?.slug ? `/posts/${latestPost.slug}` : '/posts'}
+              icon={<FileText className="h-5 w-5" />}
+              label="Posts"
+              summary={latestPost?.title || 'Recent posts'}
+            />
+            <DashboardNavItem
+              href={latestWikiPage?.slug ? `/wiki/${latestWikiPage.slug}` : '/wiki'}
+              icon={<BookOpen className="h-5 w-5" />}
+              label="Wiki Pages"
+              summary={latestWikiPage?.title || 'Knowledge base'}
+            />
+          </ul>
+        </nav>
 
         <section className="portal-panel">
           <div className="flex items-start justify-between gap-4">
@@ -656,32 +647,31 @@ const DashboardMetric: React.FC<{ href: string; label: string; value: number }> 
   </Link>
 )
 
-const ExploreCard: React.FC<{
-  action: string
-  description: string
+const DashboardNavItem: React.FC<{
   href: string
   icon: React.ReactNode
   label: string
-  title: string
-}> = ({ action, description, href, icon, label, title }) => (
-  <Link
-    className="flex min-h-56 flex-col justify-between border border-border bg-card/20 p-5 transition-colors hover:border-primary hover:bg-card/40"
-    href={href}
-    prefetch={href.startsWith('/api/') ? false : undefined}
-  >
-    <div>
-      <div className="flex items-center justify-between gap-4">
-        <p className="portal-kicker">{label}</p>
+  prefetch?: boolean
+  summary: string
+}> = ({ href, icon, label, prefetch, summary }) => (
+  <li>
+    <Link
+      className="group flex min-h-24 items-center gap-4 px-4 py-4 transition-colors hover:bg-card/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:px-5"
+      href={href}
+      prefetch={prefetch}
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
         {icon}
-      </div>
-      <h2 className="mt-4 portal-heading-sm line-clamp-2">{title}</h2>
-      <p className="mt-3 line-clamp-4 text-sm leading-6 text-muted-foreground">{description}</p>
-    </div>
-    <p className="mt-5 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-primary">
-      {action}
-      <ArrowRight className="h-4 w-4" />
-    </p>
-  </Link>
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-bold uppercase tracking-[0.12em] text-foreground">
+          {label}
+        </span>
+        <span className="mt-1 block truncate text-sm text-muted-foreground">{summary}</span>
+      </span>
+      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+    </Link>
+  </li>
 )
 
 const getModuleHref = (module?: Module | null) => {
