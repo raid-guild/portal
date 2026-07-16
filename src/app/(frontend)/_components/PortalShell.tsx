@@ -414,7 +414,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
 
       <section className="mt-12 grid gap-6 xl:grid-cols-[1fr_21rem]">
         <nav aria-label="Portal navigation" className="border-y border-border bg-card/20">
-          <ul className="divide-y divide-border md:grid md:grid-cols-2 md:divide-x md:divide-y-0 xl:grid-cols-4">
+          <ul className="grid md:grid-cols-2 xl:grid-cols-4 [&>li]:border-b [&>li]:border-border [&>li:last-child]:border-b-0 md:[&>li:nth-child(odd)]:border-r md:[&>li:nth-last-child(-n+2)]:border-b-0 xl:[&>li]:border-b-0 xl:[&>li]:border-r xl:[&>li:last-child]:border-r-0">
             <DashboardNavItem
               href="/events"
               icon={<CalendarDays className="h-5 w-5" />}
