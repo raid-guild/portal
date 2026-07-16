@@ -2977,10 +2977,12 @@ async function verifyDashboardBrief(page: Page) {
 
   await expect(page.getByText('Member Home')).toBeVisible()
   await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
-  await expect(page.getByRole('link', { name: /sessions/i }).first()).toBeVisible()
-  await expect(page.getByRole('link', { name: /modules/i }).first()).toBeVisible()
-  await expect(page.getByRole('link', { name: /^posts/i }).first()).toBeVisible()
-  await expect(page.getByRole('link', { name: /wiki pages/i }).first()).toBeVisible()
+  const portalNavigation = page.getByRole('navigation', { name: 'Portal navigation' })
+  await expect(portalNavigation).toBeVisible()
+  await expect(portalNavigation.getByRole('link', { name: /sessions/i })).toBeVisible()
+  await expect(portalNavigation.getByRole('link', { name: /modules/i })).toBeVisible()
+  await expect(portalNavigation.getByRole('link', { name: /^posts/i })).toBeVisible()
+  await expect(portalNavigation.getByRole('link', { name: /wiki pages/i })).toBeVisible()
 
   await expect(page.getByText('Guild Points')).toBeVisible()
   await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
