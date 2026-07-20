@@ -405,6 +405,49 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
+      <section className="mt-8 border border-border bg-card/25">
+        <div className="grid gap-6 p-5 lg:grid-cols-[1fr_auto_16rem] lg:items-center">
+          <div>
+            <div className="flex items-center gap-2">
+              <Award className="h-5 w-5" />
+              <h2 className="portal-heading-sm">RaidGuild Status</h2>
+            </div>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Check in for points and see today&apos;s status updates.
+            </p>
+          </div>
+
+          <div className="lg:justify-self-center">
+            <VibeCheckButton
+              currentStreak={vibeSummary.currentStreak}
+              hasCheckedInToday={vibeSummary.hasCheckedInToday}
+              todayVibe={vibeSummary.todayVibe}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-1 lg:text-right">
+            <div>
+              <p className="portal-kicker">Guild Points</p>
+              <p className="mt-1 font-serif text-3xl font-bold leading-none text-foreground">
+                {pointsTotal}
+              </p>
+            </div>
+            {latestPointEvent ? (
+              <div>
+                <p className="portal-kicker">Latest Ledger</p>
+                <p className="mt-1 font-medium text-foreground">{latestPointEvent.reason}</p>
+                <p className="mt-1 font-mono text-xs font-bold text-muted-foreground">
+                  +{latestPointEvent.amount} / {latestPointEvent.source}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="px-5 pb-5">
+          <DailyVibeNotes hasCheckedInToday={vibeSummary.hasCheckedInToday} />
+        </div>
+      </section>
+
       <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <DashboardMetric href="/events" label="Sessions" value={stats.sessions} />
         <DashboardMetric href="/modules" label="Modules" value={stats.modules} />
@@ -412,7 +455,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
       </section>
 
-      <section className="mt-12 grid gap-6 xl:grid-cols-[1fr_21rem]">
+      <section className="mt-12">
         <nav aria-label="Portal navigation" className="border-y border-border bg-card/20">
           <ul className="grid md:grid-cols-2 xl:grid-cols-4 [&>li]:border-b [&>li]:border-border [&>li:last-child]:border-b-0 md:[&>li:nth-child(odd)]:border-r md:[&>li:nth-last-child(-n+2)]:border-b-0 xl:[&>li]:border-b-0 xl:[&>li]:border-r xl:[&>li:last-child]:border-r-0">
             <DashboardNavItem
@@ -442,38 +485,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             />
           </ul>
         </nav>
-
-        <section className="portal-panel">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Award className="h-5 w-5" />
-                <h2 className="portal-heading-sm">Guild Points</h2>
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">Check in and keep your streak.</p>
-            </div>
-            <p className="portal-heading">{pointsTotal}</p>
-          </div>
-          <div className="mt-5">
-            <VibeCheckButton
-              currentStreak={vibeSummary.currentStreak}
-              hasCheckedInToday={vibeSummary.hasCheckedInToday}
-              todayVibe={vibeSummary.todayVibe}
-            />
-          </div>
-          <DailyVibeNotes hasCheckedInToday={vibeSummary.hasCheckedInToday} />
-          {latestPointEvent ? (
-            <div className="mt-5 border-t border-border pt-4 text-sm">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="font-medium">{latestPointEvent.reason}</p>
-                  <p className="mt-1 portal-kicker">{latestPointEvent.source}</p>
-                </div>
-                <p className="font-mono font-bold">+{latestPointEvent.amount}</p>
-              </div>
-            </div>
-          ) : null}
-        </section>
       </section>
 
       <section className="mt-12 border border-border bg-background/70">

@@ -3314,7 +3314,8 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
   }
 
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { name: 'Guild Points' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
+  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
   await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Vibe check' }).click()
