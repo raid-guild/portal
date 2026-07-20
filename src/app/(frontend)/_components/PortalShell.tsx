@@ -382,6 +382,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
     spotlights.find(
       (spotlight) => spotlight.targetType === 'thread' && spotlight.kind === 'featured',
     ) || spotlights.find((spotlight) => spotlight.targetType === 'thread')
+  const moduleHref = getModuleHref(featuredModule)
 
   return (
     <main className="container pb-24 pt-12">
@@ -455,36 +456,29 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
       </section>
 
-      <section className="mt-12">
-        <nav aria-label="Portal navigation" className="border-y border-border bg-card/20">
-          <ul className="grid md:grid-cols-2 xl:grid-cols-4 [&>li]:border-b [&>li]:border-border [&>li:last-child]:border-b-0 md:[&>li:nth-child(odd)]:border-r md:[&>li:nth-last-child(-n+2)]:border-b-0 xl:[&>li]:border-b-0 xl:[&>li]:border-r xl:[&>li:last-child]:border-r-0">
-            <DashboardNavItem
-              href="/events"
-              icon={<CalendarDays className="h-5 w-5" />}
-              label="Sessions"
-              summary={primaryEvent?.title || 'Session schedule'}
-            />
-            <DashboardNavItem
-              href={getModuleHref(featuredModule) || '/modules'}
-              icon={<Puzzle className="h-5 w-5" />}
-              label="Modules"
-              prefetch={getModuleHref(featuredModule)?.startsWith('/api/') ? false : undefined}
-              summary={featuredModule?.name || 'Portal modules'}
-            />
-            <DashboardNavItem
-              href={latestPost?.slug ? `/posts/${latestPost.slug}` : '/posts'}
-              icon={<FileText className="h-5 w-5" />}
-              label="Posts"
-              summary={latestPost?.title || 'Recent posts'}
-            />
-            <DashboardNavItem
-              href={latestWikiPage?.slug ? `/wiki/${latestWikiPage.slug}` : '/wiki'}
-              icon={<BookOpen className="h-5 w-5" />}
-              label="Wiki Pages"
-              summary={latestWikiPage?.title || 'Knowledge base'}
-            />
-          </ul>
-        </nav>
+      <DashboardWeeklySessionStrip
+        className="mt-10"
+        events={weekEvents.length ? weekEvents : upcomingEvents}
+      />
+
+      <section className="mt-10 grid gap-6 lg:grid-cols-2">
+        <BriefPanel title="Active Members">
+          {activeProfiles.length ? (
+            <ActiveProfilesList profiles={activeProfiles} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No active member profiles have been updated recently.
+            </p>
+          )}
+        </BriefPanel>
+
+        <BriefPanel title="Highlighted Thread">
+          {highlightedThread ? (
+            <SpotlightCard compact spotlight={highlightedThread} />
+          ) : (
+            <p className="text-sm text-muted-foreground">No highlighted thread is set.</p>
+          )}
+        </BriefPanel>
       </section>
 
       <section className="mt-12 border border-border bg-background/70">
@@ -560,31 +554,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               </div>
             </div>
 
-            <DashboardWeeklySessionStrip
-              className="mt-8"
-              events={weekEvents.length ? weekEvents : upcomingEvents}
-            />
-
-            <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_1fr]">
-              <BriefPanel title="Highlighted Thread">
-                {highlightedThread ? (
-                  <SpotlightCard compact spotlight={highlightedThread} />
-                ) : (
-                  <p className="text-sm text-muted-foreground">No highlighted thread is set.</p>
-                )}
-              </BriefPanel>
-
-              <BriefPanel title="Active Members">
-                {activeProfiles.length ? (
-                  <ActiveProfilesList profiles={activeProfiles} />
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    No active member profiles have been updated recently.
-                  </p>
-                )}
-              </BriefPanel>
-            </div>
-
             {dailyBrief.engagementActions?.length ? (
               <div className="mt-8">
                 <h2 className="portal-heading-sm">Ways to Engage</h2>
@@ -639,6 +608,27 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </Button>
         </div>
       </section>
+
+      <section className="mt-16">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <p className="portal-kicker">Explore</p>
+            <h2 className="portal-heading-sm">Explore more Portal surfaces</h2>
+          </div>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Quick links back into the main spaces after you have caught up on the current week.
+          </p>
+        </div>
+        <DashboardNavigation
+          featuredModuleHref={moduleHref}
+          featuredModuleName={featuredModule?.name}
+          latestPostSlug={latestPost?.slug}
+          latestPostTitle={latestPost?.title}
+          latestWikiPageSlug={latestWikiPage?.slug}
+          latestWikiPageTitle={latestWikiPage?.title}
+          primaryEventTitle={primaryEvent?.title}
+        />
+      </section>
     </main>
   )
 }
@@ -683,6 +673,54 @@ const DashboardNavItem: React.FC<{
       <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
     </Link>
   </li>
+)
+
+const DashboardNavigation: React.FC<{
+  featuredModuleHref?: string | null
+  featuredModuleName?: string | null
+  latestPostSlug?: string | null
+  latestPostTitle?: string | null
+  latestWikiPageSlug?: string | null
+  latestWikiPageTitle?: string | null
+  primaryEventTitle?: string | null
+}> = ({
+  featuredModuleHref,
+  featuredModuleName,
+  latestPostSlug,
+  latestPostTitle,
+  latestWikiPageSlug,
+  latestWikiPageTitle,
+  primaryEventTitle,
+}) => (
+  <nav aria-label="Explore more Portal surfaces" className="border-y border-border bg-card/20">
+    <ul className="grid md:grid-cols-2 xl:grid-cols-4 [&>li]:border-b [&>li]:border-border [&>li:last-child]:border-b-0 md:[&>li:nth-child(odd)]:border-r md:[&>li:nth-last-child(-n+2)]:border-b-0 xl:[&>li]:border-b-0 xl:[&>li]:border-r xl:[&>li:last-child]:border-r-0">
+      <DashboardNavItem
+        href="/events"
+        icon={<CalendarDays className="h-5 w-5" />}
+        label="Sessions"
+        summary={primaryEventTitle || 'Session schedule'}
+      />
+      <DashboardNavItem
+        href={featuredModuleHref || '/modules'}
+        icon={<Puzzle className="h-5 w-5" />}
+        label="Modules"
+        prefetch={featuredModuleHref?.startsWith('/api/') ? false : undefined}
+        summary={featuredModuleName || 'Portal modules'}
+      />
+      <DashboardNavItem
+        href={latestPostSlug ? `/posts/${latestPostSlug}` : '/posts'}
+        icon={<FileText className="h-5 w-5" />}
+        label="Posts"
+        summary={latestPostTitle || 'Recent posts'}
+      />
+      <DashboardNavItem
+        href={latestWikiPageSlug ? `/wiki/${latestWikiPageSlug}` : '/wiki'}
+        icon={<BookOpen className="h-5 w-5" />}
+        label="Wiki Pages"
+        summary={latestWikiPageTitle || 'Knowledge base'}
+      />
+    </ul>
+  </nav>
 )
 
 const getModuleHref = (module?: Module | null) => {
