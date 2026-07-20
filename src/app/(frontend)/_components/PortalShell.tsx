@@ -107,7 +107,7 @@ type DashboardQuote = {
   text: string
 }
 
-const quoteLinkPattern = /(artifact|recording|meeting|session|summary|notes)/i
+const quoteLinkPattern = /(artifact|recording|summary|notes)/i
 
 const cleanQuoteText = (value?: string | null) => {
   const text = value?.replace(/\s+/g, ' ').trim()
@@ -124,10 +124,10 @@ const getDashboardQuote = (brief?: DailyBrief | null): DashboardQuote | null => 
 
   for (const section of brief.sections) {
     const artifactLink = section.links?.find((link) => {
-      const safeURL = toSafeURL(link.url, { allowRelative: false })
+      const safeURL = toSafeURL(link.url)
       return safeURL && quoteLinkPattern.test(`${link.label} ${safeURL}`)
     })
-    const href = artifactLink ? toSafeURL(artifactLink.url, { allowRelative: false }) : null
+    const href = artifactLink ? toSafeURL(artifactLink.url) : null
     const text = cleanQuoteText(section.body)
 
     if (href && text) {
