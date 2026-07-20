@@ -3015,7 +3015,8 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'View sessions' })).toBeVisible()
-  await expect(page.getByText('Guild Points')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
+  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
   await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next Profile Step' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Explore more Portal surfaces' })).toBeVisible()
@@ -3339,7 +3340,8 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
   }
 
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { name: 'Guild Points' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
+  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
   await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Vibe check' }).click()
