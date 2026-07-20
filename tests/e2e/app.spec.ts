@@ -250,6 +250,21 @@ async function getApprovedCommentCount(page: Page) {
   return body.docs.length as number
 }
 
+async function expectVerticalOrder(locators: Locator[]) {
+  const boxes: { y: number }[] = []
+
+  for (const locator of locators) {
+    await expect(locator).toBeVisible()
+    const box = await locator.boundingBox()
+    expect(box).not.toBeNull()
+    boxes.push(box!)
+  }
+
+  for (let index = 1; index < boxes.length; index += 1) {
+    expect(boxes[index].y).toBeGreaterThanOrEqual(boxes[index - 1].y)
+  }
+}
+
 async function verifySeededPosts(page: Page) {
   await page.goto('/posts')
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
@@ -2977,15 +2992,15 @@ async function verifyDashboardBrief(page: Page) {
 
   await expect(page.getByText('Member Home')).toBeVisible()
   await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
-  const portalNavigation = page.getByRole('navigation', { name: 'Portal navigation' })
-  await expect(portalNavigation).toBeVisible()
-  await expect(portalNavigation.getByRole('link', { name: /sessions/i })).toBeVisible()
-  await expect(portalNavigation.getByRole('link', { name: /modules/i })).toBeVisible()
-  await expect(portalNavigation.getByRole('link', { name: /^posts/i })).toBeVisible()
-  await expect(portalNavigation.getByRole('link', { name: /wiki pages/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Active Members' })).toBeVisible()
+  await expect(
+    page.getByText('No active member profiles have been updated recently.'),
+  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Highlighted Thread' })).toBeVisible()
+  await expect(page.getByText('No highlighted thread is set.')).toBeVisible()
 
-  await expect(page.getByText('Guild Points')).toBeVisible()
-  await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
   await expect(page.getByText('This Week In The Guild')).toBeVisible()
   await expect(page.getByText('Weekly', { exact: true })).toBeVisible()
   await expect(page.getByText('Project Spike Portal', { exact: true })).toBeVisible()
@@ -2997,18 +3012,29 @@ async function verifyDashboardBrief(page: Page) {
   ).toBeVisible()
   await expect(page.getByText('Project spikes over project management:')).toBeVisible()
   await expect(page.getByText('Calendar is the public pull:')).toBeVisible()
-  await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Highlighted Thread' })).toBeVisible()
-  await expect(page.getByText('No highlighted thread is set.')).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Active Members' })).toBeVisible()
-  await expect(
-    page.getByText('No active member profiles have been updated recently.'),
-  ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'View sessions' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
+  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
+  await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next Profile Step' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Explore more Portal surfaces' })).toBeVisible()
+
+  const exploreNavigation = page.getByRole('navigation', { name: 'Explore more Portal surfaces' })
+  await expect(exploreNavigation).toBeVisible()
+  await expect(exploreNavigation.getByRole('link', { name: /sessions/i })).toBeVisible()
+  await expect(exploreNavigation.getByRole('link', { name: /modules/i })).toBeVisible()
+  await expect(exploreNavigation.getByRole('link', { name: /^posts/i })).toBeVisible()
+  await expect(exploreNavigation.getByRole('link', { name: /wiki pages/i })).toBeVisible()
+
+  await expectVerticalOrder([
+    page.getByRole('link', { name: /^Sessions\s+\d+/ }).first(),
+    page.getByRole('heading', { name: "This Week's Sessions" }),
+    page.getByRole('heading', { name: 'Active Members' }),
+    page.getByText('This Week In The Guild'),
+    page.getByRole('heading', { name: 'Explore more Portal surfaces' }),
+  ])
 }
 
 async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPage: Page) {
@@ -3314,7 +3340,8 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
   }
 
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { name: 'Guild Points' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
+  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
   await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
 
   await page.getByRole('button', { name: 'Vibe check' }).click()
