@@ -101,6 +101,47 @@ const BriefMedia: React.FC<{ brief: DailyBrief; emptyText: string }> = ({ brief,
   )
 }
 
+type DashboardQuote = {
+  href: string
+  label: string
+  text: string
+}
+
+const quoteLinkPattern = /(artifact|recording|summary|notes)/i
+
+const cleanQuoteText = (value?: string | null) => {
+  const text = value?.replace(/\s+/g, ' ').trim()
+  if (!text) return null
+
+  const sentence = text.match(/^.+?[.!?](?:\s|$)/)?.[0]?.trim() || text
+  if (sentence.length <= 160) return sentence
+
+  return `${sentence.slice(0, 157).trim()}...`
+}
+
+const getDashboardQuote = (brief?: DailyBrief | null): DashboardQuote | null => {
+  if (!brief?.sections?.length) return null
+
+  for (const section of brief.sections) {
+    const artifactLink = section.links?.find((link) => {
+      const safeURL = toSafeURL(link.url)
+      return safeURL && quoteLinkPattern.test(`${link.label} ${safeURL}`)
+    })
+    const href = artifactLink ? toSafeURL(artifactLink.url) : null
+    const text = cleanQuoteText(section.body)
+
+    if (href && text) {
+      return {
+        href,
+        label: artifactLink?.label || 'View meeting artifact',
+        text,
+      }
+    }
+  }
+
+  return null
+}
+
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   copy,
   posts = [],
@@ -383,13 +424,14 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       (spotlight) => spotlight.targetType === 'thread' && spotlight.kind === 'featured',
     ) || spotlights.find((spotlight) => spotlight.targetType === 'thread')
   const moduleHref = getModuleHref(featuredModule)
+  const dashboardQuote = getDashboardQuote(dailyBrief)
 
   return (
     <main className="container pb-24 pt-12">
       <section className="grid gap-10 lg:grid-cols-[1fr_18rem]">
         <div>
           <p className="mb-4 portal-kicker">Member Home</p>
-          <h1 className="portal-title">
+          <h1 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">
             {hasProfile ? `Welcome, ${displayName}` : 'Welcome - create your profile'}
           </h1>
           <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
@@ -397,16 +439,35 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
               : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
           </p>
+          {dashboardQuote ? (
+            <figure className="mt-5 max-w-2xl border-l border-border pl-4">
+              <blockquote className="text-sm italic leading-6 text-muted-foreground">
+                &ldquo;{dashboardQuote.text}&rdquo;
+              </blockquote>
+              <figcaption className="mt-2">
+                <SafeTextLink href={dashboardQuote.href} label={dashboardQuote.label} />
+              </figcaption>
+            </figure>
+          ) : null}
         </div>
         <div className="border-l border-border pl-6 text-sm">
           <p className="font-mono text-sm font-bold">{user.email}</p>
-          <p className="mt-2 text-muted-foreground">
-            {hasProfile ? `Profile: ${profile?.displayName}` : 'No profile connected yet.'}
-          </p>
         </div>
       </section>
 
-      <section className="mt-8 border border-border bg-card/25">
+      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <DashboardMetric href="/events" label="Sessions" value={stats.sessions} />
+        <DashboardMetric href="/modules" label="Modules" value={stats.modules} />
+        <DashboardMetric href="/posts" label="Posts" value={stats.posts} />
+        <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
+      </section>
+
+      <DashboardWeeklySessionStrip
+        className="mt-10"
+        events={weekEvents.length ? weekEvents : upcomingEvents}
+      />
+
+      <section className="mt-10 border border-border bg-card/25">
         <div className="grid gap-6 p-5 lg:grid-cols-[1fr_auto_16rem] lg:items-center">
           <div>
             <div className="flex items-center gap-2">
@@ -448,18 +509,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           <DailyVibeNotes hasCheckedInToday={vibeSummary.hasCheckedInToday} />
         </div>
       </section>
-
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DashboardMetric href="/events" label="Sessions" value={stats.sessions} />
-        <DashboardMetric href="/modules" label="Modules" value={stats.modules} />
-        <DashboardMetric href="/posts" label="Posts" value={stats.posts} />
-        <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
-      </section>
-
-      <DashboardWeeklySessionStrip
-        className="mt-10"
-        events={weekEvents.length ? weekEvents : upcomingEvents}
-      />
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
         <BriefPanel title="Active Members">

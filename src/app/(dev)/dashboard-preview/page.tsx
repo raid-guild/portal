@@ -82,6 +82,12 @@ const createPreviewBrief = (date: Date, nextEvent?: Event): DailyBrief => {
       {
         body: 'Fireside sessions are producing source material for posts, wiki pages, and follow-up prompts.',
         heading: 'Sessions',
+        links: [
+          {
+            label: 'View meeting notes',
+            url: '/memory/artifacts/fireside-preview',
+          },
+        ],
       },
       {
         body: 'The Portal dashboard is shifting from navigation hub to operating brief for members.',

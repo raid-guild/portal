@@ -505,6 +505,71 @@ async function verifyPublicPostsRSSFeed(adminPage: Page, publicPage: Page) {
   expect(feedXML).not.toContain(draftTitle)
 }
 
+async function verifyPublicLLMsText(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const publicTitle = `LLMS public post ${suffix}`
+  const memberTitle = `LLMS member post ${suffix}`
+  const draftTitle = `LLMS draft post ${suffix}`
+  const publicDescription = `LLMS public description ${suffix}`
+
+  const publicPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Public llms.txt post content fallback.'),
+      meta: {
+        description: publicDescription,
+      },
+      publishedAt: new Date().toISOString(),
+      slug: `llms-public-post-${suffix}`,
+      title: publicTitle,
+      visibility: 'public',
+    },
+  })
+
+  expect(publicPostResponse.status()).toBe(201)
+
+  const memberPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Member llms.txt post content should stay private.'),
+      publishedAt: new Date().toISOString(),
+      slug: `llms-member-post-${suffix}`,
+      title: memberTitle,
+      visibility: 'member',
+    },
+  })
+
+  expect(memberPostResponse.status()).toBe(201)
+
+  const draftPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'draft',
+      content: lexicalContent('Draft llms.txt post content should stay private.'),
+      slug: `llms-draft-post-${suffix}`,
+      title: draftTitle,
+      visibility: 'public',
+    },
+  })
+
+  expect(draftPostResponse.status()).toBe(201)
+
+  const llmsResponse = await publicPage.request.get('/llms.txt')
+  expect(llmsResponse.ok()).toBeTruthy()
+  expect(llmsResponse.headers()['content-type']).toContain('text/markdown')
+
+  const llmsText = await llmsResponse.text()
+  expect(llmsText).toContain('# RaidGuild Portal')
+  expect(llmsText).toContain('## Posts And Articles')
+  expect(llmsText).toContain(targetPost.title)
+  expect(llmsText).toContain(publicTitle)
+  expect(llmsText).toContain(publicDescription)
+  expect(llmsText).not.toContain(memberTitle)
+  expect(llmsText).not.toContain(draftTitle)
+  expect(llmsText).not.toContain('/admin')
+  expect(llmsText).not.toContain('/next/preview')
+  expect(llmsText).not.toContain('sourceArtifact')
+}
+
 async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page) {
   const suffix = Date.now()
   const title = `Admin publish persistence ${suffix}`
@@ -4150,6 +4215,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyBadgesFeature(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyPublicPostsRSSFeed(page, publicPage)
+  await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
