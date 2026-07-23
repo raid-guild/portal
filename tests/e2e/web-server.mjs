@@ -1,5 +1,4 @@
 import { execFileSync, spawn } from 'node:child_process'
-import net from 'node:net'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -38,32 +37,29 @@ function run(command, args) {
   })
 }
 
-async function waitForPort(port, host = '127.0.0.1', timeoutMs = 60000) {
+async function waitForPostgres(timeoutMs = 60000) {
   const start = Date.now()
 
   while (Date.now() - start < timeoutMs) {
-    const ready = await new Promise((resolve) => {
-      const socket = net.createConnection({ host, port })
-
-      socket.once('connect', () => {
-        socket.end()
-        resolve(true)
-      })
-
-      socket.once('error', () => {
-        socket.destroy()
-        resolve(false)
-      })
-    })
-
-    if (ready) {
+    try {
+      execFileSync(
+        'docker',
+        ['compose', 'exec', '-T', 'postgres', 'pg_isready', '-U', postgresUser, '-d', postgresDb],
+        {
+          cwd: repoRoot,
+          env,
+          stdio: 'ignore',
+        },
+      )
       return
+    } catch {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 1000)
+      })
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
-  throw new Error(`Timed out waiting for PostgreSQL on ${host}:${port}`)
+  throw new Error('Timed out waiting for the PostgreSQL health check')
 }
 
 function stopPostgres() {
@@ -77,7 +73,7 @@ function stopPostgres() {
 async function main() {
   run('docker', ['compose', 'down', '--volumes', '--remove-orphans'])
   run('docker', ['compose', 'up', '-d', 'postgres'])
-  await waitForPort(postgresPort)
+  await waitForPostgres()
 
   run('corepack', ['pnpm', 'deps:native'])
   run('corepack', ['pnpm', 'build'])

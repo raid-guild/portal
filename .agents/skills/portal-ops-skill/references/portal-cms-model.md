@@ -33,10 +33,13 @@ Key fields:
 - `relatedThread`
 - `relatedEvent`
 - `relatedProfiles`
+- `creditedProfiles`: profiles whose concrete participation the item documents
 - `visibility`: `public`, `authenticated`, `admin`
 - `_status`: `draft`, `published`
 
 Rule: one activity item should describe one concrete thing that happened.
+
+Rule: use `creditedProfiles` only for people whose participation is supported by the source. Use `relatedProfiles` for people who are referenced or otherwise connected but are not necessarily contributors. Recent dashboard contributors are derived from visible, published activity items through `creditedProfiles`.
 
 ## threads
 

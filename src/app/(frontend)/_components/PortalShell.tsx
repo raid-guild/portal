@@ -27,6 +27,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
+import type { RecentContributor } from '../dashboard/dashboardTypes'
 import { DailyVibeNotes } from './DailyVibeNotes'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
@@ -58,11 +59,11 @@ type DashboardProps = {
   featuredModules?: Module[]
   upcomingEvents?: Event[]
   weekEvents?: Event[]
-  activeProfiles?: Profile[]
   pointEvents?: PointEvent[]
   pointsTotal?: number
   profile?: Profile | null
   recentPosts?: Post[]
+  recentContributors?: RecentContributor[]
   recentWikiPages?: WikiPage[]
   spotlights?: Spotlight[]
   user: User
@@ -390,11 +391,11 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   featuredModules = [],
   upcomingEvents = [],
   weekEvents = [],
-  activeProfiles = [],
   pointEvents = [],
   pointsTotal = 0,
   profile,
   recentPosts = [],
+  recentContributors = [],
   recentWikiPages = [],
   spotlights = [],
   user,
@@ -511,12 +512,12 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       </section>
 
       <section className="mt-10 grid gap-6 lg:grid-cols-2">
-        <BriefPanel title="Active Members">
-          {activeProfiles.length ? (
-            <ActiveProfilesList profiles={activeProfiles} />
+        <BriefPanel title="Recent Contributors">
+          {recentContributors.length ? (
+            <RecentContributorsList contributors={recentContributors} />
           ) : (
             <p className="text-sm text-muted-foreground">
-              No active member profiles have been updated recently.
+              No source-grounded member activity has been published in the last 30 days.
             </p>
           )}
         </BriefPanel>
@@ -968,9 +969,21 @@ const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
   </section>
 )
 
-const ActiveProfilesList: React.FC<{ profiles: Profile[] }> = ({ profiles }) => (
+const activityTypeLabels: Record<RecentContributor['activity']['activityType'], string> = {
+  blocker: 'Blocker',
+  contribution: 'Contribution',
+  decision: 'Decision',
+  discussion: 'Discussion',
+  event: 'Session',
+  insight: 'Insight',
+  project: 'Project',
+}
+
+const RecentContributorsList: React.FC<{ contributors: RecentContributor[] }> = ({
+  contributors,
+}) => (
   <div className="grid gap-3 sm:grid-cols-2">
-    {profiles.slice(0, 8).map((profile) => {
+    {contributors.slice(0, 8).map(({ activity, profile }) => {
       const avatar = profile.avatar && typeof profile.avatar === 'object' ? profile.avatar : null
       const avatarURL = avatar?.url
       const label = profile.displayName || profile.handle || 'Member'
@@ -998,6 +1011,12 @@ const ActiveProfilesList: React.FC<{ profiles: Profile[] }> = ({ profiles }) => 
             <span className="block truncate font-bold text-foreground">{label}</span>
             <span className="mt-1 block truncate text-xs text-muted-foreground">
               {profile.handle ? `@${profile.handle}` : 'Updated profile'}
+            </span>
+            <span className="mt-2 block line-clamp-2 text-xs leading-5 text-muted-foreground">
+              {activity.title}
+            </span>
+            <span className="mt-1 block portal-kicker">
+              {activityTypeLabels[activity.activityType]} · {formatDate(activity.happenedAt)}
             </span>
           </span>
         </Link>

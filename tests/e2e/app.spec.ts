@@ -2774,6 +2774,71 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await expect(page).toHaveURL(/\/admin\/collections\/posts\/(create|\d+)/)
   await expect(page.getByText(/Creating new Post|Status:\s*Draft/)).toBeVisible()
   await expect(page.getByRole('textbox', { name: /title/i }).first()).toBeVisible()
+
+  return profileHandle
+}
+
+async function verifyRecentContributors(page: Page, profileHandle: string) {
+  const profileResponse = await page.request.get('/api/profiles', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[handle][equals]': profileHandle,
+    },
+  })
+  expect(profileResponse.ok()).toBeTruthy()
+
+  const profileBody = await profileResponse.json()
+  const profileID = profileBody.docs[0]?.id
+  expect(profileID).toBeTruthy()
+
+  const relatedOnlyTitle = `Related but not credited ${Date.now()}`
+  const relatedOnlyResponse = await page.request.post('/api/activityItems', {
+    data: {
+      activityType: 'discussion',
+      happenedAt: new Date().toISOString(),
+      relatedProfiles: [profileID],
+      sourceLabel: 'Playwright dashboard coverage',
+      title: relatedOnlyTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(relatedOnlyResponse.status()).toBe(201)
+
+  await page.goto('/')
+  const emptySection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Recent Contributors' }),
+  })
+  await expect(emptySection.getByText(relatedOnlyTitle)).toHaveCount(0)
+  await expect(
+    emptySection.getByText(
+      'No source-grounded member activity has been published in the last 30 days.',
+    ),
+  ).toBeVisible()
+
+  const creditedTitle = `Shipped recent Portal dashboard work ${Date.now()}`
+  const creditedResponse = await page.request.post('/api/activityItems', {
+    data: {
+      activityType: 'contribution',
+      creditedProfiles: [profileID],
+      happenedAt: new Date().toISOString(),
+      relatedProfiles: [profileID],
+      sourceLabel: 'Playwright dashboard coverage',
+      title: creditedTitle,
+      visibility: 'public',
+      _status: 'published',
+    },
+  })
+  expect(creditedResponse.status()).toBe(201)
+
+  await page.goto('/')
+  const populatedSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Recent Contributors' }),
+  })
+  await expect(populatedSection.getByText('Playwright Admin', { exact: true })).toBeVisible()
+  await expect(populatedSection.getByText(creditedTitle)).toBeVisible()
+  await expect(populatedSection.getByText(/Contribution/)).toBeVisible()
 }
 
 async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
@@ -3141,9 +3206,9 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
   await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Active Members' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Recent Contributors' })).toBeVisible()
   await expect(
-    page.getByText('No active member profiles have been updated recently.'),
+    page.getByText('No source-grounded member activity has been published in the last 30 days.'),
   ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Highlighted Thread' })).toBeVisible()
   await expect(page.getByText('No highlighted thread is set.')).toBeVisible()
@@ -3178,7 +3243,7 @@ async function verifyDashboardBrief(page: Page) {
   await expectVerticalOrder([
     page.getByRole('link', { name: /^Sessions\s+\d+/ }).first(),
     page.getByRole('heading', { name: "This Week's Sessions" }),
-    page.getByRole('heading', { name: 'Active Members' }),
+    page.getByRole('heading', { name: 'Recent Contributors' }),
     page.getByText('This Week In The Guild'),
     page.getByRole('heading', { name: 'Explore more Portal surfaces' }),
   ])
@@ -3427,6 +3492,16 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
   const today = new Date().toISOString()
   const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()
   const password = `DailyNotes-${suffix}!`
+  const [skillsResponse, rolesResponse] = await Promise.all([
+    page.request.get('/api/profileSkills', { params: { limit: '1' } }),
+    page.request.get('/api/profileRoles', { params: { limit: '1' } }),
+  ])
+  expect(skillsResponse.ok()).toBeTruthy()
+  expect(rolesResponse.ok()).toBeTruthy()
+  const skillID = (await skillsResponse.json()).docs[0]?.id
+  const roleID = (await rolesResponse.json()).docs[0]?.id
+  expect(skillID).toBeTruthy()
+  expect(roleID).toBeTruthy()
 
   const unverifiedEmail = `daily-notes-unverified-${suffix}@example.com`
   const unverifiedResponse = await page.request.post('/api/users', {
@@ -3629,8 +3704,11 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
 
     const profileResponse = await page.request.post('/api/profiles', {
       data: {
+        bio: 'Profile fixture for daily vibe note visibility coverage.',
         displayName: variant.name,
         handle: `daily-notes-${index}-${suffix}`,
+        profileRoles: [roleID],
+        profileSkills: [skillID],
         status: 'active',
         user: userID,
         visibility: variant.profileVisibility,
@@ -4273,7 +4351,8 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)
   await verifyFeedbackWidget(page)
-  await createProfileAndVerifyContributorCreateLinks(page)
+  const adminProfileHandle = await createProfileAndVerifyContributorCreateLinks(page)
+  await verifyRecentContributors(page, adminProfileHandle)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)
 

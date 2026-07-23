@@ -307,6 +307,7 @@ Fields:
 - `relatedProject`: relationship to `projects`, optional
 - `relatedThread`: relationship to `threads`, optional
 - `relatedProfiles`: relationship to `profiles`, has many
+- `creditedProfiles`: relationship to `profiles`, has many; only profiles whose concrete participation is supported by the activity source
 - `visibility`: `public`, `authenticated`, `admin`
 - drafts/publishing if editorial review is needed
 
@@ -316,6 +317,11 @@ Access:
 - authenticated users can read authenticated items
 - contributors can create drafts
 - editors/admins publish
+
+The member dashboard derives Recent Contributors from `creditedProfiles` on
+viewer-visible, published activity items from the last 30 days. It keeps the
+latest qualifying activity per profile and shows at most eight profiles.
+`relatedProfiles` alone must not qualify someone as a recent contributor.
 
 #### `threads`
 

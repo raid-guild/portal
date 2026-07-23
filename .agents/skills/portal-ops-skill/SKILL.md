@@ -53,7 +53,7 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 2. Identify existing projects, threads, events, and profiles that should be updated.
 3. Prefer updating existing threads over creating new threads.
 4. Create new projects only when there is a concrete collaboration surface with state, people, links, or a next action.
-5. Create activity items for specific dated events, decisions, blockers, insights, or contributions.
+5. Create activity items for specific dated events, decisions, blockers, insights, or contributions. Credit only profiles whose concrete participation the source documents; keep people who are merely mentioned in `relatedProfiles`.
 6. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
 7. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
 8. Create or update wiki pages only when the source supports durable topic knowledge, not transient recap content.
