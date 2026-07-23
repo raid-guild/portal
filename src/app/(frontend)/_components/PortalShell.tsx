@@ -410,9 +410,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   const nextEvent =
     dailyBrief?.nextEvent && typeof dailyBrief.nextEvent === 'object' ? dailyBrief.nextEvent : null
   const primaryEvent = nextEvent || upcomingEvents[0]
-  const latestPost = recentPosts[0]
-  const featuredModule = featuredModules[0]
-  const latestWikiPage = recentWikiPages[0]
   const latestPointEvent = pointEvents[0]
   const stats = dashboardStats || {
     modules: featuredModules.length,
@@ -424,7 +421,6 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
     spotlights.find(
       (spotlight) => spotlight.targetType === 'thread' && spotlight.kind === 'featured',
     ) || spotlights.find((spotlight) => spotlight.targetType === 'thread')
-  const moduleHref = getModuleHref(featuredModule)
   const dashboardQuote = getDashboardQuote(dailyBrief)
 
   return (
@@ -432,36 +428,42 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       <section className="grid gap-10 lg:grid-cols-[1fr_18rem]">
         <div>
           <p className="mb-4 portal-kicker">Member Home</p>
-          <h1 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">
-            {hasProfile ? `Welcome, ${displayName}` : 'Welcome - create your profile'}
-          </h1>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
-            {hasProfile
-              ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
-              : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
-          </p>
-          {dashboardQuote ? (
-            <figure className="mt-5 max-w-2xl border-l border-border pl-4">
-              <blockquote className="text-sm italic leading-6 text-muted-foreground">
-                &ldquo;{dashboardQuote.text}&rdquo;
-              </blockquote>
-              <figcaption className="mt-2">
-                <SafeTextLink href={dashboardQuote.href} label={dashboardQuote.label} />
-              </figcaption>
-            </figure>
-          ) : null}
+          <div className="flex items-start gap-4 sm:gap-6">
+            <img
+              alt="Tavern keeper"
+              className="h-28 w-auto shrink-0 [image-rendering:pixelated] sm:h-36 md:h-40"
+              height="268"
+              src="/assets/map/characters/tavern-keeper.svg"
+              width="176"
+            />
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl font-bold leading-tight text-foreground md:text-3xl">
+                {hasProfile ? `Welcome, ${displayName}` : 'Welcome - create your profile'}
+              </h1>
+              <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
+                {hasProfile
+                  ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
+                  : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
+              </p>
+              {dashboardQuote ? (
+                <figure className="mt-5 max-w-2xl border-l border-border pl-4">
+                  <blockquote className="text-sm italic leading-6 text-muted-foreground">
+                    &ldquo;{dashboardQuote.text}&rdquo;
+                  </blockquote>
+                  <figcaption className="mt-2">
+                    <SafeTextLink href={dashboardQuote.href} label={dashboardQuote.label} />
+                  </figcaption>
+                </figure>
+              ) : null}
+            </div>
+          </div>
         </div>
         <div className="border-l border-border pl-6 text-sm">
           <p className="font-mono text-sm font-bold">{user.email}</p>
         </div>
       </section>
 
-      <section className="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DashboardMetric href="/events" label="Sessions" value={stats.sessions} />
-        <DashboardMetric href="/modules" label="Modules" value={stats.modules} />
-        <DashboardMetric href="/posts" label="Posts" value={stats.posts} />
-        <DashboardMetric href="/wiki" label="Wiki Pages" value={stats.wikiPages} />
-      </section>
+      <DashboardNavigation className="mt-10" stats={stats} />
 
       <DashboardWeeklySessionStrip
         className="mt-10"
@@ -511,25 +513,15 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      <section className="mt-10 grid gap-6 lg:grid-cols-2">
-        <BriefPanel title="Recent Contributors">
-          {recentContributors.length ? (
-            <RecentContributorsList contributors={recentContributors} />
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No source-grounded member activity has been published in the last 30 days.
-            </p>
-          )}
-        </BriefPanel>
-
+      <div className="mt-10">
         <BriefPanel title="Highlighted Thread">
           {highlightedThread ? (
-            <SpotlightCard compact spotlight={highlightedThread} />
+            <SpotlightCard spotlight={highlightedThread} />
           ) : (
             <p className="text-sm text-muted-foreground">No highlighted thread is set.</p>
           )}
         </BriefPanel>
-      </section>
+      </div>
 
       <section className="mt-12 border border-border bg-background/70">
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-4">
@@ -630,8 +622,18 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         )}
       </section>
 
-      <section className="mt-12 max-w-xl">
-        <div className="portal-panel">
+      <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        <BriefPanel className="portal-panel" title="Recent Contributors">
+          {recentContributors.length ? (
+            <RecentContributorsList contributors={recentContributors} />
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              No source-grounded member activity has been published in the last 30 days.
+            </p>
+          )}
+        </BriefPanel>
+
+        <section className="portal-panel">
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-2">
               <LayoutDashboard className="h-5 w-5" />
@@ -656,132 +658,74 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           <Button asChild className="mt-5">
             <Link href="/me">{hasProfile ? 'Review profile' : 'Start profile'}</Link>
           </Button>
-        </div>
-      </section>
-
-      <section className="mt-16">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="portal-kicker">Explore</p>
-            <h2 className="portal-heading-sm">Explore more Portal surfaces</h2>
-          </div>
-          <p className="max-w-md text-sm text-muted-foreground">
-            Quick links back into the main spaces after you have caught up on the current week.
-          </p>
-        </div>
-        <DashboardNavigation
-          featuredModuleHref={moduleHref}
-          featuredModuleName={featuredModule?.name}
-          latestPostSlug={latestPost?.slug}
-          latestPostTitle={latestPost?.title}
-          latestWikiPageSlug={latestWikiPage?.slug}
-          latestWikiPageTitle={latestWikiPage?.title}
-          primaryEventTitle={primaryEvent?.title}
-        />
-      </section>
+        </section>
+      </div>
     </main>
   )
 }
-
-const DashboardMetric: React.FC<{ href: string; label: string; value: number }> = ({
-  href,
-  label,
-  value,
-}) => (
-  <Link
-    className="block border border-border bg-card/20 p-5 transition-colors hover:border-primary hover:bg-card/40"
-    href={href}
-  >
-    <p className="portal-kicker">{label}</p>
-    <p className="mt-3 font-serif text-5xl font-bold leading-none text-foreground">{value}</p>
-    <p className="mt-3 text-xs uppercase tracking-[0.12em] text-muted-foreground">Browse</p>
-  </Link>
-)
 
 const DashboardNavItem: React.FC<{
   href: string
   icon: React.ReactNode
   label: string
-  prefetch?: boolean
   summary: string
-}> = ({ href, icon, label, prefetch, summary }) => (
+}> = ({ href, icon, label, summary }) => (
   <li>
     <Link
       className="group flex min-h-24 items-center gap-4 px-4 py-4 transition-colors hover:bg-card/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:px-5"
       href={href}
-      prefetch={prefetch}
     >
       <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold uppercase tracking-[0.12em] text-foreground">
-          {label}
-        </span>
+        <span className="block text-base font-bold text-foreground">{label}</span>
         <span className="mt-1 block truncate text-sm text-muted-foreground">{summary}</span>
       </span>
-      <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+      <ArrowRight
+        aria-hidden="true"
+        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+      />
     </Link>
   </li>
 )
 
 const DashboardNavigation: React.FC<{
-  featuredModuleHref?: string | null
-  featuredModuleName?: string | null
-  latestPostSlug?: string | null
-  latestPostTitle?: string | null
-  latestWikiPageSlug?: string | null
-  latestWikiPageTitle?: string | null
-  primaryEventTitle?: string | null
-}> = ({
-  featuredModuleHref,
-  featuredModuleName,
-  latestPostSlug,
-  latestPostTitle,
-  latestWikiPageSlug,
-  latestWikiPageTitle,
-  primaryEventTitle,
-}) => (
-  <nav aria-label="Explore more Portal surfaces" className="border-y border-border bg-card/20">
+  className?: string
+  stats: NonNullable<DashboardProps['dashboardStats']>
+}> = ({ className, stats }) => (
+  <nav
+    aria-label="Portal sections"
+    className={`${className || ''} border-y border-border bg-card/20`}
+  >
     <ul className="grid md:grid-cols-2 xl:grid-cols-4 [&>li]:border-b [&>li]:border-border [&>li:last-child]:border-b-0 md:[&>li:nth-child(odd)]:border-r md:[&>li:nth-last-child(-n+2)]:border-b-0 xl:[&>li]:border-b-0 xl:[&>li]:border-r xl:[&>li:last-child]:border-r-0">
       <DashboardNavItem
         href="/events"
-        icon={<CalendarDays className="h-5 w-5" />}
+        icon={<CalendarDays aria-hidden="true" className="h-5 w-5" />}
         label="Sessions"
-        summary={primaryEventTitle || 'Session schedule'}
+        summary={`${stats.sessions} Total Sessions`}
       />
       <DashboardNavItem
-        href={featuredModuleHref || '/modules'}
-        icon={<Puzzle className="h-5 w-5" />}
+        href="/modules"
+        icon={<Puzzle aria-hidden="true" className="h-5 w-5" />}
         label="Modules"
-        prefetch={featuredModuleHref?.startsWith('/api/') ? false : undefined}
-        summary={featuredModuleName || 'Portal modules'}
+        summary={`${stats.modules} Total Modules`}
       />
       <DashboardNavItem
-        href={latestPostSlug ? `/posts/${latestPostSlug}` : '/posts'}
-        icon={<FileText className="h-5 w-5" />}
+        href="/posts"
+        icon={<FileText aria-hidden="true" className="h-5 w-5" />}
         label="Posts"
-        summary={latestPostTitle || 'Recent posts'}
+        summary={`${stats.posts} Total Posts`}
       />
       <DashboardNavItem
-        href={latestWikiPageSlug ? `/wiki/${latestWikiPageSlug}` : '/wiki'}
-        icon={<BookOpen className="h-5 w-5" />}
+        href="/wiki"
+        icon={<BookOpen aria-hidden="true" className="h-5 w-5" />}
         label="Wiki Pages"
-        summary={latestWikiPageTitle || 'Knowledge base'}
+        summary={`${stats.wikiPages} Total Wiki Pages`}
       />
     </ul>
   </nav>
 )
-
-const getModuleHref = (module?: Module | null) => {
-  if (!module) return null
-
-  if (module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug) {
-    return `/api/modules/${module.slug}/launch`
-  }
-
-  return toSafeURL(module.entryRoute, { allowRelative: true })
-}
 
 const SpotlightSection: React.FC<{ className?: string; spotlights: Spotlight[] }> = ({
   className,
@@ -959,11 +903,12 @@ const defaultSpotlightCTALabels: Record<NonNullable<Spotlight['targetType']>, st
   thread: 'View thread',
 }
 
-const BriefPanel: React.FC<{ children: React.ReactNode; title: string }> = ({
+const BriefPanel: React.FC<{ children: React.ReactNode; className?: string; title: string }> = ({
   children,
+  className,
   title,
 }) => (
-  <section>
+  <section className={className}>
     <h2 className="portal-heading-sm">{title}</h2>
     <div className="mt-4">{children}</div>
   </section>

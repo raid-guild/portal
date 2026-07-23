@@ -3203,7 +3203,16 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('menuitem', { name: 'Logout' })).toBeVisible()
 
   await expect(page.getByText('Member Home')).toBeVisible()
-  await expect(page.getByRole('heading', { name: /welcome/i })).toBeVisible()
+  const welcomeHeading = page.getByRole('heading', { name: /welcome/i })
+  const tavernKeeper = page.getByRole('img', { name: 'Tavern keeper' })
+  await expect(welcomeHeading).toBeVisible()
+  await expect(tavernKeeper).toBeVisible()
+  await expect(tavernKeeper).toHaveAttribute('src', '/assets/map/characters/tavern-keeper.svg')
+  const welcomeHeadingBox = await welcomeHeading.boundingBox()
+  const tavernKeeperBox = await tavernKeeper.boundingBox()
+  expect(welcomeHeadingBox).not.toBeNull()
+  expect(tavernKeeperBox).not.toBeNull()
+  expect(tavernKeeperBox!.x).toBeLessThan(welcomeHeadingBox!.x)
   await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Recent Contributors' })).toBeVisible()
@@ -3231,21 +3240,43 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
   await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Next Profile Step' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Explore more Portal surfaces' })).toBeVisible()
 
-  const exploreNavigation = page.getByRole('navigation', { name: 'Explore more Portal surfaces' })
-  await expect(exploreNavigation).toBeVisible()
-  await expect(exploreNavigation.getByRole('link', { name: /sessions/i })).toBeVisible()
-  await expect(exploreNavigation.getByRole('link', { name: /modules/i })).toBeVisible()
-  await expect(exploreNavigation.getByRole('link', { name: /^posts/i })).toBeVisible()
-  await expect(exploreNavigation.getByRole('link', { name: /wiki pages/i })).toBeVisible()
+  const portalNavigation = page.getByRole('navigation', { name: 'Portal sections' })
+  await expect(portalNavigation).toBeVisible()
+  await expect(
+    portalNavigation.getByRole('link', { name: /sessions.*total sessions/i }),
+  ).toHaveAttribute('href', '/events')
+  await expect(
+    portalNavigation.getByRole('link', { name: /modules.*total modules/i }),
+  ).toHaveAttribute('href', '/modules')
+  await expect(portalNavigation.getByRole('link', { name: /posts.*total posts/i })).toHaveAttribute(
+    'href',
+    '/posts',
+  )
+  await expect(
+    portalNavigation.getByRole('link', { name: /wiki pages.*total wiki pages/i }),
+  ).toHaveAttribute('href', '/wiki')
+  await expect(page.getByRole('heading', { name: 'Explore more Portal surfaces' })).toHaveCount(0)
+  await expect(page.getByRole('navigation', { name: 'Explore more Portal surfaces' })).toHaveCount(
+    0,
+  )
+
+  const recentContributorsHeading = page.getByRole('heading', { name: 'Recent Contributors' })
+  const nextProfileStepHeading = page.getByRole('heading', { name: 'Next Profile Step' })
+  const recentContributorsBox = await recentContributorsHeading.boundingBox()
+  const nextProfileStepBox = await nextProfileStepHeading.boundingBox()
+  expect(recentContributorsBox).not.toBeNull()
+  expect(nextProfileStepBox).not.toBeNull()
+  expect(Math.abs(recentContributorsBox!.y - nextProfileStepBox!.y)).toBeLessThanOrEqual(1)
+  expect(recentContributorsBox!.x).toBeLessThan(nextProfileStepBox!.x)
 
   await expectVerticalOrder([
-    page.getByRole('link', { name: /^Sessions\s+\d+/ }).first(),
+    portalNavigation,
     page.getByRole('heading', { name: "This Week's Sessions" }),
-    page.getByRole('heading', { name: 'Recent Contributors' }),
+    page.getByRole('heading', { name: 'Highlighted Thread' }),
     page.getByText('This Week In The Guild'),
-    page.getByRole('heading', { name: 'Explore more Portal surfaces' }),
+    recentContributorsHeading,
+    nextProfileStepHeading,
   ])
 }
 
