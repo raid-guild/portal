@@ -9,6 +9,7 @@ export type PortalAnalyticsEvent =
   | 'Inquiry Failed'
   | 'Inquiry Started'
   | 'Inquiry Submitted'
+  | 'Join CTA Clicked'
   | 'Profile Completed'
 
 type AnalyticsProperties = Record<string, boolean | number | string>

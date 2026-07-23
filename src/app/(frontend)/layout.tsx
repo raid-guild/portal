@@ -9,6 +9,7 @@ import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
 import { WidgetBubble } from './_components/WidgetBubble'
+import { JoinCTAAnalytics } from './_components/JoinCTAAnalytics'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
@@ -47,6 +48,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
+        <JoinCTAAnalytics />
         <Providers>
           <AdminBar
             adminBarProps={{

@@ -73,7 +73,12 @@ export default async function Post({ params: paramsPromise }: Args) {
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="container">
           <PostSourceContext post={post} />
-          <RichText className="max-w-[48rem] mx-auto" content={post.content} enableGutter={false} />
+          <RichText
+            analyticsContext={{ placement: 'post-body', postSlug: post.slug || slug }}
+            className="max-w-[48rem] mx-auto"
+            content={post.content}
+            enableGutter={false}
+          />
           {post.relatedPosts && post.relatedPosts.length > 0 && (
             <RelatedPosts
               className="mt-12 max-w-[52rem] lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[2fr]"
