@@ -4,6 +4,10 @@ import React from 'react'
 import { serializeLexical } from './serialize'
 
 type Props = {
+  analyticsContext?: {
+    placement: string
+    postSlug?: string
+  }
   className?: string
   content: Record<string, any>
   enableGutter?: boolean
@@ -11,6 +15,7 @@ type Props = {
 }
 
 const RichText: React.FC<Props> = ({
+  analyticsContext,
   className,
   content,
   enableGutter = true,
@@ -22,6 +27,8 @@ const RichText: React.FC<Props> = ({
 
   return (
     <div
+      data-analytics-placement={analyticsContext?.placement}
+      data-analytics-post-slug={analyticsContext?.postSlug}
       className={cn(
         {
           'container ': enableGutter,

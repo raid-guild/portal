@@ -127,6 +127,53 @@ function lexicalContent(content: string) {
   }
 }
 
+function lexicalLinkContent(label: string, url: string) {
+  return {
+    root: {
+      children: [
+        {
+          children: [
+            {
+              children: [
+                {
+                  detail: 0,
+                  format: 0,
+                  mode: 'normal',
+                  style: '',
+                  text: label,
+                  type: 'text',
+                  version: 1,
+                },
+              ],
+              direction: 'ltr',
+              fields: {
+                linkType: 'custom',
+                newTab: false,
+                url,
+              },
+              format: '',
+              indent: 0,
+              type: 'link',
+              version: 2,
+            },
+          ],
+          direction: 'ltr',
+          format: '',
+          indent: 0,
+          textFormat: 0,
+          type: 'paragraph',
+          version: 1,
+        },
+      ],
+      direction: 'ltr',
+      format: '',
+      indent: 0,
+      type: 'root',
+      version: 1,
+    },
+  }
+}
+
 function lexicalListContent(items: string[]) {
   return {
     root: {
@@ -291,6 +338,41 @@ async function verifySeededPosts(page: Page) {
     await expect(postArticle.getByLabel('Post visibility: Public')).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
   }
+}
+
+async function verifyPostJoinCTAAnalytics(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const slug = `join-cta-analytics-${suffix}`
+  const linkLabel = `Join from post ${suffix}`
+
+  const response = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalLinkContent(linkLabel, '/join'),
+      publishedAt: new Date().toISOString(),
+      slug,
+      title: `Join CTA analytics ${suffix}`,
+      visibility: 'public',
+    },
+  })
+
+  expect(response.status()).toBe(201)
+
+  await installPlausibleCapture(publicPage)
+  await publicPage.goto(`/posts/${slug}`)
+  await publicPage.getByRole('link', { name: linkLabel }).click()
+  await expect(publicPage).toHaveURL(/\/join$/)
+
+  expect(await capturedPlausibleEvents(publicPage, 'Join CTA Clicked')).toEqual([
+    {
+      name: 'Join CTA Clicked',
+      props: {
+        placement: 'post-body',
+        post_slug: slug,
+        target_path: '/join',
+      },
+    },
+  ])
 }
 
 async function verifyMapDashboard(adminPage: Page, browser: Browser, publicPage: Page) {
@@ -4218,6 +4300,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
+  await verifyPostJoinCTAAnalytics(page, publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
   await verifyMapDashboard(page, browser, publicPage)
   await verifySeededProjectSpike(publicPage)
