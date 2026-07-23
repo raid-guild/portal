@@ -130,6 +130,17 @@ export default {
           css: {
             '--tw-prose-body': 'var(--text)',
             '--tw-prose-headings': 'var(--text)',
+            '--tw-prose-links': theme('colors.blue.400'),
+            '--tw-prose-invert-links': theme('colors.blue.400'),
+            a: {
+              textDecorationColor: theme('colors.blue.400'),
+              transitionDuration: '150ms',
+              transitionProperty: 'color, text-decoration-color',
+              '&:hover': {
+                color: theme('colors.blue.300'),
+                textDecorationColor: theme('colors.blue.300'),
+              },
+            },
             h1: {
               fontSize: '3.5rem',
               fontWeight: 'normal',
