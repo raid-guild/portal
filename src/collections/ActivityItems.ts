@@ -108,6 +108,19 @@ export const ActivityItems: CollectionConfig = {
     {
       name: 'relatedProfiles',
       type: 'relationship',
+      admin: {
+        description: 'People referenced by or otherwise related to this activity.',
+      },
+      hasMany: true,
+      relationTo: 'profiles',
+    },
+    {
+      name: 'creditedProfiles',
+      type: 'relationship',
+      admin: {
+        description:
+          'Profiles whose concrete participation this activity documents. Recent credited activity can surface them on the member dashboard.',
+      },
       hasMany: true,
       relationTo: 'profiles',
     },

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import React from 'react'
 
 import { PortalDashboard } from '../../(frontend)/_components/PortalShell'
+import type { RecentContributor } from '../../(frontend)/dashboard/dashboardTypes'
 import type {
   DailyBrief,
   Event,
@@ -26,7 +27,6 @@ export default function DashboardPreviewPage() {
 
   return (
     <PortalDashboard
-      activeProfiles={createPreviewProfiles(now)}
       dailyBrief={createPreviewBrief(now, upcomingEvents[0])}
       dailyEngagementSummary={{
         currentStreak: 4,
@@ -43,6 +43,7 @@ export default function DashboardPreviewPage() {
       pointEvents={createPreviewPointEvents(now)}
       pointsTotal={85}
       recentPosts={createPreviewPosts(now)}
+      recentContributors={createPreviewContributors(now)}
       recentWikiPages={createPreviewWikiPages(now)}
       spotlights={createPreviewSpotlights(now)}
       upcomingEvents={upcomingEvents}
@@ -213,6 +214,19 @@ const createPreviewProfiles = (date: Date): Profile[] =>
         visibility: 'public',
       }) satisfies Profile,
   )
+
+const createPreviewContributors = (date: Date): RecentContributor[] =>
+  createPreviewProfiles(date).map((profile, index) => ({
+    activity: {
+      activityType: index % 2 === 0 ? 'contribution' : 'discussion',
+      happenedAt: new Date(date.getTime() - index * 24 * 60 * 60 * 1000).toISOString(),
+      title:
+        index % 2 === 0
+          ? 'Shared a source-grounded project update.'
+          : 'Moved an active guild discussion forward.',
+    },
+    profile,
+  }))
 
 const createPreviewSpotlights = (date: Date): Spotlight[] => [
   {

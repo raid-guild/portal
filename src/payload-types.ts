@@ -955,7 +955,14 @@ export interface ActivityItem {
   relatedProject?: (number | null) | Project;
   relatedThread?: (number | null) | Thread;
   relatedEvent?: (number | null) | Event;
+  /**
+   * People referenced by or otherwise related to this activity.
+   */
   relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Profiles whose concrete participation this activity documents. Recent credited activity can surface them on the member dashboard.
+   */
+  creditedProfiles?: (number | Profile)[] | null;
   visibility: 'authenticated' | 'public' | 'admin';
   publishedAt?: string | null;
   updatedAt: string;
@@ -2570,6 +2577,7 @@ export interface ActivityItemsSelect<T extends boolean = true> {
   relatedThread?: T;
   relatedEvent?: T;
   relatedProfiles?: T;
+  creditedProfiles?: T;
   visibility?: T;
   publishedAt?: T;
   updatedAt?: T;
