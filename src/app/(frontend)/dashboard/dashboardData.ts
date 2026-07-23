@@ -1,9 +1,12 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { User } from '@/payload-types'
+import type { ActivityItem, Profile, User } from '@/payload-types'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
+import type { RecentContributor } from './dashboardTypes'
+
+const recentContributorWindowDays = 30
 
 export const getAuthenticatedDashboardData = async (user: User) => {
   const [
@@ -18,7 +21,7 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     featuredModules,
     recentWikiPages,
     weekEvents,
-    activeProfiles,
+    recentContributors,
   ] = await Promise.all([
     getLatestDashboardBrief(user),
     getDailyEngagementSummary(user),
@@ -31,11 +34,11 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     getFeaturedModules(user),
     getRecentWikiPages(user),
     getWeekEvents(user),
-    getActiveProfiles(user),
+    getRecentContributors(user),
   ])
 
   return {
-    activeProfiles,
+    recentContributors,
     dailyBrief,
     dailyEngagementSummary,
     dashboardStats,
@@ -224,18 +227,63 @@ const getDashboardStats = async (user: User) => {
   }
 }
 
-const getActiveProfiles = async (user: User) => {
+const getRecentContributors = async (user: User): Promise<RecentContributor[]> => {
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'profiles',
-    depth: 1,
-    limit: 8,
+  const cutoff = new Date()
+  cutoff.setUTCDate(cutoff.getUTCDate() - recentContributorWindowDays)
+
+  const activityResult = await payload.find({
+    collection: 'activityItems',
+    depth: 0,
+    draft: false,
+    limit: 1000,
     overrideAccess: false,
     pagination: false,
-    sort: '-updatedAt',
+    sort: '-happenedAt',
     user,
     where: {
       and: [
+        {
+          _status: {
+            equals: 'published',
+          },
+        },
+        {
+          happenedAt: {
+            greater_than_equal: cutoff.toISOString(),
+          },
+        },
+      ],
+    },
+  })
+
+  const latestActivityByProfileID = new Map<string, ActivityItem>()
+
+  activityResult.docs.forEach((activity) => {
+    activity.creditedProfiles?.forEach((profile) => {
+      const profileID = getRelationshipID(profile)
+      if (!profileID || latestActivityByProfileID.has(profileID)) return
+      latestActivityByProfileID.set(profileID, activity)
+    })
+  })
+
+  const profileIDs = [...latestActivityByProfileID.keys()]
+  if (!profileIDs.length) return []
+
+  const profileResult = await payload.find({
+    collection: 'profiles',
+    depth: 1,
+    limit: profileIDs.length,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      and: [
+        {
+          id: {
+            in: profileIDs,
+          },
+        },
         {
           status: {
             equals: 'active',
@@ -250,7 +298,33 @@ const getActiveProfiles = async (user: User) => {
     },
   })
 
-  return result.docs
+  const profilesByID = new Map(
+    profileResult.docs.map((profile) => [String(profile.id), profile] as const),
+  )
+
+  return profileIDs
+    .flatMap((profileID) => {
+      const activity = latestActivityByProfileID.get(profileID)
+      const profile = profilesByID.get(profileID)
+      if (!activity || !profile) return []
+
+      return [
+        {
+          activity: {
+            activityType: activity.activityType,
+            happenedAt: activity.happenedAt,
+            title: activity.title,
+          },
+          profile,
+        },
+      ]
+    })
+    .slice(0, 8)
+}
+
+const getRelationshipID = (value: number | Profile | string): string | null => {
+  if (typeof value === 'number' || typeof value === 'string') return String(value)
+  return value?.id === undefined ? null : String(value.id)
 }
 
 const getFeaturedModules = async (user: User) => {

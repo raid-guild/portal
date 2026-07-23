@@ -132,6 +132,9 @@ Answers:
 - What project, thread, event, or people does it relate to?
 
 Activity items should be short, factual, dated, and sourceable where possible.
+Use `creditedProfiles` only for people whose concrete participation the source
+documents. Keep people who are merely mentioned or otherwise connected in
+`relatedProfiles`.
 
 Good examples:
 

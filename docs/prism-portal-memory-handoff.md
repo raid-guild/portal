@@ -145,10 +145,13 @@ Use both future and recent past sessions:
 - relatedThread
 - relatedEvent
 - relatedProfiles
+- creditedProfiles
 - visibility
 
 These are useful as recent factual history, but should be treated carefully if
 they were agent-generated from Prism.
+Only populate `creditedProfiles` when the source identifies a person's concrete
+participation. Keep people who are merely mentioned in `relatedProfiles`.
 
 ### Profiles
 

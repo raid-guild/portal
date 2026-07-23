@@ -21,7 +21,6 @@ export default async function HomePage() {
 
     return (
       <PortalDashboard
-        activeProfiles={dashboardData.activeProfiles}
         dashboardStats={dashboardData.dashboardStats}
         dailyBrief={dashboardData.dailyBrief}
         dailyEngagementSummary={dashboardData.dailyEngagementSummary}
@@ -31,6 +30,7 @@ export default async function HomePage() {
         profile={dashboardData.profile}
         recentPosts={dashboardData.recentPosts}
         recentWikiPages={dashboardData.recentWikiPages}
+        recentContributors={dashboardData.recentContributors}
         spotlights={dashboardData.spotlights}
         upcomingEvents={dashboardData.upcomingEvents}
         weekEvents={dashboardData.weekEvents}

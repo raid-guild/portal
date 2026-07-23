@@ -22,6 +22,7 @@ Input: May 11, 2026 Cohort Voice meeting digest.
     - `happenedAt`: `2026-05-11T17:00:00.000Z`
     - `relatedProject`: `Cohort Project Spike Portal`
     - `relatedThread`: `Defining the project spike object`
+    - `creditedProfiles`: only participants whose contribution to the decision is identified in the source
   source: meeting summary and quotes
 
 - collection: `threads`
@@ -62,4 +63,3 @@ Input: May 11, 2026 Cohort Voice meeting digest.
 
 - item: project management workflow
   reason: group explicitly avoided task-board/PM-tool scope
-
