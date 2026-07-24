@@ -190,6 +190,10 @@ export const Cohorts: CollectionConfig = {
     {
       name: 'featuredPosts',
       type: 'relationship',
+      admin: {
+        description:
+          'Curated cohort posts. Posts with the Announcement content type appear in the dated Announcements section.',
+      },
       hasMany: true,
       relationTo: 'posts',
     },

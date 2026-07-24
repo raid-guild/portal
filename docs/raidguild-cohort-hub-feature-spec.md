@@ -81,14 +81,15 @@ Recommended page composition:
 2. commitment state or signup CTA
 3. live or next-session card with join and calendar actions
 4. cohort-specific weekly schedule
-5. current cohort update, when a related Brief exists
-6. theme, thesis, and starter topics
-7. program details and participation expectations
-8. related or featured Projects and Threads
-9. related Posts, examples, and guides
-10. useful Modules
-11. past sessions, recordings, summaries, slides, and artifacts
-12. participant display only when visibility and consent policy allow it
+5. dated announcements backed by curated Announcement Posts
+6. current cohort update, when a related Brief exists
+7. theme, thesis, and starter topics
+8. program details and participation expectations
+9. related or featured Projects and Threads
+10. related Posts, examples, and guides
+11. useful Modules
+12. past sessions, recordings, summaries, slides, and artifacts
+13. participant display only when visibility and consent policy allow it
 
 ### Page Lifecycle
 
@@ -192,6 +193,10 @@ Do not invent scarcity or urgency.
 The Cohort record should initially hold curated relationships for Posts,
 Projects, Threads, and Modules. This gives editors control over ordering and
 which records are presented as the strongest examples.
+
+Featured Posts with `contentType: announcement` render in a dedicated,
+date-ordered Announcements section near the cohort schedule. They remain normal,
+shareable Posts and are not duplicated in the general context-and-work section.
 
 Sessions and Briefs should point back to Cohorts because those records
 accumulate independently over time and should appear automatically.

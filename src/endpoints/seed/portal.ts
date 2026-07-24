@@ -593,6 +593,7 @@ export const seedPortalContent = async ({
       data: {
         title: 'Cohort Project Spike Portal Update',
         slug: 'cohort-project-spike-portal-update',
+        contentType: 'announcement',
         content: lexicalRoot([
           headingNode('h2', [text('Cohort project spike portal update')]),
           paragraphNode(

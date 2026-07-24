@@ -349,6 +349,10 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   ).toBeVisible()
   await expect(publicPage.getByText('Agents that strengthen real community work')).toBeVisible()
   await expect(publicPage.getByRole('heading', { name: 'Starter topics' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Announcements' })).toBeVisible()
+  await expect(
+    publicPage.getByRole('link', { name: /Cohort Project Spike Portal Update/ }),
+  ).toBeVisible()
   await expect(publicPage.getByText('Cohort Project Spike Sync').first()).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Log in to join' })).toHaveAttribute(
     'href',

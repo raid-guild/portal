@@ -833,6 +833,9 @@ export interface Cohort {
       }[]
     | null;
   highlightedThread?: (number | null) | Thread;
+  /**
+   * Curated cohort posts. Posts with the Announcement content type appear in the dated Announcements section.
+   */
   featuredPosts?: (number | Post)[] | null;
   featuredProjects?: (number | Project)[] | null;
   featuredModules?: (number | Module)[] | null;

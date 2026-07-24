@@ -38,6 +38,10 @@ export default async function CohortPage({ params }: Args) {
   const cohortLabel = getCohortLabel(cohort)
   const enrollmentOpen = isEnrollmentOpen(cohort, now)
   const posts = relationDocs<Post>(cohort.featuredPosts)
+  const announcements = posts
+    .filter((post) => post.contentType === 'announcement')
+    .sort((a, b) => getTimestamp(b.publishedAt) - getTimestamp(a.publishedAt))
+  const contextPosts = posts.filter((post) => post.contentType !== 'announcement')
   const projects = relationDocs<Project>(cohort.featuredProjects)
   const modules = relationDocs<Module>(cohort.featuredModules)
   const thread = relationDoc<Thread>(cohort.highlightedThread)
@@ -97,6 +101,22 @@ export default async function CohortPage({ params }: Args) {
             heading={`${eyebrow} schedule`}
             scheduleHref="#schedule"
           />
+
+          {announcements.length ? (
+            <CohortSection heading="Announcements">
+              <div className="space-y-3">
+                {announcements.map((post) => (
+                  <RelatedCard
+                    href={`/posts/${post.slug}`}
+                    kicker={formatAnnouncementLabel(post.publishedAt)}
+                    key={post.id}
+                    summary={post.meta?.description}
+                    title={post.title}
+                  />
+                ))}
+              </div>
+            </CohortSection>
+          ) : null}
 
           {cohort.thesis || explorationVideoURL ? (
             <CohortSection heading="What we are exploring">
@@ -166,7 +186,11 @@ export default async function CohortPage({ params }: Args) {
             </CohortSection>
           ) : null}
 
-          {projects.length || posts.length || modules.length || contextLinks.length || thread ? (
+          {projects.length ||
+          contextPosts.length ||
+          modules.length ||
+          contextLinks.length ||
+          thread ? (
             <CohortSection heading="Cohort context and work">
               <div className="grid gap-4 md:grid-cols-2">
                 {thread ? (
@@ -186,7 +210,7 @@ export default async function CohortPage({ params }: Args) {
                     title={project.title}
                   />
                 ))}
-                {posts.map((post) => (
+                {contextPosts.map((post) => (
                   <RelatedCard
                     href={`/posts/${post.slug}`}
                     kicker="Post"
@@ -374,6 +398,16 @@ const formatDateRange = (start?: string | null, end?: string | null) => {
   return end
     ? `${formatter.format(new Date(start))} - ${formatter.format(new Date(end))}`
     : formatter.format(new Date(start))
+}
+const getTimestamp = (value?: string | null) => (value ? new Date(value).getTime() : 0)
+const formatAnnouncementLabel = (publishedAt?: string | null) => {
+  if (!publishedAt) return 'Announcement'
+
+  return `Announcement · ${new Intl.DateTimeFormat('en', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(publishedAt))}`
 }
 const isEnrollmentOpen = (cohort: Cohort, now: number) =>
   cohort.enrollmentStatus === 'open' &&
