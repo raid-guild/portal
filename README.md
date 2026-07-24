@@ -85,6 +85,19 @@ Use one-click deploy template:
 
 [![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/template/L8TUlT?referralCode=-Yg50p)
 
+Repository deployments use [`railway.json`](./railway.json) to keep image builds
+database-independent. Railway runs `corepack pnpm migrate:deploy` as a
+pre-deploy command, after the image builds and before traffic moves to the new
+deployment. A failed migration stops the deployment.
+
+For a branch preview against production data, create a second Portal service in
+the production Railway environment, connect it to the preview branch, and give
+it the same `DATABASE_URI`, `PAYLOAD_SECRET`, and service variables as the
+production Portal. Give the preview its own public domain and set
+`NEXT_PUBLIC_SERVER_URL` to that domain. Do not attach or reset a database, run
+seed commands, or use the local reset scripts. Preview migrations must be
+forward-compatible with the currently running production application.
+
 ### Local Setup
 
 1. Clone proejct: (recommeded) Laucnh on Railway and ejct [watch how](https://www.youtube.com/watch?v=LJFek8JP8TE). Alternatively clone this repo or fork it.
