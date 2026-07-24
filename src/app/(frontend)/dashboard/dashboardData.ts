@@ -1,8 +1,8 @@
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import type { ActivityItem, Cohort, Profile, User } from '@/payload-types'
-import { selectFeaturedCohort } from '@/cohorts/selectFeaturedCohort'
+import type { ActivityItem, Profile, User } from '@/payload-types'
+import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
 import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
@@ -38,7 +38,7 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     getRecentWikiPages(user),
     getWeekEvents(user),
     getRecentContributors(user),
-    getFeaturedCohort(user),
+    getFeaturedCohort({ user, visibility: 'visible-to-user' }),
   ])
 
   const cohortCommitment =
@@ -63,29 +63,6 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     upcomingEvents,
     weekEvents,
   }
-}
-
-const getFeaturedCohort = async (user: User): Promise<Cohort | null> => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'cohorts',
-    depth: 1,
-    draft: false,
-    limit: 20,
-    overrideAccess: false,
-    pagination: false,
-    sort: 'startsAt',
-    user,
-    where: {
-      and: [
-        { _status: { equals: 'published' } },
-        { programStatus: { in: ['gathering-interest', 'upcoming', 'active'] } },
-        { visibility: { not_equals: 'admin' } },
-      ],
-    },
-  })
-
-  return selectFeaturedCohort(result.docs)
 }
 
 const getCohortCommitment = async (user: User, cohortID: number, profileID: number) => {

@@ -27,7 +27,11 @@ import type {
   WikiPage,
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
-import { getCohortInquiryHref, getCohortLabel } from '@/cohorts/selectFeaturedCohort'
+import {
+  getCohortInquiryHref,
+  getCohortLabel,
+  isCohortEnrollmentOpen,
+} from '@/cohorts/selectFeaturedCohort'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
@@ -371,6 +375,7 @@ const PublicCohortSection: React.FC<{
   sessionThemes: Event[]
 }> = ({ cohort, sessionThemes }) => {
   const isGatheringInterest = cohort?.programStatus === 'gathering-interest'
+  const enrollmentOpen = cohort ? isCohortEnrollmentOpen(cohort) : false
   const cohortLabel = cohort ? getCohortLabel(cohort) : 'the next RaidGuild cohort'
   const interestHref = cohort
     ? getCohortInquiryHref(cohort, 'interested')
@@ -423,9 +428,7 @@ const PublicCohortSection: React.FC<{
                   href={`/cohorts/${cohort.slug}`}
                   placement="portal_home"
                 >
-                  {cohort.enrollmentStatus === 'open'
-                    ? `Join ${cohortLabel}`
-                    : 'Explore the cohort'}
+                  {enrollmentOpen ? `Join ${cohortLabel}` : 'Explore the cohort'}
                 </TrackedCohortLink>
               )}
               <TrackedInquiryLink
@@ -739,7 +742,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         )}
       </section>
 
-      <div className="mt-12 grid gap-6 xl:grid-cols-3">
+      <div className="mt-12 grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
         <BriefPanel
           className="portal-panel"
           title={
@@ -825,9 +828,10 @@ const DashboardCohortCard: React.FC<{
   const cohortHref = `/cohorts/${cohort.slug}`
   const isGatheringInterest = cohort.programStatus === 'gathering-interest'
   const isCommitted = commitment?.status === 'committed' || commitment?.status === 'waitlisted'
+  const enrollmentOpen = isCohortEnrollmentOpen(cohort)
   const heading = isGatheringInterest
     ? `${getCohortLabel(cohort)} is gathering interest`
-    : cohort.enrollmentStatus === 'open'
+    : enrollmentOpen
       ? `Join ${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'the cohort'}`
       : cohort.programStatus === 'active'
         ? `${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'The cohort'} is underway`
@@ -836,9 +840,9 @@ const DashboardCohortCard: React.FC<{
     ? 'Signal interest'
     : isCommitted
       ? 'Open your cohort'
-      : !hasProfile && cohort.enrollmentStatus === 'open'
+      : !hasProfile && enrollmentOpen
         ? 'Complete profile to join'
-        : cohort.enrollmentStatus === 'open'
+        : enrollmentOpen
           ? 'Join the cohort'
           : 'Explore the cohort'
 

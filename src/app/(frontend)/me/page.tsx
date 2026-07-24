@@ -12,6 +12,7 @@ import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { ProfileAvatarCard } from './ProfileAvatarCard'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { getSafeNextPath } from '@/utilities/safeNextPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -176,9 +177,6 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
 export const metadata: Metadata = {
   title: 'My Profile',
 }
-
-const getSafeNextPath = (next?: string) =>
-  next?.startsWith('/') && !next.startsWith('//') ? next : undefined
 
 const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
   const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null

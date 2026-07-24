@@ -40,6 +40,14 @@ The result should feel like a cohort-scoped activity hub, not a one-time
 marketing page, application tracker, course platform, or project-management
 system.
 
+## Agent Operations
+
+The exposed `portal-ops-skill` documents Cohort setup as a review-first
+workflow. Agents may assemble sourced Cohort proposals and operate related
+Posts or Events where access allows, but an editor or admin must create, update,
+or publish the Cohort record. Cohort Commitments remain self-serve Profile
+actions and must never be created on someone else's behalf.
+
 ## Product Classification
 
 Implement Cohorts as a feature module inside the Portal application.

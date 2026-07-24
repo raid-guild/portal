@@ -91,6 +91,9 @@
 - [x] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
 - [x] Serve the canonical skill from the API at `/api/portal/skills/portal-ops-skill`.
 - [x] Add `/api/portal/skills` discovery and keep `/api/portal/skills/portal-memory-publisher` as a compatibility alias.
+- [x] Document review-first Cohort page setup, announcements, related sessions,
+      enrollment states, publishing, and route verification in the exposed
+      `portal-ops-skill`.
 
 ## Phase 5C: RaidGuild Cohort Hub Module
 

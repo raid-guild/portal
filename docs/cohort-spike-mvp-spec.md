@@ -24,6 +24,11 @@ The public home may feature that module's active, upcoming, or
 interest reuses the general inquiry flow rather than becoming a project task or
 commitment.
 
+The exposed `portal-ops-skill` includes a review-first Cohort setup workflow.
+Agents can prepare sourced Cohort proposals and related Posts or Events, while
+editor/admin review remains required to create, update, or publish the Cohort
+record. Participant commitments remain self-serve Profile actions.
+
 ## Current Repo Fit
 
 Already present:

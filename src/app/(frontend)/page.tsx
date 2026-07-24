@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+
+import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 import React from 'react'
 
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
@@ -10,7 +12,6 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
-import { selectFeaturedCohort } from '@/cohorts/selectFeaturedCohort'
 
 export const dynamic = 'force-dynamic'
 
@@ -106,22 +107,7 @@ const getRecentPosts = async () => {
 
 const getPublicCohortSnapshot = async () => {
   const payload = await getPayload({ config: configPromise })
-  const cohorts = await payload.find({
-    collection: 'cohorts',
-    depth: 1,
-    draft: false,
-    limit: 20,
-    overrideAccess: false,
-    pagination: false,
-    sort: 'startsAt',
-    where: {
-      and: [
-        { _status: { equals: 'published' } },
-        { programStatus: { in: ['gathering-interest', 'upcoming', 'active'] } },
-        { visibility: { equals: 'public' } },
-      ],
-    },
-  })
+  const cohort = await getFeaturedCohort({ visibility: 'public' })
 
   const pastSessions = await payload.find({
     collection: 'events',
@@ -142,7 +128,7 @@ const getPublicCohortSnapshot = async () => {
   })
 
   return {
-    cohort: selectFeaturedCohort(cohorts.docs),
+    cohort,
     sessionThemes: pastSessions.docs.slice(0, 3),
   }
 }

@@ -50,6 +50,7 @@ import * as migration_20260724_120000_activity_item_source_key from './20260724_
 import * as migration_20260724_143514_cohort_hub from './20260724_143514_cohort_hub'
 import * as migration_20260724_150742_cohort_media_links from './20260724_150742_cohort_media_links'
 import * as migration_20260724_151843_cohort_gathering_interest from './20260724_151843_cohort_gathering_interest'
+import * as migration_20260724_180000_cohort_commitment_cascades from './20260724_180000_cohort_commitment_cascades'
 
 export const migrations = [
   {
@@ -311,5 +312,10 @@ export const migrations = [
     up: migration_20260724_151843_cohort_gathering_interest.up,
     down: migration_20260724_151843_cohort_gathering_interest.down,
     name: '20260724_151843_cohort_gathering_interest',
+  },
+  {
+    up: migration_20260724_180000_cohort_commitment_cascades.up,
+    down: migration_20260724_180000_cohort_commitment_cascades.down,
+    name: '20260724_180000_cohort_commitment_cascades',
   },
 ]

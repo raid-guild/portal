@@ -8,7 +8,7 @@ const postgresPort = Number(process.env.E2E_POSTGRES_PORT ?? '54329')
 const postgresDb = process.env.E2E_POSTGRES_DB ?? 'payload_e2e'
 const postgresUser = process.env.E2E_POSTGRES_USER ?? 'postgres'
 const postgresPassword = process.env.E2E_POSTGRES_PASSWORD ?? 'postgres'
-const databaseURI = `postgres://${postgresUser}:${postgresPassword}@127.0.0.1:${postgresPort}/${postgresDb}`
+const databaseURI = `postgres://${encodeURIComponent(postgresUser)}:${encodeURIComponent(postgresPassword)}@127.0.0.1:${postgresPort}/${encodeURIComponent(postgresDb)}`
 
 const env = {
   ...process.env,

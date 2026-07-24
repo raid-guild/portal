@@ -444,6 +444,11 @@ When picking up work:
 5. Add or update seed data when the feature depends on visible content.
 6. Run relevant tests before claiming completion.
 
+Automated Portal operations should use the exposed `portal-ops-skill`. Cohort
+setup is review-first: agents may assemble sourced Cohort payloads and related
+Posts or Events, but only an editor or admin applies or publishes the Cohort
+record. Never create a participant's Cohort Commitment on their behalf.
+
 For app behavior, build tooling, auth, admin flows, seeding, comments, routing, or rendering changes, run:
 
 ```sh

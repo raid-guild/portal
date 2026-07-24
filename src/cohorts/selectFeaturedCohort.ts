@@ -12,6 +12,18 @@ export const selectFeaturedCohort = (cohorts: Cohort[]) =>
 export const getCohortLabel = (cohort: Pick<Cohort, 'cohortNumber' | 'title'>) =>
   cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : cohort.title
 
+export const isCohortEnrollmentOpen = (
+  cohort: Pick<
+    Cohort,
+    'enrollmentClosesAt' | 'enrollmentOpensAt' | 'enrollmentStatus' | 'programStatus'
+  >,
+  now = Date.now(),
+) =>
+  cohort.programStatus !== 'gathering-interest' &&
+  cohort.enrollmentStatus === 'open' &&
+  (!cohort.enrollmentOpensAt || new Date(cohort.enrollmentOpensAt).getTime() <= now) &&
+  (!cohort.enrollmentClosesAt || new Date(cohort.enrollmentClosesAt).getTime() >= now)
+
 export const getCohortInquiryHref = (
   cohort: Pick<Cohort, 'cohortNumber' | 'slug' | 'title'>,
   intent: 'interested' | 'suggest-topic',

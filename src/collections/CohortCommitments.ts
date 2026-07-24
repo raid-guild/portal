@@ -7,6 +7,7 @@ import {
 } from '@/access/cohortCommitments'
 import { getProfileIDsForUser, getRelationshipID } from '@/access/projectStewards'
 import { contentEditors, canEditContent } from '@/access/roles'
+import { isCohortEnrollmentOpen } from '@/cohorts/selectFeaturedCohort'
 
 const prepareCommitment: CollectionBeforeValidateHook = async ({
   data,
@@ -32,7 +33,7 @@ const prepareCommitment: CollectionBeforeValidateHook = async ({
       throw new Error('You may commit to or withdraw from a cohort.')
     }
 
-    if (nextStatus === 'committed' && originalDoc?.status === 'withdrawn') {
+    if (nextStatus === 'committed' && originalDoc?.status !== 'committed') {
       const cohortID = getRelationshipID(originalDoc.cohort)
       if (!cohortID) throw new Error('This commitment is not connected to a cohort.')
       await assertEnrollmentOpen(req, cohortID)
@@ -133,7 +134,7 @@ export const CohortCommitments: CollectionConfig = {
           return { ...data, withdrawnAt: data.withdrawnAt || new Date().toISOString() }
         }
 
-        if (data.status === 'committed' && originalDoc?.status === 'withdrawn') {
+        if (data.status === 'committed' && originalDoc?.status !== 'committed') {
           return {
             ...data,
             committedAt: data.committedAt || new Date().toISOString(),
@@ -165,15 +166,7 @@ const assertEnrollmentOpen = async (
     overrideAccess: false,
     user: req.user,
   })
-  const now = Date.now()
-  const opensAt = cohort.enrollmentOpensAt ? new Date(cohort.enrollmentOpensAt).getTime() : null
-  const closesAt = cohort.enrollmentClosesAt ? new Date(cohort.enrollmentClosesAt).getTime() : null
-
-  if (
-    cohort.enrollmentStatus !== 'open' ||
-    (opensAt !== null && opensAt > now) ||
-    (closesAt !== null && closesAt < now)
-  ) {
+  if (!isCohortEnrollmentOpen(cohort)) {
     throw new Error('Enrollment is not open for this cohort.')
   }
 }

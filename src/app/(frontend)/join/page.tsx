@@ -6,6 +6,7 @@ import { SignupForm } from '../_components/SignupForm'
 import { TrackedInquiryLink } from '../_components/TrackedInquiryLink'
 import type { InquiryAnalyticsType } from '@/utilities/analytics'
 import { getJoinPageCopy } from '@/utilities/pageCopy'
+import { getSafeNextPath } from '@/utilities/safeNextPath'
 
 type Args = {
   searchParams?: Promise<{
@@ -112,9 +113,6 @@ const normalizeEmail = (email: string | undefined) => {
 
   return normalized && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : undefined
 }
-
-const getSafeNextPath = (next?: string) =>
-  next && next.startsWith('/') && !next.startsWith('//') ? next : null
 
 const inquiryTypes = new Set<InquiryAnalyticsType>([
   'client',

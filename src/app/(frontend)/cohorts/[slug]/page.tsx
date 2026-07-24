@@ -7,7 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { Cohort, Event, Media, Module, Post, Profile, Project, Thread } from '@/payload-types'
-import { getCohortLabel } from '@/cohorts/selectFeaturedCohort'
+import { getCohortLabel, isCohortEnrollmentOpen } from '@/cohorts/selectFeaturedCohort'
 import { Button } from '@/components/ui/button'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
@@ -36,7 +36,7 @@ export default async function CohortPage({ params }: Args) {
     ? `RaidGuild Cohort ${cohort.cohortNumber}`
     : 'RaidGuild Cohort'
   const cohortLabel = getCohortLabel(cohort)
-  const enrollmentOpen = isEnrollmentOpen(cohort, now)
+  const enrollmentOpen = isCohortEnrollmentOpen(cohort, now)
   const posts = relationDocs<Post>(cohort.featuredPosts)
   const announcements = posts
     .filter((post) => post.contentType === 'announcement')
@@ -409,11 +409,6 @@ const formatAnnouncementLabel = (publishedAt?: string | null) => {
     year: 'numeric',
   }).format(new Date(publishedAt))}`
 }
-const isEnrollmentOpen = (cohort: Cohort, now: number) =>
-  cohort.enrollmentStatus === 'open' &&
-  (!cohort.enrollmentOpensAt || new Date(cohort.enrollmentOpensAt).getTime() <= now) &&
-  (!cohort.enrollmentClosesAt || new Date(cohort.enrollmentClosesAt).getTime() >= now)
-
 const CohortSection: React.FC<{ children: React.ReactNode; heading: string }> = ({
   children,
   heading,
@@ -447,33 +442,37 @@ const RelatedCard = ({
     {summary ? <p className="mt-2 text-sm leading-6 text-muted-foreground">{summary}</p> : null}
   </Link>
 )
-const NextSession = ({ event }: { event: Event }) => (
-  <section className="portal-panel border-primary/40">
-    <p className="portal-kicker">Next cohort session</p>
-    <div className="mt-3 flex flex-wrap items-start justify-between gap-5">
-      <div>
-        <h2 className="portal-heading-sm">{event.title}</h2>
-        <SessionDateTime
-          className="mt-2 block text-sm text-muted-foreground"
-          endsAt={event.endsAt}
-          startsAt={event.startsAt}
-        />
-      </div>
-      <div className="flex gap-3">
-        <Button asChild>
-          <Link href={`/events/${event.id}`}>Session details</Link>
-        </Button>
-        {toSafeURL(event.joinURL, { allowRelative: false }) ? (
-          <Button asChild variant="outline">
-            <a href={event.joinURL!} rel="noopener noreferrer" target="_blank">
-              Join session
-            </a>
+const NextSession = ({ event }: { event: Event }) => {
+  const joinURL = toSafeURL(event.joinURL, { allowRelative: false })
+
+  return (
+    <section className="portal-panel border-primary/40">
+      <p className="portal-kicker">Next cohort session</p>
+      <div className="mt-3 flex flex-wrap items-start justify-between gap-5">
+        <div>
+          <h2 className="portal-heading-sm">{event.title}</h2>
+          <SessionDateTime
+            className="mt-2 block text-sm text-muted-foreground"
+            endsAt={event.endsAt}
+            startsAt={event.startsAt}
+          />
+        </div>
+        <div className="flex gap-3">
+          <Button asChild>
+            <Link href={`/events/${event.id}`}>Session details</Link>
           </Button>
-        ) : null}
+          {joinURL ? (
+            <Button asChild variant="outline">
+              <a href={joinURL} rel="noopener noreferrer" target="_blank">
+                Join session
+              </a>
+            </Button>
+          ) : null}
+        </div>
       </div>
-    </div>
-  </section>
-)
+    </section>
+  )
+}
 const SessionRow = ({ event }: { event: Event }) => (
   <Link
     className="portal-card flex flex-wrap items-center justify-between gap-4 hover:border-primary"
