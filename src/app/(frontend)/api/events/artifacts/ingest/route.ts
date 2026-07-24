@@ -3,6 +3,8 @@ import { headers } from 'next/headers'
 import { getPayload } from 'payload'
 
 import { canContributeContent } from '@/access/roles'
+import { toActivityVisibility } from '@/activityItems/activityVisibility'
+import { recordPortalActivity } from '@/activityItems/recordPortalActivity'
 import type { Event } from '@/payload-types'
 import { validateSafeURL } from '@/utilities/safeURL'
 
@@ -97,6 +99,38 @@ export async function POST(request: Request) {
     overrideAccess: true,
     user,
   })
+
+  const visibility = toActivityVisibility(updated.visibility)
+  if (visibility) {
+    try {
+      await recordPortalActivity({
+        activityType: 'event',
+        body: updated.summary || undefined,
+        happenedAt: new Date(),
+        relatedEvent: updated.id,
+        relatedProfiles: [
+          updated.speaker,
+          ...(updated.hostProfiles || []),
+          ...(updated.speakerProfiles || []),
+        ],
+        req: {
+          payload,
+          user,
+        },
+        sourceKey: `event:${updated.id}:artifact-ingested`,
+        sourceLabel: sourceStatus === 'summarized' ? 'Session summary' : 'Session artifact',
+        sourceURL: sourceArtifactURL || recordingURL || undefined,
+        title: `Added session artifacts: ${updated.title}`,
+        visibility,
+      })
+    } catch (error) {
+      payload.logger.warn({
+        err: error,
+        eventID: updated.id,
+        msg: 'Failed to record event artifact activity.',
+      })
+    }
+  }
 
   return Response.json({
     event: updated,

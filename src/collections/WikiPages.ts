@@ -17,6 +17,7 @@ import { contentEditors, hasRole } from '@/access/roles'
 import { createWikiPages, readVisibleWikiPages, updateWikiPages } from '@/access/wikiPages'
 import { Banner } from '@/blocks/Banner/config'
 import { Code } from '@/blocks/Code/config'
+import { recordWikiPagePublishedActivity } from '@/collections/WikiPages/hooks/recordWikiPagePublishedActivity'
 import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
@@ -421,6 +422,7 @@ export const WikiPages: CollectionConfig = {
     }),
   ],
   hooks: {
+    afterChange: [recordWikiPagePublishedActivity],
     beforeChange: [
       ({ data, originalDoc }) => {
         const nextStatus = data?._status ?? originalDoc?._status

@@ -951,6 +951,10 @@ export interface ActivityItem {
   activityType: 'discussion' | 'decision' | 'project' | 'insight' | 'blocker' | 'event' | 'contribution';
   happenedAt: string;
   sourceLabel?: string | null;
+  /**
+   * Stable key used by portal action hooks to avoid duplicate activity items.
+   */
+  sourceKey?: string | null;
   sourceURL?: string | null;
   relatedProject?: (number | null) | Project;
   relatedThread?: (number | null) | Thread;
@@ -2572,6 +2576,7 @@ export interface ActivityItemsSelect<T extends boolean = true> {
   activityType?: T;
   happenedAt?: T;
   sourceLabel?: T;
+  sourceKey?: T;
   sourceURL?: T;
   relatedProject?: T;
   relatedThread?: T;

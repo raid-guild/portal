@@ -21,6 +21,7 @@ import { MediaBlock } from '../../blocks/MediaBlock/config'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { enforcePostWorkflow } from './hooks/enforcePostWorkflow'
 import { populateAuthors } from './hooks/populateAuthors'
+import { recordPostPublishedActivity } from './hooks/recordPostPublishedActivity'
 import { revalidatePost } from './hooks/revalidatePost'
 import { validateSafeURL } from '@/utilities/safeURL'
 
@@ -380,7 +381,7 @@ export const Posts: CollectionConfig<'posts'> = {
     ...slugField(),
   ],
   hooks: {
-    afterChange: [revalidatePost],
+    afterChange: [revalidatePost, recordPostPublishedActivity],
     afterRead: [populateAuthors],
     beforeChange: [enforcePostWorkflow],
   },
