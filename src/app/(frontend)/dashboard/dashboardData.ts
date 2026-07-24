@@ -4,9 +4,9 @@ import { getPayload } from 'payload'
 import type { ActivityItem, Profile, User } from '@/payload-types'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
-import type { RecentContributor } from './dashboardTypes'
+import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
 
-const recentContributorWindowDays = 30
+const recentContributorWindowDays = 90
 
 export const getAuthenticatedDashboardData = async (user: User) => {
   const [
@@ -21,7 +21,7 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     featuredModules,
     recentWikiPages,
     weekEvents,
-    recentContributors,
+    recentContributorResult,
   ] = await Promise.all([
     getLatestDashboardBrief(user),
     getDailyEngagementSummary(user),
@@ -38,7 +38,8 @@ export const getAuthenticatedDashboardData = async (user: User) => {
   ])
 
   return {
-    recentContributors,
+    recentContributorMode: recentContributorResult.mode,
+    recentContributors: recentContributorResult.contributors,
     dailyBrief,
     dailyEngagementSummary,
     dashboardStats,
@@ -227,7 +228,9 @@ const getDashboardStats = async (user: User) => {
   }
 }
 
-const getRecentContributors = async (user: User): Promise<RecentContributor[]> => {
+const getRecentContributors = async (
+  user: User,
+): Promise<{ contributors: RecentContributor[]; mode: RecentContributorMode }> => {
   const payload = await getPayload({ config: configPromise })
   const cutoff = new Date()
   cutoff.setUTCDate(cutoff.getUTCDate() - recentContributorWindowDays)
@@ -268,22 +271,75 @@ const getRecentContributors = async (user: User): Promise<RecentContributor[]> =
   })
 
   const profileIDs = [...latestActivityByProfileID.keys()]
-  if (!profileIDs.length) return []
+  if (profileIDs.length) {
+    const profileResult = await payload.find({
+      collection: 'profiles',
+      depth: 1,
+      limit: profileIDs.length,
+      overrideAccess: false,
+      pagination: false,
+      user,
+      where: {
+        and: [
+          {
+            id: {
+              in: profileIDs,
+            },
+          },
+          {
+            status: {
+              equals: 'active',
+            },
+          },
+          {
+            visibility: {
+              not_equals: 'private',
+            },
+          },
+        ],
+      },
+    })
 
-  const profileResult = await payload.find({
+    const profilesByID = new Map(
+      profileResult.docs.map((profile) => [String(profile.id), profile] as const),
+    )
+    const contributors = profileIDs
+      .flatMap((profileID) => {
+        const activity = latestActivityByProfileID.get(profileID)
+        const profile = profilesByID.get(profileID)
+        if (!activity || !profile) return []
+
+        return [
+          {
+            activity: {
+              activityType: activity.activityType,
+              happenedAt: activity.happenedAt,
+              title: activity.title,
+            },
+            profile,
+          },
+        ]
+      })
+      .slice(0, 8)
+
+    if (contributors.length) {
+      return {
+        contributors,
+        mode: 'recent-contributors',
+      }
+    }
+  }
+
+  const fallbackProfiles = await payload.find({
     collection: 'profiles',
     depth: 1,
-    limit: profileIDs.length,
+    limit: 8,
     overrideAccess: false,
     pagination: false,
+    sort: 'displayName',
     user,
     where: {
       and: [
-        {
-          id: {
-            in: profileIDs,
-          },
-        },
         {
           status: {
             equals: 'active',
@@ -298,28 +354,10 @@ const getRecentContributors = async (user: User): Promise<RecentContributor[]> =
     },
   })
 
-  const profilesByID = new Map(
-    profileResult.docs.map((profile) => [String(profile.id), profile] as const),
-  )
-
-  return profileIDs
-    .flatMap((profileID) => {
-      const activity = latestActivityByProfileID.get(profileID)
-      const profile = profilesByID.get(profileID)
-      if (!activity || !profile) return []
-
-      return [
-        {
-          activity: {
-            activityType: activity.activityType,
-            happenedAt: activity.happenedAt,
-            title: activity.title,
-          },
-          profile,
-        },
-      ]
-    })
-    .slice(0, 8)
+  return {
+    contributors: fallbackProfiles.docs.map((profile) => ({ profile })),
+    mode: 'member-discovery',
+  }
 }
 
 const getRelationshipID = (value: number | Profile | string): string | null => {
