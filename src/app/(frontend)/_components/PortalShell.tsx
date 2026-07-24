@@ -444,8 +444,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
                 {hasProfile
-                  ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
-                  : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
+                  ? "I'm the tavern keeper around here. Let me pour you an ale while you catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now."
+                  : "I'm the tavern keeper around here. Let me pour you an ale while you create your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools."}
               </p>
               {dashboardQuote ? (
                 <figure className="mt-5 max-w-2xl border-l border-border pl-4">
