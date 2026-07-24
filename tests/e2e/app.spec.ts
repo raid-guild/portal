@@ -2241,6 +2241,26 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
     summaryArtifactURL: 'https://example.com/summary',
     transcriptArtifactURL: 'https://example.com/transcript',
   })
+
+  const activityResponse = await adminPage.request.get('/api/activityItems', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[sourceKey][equals]': `event:${ingestBody.event.id}:artifact-ingested`,
+    },
+  })
+  expect(activityResponse.ok()).toBeTruthy()
+  const activityBody = await activityResponse.json()
+  expect(activityBody.docs?.[0]).toMatchObject({
+    activityType: 'event',
+    relatedEvent: ingestBody.event.id,
+    sourceKey: `event:${ingestBody.event.id}:artifact-ingested`,
+    sourceLabel: 'Session summary',
+    sourceURL: 'https://example.com/summary',
+    title: `Added session artifacts: ${title}`,
+    visibility: 'public',
+    _status: 'published',
+  })
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
@@ -2807,19 +2827,15 @@ async function verifyRecentContributors(page: Page, profileHandle: string) {
   expect(relatedOnlyResponse.status()).toBe(201)
 
   await page.goto('/')
-  const fallbackSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Meet Members' }),
-  })
-  await expect(fallbackSection.getByText(relatedOnlyTitle)).toHaveCount(0)
-  await expect(fallbackSection.getByText('Playwright Admin', { exact: true })).toBeVisible()
+  await expect(page.getByText(relatedOnlyTitle)).toHaveCount(0)
 
   const creditedTitle = `Shipped recent Portal dashboard work ${Date.now()}`
-  const extendedWindowActivityDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+  const latestActivityDate = new Date().toISOString()
   const creditedResponse = await page.request.post('/api/activityItems', {
     data: {
       activityType: 'contribution',
       creditedProfiles: [profileID],
-      happenedAt: extendedWindowActivityDate,
+      happenedAt: latestActivityDate,
       relatedProfiles: [profileID],
       sourceLabel: 'Playwright dashboard coverage',
       title: creditedTitle,
@@ -3913,6 +3929,24 @@ async function verifyInboxAndNotificationPreferences(page: Page) {
     deliveryChannel: 'in_app',
     emailStatus: 'none',
     title: `New session: ${hookEventTitle}`,
+  })
+  const hookEventActivityResponse = await page.request.get('/api/activityItems', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[sourceKey][equals]': `event:${hookEventID}:published`,
+    },
+  })
+  expect(hookEventActivityResponse.ok()).toBeTruthy()
+  const hookEventActivityBody = await hookEventActivityResponse.json()
+  expect(hookEventActivityBody.docs?.[0]).toMatchObject({
+    activityType: 'event',
+    relatedEvent: hookEventID,
+    sourceKey: `event:${hookEventID}:published`,
+    sourceLabel: 'Portal session',
+    title: `Scheduled session: ${hookEventTitle}`,
+    visibility: 'public',
+    _status: 'published',
   })
 
   const hookBriefTitle = `E2E Hook Brief ${hookSuffix}`

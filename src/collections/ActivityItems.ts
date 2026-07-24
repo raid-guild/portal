@@ -85,6 +85,17 @@ export const ActivityItems: CollectionConfig = {
       type: 'text',
     },
     {
+      name: 'sourceKey',
+      type: 'text',
+      admin: {
+        description: 'Stable key used by portal action hooks to avoid duplicate activity items.',
+        position: 'sidebar',
+        readOnly: true,
+      },
+      index: true,
+      unique: true,
+    },
+    {
       name: 'sourceURL',
       type: 'text',
       validate: (value) =>
