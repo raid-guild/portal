@@ -5,6 +5,7 @@ import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { canContributeContent, contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
 import { createEventPublishedNotifications } from './Events/hooks/createEventPublishedNotifications'
+import { recordEventPublishedActivity } from './Events/hooks/recordEventPublishedActivity'
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -547,7 +548,7 @@ export const Events: CollectionConfig = {
     },
   ],
   hooks: {
-    afterChange: [createEventPublishedNotifications],
+    afterChange: [createEventPublishedNotifications, recordEventPublishedActivity],
   },
   versions: {
     drafts: true,

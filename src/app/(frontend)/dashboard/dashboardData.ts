@@ -7,6 +7,7 @@ import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEng
 import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
 
 const recentContributorWindowDays = 90
+const memberDiscoveryPoolLimit = 1000
 
 export const getAuthenticatedDashboardData = async (user: User) => {
   const [
@@ -333,7 +334,7 @@ const getRecentContributors = async (
   const fallbackProfiles = await payload.find({
     collection: 'profiles',
     depth: 1,
-    limit: 8,
+    limit: memberDiscoveryPoolLimit,
     overrideAccess: false,
     pagination: false,
     sort: 'displayName',
@@ -353,9 +354,22 @@ const getRecentContributors = async (
       ],
     },
   })
+  const memberDiscoverySeed = getMemberDiscoverySeed()
+  const memberDiscoveryProfiles = fallbackProfiles.docs
+    .map((profile) => ({
+      profile,
+      contentScore: getFallbackProfileContentScore(profile),
+      rotationScore: hashString(`${memberDiscoverySeed}:${profile.id}`),
+    }))
+    .sort((a, b) => {
+      if (b.contentScore !== a.contentScore) return b.contentScore - a.contentScore
+      if (a.rotationScore !== b.rotationScore) return a.rotationScore - b.rotationScore
+      return a.profile.displayName.localeCompare(b.profile.displayName)
+    })
+    .slice(0, 8)
 
   return {
-    contributors: fallbackProfiles.docs.map((profile) => ({ profile })),
+    contributors: memberDiscoveryProfiles.map(({ profile }) => ({ profile })),
     mode: 'member-discovery',
   }
 }
@@ -363,6 +377,27 @@ const getRecentContributors = async (
 const getRelationshipID = (value: number | Profile | string): string | null => {
   if (typeof value === 'number' || typeof value === 'string') return String(value)
   return value?.id === undefined ? null : String(value.id)
+}
+
+const getMemberDiscoverySeed = () => new Date().toISOString().slice(0, 10)
+
+const getFallbackProfileContentScore = (profile: Profile) => {
+  let score = 0
+  if (profile.bio?.trim()) score += 2
+  if (profile.avatar) score += 2
+  if (profile.links?.length) score += 1
+  return score
+}
+
+const hashString = (value: string) => {
+  let hash = 0
+
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash << 5) - hash + value.charCodeAt(index)
+    hash |= 0
+  }
+
+  return hash >>> 0
 }
 
 const getFeaturedModules = async (user: User) => {

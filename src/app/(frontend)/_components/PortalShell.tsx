@@ -121,6 +121,13 @@ const cleanQuoteText = (value?: string | null) => {
   return `${sentence.slice(0, 157).trim()}...`
 }
 
+const truncateProfileBio = (bio?: string | null) => {
+  const text = bio?.replace(/\s+/g, ' ').trim()
+  if (!text || text.length <= 130) return text
+
+  return `${text.slice(0, 127).trim()}...`
+}
+
 const getDashboardQuote = (brief?: DailyBrief | null): DashboardQuote | null => {
   if (!brief?.sections?.length) return null
 
@@ -970,12 +977,12 @@ const RecentContributorsList: React.FC<{ contributors: RecentContributor[] }> = 
               {profile.handle ? `@${profile.handle}` : 'Member profile'}
             </span>
             <span className="mt-2 block line-clamp-2 text-xs leading-5 text-muted-foreground">
-              {activity?.title || profile.bio}
+              {activity?.title || truncateProfileBio(profile.bio)}
             </span>
             <span className="mt-1 block portal-kicker">
               {activity
                 ? `${activityTypeLabels[activity.activityType]} · ${formatDate(activity.happenedAt)}`
-                : 'Member profile'}
+                : ''}
             </span>
           </span>
         </Link>
