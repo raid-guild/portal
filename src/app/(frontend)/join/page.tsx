@@ -6,12 +6,14 @@ import { SignupForm } from '../_components/SignupForm'
 import { TrackedInquiryLink } from '../_components/TrackedInquiryLink'
 import type { InquiryAnalyticsType } from '@/utilities/analytics'
 import { getJoinPageCopy } from '@/utilities/pageCopy'
+import { getSafeNextPath } from '@/utilities/safeNextPath'
 
 type Args = {
   searchParams?: Promise<{
     email?: string
     inquiry?: string
     inquiryType?: string
+    next?: string
   }>
 }
 
@@ -21,6 +23,7 @@ export default async function JoinPage({ searchParams }: Args) {
   const initialEmail = normalizeEmail(params?.email)
   const hasInquiryContext = Boolean(params?.inquiry)
   const inquiryType = normalizeInquiryType(params?.inquiryType)
+  const nextPath = getSafeNextPath(params?.next)
 
   return (
     <main className="container pb-24 pt-12">
@@ -54,13 +57,14 @@ export default async function JoinPage({ searchParams }: Args) {
           <SignupForm
             initialEmail={initialEmail}
             inquiryType={inquiryType}
+            nextPath={nextPath || undefined}
             signupContext={hasInquiryContext ? 'inquiry' : 'direct'}
           />
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link
               className="font-bold text-foreground underline decoration-primary/50"
-              href="/login"
+              href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
             >
               Log in
             </Link>

@@ -340,6 +340,129 @@ async function verifySeededPosts(page: Page) {
   }
 }
 
+async function verifyCohortHub(adminPage: Page, publicPage: Page) {
+  const cohortPath = '/cohorts/agentic-guild-operations'
+
+  await publicPage.goto(cohortPath)
+  await expect(
+    publicPage.getByRole('heading', { name: 'Agentic Guild Operations', exact: true }),
+  ).toBeVisible()
+  await expect(publicPage.getByText('Agents that strengthen real community work')).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Starter topics' })).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'Announcements' })).toBeVisible()
+  await expect(
+    publicPage.getByRole('link', { name: /Cohort Project Spike Portal Update/ }),
+  ).toBeVisible()
+  await expect(publicPage.getByText('Cohort Project Spike Sync').first()).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Log in to join' })).toHaveAttribute(
+    'href',
+    /\/login\?next=%2Fcohorts%2Fagentic-guild-operations/,
+  )
+
+  const cohortResponse = await publicPage.request.get('/api/cohorts', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[slug][equals]': 'agentic-guild-operations',
+    },
+  })
+  expect(cohortResponse.ok()).toBeTruthy()
+  const cohort = (await cohortResponse.json()).docs[0]
+  expect(cohort?.id).toBeTruthy()
+
+  const enrichedCohortResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+    data: {
+      _status: 'published',
+      contextLinks: [
+        {
+          summary: 'External context remains explicit and editor curated.',
+          title: 'E2E cohort reference',
+          url: 'https://www.raidguild.org/',
+        },
+      ],
+      explorationVideoURL: 'https://www.youtube.com/watch?v=M7lc1UVf-VE',
+    },
+  })
+  expect(enrichedCohortResponse.ok()).toBeTruthy()
+
+  await publicPage.goto(cohortPath)
+  await expect(publicPage.locator('iframe[title*="what we are exploring"]')).toHaveAttribute(
+    'src',
+    'https://www.youtube-nocookie.com/embed/M7lc1UVf-VE',
+  )
+  await expect(publicPage.getByRole('link', { name: /E2E cohort reference/ })).toHaveAttribute(
+    'target',
+    '_blank',
+  )
+
+  const anonymousCommitment = await publicPage.request.post('/api/cohortCommitments', {
+    data: { cohort: cohort.id },
+  })
+  expect([401, 403]).toContain(anonymousCommitment.status())
+
+  await adminPage.goto('/dashboard')
+  await expect(adminPage.getByRole('heading', { name: 'Join Cohort 8' })).toBeVisible()
+  await expect(adminPage.getByText('Agents that strengthen real community work')).toBeVisible()
+  await adminPage.getByRole('link', { name: 'Join the cohort' }).click()
+  await expect(adminPage).toHaveURL(new RegExp(`${cohortPath}$`))
+
+  await adminPage.getByRole('button', { name: 'Join the cohort' }).click()
+  await expect(
+    adminPage.getByRole('heading', { name: 'You are connected to this cohort.' }),
+  ).toBeVisible()
+
+  const duplicateCommitment = await adminPage.request.post('/api/cohortCommitments', {
+    data: { cohort: cohort.id },
+  })
+  expect(duplicateCommitment.ok()).toBeFalsy()
+
+  await adminPage.getByRole('button', { name: 'Withdraw commitment' }).click()
+  await expect(adminPage.getByRole('heading', { name: 'Rejoin this cohort' })).toBeVisible()
+  await adminPage.getByRole('button', { name: 'Join the cohort' }).click()
+  await expect(
+    adminPage.getByRole('heading', { name: 'You are connected to this cohort.' }),
+  ).toBeVisible()
+
+  const gatheringInterestResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+    data: {
+      _status: 'published',
+      enrollmentStatus: 'closed',
+      programStatus: 'gathering-interest',
+    },
+  })
+  expect(gatheringInterestResponse.ok()).toBeTruthy()
+
+  await publicPage.goto(cohortPath)
+  await expect(publicPage.getByText('Gathering interest').first()).toBeVisible()
+  await expect(
+    publicPage.getByRole('heading', { name: 'Help shape this future cohort' }),
+  ).toBeVisible()
+  await publicPage.getByRole('link', { name: "I'm interested" }).click()
+  await expect(publicPage).toHaveURL(/context=cohort-interest.*intent=interested/)
+  await expect(publicPage.locator('textarea[name="message"]')).toHaveValue(
+    "I'm interested in Cohort 8.",
+  )
+
+  await publicPage.goto(cohortPath)
+  await publicPage.getByRole('link', { name: 'Suggest a topic' }).click()
+  await expect(publicPage.locator('textarea[name="message"]')).toHaveValue(
+    'I would like to suggest a future topic for Cohort 8: ',
+  )
+
+  await publicPage.goto('/')
+  await expect(publicPage.getByText('Potential future cohort')).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Signal interest' })).toBeVisible()
+
+  const restoreCohortResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+    data: {
+      _status: 'published',
+      enrollmentStatus: 'open',
+      programStatus: 'upcoming',
+    },
+  })
+  expect(restoreCohortResponse.ok()).toBeTruthy()
+}
+
 async function verifyPostJoinCTAAnalytics(adminPage: Page, publicPage: Page) {
   const suffix = Date.now()
   const slug = `join-cta-analytics-${suffix}`
@@ -759,6 +882,10 @@ async function verifyPublicHome(page: Page) {
   ).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join for daily briefs' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'View sessions' }).first()).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Cohorts' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Find a Team' })).toHaveCount(0)
+  await expect(page.getByText('Agents that strengthen real community work')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Join Cohort 8' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
 }
@@ -2286,9 +2413,12 @@ async function verifyPortalSkillEndpoint(page: Page) {
   const body = await response.json()
 
   expect(body.name).toBe('portal-ops-skill')
+  expect(body.version).toBe('4')
   expect(body.aliases).toContain('portal-memory-publisher')
   expect(body.files['SKILL.md']).toContain('Portal Ops Skill')
+  expect(body.files['SKILL.md']).toContain('Cohort Page Setup')
   expect(body.files['SKILL.md']).toContain('Wiki Page Creation')
+  expect(body.files['references/portal-cms-model.md']).toContain('## cohorts')
   expect(body.files['references/portal-cms-model.md']).toContain('activityItems')
   expect(body.files['references/portal-cms-model.md']).toContain('wikiPages')
   expect(body.files['references/example-digest-mapping.md']).toContain('Cohort Project Spike Sync')
@@ -4438,6 +4568,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
+  await verifyCohortHub(page, publicPage)
   await verifyPostJoinCTAAnalytics(page, publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
   await verifyMapDashboard(page, browser, publicPage)

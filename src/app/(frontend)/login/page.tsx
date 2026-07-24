@@ -4,17 +4,12 @@ import React from 'react'
 
 import { LoginForm } from '../_components/LoginForm'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { getSafeNextPath } from '@/utilities/safeNextPath'
 
 type Args = {
   searchParams: Promise<{
     next?: string
   }>
-}
-
-const getSafeNextPath = (next?: string) => {
-  if (!next || !next.startsWith('/') || next.startsWith('//')) return null
-
-  return next
 }
 
 export default async function LoginPage({ searchParams: searchParamsPromise }: Args) {

@@ -2,9 +2,16 @@
 
 ## Status
 
-Planned / future. This document defines a reusable Portal feature for launching,
-running, and archiving RaidGuild program cohorts. No primary implementation
-exists yet.
+First slice implemented. The Portal now has reusable Cohort and Cohort
+Commitment records, a public `/cohorts/[slug]` hub, Event-backed schedules,
+Profile-gated commitment and withdrawal flows, dashboard discovery, controlled
+visual variants, deterministic seed content, Plausible events, and end-to-end
+coverage.
+
+The living-record phase remains future work: Cohort-related Briefs, richer
+artifact presentation, participant display rules, real capacity/waitlist
+behavior, and an archive route should be added only when their operational need
+is clear.
 
 This feature is distinct from the cohort project spike that originally shaped
 the Portal product. In this document, a `Cohort` is a named, scheduled RaidGuild
@@ -32,6 +39,14 @@ The same page should support the full program lifecycle:
 The result should feel like a cohort-scoped activity hub, not a one-time
 marketing page, application tracker, course platform, or project-management
 system.
+
+## Agent Operations
+
+The exposed `portal-ops-skill` documents Cohort setup as a review-first
+workflow. Agents may assemble sourced Cohort proposals and operate related
+Posts or Events where access allows, but an editor or admin must create, update,
+or publish the Cohort record. Cohort Commitments remain self-serve Profile
+actions and must never be created on someone else's behalf.
 
 ## Product Classification
 
@@ -74,14 +89,15 @@ Recommended page composition:
 2. commitment state or signup CTA
 3. live or next-session card with join and calendar actions
 4. cohort-specific weekly schedule
-5. current cohort update, when a related Brief exists
-6. theme, thesis, and starter topics
-7. program details and participation expectations
-8. related or featured Projects and Threads
-9. related Posts, examples, and guides
-10. useful Modules
-11. past sessions, recordings, summaries, slides, and artifacts
-12. participant display only when visibility and consent policy allow it
+5. dated announcements backed by curated Announcement Posts
+6. current cohort update, when a related Brief exists
+7. theme, thesis, and starter topics
+8. program details and participation expectations
+9. related or featured Projects and Threads
+10. related Posts, examples, and guides
+11. useful Modules
+12. past sessions, recordings, summaries, slides, and artifacts
+13. participant display only when visibility and consent policy allow it
 
 ### Page Lifecycle
 
@@ -139,7 +155,7 @@ summary: textarea
 theme: text
 thesis: textarea or rich text
 
-programStatus: draft / upcoming / active / complete / archived
+programStatus: draft / gathering-interest / upcoming / active / complete / archived
 enrollmentStatus: closed / open / waitlist
 startsAt: date
 endsAt: date
@@ -150,6 +166,7 @@ visibility: public / authenticated / member / admin
 _status: draft / published
 
 heroMedia: relationship -> media
+explorationVideoURL: validated YouTube URL, optional
 visualVariant: controlled select
 accentTone: controlled select
 
@@ -157,6 +174,7 @@ participationExpectation: textarea
 capacity: number, optional
 starterTopics: array { title, summary, link }
 programSections: array { heading, body }
+contextLinks: array { title, summary, external URL }
 
 highlightedThread: relationship -> threads
 featuredPosts: relationship[] -> posts
@@ -164,9 +182,16 @@ featuredProjects: relationship[] -> projects
 featuredModules: relationship[] -> modules
 ```
 
-Keep `programStatus` separate from `enrollmentStatus`. An active cohort may have
-closed enrollment, while an upcoming cohort may be published before enrollment
-opens.
+When present, `heroMedia` renders as a decorative background beneath the
+controlled visual-variant overlay. The exploration video uses a privacy-enhanced
+YouTube embed; arbitrary iframe markup is never stored. External context links
+are validated, editor-curated references shown alongside typed Portal
+relationships.
+
+Keep `programStatus` separate from `enrollmentStatus`. `gathering-interest`
+means a potential program is public enough to test demand, but has no official
+start date and does not accept commitments. An active cohort may have closed
+enrollment, while an upcoming cohort may be published before enrollment opens.
 
 Capacity should only be displayed when it is factual and operationally useful.
 Do not invent scarcity or urgency.
@@ -176,6 +201,10 @@ Do not invent scarcity or urgency.
 The Cohort record should initially hold curated relationships for Posts,
 Projects, Threads, and Modules. This gives editors control over ordering and
 which records are presented as the strongest examples.
+
+Featured Posts with `contentType: announcement` render in a dedicated,
+date-ordered Announcements section near the cohort schedule. They remain normal,
+shareable Posts and are not duplicated in the general context-and-work section.
 
 Sessions and Briefs should point back to Cohorts because those records
 accumulate independently over time and should appear automatically.
@@ -278,14 +307,15 @@ copy.
 
 Resolve the featured cohort in this order:
 
-1. published cohort with open enrollment
-2. published active cohort
-3. next published upcoming cohort
-4. no scheduled cohort fallback
+1. published active cohort
+2. published upcoming cohort with open enrollment
+3. published cohort gathering interest
+4. next published upcoming cohort
+5. no scheduled cohort fallback
 
-If a future cohort has open enrollment while another cohort is active, favor
-the open enrollment action. A later iteration may add an explicit editorial
-priority if automatic selection proves insufficient.
+The current cohort remains the primary context while it is active. A later
+iteration may add an explicit editorial priority if automatic selection proves
+insufficient.
 
 Recommended states:
 
@@ -294,6 +324,7 @@ Recommended states:
 | Enrollment open | `Join Cohort 8` | View and commit |
 | Upcoming | `Next cohort: Cohort 8` | Explore the cohort |
 | Active | `Cohort 7 is underway` | Follow the cohort |
+| Gathering interest | `Cohort 9 is gathering interest` | Signal interest |
 | No cohort scheduled | `Interested in the next cohort?` | Signal interest |
 
 Profile-aware CTA behavior:
@@ -366,6 +397,14 @@ An optional short prompt such as `What do you hope to explore?` is acceptable.
 Do not turn the commitment flow into an application or selection workflow
 unless cohort operations genuinely require one.
 
+## Public Home Cohort Snapshot
+
+The unauthenticated home page replaces the former `Find a Team` project block
+with a Cohort snapshot. It shows the selected active, open, upcoming, or
+interest-gathering Cohort, an appropriate signup or interest action, and up to
+three themes from previous public Cohort-related Event records when available.
+It does not duplicate session content onto the Cohort record.
+
 ## No Scheduled Cohort And Interest
 
 When no current or upcoming cohort exists, the dashboard card and completed
@@ -375,12 +414,15 @@ button.
 First-slice fallback:
 
 ```txt
-/inquire/general?context=cohort-interest
+/inquire/general?context=cohort-interest&intent=interested
 ```
 
-The inquiry page and saved source context should clearly identify this as
-interest in a future cohort. Prefill authenticated user/Profile context where
-the existing inquiry flow permits it.
+For a named Cohort, links also carry a safe Cohort label and one of the curated
+`interested` or `suggest-topic` intents. The inquiry page turns those values
+into an editable message such as `I'm interested in Cohort 9.` or `I would like
+to suggest a future topic for Cohort 9:`. Arbitrary query-string message content
+is not rendered. The saved inquiry continues to use the existing source route;
+no separate interest model is introduced.
 
 If recurring interest becomes an operational signal that needs one-click
 capture, filtering, deduplication, or conversion tracking, add a small
@@ -483,6 +525,8 @@ Plausible.
 - enforce public-read and authenticated/Profile-gated commitment behavior
 - support commitment creation, existing state, and withdrawal
 - add dashboard cohort spotlight and no-cohort interest fallback
+- replace the public home project block with a current/next Cohort snapshot
+- support the non-committal `gathering-interest` state and prefilled inquiries
 - add Plausible events
 - add deterministic seed data and end-to-end coverage
 
@@ -524,6 +568,10 @@ the first cohort launch.
 - The Profile owner can see and withdraw their commitment.
 - The authenticated dashboard highlights the most relevant current or next
   Cohort using the defined state priority.
+- The unauthenticated home highlights that Cohort, offers signup or interest,
+  and shows prior public cohort-session themes when they exist.
+- A gathering-interest Cohort never creates a commitment and routes interest or
+  topic suggestions through an editable, safely prefilled general inquiry.
 - When no Cohort is scheduled, the dashboard offers a working, source-labeled
   interest path.
 - Cohort-related sessions come from Events and expose working detail, join, and

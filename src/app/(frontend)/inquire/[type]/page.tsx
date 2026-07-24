@@ -9,16 +9,19 @@ type Args = {
   params: Promise<{
     type: string
   }>
+  searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
 const isInquiryType = (type: string): type is InquiryType => type in inquiryPageFallbacks
 
-export default async function InquiryPage({ params }: Args) {
+export default async function InquiryPage({ params, searchParams }: Args) {
   const { type } = await params
 
   if (!isInquiryType(type)) notFound()
 
   const copy = await getInquiryPageCopy(type)
+  const query = (await searchParams) || {}
+  const initialMessage = getCohortInitialMessage(type, query)
 
   return (
     <main className="container pb-24 pt-12">
@@ -37,6 +40,7 @@ export default async function InquiryPage({ params }: Args) {
         </div>
         <InquiryForm
           createAccountLabel={copy.createAccountLabel}
+          initialMessage={initialMessage}
           messageLabel={copy.messageLabel || 'What should we know?'}
           postSubmitBody={copy.postSubmitBody}
           postSubmitEyebrow={copy.postSubmitEyebrow}
@@ -49,6 +53,24 @@ export default async function InquiryPage({ params }: Args) {
       </section>
     </main>
   )
+}
+
+const getCohortInitialMessage = (
+  type: InquiryType,
+  query: Record<string, string | string[] | undefined>,
+) => {
+  if (type !== 'general' || query.context !== 'cohort-interest') return undefined
+
+  const rawLabel = typeof query.cohortTitle === 'string' ? query.cohortTitle : 'a future cohort'
+  const cohortLabel = rawLabel
+    .replace(/[^\p{L}\p{N} .,'&():-]/gu, '')
+    .trim()
+    .slice(0, 100)
+  const safeLabel = cohortLabel || 'a future cohort'
+
+  return query.intent === 'suggest-topic'
+    ? `I would like to suggest a future topic for ${safeLabel}: `
+    : `I'm interested in ${safeLabel}.`
 }
 
 export function generateStaticParams() {

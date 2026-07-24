@@ -30,6 +30,7 @@ const timelines = [
 
 export const InquiryForm: React.FC<{
   createAccountLabel?: string
+  initialMessage?: string
   messageLabel: string
   postSubmitBody?: string
   postSubmitEyebrow?: string
@@ -40,6 +41,7 @@ export const InquiryForm: React.FC<{
   type: InquiryType
 }> = ({
   createAccountLabel = 'Create account',
+  initialMessage,
   messageLabel,
   postSubmitBody = 'Your request has been started. Create an account so we can connect this request to your Portal profile, share follow-ups, and keep the conversation tied to your work.',
   postSubmitEyebrow = 'Inquiry started',
@@ -237,7 +239,14 @@ export const InquiryForm: React.FC<{
 
         <div>
           <Label htmlFor="message">{messageLabel}</Label>
-          <Textarea id="message" maxLength={4000} name="message" required rows={6} />
+          <Textarea
+            defaultValue={initialMessage}
+            id="message"
+            maxLength={4000}
+            name="message"
+            required
+            rows={6}
+          />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">

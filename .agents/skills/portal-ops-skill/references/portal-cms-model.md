@@ -17,6 +17,41 @@ with only the `unverified` role should be treated like anonymous users for
 protected reads and should not perform write actions until email verification or
 profile claim removes the unverified role.
 
+## cohorts
+
+Purpose: durable program hubs that frame one named cohort across interest,
+enrollment, active programming, and its long-term record.
+
+Key fields:
+
+- `title`, `slug`, `summary`, `theme`, `thesis`
+- `cohortNumber`, only when officially assigned
+- `programStatus`: `draft`, `gathering-interest`, `upcoming`, `active`,
+  `complete`, `archived`
+- `enrollmentStatus`: `closed`, `open`, `waitlist`
+- `startsAt`, `endsAt`, `enrollmentOpensAt`, `enrollmentClosesAt`
+- `participationExpectation`, `capacity`
+- `heroMedia`, `explorationVideoURL`, `visualVariant`
+- `starterTopics`, `programSections`, `contextLinks`
+- `highlightedThread`, `featuredPosts`, `featuredProjects`, `featuredModules`
+- `visibility`: `public`, `authenticated`, `member`, `admin`
+- `publishedAt`, `_status`
+
+Rule: only editors and admins may create or update Cohort records. Agents should
+produce reviewable Cohort proposals and may operate related records where their
+collection access permits; they must not borrow a human account for automation.
+
+Rule: `gathering-interest` uses `enrollmentStatus = closed` and the existing
+prefilled inquiry flow. Do not invent a date, commitment count, or dedicated
+interest record.
+
+Rule: Announcement Posts are normal Posts with `contentType = announcement`
+attached through `featuredPosts`. Sessions are Events connected through
+`events.relatedCohorts`. Do not copy Post or Event content into the Cohort.
+
+Rule: never create a `cohortCommitment` for another person. Commitments are
+Profile-owned, authenticated expressions of intent made through the cohort UI.
+
 ## activityItems
 
 Purpose: dated factual community signals.
@@ -85,6 +120,7 @@ Key fields:
 - `recurrenceUntil`
 - `previousOccurrence`
 - `nextOccurrence`
+- `relatedCohorts`
 - `relatedProjects`
 - `relatedThreads`
 - `relatedProfiles`
@@ -92,7 +128,8 @@ Key fields:
 - `visibility`
 - `_status`
 
-Rule: sessions can be cohort-wide or scoped to one or more projects through `relatedProjects`.
+Rule: sessions join a Cohort schedule through `relatedCohorts` and can also be
+scoped to one or more projects through `relatedProjects`.
 
 Rule: use `member` visibility for member-only sessions. Authenticated non-members should not see those events.
 

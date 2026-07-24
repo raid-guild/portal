@@ -8,9 +8,13 @@ const postgresPort = Number(process.env.E2E_POSTGRES_PORT ?? '54329')
 const postgresDb = process.env.E2E_POSTGRES_DB ?? 'payload_e2e'
 const postgresUser = process.env.E2E_POSTGRES_USER ?? 'postgres'
 const postgresPassword = process.env.E2E_POSTGRES_PASSWORD ?? 'postgres'
+const databaseURI = `postgres://${encodeURIComponent(postgresUser)}:${encodeURIComponent(postgresPassword)}@127.0.0.1:${postgresPort}/${encodeURIComponent(postgresDb)}`
 
 const env = {
   ...process.env,
+  // E2E always owns and resets this local Docker database. Never inherit a
+  // developer or deployment DATABASE_URI for a destructive test run.
+  DATABASE_URI: databaseURI,
   DISABLE_SEARCH_SYNC: process.env.DISABLE_SEARCH_SYNC ?? 'true',
   POSTGRES_DB: postgresDb,
   POSTGRES_USER: postgresUser,
@@ -76,6 +80,24 @@ async function main() {
   await waitForPostgres()
 
   run('corepack', ['pnpm', 'deps:native'])
+  // Establish the clean test schema before the app starts. Production deploys
+  // run this as Railway's pre-deploy command, separately from image builds.
+  run('corepack', ['pnpm', 'payload', 'migrate'])
+  run('docker', [
+    'compose',
+    'exec',
+    '-T',
+    'postgres',
+    'psql',
+    '-U',
+    postgresUser,
+    '-d',
+    postgresDb,
+    '-v',
+    'ON_ERROR_STOP=1',
+    '-c',
+    `DO $$ BEGIN IF to_regclass('public.payload_migrations') IS NULL THEN RAISE EXCEPTION 'Payload migrations did not initialize the E2E database'; END IF; END $$;`,
+  ])
   run('corepack', ['pnpm', 'build'])
 
   const app = isWindows

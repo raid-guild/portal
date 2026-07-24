@@ -91,6 +91,24 @@
 - [x] Decide whether the skill should call Payload APIs directly or produce reviewable update plans first.
 - [x] Serve the canonical skill from the API at `/api/portal/skills/portal-ops-skill`.
 - [x] Add `/api/portal/skills` discovery and keep `/api/portal/skills/portal-memory-publisher` as a compatibility alias.
+- [x] Document review-first Cohort page setup, announcements, related sessions,
+      enrollment states, publishing, and route verification in the exposed
+      `portal-ops-skill`.
+
+## Phase 5C: RaidGuild Cohort Hub Module
+
+- [x] Add reusable `cohorts` records with program and enrollment state, dates, curated context, and controlled visual variants.
+- [x] Add Profile-owned `cohortCommitments` with authenticated create/read/update access, duplicate prevention, withdrawal, and rejoin behavior.
+- [x] Create the public, shareable `/cohorts/[slug]` hub while keeping commitment actions behind login and Profile creation.
+- [x] Support optional hero backgrounds, a validated exploration video, and curated external context links without arbitrary CMS HTML or CSS.
+- [x] Relate Events to Cohorts and render next, weekly, upcoming, and past session views from the canonical Event records.
+- [x] Highlight the highest-priority active, open, interest-gathering, or upcoming Cohort on the authenticated dashboard.
+- [x] Replace the unauthenticated home project block with Cohort status, signup or interest actions, and prior public session themes when available.
+- [x] Support a `gathering-interest` state and safely prefilled general inquiries without adding a separate interest model.
+- [x] Provide a truthful general-inquiry fallback when no Cohort is scheduled.
+- [x] Add deterministic Cohort seed content, a schema migration, generated Payload types, analytics, and end-to-end coverage.
+- [ ] Relate Briefs to Cohorts and show the newest visible update when editorial use justifies the relationship.
+- [ ] Add participant display, capacity/waitlist automation, dedicated interest records, and a Cohort archive only when real operations define their lifecycle and permissions.
 
 ## Phase 6: External API Hardening
 

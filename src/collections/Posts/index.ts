@@ -49,6 +49,8 @@ export const Posts: CollectionConfig<'posts'> = {
   defaultPopulate: {
     title: true,
     slug: true,
+    contentType: true,
+    publishedAt: true,
     categories: true,
     meta: {
       image: true,

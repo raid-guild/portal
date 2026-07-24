@@ -14,6 +14,21 @@ The portal should answer, quickly and plainly:
 
 This aligns with the current repository direction: a CMS-backed RaidGuild portal for discoverability, profiles, projects, and published updates. It does change the product emphasis from a broad RaidGuild directory toward a narrower first use case: surfacing cohort activity and project spikes without becoming a project management system.
 
+In this document, “cohort” describes the community frame around the project
+spike MVP. Durable, numbered RaidGuild programs with enrollment, a dedicated
+hub, and a cohort-specific schedule are a separate feature module defined in
+the [RaidGuild Cohort Hub spec](./raidguild-cohort-hub-feature-spec.md). That
+module composes the primitives below rather than changing their meaning.
+The public home may feature that module's active, upcoming, or
+`gathering-interest` Cohort and prior public Event themes; potential-program
+interest reuses the general inquiry flow rather than becoming a project task or
+commitment.
+
+The exposed `portal-ops-skill` includes a review-first Cohort setup workflow.
+Agents can prepare sourced Cohort proposals and related Posts or Events, while
+editor/admin review remains required to create, update, or publish the Cohort
+record. Participant commitments remain self-serve Profile actions.
+
 ## Current Repo Fit
 
 Already present:
