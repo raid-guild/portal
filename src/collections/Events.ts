@@ -74,6 +74,18 @@ export const Events: CollectionConfig = {
           label: 'Fireside',
           value: 'fireside',
         },
+        {
+          label: 'Kickoff',
+          value: 'kickoff',
+        },
+        {
+          label: 'Office hours',
+          value: 'office-hours',
+        },
+        {
+          label: 'Guest talk',
+          value: 'guest-talk',
+        },
       ],
       required: true,
     },
@@ -483,6 +495,15 @@ export const Events: CollectionConfig = {
           ],
         },
       ],
+    },
+    {
+      name: 'relatedCohorts',
+      type: 'relationship',
+      admin: {
+        description: 'Cohort programs that include this session.',
+      },
+      hasMany: true,
+      relationTo: 'cohorts',
     },
     {
       name: 'relatedProjects',

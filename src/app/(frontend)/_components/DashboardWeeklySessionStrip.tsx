@@ -6,9 +6,18 @@ import React from 'react'
 import { cn } from '@/utilities/cn'
 import type { Event } from '@/payload-types'
 
-export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events: Event[] }> = ({
+export const DashboardWeeklySessionStrip: React.FC<{
+  className?: string
+  emptyLabel?: string
+  events: Event[]
+  heading?: string
+  scheduleHref?: string
+}> = ({
   className,
+  emptyLabel = 'Open',
   events,
+  heading = "This Week's Sessions",
+  scheduleHref = '/events',
 }) => {
   const [isMounted, setIsMounted] = React.useState(false)
 
@@ -20,8 +29,8 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
     return (
       <section className={className}>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="portal-heading-sm">This Week&apos;s Sessions</h2>
-          <Link className="portal-link" href="/events">
+          <h2 className="portal-heading-sm">{heading}</h2>
+          <Link className="portal-link" href={scheduleHref}>
             Full schedule
           </Link>
         </div>
@@ -37,8 +46,8 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
   return (
     <section className={className}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="portal-heading-sm">This Week&apos;s Sessions</h2>
-        <Link className="portal-link" href="/events">
+        <h2 className="portal-heading-sm">{heading}</h2>
+        <Link className="portal-link" href={scheduleHref}>
           Full schedule
         </Link>
       </div>
@@ -91,7 +100,7 @@ export const DashboardWeeklySessionStrip: React.FC<{ className?: string; events:
                     )
                   })
                 ) : (
-                  <span className="text-xs text-muted-foreground">Open</span>
+                  <span className="text-xs text-muted-foreground">{emptyLabel}</span>
                 )}
               </div>
             </div>

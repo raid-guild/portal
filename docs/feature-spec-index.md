@@ -33,12 +33,12 @@ Status labels:
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
 | Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
 | Interactive map dashboard | [Interactive map dashboard](./map-dashboard-feature-spec.md) | First slice implemented | Alternate authenticated dashboard landing view using existing Portal primitives. |
+| RaidGuild cohort hub | [RaidGuild cohort hub](./raidguild-cohort-hub-feature-spec.md) | First slice implemented | Reusable cohort hubs, Profile-gated commitments, Event-backed schedules, dashboard discovery, and durable routes exist. |
 
 ## Planned / Future Modules
 
 | Area | Spec | Status | Notes |
 | --- | --- | --- | --- |
-| RaidGuild cohort hub | [RaidGuild cohort hub](./raidguild-cohort-hub-feature-spec.md) | Planned / future | Reusable cohort pages, Profile-gated commitments, cohort schedules, dashboard discovery, and durable archives. |
 | Launch invites | [Launch invites](./launch-invites-feature-spec.md) | Planned / future | Keep bulk launch email outside Payload for now. |
 | Newsletter module | [Newsletter module](./newsletter-module-feature-spec.md) | Planned / first slice | Portal-side bridge from posts to listmonk campaign drafts and test sends. |
 | Fireside content flow | [Fireside content flow](./fireside-content-flow-feature-spec.md) | Planned / future | Use sessions as source records before adding new collections. |

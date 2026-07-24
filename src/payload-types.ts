@@ -72,6 +72,8 @@ export interface Config {
     activityItems: ActivityItem;
     dailyBriefs: DailyBrief;
     dailyEngagements: DailyEngagement;
+    cohorts: Cohort;
+    cohortCommitments: CohortCommitment;
     events: Event;
     pointEvents: PointEvent;
     projects: Project;
@@ -114,6 +116,8 @@ export interface Config {
     activityItems: ActivityItemsSelect<false> | ActivityItemsSelect<true>;
     dailyBriefs: DailyBriefsSelect<false> | DailyBriefsSelect<true>;
     dailyEngagements: DailyEngagementsSelect<false> | DailyEngagementsSelect<true>;
+    cohorts: CohortsSelect<false> | CohortsSelect<true>;
+    cohortCommitments: CohortCommitmentsSelect<false> | CohortCommitmentsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
     pointEvents: PointEventsSelect<false> | PointEventsSelect<true>;
     projects: ProjectsSelect<false> | ProjectsSelect<true>;
@@ -554,7 +558,16 @@ export interface Event {
   id: number;
   title: string;
   summary?: string | null;
-  sessionType: 'brownbag' | 'workshop' | 'all-hands' | 'demo' | 'pitch' | 'fireside';
+  sessionType:
+    | 'brownbag'
+    | 'workshop'
+    | 'all-hands'
+    | 'demo'
+    | 'pitch'
+    | 'fireside'
+    | 'kickoff'
+    | 'office-hours'
+    | 'guest-talk';
   speaker?: (number | null) | Profile;
   /**
    * Optional hosts or facilitators for interview-style sessions.
@@ -635,6 +648,10 @@ export interface Event {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Cohort programs that include this session.
+   */
+  relatedCohorts?: (number | Cohort)[] | null;
   relatedProjects?: (number | Project)[] | null;
   relatedThreads?: (number | Thread)[] | null;
   relatedProfiles?: (number | Profile)[] | null;
@@ -761,6 +778,96 @@ export interface ProfileRole {
   slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cohorts".
+ */
+export interface Cohort {
+  id: number;
+  title: string;
+  slug: string;
+  slugLock?: boolean | null;
+  cohortNumber?: number | null;
+  summary: string;
+  theme: string;
+  thesis?: string | null;
+  programStatus: 'draft' | 'gathering-interest' | 'upcoming' | 'active' | 'complete' | 'archived';
+  enrollmentStatus: 'closed' | 'open' | 'waitlist';
+  startsAt?: string | null;
+  endsAt?: string | null;
+  enrollmentOpensAt?: string | null;
+  enrollmentClosesAt?: string | null;
+  participationExpectation?: string | null;
+  capacity?: number | null;
+  heroMedia?: (number | null) | Media;
+  /**
+   * Optional YouTube video shown in What we are exploring.
+   */
+  explorationVideoURL?: string | null;
+  visualVariant: 'guild' | 'scroll' | 'moloch';
+  starterTopics?:
+    | {
+        title: string;
+        summary?: string | null;
+        url?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  programSections?:
+    | {
+        heading: string;
+        body: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * External references shown with related Portal context and work.
+   */
+  contextLinks?:
+    | {
+        title: string;
+        summary?: string | null;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  highlightedThread?: (number | null) | Thread;
+  featuredPosts?: (number | Post)[] | null;
+  featuredProjects?: (number | Project)[] | null;
+  featuredModules?: (number | Module)[] | null;
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  publishedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "threads".
+ */
+export interface Thread {
+  id: number;
+  title: string;
+  summary: string;
+  threadStatus: 'active' | 'paused' | 'resolved' | 'archived';
+  lastActiveAt?: string | null;
+  participants?: (number | Profile)[] | null;
+  relatedProjects?: (number | Project)[] | null;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  visibility: 'authenticated' | 'public' | 'admin';
+  publishedAt?: string | null;
+  slug?: string | null;
+  slugLock?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -975,30 +1082,125 @@ export interface ActivityItem {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "threads".
+ * via the `definition` "modules".
  */
-export interface Thread {
+export interface Module {
   id: number;
-  title: string;
+  name: string;
   summary: string;
-  threadStatus: 'active' | 'paused' | 'resolved' | 'archived';
-  lastActiveAt?: string | null;
-  participants?: (number | Profile)[] | null;
+  status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
+  /**
+   * High-level product category used to group modules on member surfaces.
+   */
+  category: 'ops' | 'tools' | 'analytics' | 'games' | 'knowledge' | 'community';
+  visibility: 'public' | 'authenticated' | 'member' | 'admin';
+  /**
+   * Enabled modules are listed on member-facing module surfaces.
+   */
+  enabled?: boolean | null;
+  featured?: boolean | null;
+  sortOrder?: number | null;
+  /**
+   * Member-facing route when the module has a usable surface.
+   */
+  entryRoute?: string | null;
+  /**
+   * Internal modules open Portal routes. External modules launch another app.
+   */
+  moduleKind: 'internal' | 'external';
+  /**
+   * Signed launch redirects through Portal and hands off a short-lived token.
+   */
+  authMode: 'none' | 'signed_launch';
+  /**
+   * HTTPS callback URL that receives the launch token.
+   */
+  externalCallbackURL?: string | null;
+  /**
+   * Environment variable key containing this module launch signing secret.
+   */
+  launchSecretEnvKey?: string | null;
+  /**
+   * Audience claim expected by the external app. Defaults to the module slug.
+   */
+  launchAudience?: string | null;
+  /**
+   * Short-lived launch token TTL. Keep this low.
+   */
+  launchTokenTTLSeconds?: number | null;
+  /**
+   * Optional additional user roles required to launch this external module.
+   */
+  launchRequiredRoles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent' | 'unverified')[] | null;
+  /**
+   * Include the user email claim in signed launch tokens.
+   */
+  includeEmailInLaunch?: boolean | null;
+  /**
+   * Include Portal auth roles in signed launch tokens.
+   */
+  includeRolesInLaunch?: boolean | null;
+  /**
+   * Include the linked Portal profile ID/name when one exists.
+   */
+  includeProfileInLaunch?: boolean | null;
+  /**
+   * Include the linked public profile handle when one exists.
+   */
+  includeHandleInLaunch?: boolean | null;
+  /**
+   * Include a public avatar URL when the linked profile has one.
+   */
+  includeAvatarInLaunch?: boolean | null;
+  /**
+   * Internal notes for the external app integration.
+   */
+  integrationNotes?: string | null;
+  /**
+   * Optional admin route for managing module-owned records.
+   */
+  adminRoute?: string | null;
+  /**
+   * Spec, docs, or planning link for this module.
+   */
+  specURL?: string | null;
+  /**
+   * Optional implementation repository or PR link.
+   */
+  repositoryURL?: string | null;
+  /**
+   * Profiles stewarding or championing this module.
+   */
+  owners?: (number | Profile)[] | null;
+  /**
+   * Primary project that produced or maintains this module.
+   */
+  sourceProject?: (number | null) | Project;
   relatedProjects?: (number | Project)[] | null;
-  links?:
+  relatedThreads?: (number | Thread)[] | null;
+  relatedProfiles?: (number | Profile)[] | null;
+  /**
+   * Payload collection slugs owned by this module.
+   */
+  ownedCollections?:
     | {
-        label: string;
-        url: string;
+        collectionSlug: string;
         id?: string | null;
       }[]
     | null;
-  visibility: 'authenticated' | 'public' | 'admin';
-  publishedAt?: string | null;
+  corePrimitiveRelationships?:
+    | {
+        primitive: 'brief' | 'project' | 'thread' | 'activityItem' | 'event' | 'profile' | 'post';
+        id?: string | null;
+      }[]
+    | null;
+  graduationCriteria?: string | null;
+  riskNotes?: string | null;
+  lastReviewedAt?: string | null;
   slug?: string | null;
   slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
-  _status?: ('draft' | 'published') | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1343,6 +1545,22 @@ export interface PointEvent {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cohortCommitments".
+ */
+export interface CohortCommitment {
+  id: number;
+  cohort: number | Cohort;
+  profile: number | Profile;
+  status: 'committed' | 'waitlisted' | 'withdrawn';
+  shortResponse?: string | null;
+  expectationsAcknowledgedAt?: string | null;
+  committedAt?: string | null;
+  withdrawnAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "contributionRequests".
  */
 export interface ContributionRequest {
@@ -1434,128 +1652,6 @@ export interface ProfileBadge {
   note?: string | null;
   featured?: boolean | null;
   visibility: 'public' | 'member' | 'private';
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "modules".
- */
-export interface Module {
-  id: number;
-  name: string;
-  summary: string;
-  status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
-  /**
-   * High-level product category used to group modules on member surfaces.
-   */
-  category: 'ops' | 'tools' | 'analytics' | 'games' | 'knowledge' | 'community';
-  visibility: 'public' | 'authenticated' | 'member' | 'admin';
-  /**
-   * Enabled modules are listed on member-facing module surfaces.
-   */
-  enabled?: boolean | null;
-  featured?: boolean | null;
-  sortOrder?: number | null;
-  /**
-   * Member-facing route when the module has a usable surface.
-   */
-  entryRoute?: string | null;
-  /**
-   * Internal modules open Portal routes. External modules launch another app.
-   */
-  moduleKind: 'internal' | 'external';
-  /**
-   * Signed launch redirects through Portal and hands off a short-lived token.
-   */
-  authMode: 'none' | 'signed_launch';
-  /**
-   * HTTPS callback URL that receives the launch token.
-   */
-  externalCallbackURL?: string | null;
-  /**
-   * Environment variable key containing this module launch signing secret.
-   */
-  launchSecretEnvKey?: string | null;
-  /**
-   * Audience claim expected by the external app. Defaults to the module slug.
-   */
-  launchAudience?: string | null;
-  /**
-   * Short-lived launch token TTL. Keep this low.
-   */
-  launchTokenTTLSeconds?: number | null;
-  /**
-   * Optional additional user roles required to launch this external module.
-   */
-  launchRequiredRoles?: ('admin' | 'editor' | 'contributor' | 'member' | 'agent' | 'unverified')[] | null;
-  /**
-   * Include the user email claim in signed launch tokens.
-   */
-  includeEmailInLaunch?: boolean | null;
-  /**
-   * Include Portal auth roles in signed launch tokens.
-   */
-  includeRolesInLaunch?: boolean | null;
-  /**
-   * Include the linked Portal profile ID/name when one exists.
-   */
-  includeProfileInLaunch?: boolean | null;
-  /**
-   * Include the linked public profile handle when one exists.
-   */
-  includeHandleInLaunch?: boolean | null;
-  /**
-   * Include a public avatar URL when the linked profile has one.
-   */
-  includeAvatarInLaunch?: boolean | null;
-  /**
-   * Internal notes for the external app integration.
-   */
-  integrationNotes?: string | null;
-  /**
-   * Optional admin route for managing module-owned records.
-   */
-  adminRoute?: string | null;
-  /**
-   * Spec, docs, or planning link for this module.
-   */
-  specURL?: string | null;
-  /**
-   * Optional implementation repository or PR link.
-   */
-  repositoryURL?: string | null;
-  /**
-   * Profiles stewarding or championing this module.
-   */
-  owners?: (number | Profile)[] | null;
-  /**
-   * Primary project that produced or maintains this module.
-   */
-  sourceProject?: (number | null) | Project;
-  relatedProjects?: (number | Project)[] | null;
-  relatedThreads?: (number | Thread)[] | null;
-  relatedProfiles?: (number | Profile)[] | null;
-  /**
-   * Payload collection slugs owned by this module.
-   */
-  ownedCollections?:
-    | {
-        collectionSlug: string;
-        id?: string | null;
-      }[]
-    | null;
-  corePrimitiveRelationships?:
-    | {
-        primitive: 'brief' | 'project' | 'thread' | 'activityItem' | 'event' | 'profile' | 'post';
-        id?: string | null;
-      }[]
-    | null;
-  graduationCriteria?: string | null;
-  riskNotes?: string | null;
-  lastReviewedAt?: string | null;
-  slug?: string | null;
-  slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -2225,6 +2321,14 @@ export interface PayloadLockedDocument {
         value: number | DailyEngagement;
       } | null)
     | ({
+        relationTo: 'cohorts';
+        value: number | Cohort;
+      } | null)
+    | ({
+        relationTo: 'cohortCommitments';
+        value: number | CohortCommitment;
+      } | null)
+    | ({
         relationTo: 'events';
         value: number | Event;
       } | null)
@@ -2664,6 +2768,77 @@ export interface DailyEngagementsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cohorts_select".
+ */
+export interface CohortsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  slugLock?: T;
+  cohortNumber?: T;
+  summary?: T;
+  theme?: T;
+  thesis?: T;
+  programStatus?: T;
+  enrollmentStatus?: T;
+  startsAt?: T;
+  endsAt?: T;
+  enrollmentOpensAt?: T;
+  enrollmentClosesAt?: T;
+  participationExpectation?: T;
+  capacity?: T;
+  heroMedia?: T;
+  explorationVideoURL?: T;
+  visualVariant?: T;
+  starterTopics?:
+    | T
+    | {
+        title?: T;
+        summary?: T;
+        url?: T;
+        id?: T;
+      };
+  programSections?:
+    | T
+    | {
+        heading?: T;
+        body?: T;
+        id?: T;
+      };
+  contextLinks?:
+    | T
+    | {
+        title?: T;
+        summary?: T;
+        url?: T;
+        id?: T;
+      };
+  highlightedThread?: T;
+  featuredPosts?: T;
+  featuredProjects?: T;
+  featuredModules?: T;
+  visibility?: T;
+  publishedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cohortCommitments_select".
+ */
+export interface CohortCommitmentsSelect<T extends boolean = true> {
+  cohort?: T;
+  profile?: T;
+  status?: T;
+  shortResponse?: T;
+  expectationsAcknowledgedAt?: T;
+  committedAt?: T;
+  withdrawnAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
@@ -2726,6 +2901,7 @@ export interface EventsSelect<T extends boolean = true> {
         resourceType?: T;
         id?: T;
       };
+  relatedCohorts?: T;
   relatedProjects?: T;
   relatedThreads?: T;
   relatedProfiles?: T;

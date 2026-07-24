@@ -7,7 +7,17 @@ import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { createDiscordScheduledEvent } from '@/utilities/discordScheduledEvents'
 import { validateSafeURL } from '@/utilities/safeURL'
 
-const SESSION_TYPES = ['brownbag', 'workshop', 'all-hands', 'demo', 'pitch', 'fireside'] as const
+const SESSION_TYPES = [
+  'brownbag',
+  'workshop',
+  'all-hands',
+  'demo',
+  'pitch',
+  'fireside',
+  'kickoff',
+  'office-hours',
+  'guest-talk',
+] as const
 const DURATIONS = [30, 60] as const
 const VISIBILITIES = ['public', 'authenticated', 'member', 'admin'] as const
 const RECURRENCE_CADENCES = ['weekly', 'biweekly', 'monthly'] as const

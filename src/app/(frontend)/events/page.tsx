@@ -33,6 +33,9 @@ const sessionTypeLabels: Record<SessionType, string> = {
   brownbag: 'Brownbag',
   demo: 'Demo',
   fireside: 'Fireside',
+  'guest-talk': 'Guest talk',
+  kickoff: 'Kickoff',
+  'office-hours': 'Office hours',
   pitch: 'Pitch',
   workshop: 'Workshop',
 }
@@ -42,6 +45,9 @@ const sessionTypeStyles: Record<SessionType, string> = {
   brownbag: 'border-guild-olive/25 bg-guild-olive/10',
   demo: 'border-success/25 bg-success/10',
   fireside: 'border-primary/30 bg-primary/10',
+  'guest-talk': 'border-primary/30 bg-primary/10',
+  kickoff: 'border-moloch-500/25 bg-moloch-500/10',
+  'office-hours': 'border-scroll-200/25 bg-scroll-200/10',
   pitch: 'border-warning/25 bg-warning/10',
   workshop: 'border-scroll-200/25 bg-scroll-200/10',
 }
@@ -319,6 +325,9 @@ const SessionVisual: React.FC<{ event: Event; isLive: boolean }> = ({ event, isL
     brownbag: 'bg-guild-olive',
     demo: 'bg-success',
     fireside: 'bg-primary',
+    'guest-talk': 'bg-primary',
+    kickoff: 'bg-moloch-500',
+    'office-hours': 'bg-scroll-200',
     pitch: 'bg-moloch-500',
     workshop: 'bg-warning',
   }

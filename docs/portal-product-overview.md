@@ -38,6 +38,8 @@ or generic AI content feed.
 - `/events`: upcoming and past sessions.
 - `/events/[id]`: session details, join/calendar actions, artifacts, and related
   context.
+- `/cohorts/[slug]`: public program hub with theme, expectations, related work,
+  Event-backed schedule, and authenticated Profile commitment.
 - `/requests/[slug]`: focused contribution request detail page for a clear ask
   connected to a project, session, thread, post, or profile.
 - `/members`: contributor discovery.
@@ -106,6 +108,12 @@ tools.
 
 Notification operations are documented in
 [Notifications feature spec](./notifications-feature-spec.md).
+
+The public home uses the Cohort module as its primary program-discovery surface:
+it shows the current, next, or interest-gathering Cohort and derives previous
+session themes from public Event records. Interest and topic suggestions reuse
+the general inquiry flow until a distinct operational lifecycle justifies a new
+model.
 
 ## Product Documentation Map
 

@@ -12,6 +12,7 @@ type Args = {
     email?: string
     inquiry?: string
     inquiryType?: string
+    next?: string
   }>
 }
 
@@ -21,6 +22,7 @@ export default async function JoinPage({ searchParams }: Args) {
   const initialEmail = normalizeEmail(params?.email)
   const hasInquiryContext = Boolean(params?.inquiry)
   const inquiryType = normalizeInquiryType(params?.inquiryType)
+  const nextPath = getSafeNextPath(params?.next)
 
   return (
     <main className="container pb-24 pt-12">
@@ -54,13 +56,14 @@ export default async function JoinPage({ searchParams }: Args) {
           <SignupForm
             initialEmail={initialEmail}
             inquiryType={inquiryType}
+            nextPath={nextPath || undefined}
             signupContext={hasInquiryContext ? 'inquiry' : 'direct'}
           />
           <p className="mt-4 text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link
               className="font-bold text-foreground underline decoration-primary/50"
-              href="/login"
+              href={nextPath ? `/login?next=${encodeURIComponent(nextPath)}` : '/login'}
             >
               Log in
             </Link>
@@ -109,6 +112,9 @@ const normalizeEmail = (email: string | undefined) => {
 
   return normalized && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized) ? normalized : undefined
 }
+
+const getSafeNextPath = (next?: string) =>
+  next && next.startsWith('/') && !next.startsWith('//') ? next : null
 
 const inquiryTypes = new Set<InquiryAnalyticsType>([
   'client',

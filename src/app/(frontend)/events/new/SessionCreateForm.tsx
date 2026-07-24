@@ -31,6 +31,9 @@ const sessionTypes = [
   ['all-hands', 'All hands'],
   ['demo', 'Demo'],
   ['pitch', 'Pitch'],
+  ['kickoff', 'Kickoff'],
+  ['office-hours', 'Office hours'],
+  ['guest-talk', 'Guest talk'],
 ] as const
 
 const durations = [

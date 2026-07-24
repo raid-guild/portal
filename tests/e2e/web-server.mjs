@@ -76,6 +76,9 @@ async function main() {
   await waitForPostgres()
 
   run('corepack', ['pnpm', 'deps:native'])
+  // Establish the clean test schema before Next collects data for static routes.
+  // The production build also runs migrations, so this remains an idempotent guard.
+  run('corepack', ['pnpm', 'payload', 'migrate'])
   run('corepack', ['pnpm', 'build'])
 
   const app = isWindows

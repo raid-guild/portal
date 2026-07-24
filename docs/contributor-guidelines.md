@@ -251,6 +251,16 @@ Examples:
 
 Modules are allowed, but they should not blur the core model. A module should attach to core primitives through explicit relationships instead of stuffing unrelated behavior into `projects`, `profiles`, or `dailyBriefs`.
 
+The RaidGuild Cohort Hub is one such feature module. A `Cohort` is the durable
+identity, framing, dates, and enrollment state for a RaidGuild program; it is
+not a replacement for a Brief, Project, Thread, Event, Post, Module, or Profile.
+Keep schedules in related Events and record attendance intent only through an
+explicit Profile-owned Cohort Commitment. Do not infer participation, add
+course-progress mechanics, or turn a Cohort into a project-management surface.
+Potential programs use the Cohort `gathering-interest` state and the existing
+general inquiry flow; they do not create commitments before dates and
+enrollment are official.
+
 The `modules` collection is the registry for module discovery and status. It is
 core Portal infrastructure and belongs in the `Portal` Payload admin group.
 

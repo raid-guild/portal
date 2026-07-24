@@ -13,6 +13,8 @@ import {
 } from 'lucide-react'
 
 import type {
+  Cohort,
+  CohortCommitment,
   DailyBrief,
   Event,
   Module,
@@ -25,6 +27,7 @@ import type {
   WikiPage,
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
+import { getCohortInquiryHref, getCohortLabel } from '@/cohorts/selectFeaturedCohort'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
@@ -33,17 +36,20 @@ import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
 import { TrackedInquiryLink } from './TrackedInquiryLink'
+import { TrackedCohortLink } from './TrackedCohortLink'
 
 type PortalHomeProps = {
+  cohortSessionThemes?: Event[]
   copy: ProductPageCopy
+  featuredCohort?: Cohort | null
   posts?: Post[]
-  projects?: Project[]
   spotlights?: Spotlight[]
   upcomingEvents?: Event[]
   weeklyBrief?: DailyBrief | null
 }
 
 type DashboardProps = {
+  cohortCommitment?: CohortCommitment | null
   dailyBrief?: DailyBrief | null
   dailyEngagementSummary?: {
     currentStreak: number
@@ -57,6 +63,7 @@ type DashboardProps = {
     wikiPages: number
   }
   featuredModules?: Module[]
+  featuredCohort?: Cohort | null
   upcomingEvents?: Event[]
   weekEvents?: Event[]
   pointEvents?: PointEvent[]
@@ -152,9 +159,10 @@ const getDashboardQuote = (brief?: DailyBrief | null): DashboardQuote | null => 
 }
 
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({
+  cohortSessionThemes = [],
   copy,
+  featuredCohort,
   posts = [],
-  projects = [],
   spotlights = [],
   upcomingEvents = [],
   weeklyBrief,
@@ -320,41 +328,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         </div>
       </section>
 
-      <section className="container py-12">
-        <div className="flex items-end justify-between gap-6">
-          <div>
-            <h2 className="portal-heading">Find a Team</h2>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-              Active projects help builders discover collaboration surfaces, people, context, and
-              useful next steps.
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/projects">View projects</Link>
-          </Button>
-        </div>
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {projects.length ? (
-            projects.map((project) => (
-              <Link
-                className="block portal-card"
-                href={`/projects/${project.slug}`}
-                key={project.id}
-              >
-                <p className="portal-kicker">{project.projectStatus || 'Project'}</p>
-                <h3 className="mt-2 portal-heading-sm">{project.title}</h3>
-                <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
-                  {project.summary}
-                </p>
-              </Link>
-            ))
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              Seeded project examples are coming next.
-            </p>
-          )}
-        </div>
-      </section>
+      <PublicCohortSection cohort={featuredCohort} sessionThemes={cohortSessionThemes} />
 
       <section className="portal-band">
         <div className="container grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -392,11 +366,145 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   )
 }
 
+const PublicCohortSection: React.FC<{
+  cohort?: Cohort | null
+  sessionThemes: Event[]
+}> = ({ cohort, sessionThemes }) => {
+  const isGatheringInterest = cohort?.programStatus === 'gathering-interest'
+  const cohortLabel = cohort ? getCohortLabel(cohort) : 'the next RaidGuild cohort'
+  const interestHref = cohort
+    ? getCohortInquiryHref(cohort, 'interested')
+    : '/inquire/general?context=cohort-interest&intent=interested'
+  const topicHref = cohort
+    ? getCohortInquiryHref(cohort, 'suggest-topic')
+    : '/inquire/general?context=cohort-interest&intent=suggest-topic'
+
+  return (
+    <section className="container py-12">
+      <div className="grid gap-8 lg:grid-cols-[18rem_1fr]">
+        <div>
+          <p className="portal-kicker">Learn and build together</p>
+          <h2 className="mt-2 portal-heading">RaidGuild Cohorts</h2>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Focused programs for exploring a shared theme through sessions, projects, and visible
+            community work.
+          </p>
+        </div>
+
+        {cohort ? (
+          <article className="portal-panel border-primary/40 bg-primary/10">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="portal-kicker">
+                {isGatheringInterest ? 'Potential future cohort' : 'Current or next cohort'}
+              </p>
+              <span className="portal-pill">{cohort.programStatus.replaceAll('-', ' ')}</span>
+            </div>
+            <h3 className="mt-3 portal-heading-sm">{cohortLabel}</h3>
+            <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
+              {cohort.summary}
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              {isGatheringInterest ? (
+                <TrackedInquiryLink
+                  className="portal-admin-link"
+                  cohortInterestIntent="interested"
+                  cohortSlug={cohort.slug}
+                  href={interestHref}
+                  inquiryType="general"
+                  placement="portal_home_cohort"
+                >
+                  Signal interest
+                </TrackedInquiryLink>
+              ) : (
+                <TrackedCohortLink
+                  className="portal-admin-link"
+                  cohortSlug={cohort.slug}
+                  href={`/cohorts/${cohort.slug}`}
+                  placement="portal_home"
+                >
+                  {cohort.enrollmentStatus === 'open'
+                    ? `Join ${cohortLabel}`
+                    : 'Explore the cohort'}
+                </TrackedCohortLink>
+              )}
+              <TrackedInquiryLink
+                className="portal-admin-link"
+                cohortInterestIntent="suggest-topic"
+                cohortSlug={cohort.slug}
+                href={topicHref}
+                inquiryType="general"
+                placement="portal_home_cohort_topic"
+              >
+                Suggest a future topic
+              </TrackedInquiryLink>
+            </div>
+          </article>
+        ) : (
+          <article className="portal-panel border-primary/40 bg-primary/10">
+            <p className="portal-kicker">What should we explore next?</p>
+            <h3 className="mt-3 portal-heading-sm">Help shape the next cohort</h3>
+            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+              No cohort is scheduled yet. Signal that you would participate or suggest a theme the
+              guild should explore together.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-3">
+              <TrackedInquiryLink
+                className="portal-admin-link"
+                cohortInterestIntent="interested"
+                cohortSlug="unscheduled"
+                href={interestHref}
+                inquiryType="general"
+                placement="portal_home_cohort"
+              >
+                Signal interest
+              </TrackedInquiryLink>
+              <TrackedInquiryLink
+                className="portal-admin-link"
+                cohortInterestIntent="suggest-topic"
+                cohortSlug="unscheduled"
+                href={topicHref}
+                inquiryType="general"
+                placement="portal_home_cohort_topic"
+              >
+                Suggest a future topic
+              </TrackedInquiryLink>
+            </div>
+          </article>
+        )}
+      </div>
+
+      {sessionThemes.length ? (
+        <div className="mt-8 lg:ml-[20rem]">
+          <p className="portal-kicker">Themes from previous cohort sessions</p>
+          <div className="mt-4 grid gap-4 md:grid-cols-3">
+            {sessionThemes.slice(0, 3).map((event) => (
+              <Link className="block portal-card" href={`/events/${event.id}`} key={event.id}>
+                <p className="portal-kicker">
+                  {event.sessionType?.replaceAll('-', ' ') || 'Session'}
+                </p>
+                <h3 className="mt-2 portal-heading-sm">{event.title}</h3>
+                {event.summary ? (
+                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                    {event.summary}
+                  </p>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </section>
+  )
+}
+
 export const PortalDashboard: React.FC<DashboardProps> = ({
+  cohortCommitment,
   dailyBrief,
   dailyEngagementSummary,
   dashboardStats,
   featuredModules = [],
+  featuredCohort,
   upcomingEvents = [],
   weekEvents = [],
   pointEvents = [],
@@ -631,7 +739,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         )}
       </section>
 
-      <div className="mt-12 grid gap-6 lg:grid-cols-2">
+      <div className="mt-12 grid gap-6 xl:grid-cols-3">
         <BriefPanel
           className="portal-panel"
           title={
@@ -675,8 +783,98 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
             <Link href="/me">{hasProfile ? 'Review profile' : 'Start profile'}</Link>
           </Button>
         </section>
+
+        <DashboardCohortCard
+          cohort={featuredCohort}
+          commitment={cohortCommitment}
+          hasProfile={hasProfile}
+        />
       </div>
     </main>
+  )
+}
+
+const DashboardCohortCard: React.FC<{
+  cohort?: Cohort | null
+  commitment?: CohortCommitment | null
+  hasProfile: boolean
+}> = ({ cohort, commitment, hasProfile }) => {
+  if (!cohort) {
+    return (
+      <section className="portal-panel border-primary/40 bg-primary/10">
+        <p className="portal-kicker">Next RaidGuild cohort</p>
+        <h2 className="portal-heading-sm mt-3">Interested in the next cohort?</h2>
+        <p className="mt-4 text-sm leading-6 text-muted-foreground">
+          No cohort is scheduled yet. Tell the guild what you would like to explore when the next
+          program takes shape.
+        </p>
+        <TrackedInquiryLink
+          className="portal-admin-link mt-5 inline-flex"
+          cohortInterestIntent="interested"
+          cohortSlug="unscheduled"
+          href="/inquire/general?context=cohort-interest&intent=interested"
+          inquiryType="general"
+          placement="dashboard_cohort"
+        >
+          Signal interest
+        </TrackedInquiryLink>
+      </section>
+    )
+  }
+
+  const cohortHref = `/cohorts/${cohort.slug}`
+  const isGatheringInterest = cohort.programStatus === 'gathering-interest'
+  const isCommitted = commitment?.status === 'committed' || commitment?.status === 'waitlisted'
+  const heading = isGatheringInterest
+    ? `${getCohortLabel(cohort)} is gathering interest`
+    : cohort.enrollmentStatus === 'open'
+      ? `Join ${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'the cohort'}`
+      : cohort.programStatus === 'active'
+        ? `${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'The cohort'} is underway`
+        : `Next cohort${cohort.cohortNumber ? `: Cohort ${cohort.cohortNumber}` : ''}`
+  const cta = isGatheringInterest
+    ? 'Signal interest'
+    : isCommitted
+      ? 'Open your cohort'
+      : !hasProfile && cohort.enrollmentStatus === 'open'
+        ? 'Complete profile to join'
+        : cohort.enrollmentStatus === 'open'
+          ? 'Join the cohort'
+          : 'Explore the cohort'
+
+  return (
+    <section className="portal-panel border-primary/40 bg-primary/10">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="portal-kicker">Current program</p>
+        <span className="portal-pill">
+          {isCommitted ? 'Committed' : cohort.enrollmentStatus.replace('-', ' ')}
+        </span>
+      </div>
+      <h2 className="portal-heading-sm mt-3">{heading}</h2>
+      <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
+      <p className="mt-4 text-sm leading-6 text-muted-foreground">{cohort.summary}</p>
+      {isGatheringInterest ? (
+        <TrackedInquiryLink
+          className="portal-admin-link mt-5 inline-flex"
+          cohortInterestIntent="interested"
+          cohortSlug={cohort.slug}
+          href={getCohortInquiryHref(cohort, 'interested')}
+          inquiryType="general"
+          placement="dashboard_cohort"
+        >
+          {cta}
+        </TrackedInquiryLink>
+      ) : (
+        <TrackedCohortLink
+          className="portal-admin-link mt-5 inline-flex"
+          cohortSlug={cohort.slug}
+          href={cohortHref}
+          placement="dashboard_brief"
+        >
+          {cta}
+        </TrackedCohortLink>
+      )}
+    </section>
   )
 }
 

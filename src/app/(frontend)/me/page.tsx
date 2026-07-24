@@ -56,6 +56,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
   ])
 
   const createdRecords = await getCreatedRecords(user, profile)
+  const nextPath = getSafeNextPath(searchParams.next)
 
   return (
     <main className="container pb-24 pt-12">
@@ -108,6 +109,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
           profile={profile}
           roles={roles}
           skills={skills}
+          nextPath={nextPath}
         />
       </section>
 
@@ -174,6 +176,9 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
 export const metadata: Metadata = {
   title: 'My Profile',
 }
+
+const getSafeNextPath = (next?: string) =>
+  next?.startsWith('/') && !next.startsWith('//') ? next : undefined
 
 const ProfileSummary: React.FC<{ profile: Profile }> = ({ profile }) => {
   const avatar = typeof profile.avatar === 'object' && profile.avatar ? profile.avatar : null
