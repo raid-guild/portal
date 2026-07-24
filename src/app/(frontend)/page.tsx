@@ -29,6 +29,7 @@ export default async function HomePage() {
         pointsTotal={dashboardData.pointSummary.total}
         profile={dashboardData.profile}
         recentPosts={dashboardData.recentPosts}
+        recentContributorMode={dashboardData.recentContributorMode}
         recentWikiPages={dashboardData.recentWikiPages}
         recentContributors={dashboardData.recentContributors}
         spotlights={dashboardData.spotlights}

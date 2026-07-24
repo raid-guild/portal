@@ -27,7 +27,7 @@ import type {
 import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
-import type { RecentContributor } from '../dashboard/dashboardTypes'
+import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
 import { DailyVibeNotes } from './DailyVibeNotes'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
@@ -63,6 +63,7 @@ type DashboardProps = {
   pointsTotal?: number
   profile?: Profile | null
   recentPosts?: Post[]
+  recentContributorMode?: RecentContributorMode
   recentContributors?: RecentContributor[]
   recentWikiPages?: WikiPage[]
   spotlights?: Spotlight[]
@@ -395,6 +396,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   pointsTotal = 0,
   profile,
   recentPosts = [],
+  recentContributorMode = 'recent-contributors',
   recentContributors = [],
   recentWikiPages = [],
   spotlights = [],
@@ -442,8 +444,8 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
               </h1>
               <p className="mt-5 max-w-2xl text-base leading-7 text-muted-foreground">
                 {hasProfile
-                  ? 'Catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now.'
-                  : 'Start by creating your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools.'}
+                  ? "I'm the tavern keeper around here. Let me pour you an ale while you catch the weekly brief, see what is live, and jump into the Portal surfaces moving right now."
+                  : "I'm the tavern keeper around here. Let me pour you an ale while you create your public profile so members can find your skills, roles, links, and contributions. Then use this page to follow sessions, posts, wiki pages, and useful Portal tools."}
               </p>
               {dashboardQuote ? (
                 <figure className="mt-5 max-w-2xl border-l border-border pl-4">
@@ -623,12 +625,19 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
       </section>
 
       <div className="mt-12 grid gap-6 lg:grid-cols-2">
-        <BriefPanel className="portal-panel" title="Recent Contributors">
+        <BriefPanel
+          className="portal-panel"
+          title={
+            recentContributorMode === 'member-discovery' ? 'Meet Members' : 'Recent Contributors'
+          }
+        >
           {recentContributors.length ? (
             <RecentContributorsList contributors={recentContributors} />
           ) : (
             <p className="text-sm text-muted-foreground">
-              No source-grounded member activity has been published in the last 30 days.
+              {recentContributorMode === 'member-discovery'
+                ? 'No visible active member profiles are available yet.'
+                : 'No source-grounded member activity has been published in the last 90 days.'}
             </p>
           )}
         </BriefPanel>
@@ -914,7 +923,10 @@ const BriefPanel: React.FC<{ children: React.ReactNode; className?: string; titl
   </section>
 )
 
-const activityTypeLabels: Record<RecentContributor['activity']['activityType'], string> = {
+const activityTypeLabels: Record<
+  NonNullable<RecentContributor['activity']>['activityType'],
+  string
+> = {
   blocker: 'Blocker',
   contribution: 'Contribution',
   decision: 'Decision',
@@ -955,13 +967,15 @@ const RecentContributorsList: React.FC<{ contributors: RecentContributor[] }> = 
           <span className="min-w-0">
             <span className="block truncate font-bold text-foreground">{label}</span>
             <span className="mt-1 block truncate text-xs text-muted-foreground">
-              {profile.handle ? `@${profile.handle}` : 'Updated profile'}
+              {profile.handle ? `@${profile.handle}` : 'Member profile'}
             </span>
             <span className="mt-2 block line-clamp-2 text-xs leading-5 text-muted-foreground">
-              {activity.title}
+              {activity?.title || profile.bio}
             </span>
             <span className="mt-1 block portal-kicker">
-              {activityTypeLabels[activity.activityType]} · {formatDate(activity.happenedAt)}
+              {activity
+                ? `${activityTypeLabels[activity.activityType]} · ${formatDate(activity.happenedAt)}`
+                : 'Member profile'}
             </span>
           </span>
         </Link>

@@ -84,7 +84,7 @@
 - [x] Add rules for when to create vs update records, especially updating existing threads before creating new ones.
 - [x] Add confidence rules: draft low-confidence records, publish only high-confidence factual updates when policy allows.
 - [x] Add source-grounding rules so activity items stay dated, factual, and traceable to real community memory.
-- [x] Distinguish credited activity participants from profiles that are only referenced, and derive Recent Contributors from visible activity in the last 30 days.
+- [x] Distinguish credited activity participants from profiles that are only referenced, derive Recent Contributors from visible activity in the last 90 days, and fall back to an honestly labeled active-member discovery surface when no qualifying activity exists.
 - [x] Add guardrails against PM-tool drift: no tasks, assignees, sprint boards, or invented project state.
 - [x] Document the review workflow for agent-proposed CMS updates before publication.
 - [x] Add examples mapping one meeting digest into activity items, threads, event updates, and a daily brief.
