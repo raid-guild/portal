@@ -39,7 +39,7 @@ Key fields:
 
 Rule: one activity item should describe one concrete thing that happened.
 
-Rule: use `creditedProfiles` only for people whose participation is supported by the source. Use `relatedProfiles` for people who are referenced or otherwise connected but are not necessarily contributors. Recent dashboard contributors are derived from visible, published activity items through `creditedProfiles`.
+Rule: use `creditedProfiles` only for people whose participation is supported by the source. Use `relatedProfiles` for people who are referenced or otherwise connected but are not necessarily contributors. Recent dashboard contributors are derived from viewer-visible, published activity items from the last 90 days through `creditedProfiles`. If none qualify, the dashboard uses a separately labeled Meet Members fallback rather than presenting profile metadata as contribution evidence.
 
 ## threads
 

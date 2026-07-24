@@ -319,9 +319,14 @@ Access:
 - editors/admins publish
 
 The member dashboard derives Recent Contributors from `creditedProfiles` on
-viewer-visible, published activity items from the last 30 days. It keeps the
-latest qualifying activity per profile and shows at most eight profiles.
-`relatedProfiles` alone must not qualify someone as a recent contributor.
+viewer-visible, published activity items from the last 90 days. Newer activity
+is ordered first, so contributors from the first 30 days take priority before
+older qualifying activity fills the remaining positions. It keeps the latest
+qualifying activity per profile and shows at most eight profiles.
+`relatedProfiles` alone must not qualify someone as a recent contributor. When
+there are no qualifying contributors, the same dashboard surface becomes a
+clearly labeled Meet Members fallback containing active, viewer-visible,
+non-private profiles; it must not imply those profiles recently contributed.
 
 #### `threads`
 

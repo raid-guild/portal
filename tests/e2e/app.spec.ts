@@ -2807,22 +2807,19 @@ async function verifyRecentContributors(page: Page, profileHandle: string) {
   expect(relatedOnlyResponse.status()).toBe(201)
 
   await page.goto('/')
-  const emptySection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Recent Contributors' }),
+  const fallbackSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Meet Members' }),
   })
-  await expect(emptySection.getByText(relatedOnlyTitle)).toHaveCount(0)
-  await expect(
-    emptySection.getByText(
-      'No source-grounded member activity has been published in the last 30 days.',
-    ),
-  ).toBeVisible()
+  await expect(fallbackSection.getByText(relatedOnlyTitle)).toHaveCount(0)
+  await expect(fallbackSection.getByText('Playwright Admin', { exact: true })).toBeVisible()
 
   const creditedTitle = `Shipped recent Portal dashboard work ${Date.now()}`
+  const extendedWindowActivityDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
   const creditedResponse = await page.request.post('/api/activityItems', {
     data: {
       activityType: 'contribution',
       creditedProfiles: [profileID],
-      happenedAt: new Date().toISOString(),
+      happenedAt: extendedWindowActivityDate,
       relatedProfiles: [profileID],
       sourceLabel: 'Playwright dashboard coverage',
       title: creditedTitle,
@@ -3215,10 +3212,7 @@ async function verifyDashboardBrief(page: Page) {
   expect(tavernKeeperBox!.x).toBeLessThan(welcomeHeadingBox!.x)
   await expect(page.getByRole('heading', { name: "This Week's Sessions" })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Full schedule' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'Recent Contributors' })).toBeVisible()
-  await expect(
-    page.getByText('No source-grounded member activity has been published in the last 30 days.'),
-  ).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Meet Members' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Highlighted Thread' })).toBeVisible()
   await expect(page.getByText('No highlighted thread is set.')).toBeVisible()
 
@@ -3261,21 +3255,21 @@ async function verifyDashboardBrief(page: Page) {
     0,
   )
 
-  const recentContributorsHeading = page.getByRole('heading', { name: 'Recent Contributors' })
+  const dashboardMembersHeading = page.getByRole('heading', { name: 'Meet Members' })
   const nextProfileStepHeading = page.getByRole('heading', { name: 'Next Profile Step' })
-  const recentContributorsBox = await recentContributorsHeading.boundingBox()
+  const dashboardMembersBox = await dashboardMembersHeading.boundingBox()
   const nextProfileStepBox = await nextProfileStepHeading.boundingBox()
-  expect(recentContributorsBox).not.toBeNull()
+  expect(dashboardMembersBox).not.toBeNull()
   expect(nextProfileStepBox).not.toBeNull()
-  expect(Math.abs(recentContributorsBox!.y - nextProfileStepBox!.y)).toBeLessThanOrEqual(1)
-  expect(recentContributorsBox!.x).toBeLessThan(nextProfileStepBox!.x)
+  expect(Math.abs(dashboardMembersBox!.y - nextProfileStepBox!.y)).toBeLessThanOrEqual(1)
+  expect(dashboardMembersBox!.x).toBeLessThan(nextProfileStepBox!.x)
 
   await expectVerticalOrder([
     portalNavigation,
     page.getByRole('heading', { name: "This Week's Sessions" }),
     page.getByRole('heading', { name: 'Highlighted Thread' }),
     page.getByText('This Week In The Guild'),
-    recentContributorsHeading,
+    dashboardMembersHeading,
     nextProfileStepHeading,
   ])
 }

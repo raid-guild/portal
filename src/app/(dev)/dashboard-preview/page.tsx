@@ -43,6 +43,7 @@ export default function DashboardPreviewPage() {
       pointEvents={createPreviewPointEvents(now)}
       pointsTotal={85}
       recentPosts={createPreviewPosts(now)}
+      recentContributorMode="recent-contributors"
       recentContributors={createPreviewContributors(now)}
       recentWikiPages={createPreviewWikiPages(now)}
       spotlights={createPreviewSpotlights(now)}
