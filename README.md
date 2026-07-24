@@ -98,6 +98,12 @@ production Portal. Give the preview its own public domain and set
 seed commands, or use the local reset scripts. Preview migrations must be
 forward-compatible with the currently running production application.
 
+If the preview does not mount the production media volume, set
+`MEDIA_FALLBACK_ORIGIN=https://portal.raidguild.org`. Missing `/media/*` reads
+will be proxied to that public origin. Treat that preview as read-only for media:
+uploads written to its ephemeral filesystem will not survive deployment and are
+not copied to the production Portal volume.
+
 ### Local Setup
 
 1. Clone proejct: (recommeded) Laucnh on Railway and ejct [watch how](https://www.youtube.com/watch?v=LJFek8JP8TE). Alternatively clone this repo or fork it.
