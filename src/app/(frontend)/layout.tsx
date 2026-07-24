@@ -17,6 +17,10 @@ import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 
+// Header and footer globals are CMS-backed. Keeping the frontend tree dynamic
+// prevents Railway image builds from needing database network access.
+export const dynamic = 'force-dynamic'
+
 const plausibleInitScript = `
   window.plausible=window.plausible||function(){(plausible.q=plausible.q||[]).push(arguments)},plausible.init=plausible.init||function(i){plausible.o=i||{}};
   plausible.init()

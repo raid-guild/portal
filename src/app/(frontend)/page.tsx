@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+
+import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 import React from 'react'
 
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
@@ -21,10 +23,12 @@ export default async function HomePage() {
 
     return (
       <PortalDashboard
+        cohortCommitment={dashboardData.cohortCommitment}
         dashboardStats={dashboardData.dashboardStats}
         dailyBrief={dashboardData.dailyBrief}
         dailyEngagementSummary={dashboardData.dailyEngagementSummary}
         featuredModules={dashboardData.featuredModules}
+        featuredCohort={dashboardData.featuredCohort}
         pointEvents={dashboardData.pointSummary.events}
         pointsTotal={dashboardData.pointSummary.total}
         profile={dashboardData.profile}
@@ -40,10 +44,10 @@ export default async function HomePage() {
     )
   }
 
-  const [copy, posts, projects, upcomingEvents, weeklyBrief, spotlights] = await Promise.all([
+  const [copy, posts, cohortSnapshot, upcomingEvents, weeklyBrief, spotlights] = await Promise.all([
     getBriefPublicPageCopy(),
     getRecentPosts(),
-    getProjects(),
+    getPublicCohortSnapshot(),
     getPublicUpcomingEvents(),
     getLatestWeeklyBrief(),
     getActiveSpotlights(),
@@ -51,9 +55,10 @@ export default async function HomePage() {
 
   return (
     <PortalPublicHome
+      cohortSessionThemes={cohortSnapshot.sessionThemes}
       copy={copy}
+      featuredCohort={cohortSnapshot.cohort}
       posts={posts}
-      projects={projects}
       spotlights={spotlights}
       upcomingEvents={upcomingEvents}
       weeklyBrief={weeklyBrief}
@@ -100,23 +105,32 @@ const getRecentPosts = async () => {
   return result.docs
 }
 
-const getProjects = async () => {
+const getPublicCohortSnapshot = async () => {
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'projects',
+  const cohort = await getFeaturedCohort({ visibility: 'public' })
+
+  const pastSessions = await payload.find({
+    collection: 'events',
     depth: 1,
     draft: false,
-    limit: 3,
+    limit: 12,
     overrideAccess: false,
-    sort: '-publishedAt',
+    pagination: false,
+    sort: '-startsAt',
     where: {
-      _status: {
-        equals: 'published',
-      },
+      and: [
+        { _status: { equals: 'published' } },
+        { startsAt: { less_than: new Date().toISOString() } },
+        { visibility: { equals: 'public' } },
+        { relatedCohorts: { exists: true } },
+      ],
     },
   })
 
-  return result.docs
+  return {
+    cohort,
+    sessionThemes: pastSessions.docs.slice(0, 3),
+  }
 }
 
 const getPublicUpcomingEvents = async () => {

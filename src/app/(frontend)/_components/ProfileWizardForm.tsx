@@ -17,6 +17,7 @@ type ProfileWizardFormProps = {
   profile?: Profile | null
   roles: ProfileRole[]
   skills: ProfileSkill[]
+  nextPath?: string
 }
 
 const selectedIDs = (items?: (number | ProfileRole | ProfileSkill)[] | null) =>
@@ -58,6 +59,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   profile,
   roles,
   skills,
+  nextPath,
 }) => {
   const [claimError, setClaimError] = useState<string | null>(null)
   const [claimingProfileID, setClaimingProfileID] = useState<number | string | null>(null)
@@ -103,7 +105,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
       }
 
       if (token) {
-        window.location.href = '/me'
+        window.location.href = nextPath || '/me'
         return
       }
 
@@ -266,6 +268,10 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
 
         if (!profile && isHandleError && (await handleBelongsToAccount(handle, accountUserID))) {
           trackProfileCompletion()
+          if (nextPath) {
+            window.location.href = nextPath
+            return
+          }
           setSuccess('Profile saved.')
           return
         }
@@ -274,6 +280,10 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
       }
 
       trackProfileCompletion()
+      if (nextPath && !profile) {
+        window.location.href = nextPath
+        return
+      }
       setSuccess('Profile saved.')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to save profile.')

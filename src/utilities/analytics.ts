@@ -4,6 +4,10 @@ export type InquiryAnalyticsType = 'client' | 'general' | 'grant' | 'opportunity
 
 export type PortalAnalyticsEvent =
   | 'Account Created'
+  | 'Cohort CTA Clicked'
+  | 'Cohort Commitment Created'
+  | 'Cohort Commitment Withdrawn'
+  | 'Cohort Interest Clicked'
   | 'Inquiry Account Clicked'
   | 'Inquiry CTA Clicked'
   | 'Inquiry Failed'

@@ -12,6 +12,7 @@ import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { ProfileAvatarCard } from './ProfileAvatarCard'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { getSafeNextPath } from '@/utilities/safeNextPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -56,6 +57,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
   ])
 
   const createdRecords = await getCreatedRecords(user, profile)
+  const nextPath = getSafeNextPath(searchParams.next)
 
   return (
     <main className="container pb-24 pt-12">
@@ -108,6 +110,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
           profile={profile}
           roles={roles}
           skills={skills}
+          nextPath={nextPath}
         />
       </section>
 

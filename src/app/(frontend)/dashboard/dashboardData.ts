@@ -2,6 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { ActivityItem, Profile, User } from '@/payload-types'
+import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
 import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
@@ -23,6 +24,7 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     recentWikiPages,
     weekEvents,
     recentContributorResult,
+    featuredCohort,
   ] = await Promise.all([
     getLatestDashboardBrief(user),
     getDailyEngagementSummary(user),
@@ -36,7 +38,13 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     getRecentWikiPages(user),
     getWeekEvents(user),
     getRecentContributors(user),
+    getFeaturedCohort({ user, visibility: 'visible-to-user' }),
   ])
+
+  const cohortCommitment =
+    featuredCohort && profile
+      ? await getCohortCommitment(user, featuredCohort.id, profile.id)
+      : null
 
   return {
     recentContributorMode: recentContributorResult.mode,
@@ -45,6 +53,8 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     dailyEngagementSummary,
     dashboardStats,
     featuredModules,
+    featuredCohort,
+    cohortCommitment,
     pointSummary,
     profile,
     recentPosts,
@@ -53,6 +63,23 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     upcomingEvents,
     weekEvents,
   }
+}
+
+const getCohortCommitment = async (user: User, cohortID: number, profileID: number) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'cohortCommitments',
+    depth: 0,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    user,
+    where: {
+      and: [{ cohort: { equals: cohortID } }, { profile: { equals: profileID } }],
+    },
+  })
+
+  return result.docs[0] || null
 }
 
 const getProfileForUser = async (userID: string | number) => {

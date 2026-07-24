@@ -33,6 +33,7 @@ Status labels:
 | Widget bubble | [Widget Bubble](./widget-bubble-feature-spec.md) | First slice implemented | Feedback route, `feedbackSubmissions`, and default-on widget exist. |
 | Brief spotlight | [Brief spotlight](./brief-spotlight-feature-spec.md) | First slice implemented | `spotlights`, active home/dashboard cards, and thread detail pages exist. |
 | Interactive map dashboard | [Interactive map dashboard](./map-dashboard-feature-spec.md) | First slice implemented | Alternate authenticated dashboard landing view using existing Portal primitives. |
+| RaidGuild cohort hub | [RaidGuild cohort hub](./raidguild-cohort-hub-feature-spec.md) | First slice implemented | Reusable cohort hubs, Profile-gated commitments, Event-backed schedules, dashboard discovery, and durable routes exist. |
 
 ## Planned / Future Modules
 

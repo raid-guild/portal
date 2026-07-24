@@ -22,6 +22,7 @@ import type {
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { getYouTubeEmbedURL } from '@/utilities/videoEmbed'
 import { SessionDateTime } from '../../_components/SessionDateTime'
 
 export const dynamic = 'force-dynamic'
@@ -48,6 +49,9 @@ const sessionTypeLabels: Record<NonNullable<Event['sessionType']>, string> = {
   brownbag: 'Brownbag',
   demo: 'Demo',
   fireside: 'Fireside',
+  'guest-talk': 'Guest talk',
+  kickoff: 'Kickoff',
+  'office-hours': 'Office hours',
   pitch: 'Pitch',
   workshop: 'Workshop',
 }
@@ -538,41 +542,6 @@ const WikiPageCard: React.FC<{ page: WikiPage }> = ({ page }) => (
     <p className="mt-3 text-sm leading-6 text-muted-foreground">{page.summary}</p>
   </Link>
 )
-
-const getYouTubeEmbedURL = (href: string): string | null => {
-  try {
-    const url = new URL(href)
-    const host = url.hostname.toLowerCase().replace(/^www\./, '')
-    let videoID = ''
-
-    if (host === 'youtu.be') {
-      videoID = url.pathname.split('/').filter(Boolean)[0] || ''
-    }
-
-    if (
-      host === 'youtube.com' ||
-      host === 'm.youtube.com' ||
-      host === 'music.youtube.com' ||
-      host === 'youtube-nocookie.com'
-    ) {
-      if (url.pathname === '/watch') {
-        videoID = url.searchParams.get('v') || ''
-      } else {
-        const [, route, id] = url.pathname.split('/')
-
-        if (route === 'embed' || route === 'shorts' || route === 'live') {
-          videoID = id || ''
-        }
-      }
-    }
-
-    if (!/^[A-Za-z0-9_-]{11}$/.test(videoID)) return null
-
-    return `https://www.youtube-nocookie.com/embed/${videoID}`
-  } catch {
-    return null
-  }
-}
 
 const formatDiscordSyncError = (value?: string | null): string => {
   if (!value) return 'No error details were returned.'

@@ -128,6 +128,7 @@ Relationship fields:
 
 - `relatedProjects`
 - `relatedThreads`
+- `relatedCohorts`: reusable program relationships for cohort-specific schedules
 - `previousOccurrence`
 - `nextOccurrence`
 

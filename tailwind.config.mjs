@@ -130,6 +130,22 @@ export default {
           css: {
             '--tw-prose-body': 'var(--text)',
             '--tw-prose-headings': 'var(--text)',
+            '--tw-prose-links': theme('colors.blue.700'),
+            '--tw-prose-links-hover': theme('colors.blue.800'),
+            '--tw-prose-invert-links': theme('colors.blue.300'),
+            '--tw-prose-invert-links-hover': theme('colors.blue.200'),
+            '&.prose-invert': {
+              '--tw-prose-links-hover': 'var(--tw-prose-invert-links-hover)',
+            },
+            a: {
+              textDecorationColor: 'var(--tw-prose-links)',
+              transitionDuration: '150ms',
+              transitionProperty: 'color, text-decoration-color',
+              '&:hover': {
+                color: 'var(--tw-prose-links-hover)',
+                textDecorationColor: 'var(--tw-prose-links-hover)',
+              },
+            },
             h1: {
               fontSize: '3.5rem',
               fontWeight: 'normal',

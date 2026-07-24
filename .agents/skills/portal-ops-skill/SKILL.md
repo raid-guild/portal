@@ -1,6 +1,6 @@
 ---
 name: portal-ops-skill
-description: Operate the RaidGuild Portal through safe Payload API workflows. Use when an agent needs to discover Portal CMS primitives, create or update sessions, posts, wiki pages, wiki topic graph records, briefs, projects, threads, activity items, profiles, spotlights, CMS-managed page copy, or source-grounded memory updates while avoiding invented content and project-management drift.
+description: Operate the RaidGuild Portal through safe Payload API workflows. Use when an agent needs to discover Portal CMS primitives, set up cohort pages, or create or update sessions, posts, wiki pages, wiki topic graph records, briefs, projects, threads, activity items, profiles, spotlights, CMS-managed page copy, or source-grounded memory updates while avoiding invented content and project-management drift.
 ---
 
 # Portal Ops Skill
@@ -46,6 +46,10 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 - `wikiPages`: durable, source-backed topic pages; what the community has learned.
 - `wikiTopics`: graph/discovery nodes that organize categories, topics,
   possible articles, sources, and links between wiki pages.
+- `cohorts`: durable program hubs that frame a cohort's theme, lifecycle,
+  enrollment, schedule, announcements, and curated related work.
+- `cohortCommitments`: Profile-owned participation intent created by the person
+  joining; agents must not create commitments on someone else's behalf.
 
 ## Workflow
 
@@ -54,12 +58,15 @@ Use `references/example-digest-mapping.md` when an example output shape is usefu
 3. Prefer updating existing threads over creating new threads.
 4. Create new projects only when there is a concrete collaboration surface with state, people, links, or a next action.
 5. Create activity items for specific dated events, decisions, blockers, insights, or contributions. Credit only profiles whose concrete participation the source documents; keep people who are merely mentioned in `relatedProfiles`.
-6. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
-7. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
-8. Create or update wiki pages only when the source supports durable topic knowledge, not transient recap content.
-9. Create or update wiki topics when shaping graph discovery, importing
-   session topic maps, or connecting generated topic/article candidates.
-10. Output a reviewable plan with create/update operations and confidence.
+6. Propose a Cohort only when its theme, lifecycle state, and public framing are
+   human-approved; connect sourced Posts, Events, Projects, Threads, and Modules
+   instead of copying those records into the Cohort.
+7. Create or update events only for real sessions with time, location/join/calendar context, or clear follow-up action.
+8. Assemble the daily brief from related activity, threads, projects, events, and engagement actions.
+9. Create or update wiki pages only when the source supports durable topic knowledge, not transient recap content.
+10. Create or update wiki topics when shaping graph discovery, importing
+    session topic maps, or connecting generated topic/article candidates.
+11. Output a reviewable plan with create/update operations and confidence.
 
 ## Agent Account Flow
 
@@ -131,6 +138,163 @@ allows, they can create and publish sourced records. Operationally, prefer
 review drafts unless the target environment is clear and the source facts are
 concrete. Agents must not delete, manage users, or impersonate humans.
 
+## Cohort Page Setup
+
+Use `cohorts` for a named RaidGuild program with its own theme, lifecycle,
+enrollment state, schedule, announcements, and durable page at
+`/cohorts/<slug>`. Do not use a Cohort as a course, task board, generic campaign
+page, or replacement for Events, Posts, Projects, Threads, or Modules.
+
+### Authority And Review
+
+Creating or updating the Cohort record requires an editor or admin Payload
+session. An `agent` account may assemble a sourced proposal and may operate
+related collections where their access allows, but it cannot write the Cohort
+record directly. Do not work around this by using a human's credentials for an
+automated publisher.
+
+Default to this review sequence:
+
+1. Discover existing Cohorts by slug and confirm whether this is a create or an
+   update.
+2. Produce a reviewable Cohort payload and list every source for its theme,
+   dates, status, links, and related records.
+3. Have an editor or admin create the Cohort as a draft.
+4. Create or identify sourced Announcement Posts, Events, Projects, Threads,
+   Modules, media, and external references.
+5. Have an editor or admin attach the reviewed relationship IDs and publish.
+6. Verify the public API record and `/cohorts/<slug>` route with the intended
+   visibility.
+
+Never invent a cohort number, launch date, capacity, enrollment deadline,
+schedule, participant, commitment, speaker, join link, or claim of demand.
+
+### Cohort Fields
+
+Required or operationally important fields:
+
+- `title`, `slug`, `summary`, `theme`
+- `programStatus`: `draft`, `gathering-interest`, `upcoming`, `active`,
+  `complete`, or `archived`
+- `enrollmentStatus`: `closed`, `open`, or `waitlist`
+- `startsAt`, `endsAt`, `enrollmentOpensAt`, `enrollmentClosesAt` when confirmed
+- `participationExpectation` and factual `capacity` when useful
+- `heroMedia`: optional Payload media ID
+- `explorationVideoURL`: optional YouTube URL; never store arbitrary iframe HTML
+- `visualVariant`: `guild`, `scroll`, or `moloch`
+- `starterTopics`: `{ title, summary?, url? }`
+- `programSections`: `{ heading, body }`
+- `contextLinks`: `{ title, summary?, url }` with explicit external URLs
+- `highlightedThread`, `featuredPosts`, `featuredProjects`, `featuredModules`:
+  existing Payload relationship IDs
+- `visibility`: `public`, `authenticated`, `member`, or `admin`
+- `_status`: `draft` or `published`
+
+Keep `programStatus` separate from `enrollmentStatus`:
+
+- `gathering-interest` means the idea is visible enough to test demand, has no
+  official start date unless one is actually confirmed, and uses
+  `enrollmentStatus: closed`. Portal supplies the interest/topic inquiry CTAs.
+- `upcoming` may be published before enrollment opens.
+- `active` may have closed enrollment.
+- `complete` and `archived` preserve the same durable route and emphasize the
+  resulting sessions, Posts, Projects, and artifacts.
+
+Example editor/admin draft creation:
+
+```bash
+curl -b editor-cookies.txt -X POST "$PORTAL_URL/api/cohorts" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Agentic Guild Operations",
+    "slug": "agentic-guild-operations",
+    "summary": "A sourced summary approved for the cohort proposal.",
+    "theme": "Agents that strengthen real community work",
+    "programStatus": "gathering-interest",
+    "enrollmentStatus": "closed",
+    "visualVariant": "guild",
+    "visibility": "public",
+    "_status": "draft"
+  }'
+```
+
+Omit uncertain optional fields instead of filling them with placeholders.
+
+### Announcements And Related Work
+
+Announcements remain normal, shareable Posts:
+
+1. Create or identify a Post with `contentType: "announcement"`.
+2. Set its visibility and publication state from the source and review policy.
+3. Add its ID to the Cohort's `featuredPosts` relationship.
+
+The cohort page separates Announcement Posts into a date-ordered Announcements
+section and does not duplicate them in general context and work. Other featured
+Posts remain examples, guides, recaps, or related editorial context.
+
+Use relationships rather than duplicating content:
+
+- `highlightedThread` for the main persistent line of thought
+- `featuredProjects` for concrete work produced or advanced by the cohort
+- `featuredModules` for reusable Portal tools
+- `contextLinks` only for useful external references
+
+### Cohort Sessions
+
+Sessions remain canonical `events` records. Connect each confirmed session with
+`relatedCohorts: [<cohortID>]`. The cohort page derives its next session, weekly
+strip, full schedule, and past-session archive from those Events.
+
+For a Portal-only event, the raw Payload endpoint accepts `relatedCohorts`:
+
+```bash
+curl -b cookies.txt -X POST "$PORTAL_URL/api/events" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Cohort kickoff",
+    "summary": "Confirmed kickoff framing from the approved program notes.",
+    "sessionType": "kickoff",
+    "startsAt": "2026-09-10T18:00:00.000Z",
+    "endsAt": "2026-09-10T19:00:00.000Z",
+    "relatedCohorts": [123],
+    "visibility": "public",
+    "_status": "published"
+  }'
+```
+
+When Discord scheduled-event creation is required, use
+`POST /api/events/create` as documented below, verify its sync result, then
+`PATCH /api/events/<eventID>` with the reviewed `relatedCohorts` IDs. Do not
+claim the session is on the cohort schedule until that relationship is present.
+
+### Commitments And Interest
+
+Do not create `cohortCommitments` for people. A commitment represents a person's
+own authenticated action and requires a linked Profile. The public cohort page
+handles login, Profile gating, commit, withdraw, and rejoin flows.
+
+Do not create a separate interest record for a `gathering-interest` Cohort.
+Portal uses a prefilled general inquiry for “I'm interested” and “Suggest a
+topic” until real operations justify a dedicated interest lifecycle.
+
+### Publish Verification
+
+After an editor/admin publishes, verify:
+
+```bash
+curl -f "$PORTAL_URL/api/cohorts?depth=2&where[slug][equals]=<slug>"
+curl -I -f "$PORTAL_URL/cohorts/<slug>"
+```
+
+Check that:
+
+- the Cohort is published with the intended visibility
+- status, enrollment, dates, and CTA language are truthful
+- Announcement Posts appear once and link to their Post routes
+- related Events appear in chronological schedule sections
+- related records enforce their own visibility
+- commitment CTAs require authentication and a Profile
+
 ## Event Creation And Discord Sync
 
 Hard rule: `syncDiscord` is not a field on the Payload `events` collection. Passing `"syncDiscord": true` to the raw Payload collection endpoint (`POST /api/events`) will be ignored and will not create a Discord scheduled event.
@@ -158,6 +322,9 @@ Payload differences for `/api/events/create`:
 - Send `durationMinutes` instead of `endsAt`; the endpoint calculates `endsAt`.
 - Send `hosts` instead of `hostProfiles`.
 - Send `guests` instead of `speakerProfiles`.
+- The dedicated endpoint does not currently accept `relatedCohorts`; after it
+  creates the Event, patch the Event through `/api/events/:id` to attach the
+  reviewed Cohort IDs.
 - Send an existing Discord event URL in `joinURL` or `discordEventURL` when the
   scheduled event already exists in Discord. Portal recognizes
   `https://discord.com/events/<guildID>/<eventID>` URLs, stores the Discord
@@ -192,6 +359,7 @@ For recurring sessions, Portal uses copied event metadata rather than a separate
 - `recurrenceCadence`: `weekly`, `biweekly`, or `monthly`
 - `recurrenceUntil`: optional end date
 - `previousOccurrence` / `nextOccurrence`: event-to-event chain
+- `relatedCohorts`: Cohort programs whose schedules include the Event
 
 When an agent workflow creates the next occurrence, copy the series fields forward, set `previousOccurrence` on the new event, and patch `nextOccurrence` on the current event. Do not invent recurrence if the current event has no `seriesKey` and `recurrenceCadence`.
 

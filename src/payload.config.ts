@@ -12,6 +12,8 @@ import { ActivityItems } from './collections/ActivityItems'
 import { Badges } from './collections/Badges'
 import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
+import { CohortCommitments } from './collections/CohortCommitments'
+import { Cohorts } from './collections/Cohorts'
 import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
@@ -52,10 +54,10 @@ const portalOpsSkillDir = path.resolve(rootDir, '.agents/skills/portal-ops-skill
 const portalOpsSkill = {
   aliases: ['portal-memory-publisher'],
   description:
-    'Operate the Portal CMS safely, including sessions, posts, wiki pages, briefs, projects, copy, and memory updates.',
+    'Operate the Portal CMS safely, including cohort setup, sessions, posts, wiki pages, briefs, projects, copy, and memory updates.',
   name: 'portal-ops-skill',
   route: '/api/portal/skills/portal-ops-skill',
-  version: '3',
+  version: '4',
 }
 
 const getPortalOpsSkillResponse = async () => {
@@ -147,6 +149,8 @@ export default buildConfig({
     ActivityItems,
     DailyBriefs,
     DailyEngagements,
+    Cohorts,
+    CohortCommitments,
     Events,
     PointEvents,
     Projects,

@@ -593,6 +593,7 @@ export const seedPortalContent = async ({
       data: {
         title: 'Cohort Project Spike Portal Update',
         slug: 'cohort-project-spike-portal-update',
+        contentType: 'announcement',
         content: lexicalRoot([
           headingNode('h2', [text('Cohort project spike portal update')]),
           paragraphNode(
@@ -743,6 +744,66 @@ export const seedPortalContent = async ({
         }),
       ])
 
+    const raidGuildCohort = await upsert({
+      collection: 'cohorts',
+      match: { slug: 'agentic-guild-operations' },
+      payload,
+      data: {
+        title: 'Agentic Guild Operations',
+        slug: 'agentic-guild-operations',
+        cohortNumber: 8,
+        summary:
+          'A working cohort for building practical agent workflows, shared memory, and human checkpoints for guild operations.',
+        theme: 'Agents that strengthen real community work',
+        thesis:
+          'Explore how agents can preserve context, improve discovery, and help contributors take a useful next step without replacing human judgment.',
+        programStatus: 'upcoming',
+        enrollmentStatus: 'open',
+        startsAt: '2030-06-01T16:00:00.000Z',
+        endsAt: '2030-07-13T23:00:00.000Z',
+        participationExpectation:
+          'Join the kickoff, attend or review the weekly sessions, and bring one concrete workflow, experiment, or useful question into the cohort.',
+        visualVariant: 'guild',
+        starterTopics: [
+          {
+            title: 'Agent-ready workflows',
+            summary: 'Bounded tools, review points, and useful handoffs between agents and people.',
+          },
+          {
+            title: 'Community memory',
+            summary: 'Source-grounded context that makes prior work easier to find and reuse.',
+          },
+          {
+            title: 'Participation and discovery',
+            summary: 'Helping contributors see what is active and choose a concrete next step.',
+          },
+        ],
+        programSections: [
+          {
+            heading: 'How we meet',
+            body: 'Kickoff, open office hours, brown bags, and guest talks create recurring places to share work and unblock experiments.',
+          },
+          {
+            heading: 'What participants make',
+            body: 'Small working prototypes, documented workflows, field notes, and reusable Portal context are all valid outcomes.',
+          },
+        ],
+        contextLinks: [
+          {
+            title: 'RaidGuild public site',
+            summary: 'Guild background, services, and public ways to connect.',
+            url: 'https://www.raidguild.org/',
+          },
+        ],
+        highlightedThread: projectObjectThread.id,
+        featuredPosts: [portalUpdatePost.id],
+        featuredProjects: [cohortProject.id],
+        visibility: 'public',
+        _status: 'published',
+        publishedAt,
+      },
+    })
+
     const nextCohortEvent = await upsert({
       collection: 'events',
       match: { title: 'Cohort Project Spike Sync' },
@@ -758,6 +819,7 @@ export const seedPortalContent = async ({
         joinURL: nextSessionJoinURL,
         calendarURL: nextSessionCalendarURL,
         discordEventURL: 'https://discord.com',
+        relatedCohorts: [raidGuildCohort.id],
         relatedProjects: [cohortProject.id],
         relatedThreads: [projectObjectThread.id, calendarThread.id, ownershipThread.id],
         visibility: 'public',
