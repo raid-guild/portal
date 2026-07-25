@@ -47,11 +47,22 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
-    if (preference && preference !== themeToSet) {
-      window.localStorage.setItem(themeLocalStorageKey, themeToSet)
+    if (normalizedPreference && preference !== normalizedPreference) {
+      window.localStorage.setItem(themeLocalStorageKey, normalizedPreference)
     }
     document.documentElement.setAttribute('data-theme', themeToSet)
     setThemeState(themeToSet)
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const applyImplicitPreference = () => {
+      if (normalizeTheme(window.localStorage.getItem(themeLocalStorageKey))) return
+      const implicitPreference = getImplicitPreference() || defaultTheme
+      document.documentElement.setAttribute('data-theme', implicitPreference)
+      setThemeState(implicitPreference)
+    }
+
+    mediaQuery.addEventListener('change', applyImplicitPreference)
+    return () => mediaQuery.removeEventListener('change', applyImplicitPreference)
   }, [])
 
   return <ThemeContext.Provider value={{ setTheme, theme }}>{children}</ThemeContext.Provider>

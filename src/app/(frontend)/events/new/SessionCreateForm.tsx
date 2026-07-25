@@ -312,7 +312,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           </Field>
           <Field htmlFor="locationLabel" label="Location label">
             <Input
-              className="h-12 border-scroll-100/25 bg-background/70"
+              className="portal-field"
               id="locationLabel"
               name="locationLabel"
               placeholder="Discord #cohort-voice"
@@ -320,7 +320,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
           </Field>
           <Field htmlFor="joinURL" label="Join URL">
             <Input
-              className="h-12 border-scroll-100/25 bg-background/70"
+              className="portal-field"
               id="joinURL"
               name="joinURL"
               placeholder="Discord event URL, channel link, or meeting link"
@@ -341,7 +341,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field htmlFor="seriesKey" label="Series key">
                   <Input
-                    className="h-12 border-scroll-100/25 bg-background/70"
+                    className="portal-field"
                     id="seriesKey"
                     name="seriesKey"
                     placeholder="weekly-all-hands"
@@ -350,7 +350,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
                 </Field>
                 <Field htmlFor="seriesTitle" label="Series title">
                   <Input
-                    className="h-12 border-scroll-100/25 bg-background/70"
+                    className="portal-field"
                     id="seriesTitle"
                     name="seriesTitle"
                     placeholder="Weekly All Hands"
@@ -370,7 +370,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
                 </Field>
                 <Field htmlFor="recurrenceUntil" label="End date">
                   <Input
-                    className="h-12 border-scroll-100/25 bg-background/70 font-mono text-xs uppercase accent-primary"
+                    className="portal-field font-mono text-xs uppercase accent-primary"
                     id="recurrenceUntil"
                     name="recurrenceUntil"
                     type="date"

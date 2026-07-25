@@ -25,7 +25,7 @@ const themeScript = `
     }
 
     function normalizeTheme(theme) {
-      if (aliases[theme]) return aliases[theme]
+      if (Object.prototype.hasOwnProperty.call(aliases, theme)) return aliases[theme]
       return supportedThemes.indexOf(theme) !== -1 ? theme : null
     }
 

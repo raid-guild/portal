@@ -217,6 +217,31 @@ function lexicalListContent(items: string[]) {
   }
 }
 
+test('normalizes stored themes and follows system preference in auto mode', async ({ browser }) => {
+  const context = await browser.newContext({ colorScheme: 'light' })
+  const page = await context.newPage()
+
+  await page.addInitScript(() => {
+    window.localStorage.setItem('payload-theme', 'constructor')
+  })
+  await page.goto('/login')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(page.locator('html')).toHaveCSS('opacity', '1')
+
+  await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
+    .toBe('raidguild-light')
+
+  await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+
+  await context.close()
+})
+
 async function expectSeedButton(page: Page, timeout = 15000) {
   await expect(page.getByText(/without clearing existing CMS content/i)).toBeVisible({ timeout })
   await expect(page.getByRole('button', { name: /upsert portal starter content/i })).toBeVisible({

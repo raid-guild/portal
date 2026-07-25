@@ -22,7 +22,7 @@ export const normalizeTheme = (value: null | string): Theme | null => {
 }
 
 export const themeIsValid = (value: null | string): value is Theme =>
-  normalizeTheme(value) === value
+  value !== null && normalizeTheme(value) === value
 
 export const themeForColorScheme = (darkMode: boolean): Theme =>
   darkMode ? legacyThemeAliases.dark : legacyThemeAliases.light
