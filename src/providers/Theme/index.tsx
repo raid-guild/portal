@@ -5,8 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { Theme, ThemeContextType } from './types'
 
 import canUseDOM from '@/utilities/canUseDOM'
-import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './shared'
-import { themeIsValid } from './types'
+import { defaultTheme, getImplicitPreference, normalizeTheme, themeLocalStorageKey } from './shared'
 
 const initialContext: ThemeContextType = {
   setTheme: () => null,
@@ -37,8 +36,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     let themeToSet: Theme = defaultTheme
     const preference = window.localStorage.getItem(themeLocalStorageKey)
 
-    if (themeIsValid(preference)) {
-      themeToSet = preference
+    const normalizedPreference = normalizeTheme(preference)
+    if (normalizedPreference) {
+      themeToSet = normalizedPreference
     } else {
       const implicitPreference = getImplicitPreference()
 
@@ -47,6 +47,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
+    if (preference && preference !== themeToSet) {
+      window.localStorage.setItem(themeLocalStorageKey, themeToSet)
+    }
     document.documentElement.setAttribute('data-theme', themeToSet)
     setThemeState(themeToSet)
   }, [])

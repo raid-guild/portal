@@ -160,7 +160,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="title" label="Title">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             id="title"
             name="title"
             placeholder="Cohort demo session"
@@ -169,7 +169,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
         </Field>
         <Field htmlFor="startsAt" label="Start time">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35 font-mono text-xs uppercase accent-primary"
+            className="portal-field font-mono text-xs uppercase accent-primary"
             id="startsAt"
             min={minimumStart}
             name="startsAt"
@@ -256,7 +256,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
       </div>
       <Field htmlFor="summary" label="Summary">
         <Textarea
-          className="min-h-28 border-scroll-100/25 bg-card/35"
+          className="portal-textarea min-h-28"
           id="summary"
           name="summary"
           placeholder="What will happen in this session?"
@@ -469,7 +469,7 @@ const RelationTypeahead: React.FC<{
     </div>
     <Input
       autoComplete="off"
-      className="h-12 border-scroll-100/25 bg-card/35"
+      className="portal-field"
       id={inputID}
       onBlur={() => window.setTimeout(() => onResultsOpenChange(false), 120)}
       onChange={(event) => {
@@ -481,7 +481,7 @@ const RelationTypeahead: React.FC<{
       value={query}
     />
     {showResults ? (
-      <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
+      <div className="portal-menu absolute left-0 right-0 top-[calc(100%+0.5rem)]">
         <button
           className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
           onMouseDown={(event) => event.preventDefault()}

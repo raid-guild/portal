@@ -20,14 +20,14 @@ const buttonVariants = cva(
       },
       variant: {
         default:
-          'border border-moloch-500 bg-moloch-500 text-scroll-100 hover:border-moloch-700 hover:bg-moloch-700 hover:text-scroll-100',
+          'border border-primary bg-primary text-primary-foreground hover:border-primary/90 hover:bg-[hsl(var(--primary-hover))]',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         ghost: 'hover:bg-card hover:text-foreground',
-        link: 'items-start justify-start text-moloch-500 underline-offset-4 hover:text-moloch-700 hover:underline',
+        link: 'items-start justify-start text-primary underline-offset-4 hover:text-[hsl(var(--primary-hover))] hover:underline',
         outline:
           'border border-border bg-transparent text-foreground hover:border-primary hover:text-primary',
         secondary:
-          'border border-border bg-secondary text-secondary-foreground hover:bg-scroll-300/70',
+          'border border-border bg-secondary text-secondary-foreground hover:bg-[hsl(var(--secondary-hover))]',
       },
     },
   },

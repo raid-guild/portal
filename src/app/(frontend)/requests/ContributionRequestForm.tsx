@@ -198,7 +198,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="title" label="Title">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             defaultValue={initialValue?.title || ''}
             id="title"
             name="title"
@@ -228,7 +228,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
 
       <Field htmlFor="summary" label="Summary">
         <Textarea
-          className="min-h-24 border-scroll-100/25 bg-card/35"
+          className="portal-textarea"
           defaultValue={initialValue?.summary || ''}
           id="summary"
           name="summary"
@@ -279,7 +279,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
 
       <Field htmlFor="body" label="Context">
         <Textarea
-          className="min-h-32 border-scroll-100/25 bg-card/35"
+          className="portal-textarea min-h-32"
           defaultValue={initialValue?.body || ''}
           id="body"
           name="body"
@@ -402,7 +402,7 @@ export const ContributionRequestForm: React.FC<Props> = ({
           />
           <Field className="sm:col-span-2" htmlFor="responseURL" label="Response URL">
             <Input
-              className="h-12 border-scroll-100/25 bg-card/35"
+              className="portal-field"
               defaultValue={initialValue?.responseURL || ''}
               id="responseURL"
               name="responseURL"
@@ -565,7 +565,7 @@ const RelationTypeaheadInner: React.FC<React.ComponentProps<typeof RelationTypea
       </div>
       <Input
         autoComplete="off"
-        className="h-12 border-scroll-100/25 bg-card/35"
+        className="portal-field"
         disabled={Boolean(maxSelected && selectedOptions.length >= maxSelected)}
         id={inputID}
         onBlur={handleBlur}
@@ -578,7 +578,7 @@ const RelationTypeaheadInner: React.FC<React.ComponentProps<typeof RelationTypea
         value={query}
       />
       {showResults ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-20 max-h-56 overflow-y-auto border border-border bg-neutral-black shadow-xl">
+        <div className="portal-menu absolute left-0 right-0 top-[calc(100%+0.5rem)]">
           <button
             className="block w-full border-b border-border px-3 py-3 text-left text-sm text-muted-foreground transition-colors hover:bg-card/70 hover:text-foreground"
             onMouseDown={(event) => event.preventDefault()}

@@ -1,6 +1,14 @@
 import React from 'react'
 
-import { defaultTheme, themeLocalStorageKey } from '../ThemeSelector/types'
+import {
+  defaultTheme,
+  legacyThemeAliases,
+  themeLocalStorageKey,
+  themeRegistry,
+} from '../themeRegistry'
+
+const supportedThemes = JSON.stringify(themeRegistry.map(({ key }) => key))
+const aliases = JSON.stringify(legacyThemeAliases)
 
 const themeScript = `
   (function () {
@@ -10,21 +18,28 @@ const themeScript = `
       var hasImplicitPreference = typeof mql.matches === 'boolean'
 
       if (hasImplicitPreference) {
-        return mql.matches ? 'dark' : 'light'
+        return mql.matches ? aliases.dark : aliases.light
       }
 
       return null
     }
 
-    function themeIsValid(theme) {
-      return theme === 'light' || theme === 'dark'
+    function normalizeTheme(theme) {
+      if (aliases[theme]) return aliases[theme]
+      return supportedThemes.indexOf(theme) !== -1 ? theme : null
     }
 
+    var aliases = ${JSON.stringify(legacyThemeAliases)}
+    var supportedThemes = ${supportedThemes}
     var themeToSet = '${defaultTheme}'
     var preference = window.localStorage.getItem('${themeLocalStorageKey}')
+    var normalizedPreference = normalizeTheme(preference)
 
-    if (themeIsValid(preference)) {
-      themeToSet = preference
+    if (normalizedPreference) {
+      themeToSet = normalizedPreference
+      if (preference !== normalizedPreference) {
+        window.localStorage.setItem('${themeLocalStorageKey}', normalizedPreference)
+      }
     } else {
       var implicitPreference = getImplicitPreference()
 
