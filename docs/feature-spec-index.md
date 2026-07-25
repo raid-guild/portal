@@ -45,6 +45,7 @@ Status labels:
 | External CRM | [External CRM module and Portal identity](./external-crm-module-identity-spec.md) | Planned / future | Portal remains profile/role authority; CRM is an external module with future launch-token SSO. |
 | Infinite Wiki | [Infinite Wiki](./infinite-wiki-feature-spec.md) and [Graph Discovery](./infinite-wiki-graph-discovery-spec.md) | First slice implemented | `wikiPages`, module entry, and public wiki routes exist; topic graph discovery and Prism generation are planned next. |
 | External module launch auth | [External module launch auth](./external-module-launch-auth-feature-spec.md) | Planned / future | Signed launch handoff for external apps while Portal remains identity/profile source of truth. |
+| Themeability refactor | [Themeability refactor](./themeability-refactor-spec.md) | Planned / future | Frontend token and component cleanup for maintainable multiple themes, including a future theme authoring guide. |
 
 ## Separate Product Direction
 
