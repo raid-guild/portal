@@ -63,10 +63,27 @@ Normal themes must not change:
 - Payload admin styling
 - sprite sheets, map artwork, logos, icons, or other branded assets
 
-The map is intentionally art-directed. Both web themes provide the same compact
-`--map-*` contract today, so its HUD remains legible without recoloring the
-world art. Email, Open Graph, and static-image colors retain a fixed RaidGuild
-identity until separately scoped.
+The map is intentionally art-directed. All current web themes provide the same
+compact `--map-*` contract today, so its HUD remains legible without recoloring
+the world art. Email, Open Graph, and static-image colors retain a fixed
+RaidGuild identity until separately scoped.
+
+## Branded assets
+
+Logos, icons, sprites, illustrations, Open Graph images, email artwork, and map
+world art are assets rather than ordinary theme tokens.
+
+- Reuse an existing asset when it remains legible on the new theme.
+- When a theme requires a variant, add an explicitly named asset and document
+  where the application selects it.
+- Preserve accessible text, intrinsic dimensions, rights, and source
+  provenance when adding or replacing an asset.
+- Do not recolor raster assets in CSS or silently replace RaidGuild marks.
+- Keep asset selection separate from authorization, content, and CMS behavior.
+
+Theme-specific font files are also branded assets. Load them globally before
+using their family names in a theme token, and document their source and
+license alongside the files.
 
 ## Runtime consumers
 
@@ -78,6 +95,77 @@ Canvas libraries require resolved color strings. Use
 `src/utilities/themeTokens.ts`; its hook observes root `data-theme` changes and
 causes consumers to repaint. Add specialty tokens rather than reading
 foundation palette aliases directly.
+
+## Remaining exceptions
+
+The following compatibility boundaries are not invitations to use brand values
+in new feature code:
+
+- Tailwind retains the `moloch`, `scroll`, `guild`, and `neutral.black`
+  aliases while older components are migrated. New reusable UI should use
+  semantic tokens.
+- The map world, sprites, email artwork, Open Graph assets, and other static
+  images keep a fixed RaidGuild identity until separately scoped.
+- Feature-specific hard-coded colors may still exist outside the core contract.
+  Record any discovered exception in the pull request instead of adding a
+  theme-specific patch to the feature page.
+- Payload admin theming remains out of scope.
+
+If a new theme needs feature-page edits for its core surfaces to remain
+readable, treat that as a contract gap. Add or repair a semantic token or shared
+component utility instead of coupling the page to the new theme key.
+
+## Example theme diff
+
+Register the theme:
+
+```ts
+// src/providers/Theme/themeRegistry.ts
+export const themeRegistry = [
+  // Existing themes...
+  {
+    key: 'community-sand',
+    label: 'Community Sand',
+    prefersColorScheme: 'light',
+  },
+] as const
+```
+
+Define a complete token block:
+
+```css
+/* src/app/(frontend)/theme.css */
+[data-theme='community-sand'] {
+  color-scheme: light;
+
+  --background: 42 45% 96%;
+  --foreground: 20 24% 14%;
+  --card: 40 34% 90%;
+  --card-foreground: var(--foreground);
+  --primary: 18 55% 38%;
+  --primary-hover: 18 58% 29%;
+  --primary-foreground: 42 45% 98%;
+
+  /*
+   * Copy and deliberately review every remaining foundation, semantic, code,
+   * graph, and map token from an existing complete theme.
+   */
+}
+```
+
+Allow the initialized document to become visible:
+
+```css
+/* src/app/(frontend)/globals.css */
+html[data-theme='community-sand'] {
+  visibility: visible;
+}
+```
+
+This abbreviated diff demonstrates registration and selector placement only.
+Do not ship inherited omissions, placeholder values, or a partial token block.
+If the theme adds fonts or branded assets, include those files and their
+provenance in the same change.
 
 ## Contrast and review
 
@@ -106,3 +194,18 @@ Then inspect all themes at desktop and mobile widths on:
 
 Record intentional exceptions in the pull request. A new theme is incomplete if
 a contributor must edit feature pages to make its core surfaces readable.
+
+## Pull request evidence
+
+Include:
+
+- the theme key, visual intent, and preferred color scheme
+- desktop and mobile screenshots of representative public and authenticated
+  surfaces
+- contrast notes for text, links, controls, focus, and status states
+- results from the automated commands above
+- branded-asset and font decisions, including provenance
+- a list of intentional exceptions or deferred contract gaps
+- confirmation that legacy preferences and invalid values still normalize
+  safely
+- confirmation that the theme required no feature-page styling branches
