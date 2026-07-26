@@ -3,6 +3,7 @@ import React from 'react'
 import {
   defaultTheme,
   legacyThemeAliases,
+  themeAutoPreference,
   themeLocalStorageKey,
   themeRegistry,
 } from '../themeRegistry'
@@ -40,12 +41,14 @@ const themeScript = `
       if (preference !== normalizedPreference) {
         window.localStorage.setItem('${themeLocalStorageKey}', normalizedPreference)
       }
-    } else {
+    } else if (preference === '${themeAutoPreference}') {
       var implicitPreference = getImplicitPreference()
 
       if (implicitPreference) {
         themeToSet = implicitPreference
       }
+    } else if (preference !== null) {
+      window.localStorage.removeItem('${themeLocalStorageKey}')
     }
 
     document.documentElement.setAttribute('data-theme', themeToSet)

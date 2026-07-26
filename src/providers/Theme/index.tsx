@@ -5,7 +5,13 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { Theme, ThemeContextType } from './types'
 
 import canUseDOM from '@/utilities/canUseDOM'
-import { defaultTheme, getImplicitPreference, normalizeTheme, themeLocalStorageKey } from './shared'
+import {
+  defaultTheme,
+  getImplicitPreference,
+  normalizeTheme,
+  themeAutoPreference,
+  themeLocalStorageKey,
+} from './shared'
 
 const initialContext: ThemeContextType = {
   setTheme: () => null,
@@ -21,10 +27,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setTheme = useCallback((themeToSet: Theme | null) => {
     if (themeToSet === null) {
-      window.localStorage.removeItem(themeLocalStorageKey)
-      const implicitPreference = getImplicitPreference()
-      document.documentElement.setAttribute('data-theme', implicitPreference || '')
-      if (implicitPreference) setThemeState(implicitPreference)
+      window.localStorage.setItem(themeLocalStorageKey, themeAutoPreference)
+      const implicitPreference = getImplicitPreference() || defaultTheme
+      document.documentElement.setAttribute('data-theme', implicitPreference)
+      setThemeState(implicitPreference)
     } else {
       setThemeState(themeToSet)
       window.localStorage.setItem(themeLocalStorageKey, themeToSet)
@@ -39,12 +45,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const normalizedPreference = normalizeTheme(preference)
     if (normalizedPreference) {
       themeToSet = normalizedPreference
-    } else {
+    } else if (preference === themeAutoPreference) {
       const implicitPreference = getImplicitPreference()
 
       if (implicitPreference) {
         themeToSet = implicitPreference
       }
+    } else if (preference !== null) {
+      window.localStorage.removeItem(themeLocalStorageKey)
     }
 
     if (normalizedPreference && preference !== normalizedPreference) {
@@ -55,7 +63,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const applyImplicitPreference = () => {
-      if (normalizeTheme(window.localStorage.getItem(themeLocalStorageKey))) return
+      if (window.localStorage.getItem(themeLocalStorageKey) !== themeAutoPreference) return
       const implicitPreference = getImplicitPreference() || defaultTheme
       document.documentElement.setAttribute('data-theme', implicitPreference)
       setThemeState(implicitPreference)

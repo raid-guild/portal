@@ -83,7 +83,7 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
       </section>
 
       {activeSpotlights.length ? (
-        <section className="mt-12 border border-primary/60 bg-card/70 p-6 shadow-[0_18px_60px_rgba(178,82,58,0.16)]">
+        <section className="mt-12 border border-primary/60 bg-card/70 p-6 shadow-[var(--shadow-emphasis)]">
           <p className="portal-kicker text-primary">Spotlight</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {activeSpotlights.map((spotlight) => (

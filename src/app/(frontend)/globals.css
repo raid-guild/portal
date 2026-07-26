@@ -36,6 +36,7 @@
   h3 {
     @apply font-bold;
     font-family: var(--font-display-theme);
+    text-shadow: var(--heading-shadow);
   }
 
   a {
@@ -407,6 +408,7 @@ html {
 
 html[data-theme='raidguild-dark'],
 html[data-theme='raidguild-light'],
+html[data-theme='raidguild-classic'],
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;

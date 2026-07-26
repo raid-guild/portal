@@ -985,9 +985,7 @@ const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
       className={`h-full border bg-card/70 p-5 transition-colors ${
         target.href ? 'hover:border-primary hover:bg-card' : ''
       } ${
-        compact
-          ? 'border-primary/35'
-          : 'border-primary/60 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_18px_60px_rgba(178,82,58,0.16)] md:p-7'
+        compact ? 'border-primary/35' : 'border-primary/60 shadow-[var(--shadow-emphasis)] md:p-7'
       }`}
     >
       <div className="mb-4 h-1 w-20 bg-primary" />
