@@ -5,6 +5,7 @@ export const themeRegistry = [
   { key: 'raidguild-dark', label: 'RaidGuild Dark', prefersColorScheme: 'dark' },
   { key: 'raidguild-light', label: 'RaidGuild Light', prefersColorScheme: 'light' },
   { key: 'raidguild-classic', label: 'RaidGuild Classic', prefersColorScheme: 'dark' },
+  { key: 'raidguild-ai', label: 'RaidGuild AI', prefersColorScheme: 'dark' },
 ] as const
 
 export type Theme = (typeof themeRegistry)[number]['key']

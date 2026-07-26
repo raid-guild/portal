@@ -240,6 +240,117 @@
   --map-shadow: rgb(10 5 4 / 0.45);
 }
 
+[data-theme='raidguild-ai'] {
+  color-scheme: dark;
+
+  /* Source: raid-guild/ai-solutions-website docs/design-direction.md. */
+  --brand-deep: 240 20% 3%;
+  --brand-panel: 240 15% 6%;
+  --brand-raised: 240 10% 12%;
+  --brand-hover: 160 63% 42%;
+  --brand-primary: 160 63% 50%;
+  --neutral-strong: 240 20% 3%;
+  --neutral-soft: 30 10% 90%;
+  --neutral-muted: 220 17% 72%;
+
+  --background: var(--brand-deep);
+  --foreground: var(--neutral-soft);
+  --card: var(--brand-panel);
+  --card-foreground: var(--neutral-soft);
+  --popover: 240 15% 5%;
+  --popover-foreground: var(--neutral-soft);
+  --primary: var(--brand-primary);
+  --primary-hover: 160 63% 58%;
+  --primary-foreground: 240 20% 3%;
+  --secondary: 347 100% 61%;
+  --secondary-hover: 347 100% 68%;
+  --secondary-foreground: 240 20% 3%;
+  --muted: var(--brand-raised);
+  --muted-foreground: var(--neutral-muted);
+  --accent: 347 100% 61%;
+  --accent-foreground: 240 20% 3%;
+  --destructive: 0 72% 58%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 220 18% 32% / 0.72;
+  --input: 220 18% 52%;
+  --ring: var(--brand-primary);
+  --success: 160 63% 50%;
+  --warning: 40 90% 62%;
+  --error: 0 78% 68%;
+
+  --surface-page: radial-gradient(circle at 78% 12%, hsl(263 76% 66% / 0.08), transparent 34%),
+    hsl(var(--background));
+  --surface-panel: hsl(var(--card) / 0.76);
+  --surface-card: hsl(var(--card) / 0.72);
+  --surface-card-hover: hsl(var(--muted) / 0.82);
+  --surface-popover: hsl(var(--popover));
+  --surface-inverse: hsl(var(--neutral-soft));
+  --text-primary: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --text-inverse: hsl(var(--neutral-strong));
+  --link: hsl(var(--primary));
+  --link-hover: hsl(var(--primary-hover));
+  --button-primary: hsl(var(--primary));
+  --button-primary-hover: hsl(var(--primary-hover));
+  --button-primary-text: hsl(var(--primary-foreground));
+  --button-secondary: hsl(var(--secondary));
+  --button-secondary-hover: hsl(var(--secondary-hover));
+  --pill-bg: hsl(var(--primary) / 0.09);
+  --pill-text: hsl(var(--primary));
+  --divider: hsl(var(--border));
+  --shadow-color: 240 35% 1%;
+  --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.46), 0 0 20px hsl(var(--primary) / 0.06);
+  --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.64),
+    0 0 30px hsl(var(--primary) / 0.14);
+  --heading-shadow: 0 0 20px hsl(var(--primary) / 0.12);
+
+  --radius: 0.125rem;
+  --radius-card: 0.125rem;
+  --radius-control: 0;
+  --radius-pill: 9999px;
+  /*
+   * The reference uses Space Grotesk, Inter, and JetBrains Mono. Keep this
+   * theme asset-free and use the closest loaded system stacks.
+   */
+  --font-display-theme: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-body-theme: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono-theme: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --code-background: hsl(240 24% 2%);
+  --code-foreground: hsl(var(--neutral-soft));
+  --code-line-number: hsl(var(--muted-foreground) / 0.55);
+
+  --graph-background: hsl(var(--background));
+  --graph-node-profile: hsl(30 10% 90%);
+  --graph-node-role: hsl(347 100% 61%);
+  --graph-node-skill: hsl(160 63% 50%);
+  --graph-node-article: hsl(263 76% 72%);
+  --graph-node-category: hsl(347 100% 70%);
+  --graph-node-possible: hsl(40 90% 62%);
+  --graph-node-source: hsl(200 78% 65%);
+  --graph-node-topic: hsl(160 63% 63%);
+  --graph-link: hsl(160 63% 50% / 0.22);
+  --graph-link-active: hsl(160 63% 50% / 0.92);
+  --graph-node-active: hsl(30 10% 98%);
+  --graph-node-border: hsl(160 63% 50% / 0.62);
+  --graph-node-possible-border: hsl(40 90% 75%);
+  --graph-label: hsl(30 10% 90% / 0.96);
+  --graph-label-dimmed: hsl(220 17% 72% / 0.52);
+
+  /* The map world remains art-directed and uses the established HUD contract. */
+  --map-panel: rgb(10 5 4 / 0.86);
+  --map-dialog: hsl(10 43% 7%);
+  --map-dialog-raised: hsl(11 39% 11%);
+  --map-border: hsl(43 34% 78%);
+  --map-text: hsl(56 60% 94%);
+  --map-text-muted: hsl(49 47% 88%);
+  --map-focus: hsl(56 60% 94%);
+  --map-marker: hsl(48 96% 53%);
+  --map-marker-glow: rgb(250 204 21 / 0.78);
+  --map-shadow-outline: rgb(10 5 4 / 0.9);
+  --map-shadow: rgb(10 5 4 / 0.45);
+}
+
 [data-theme='raidguild-classic'] {
   color-scheme: dark;
 
