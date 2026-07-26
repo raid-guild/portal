@@ -1,8 +1,10 @@
 export const themeLocalStorageKey = 'payload-theme'
+export const themeAutoPreference = 'auto'
 
 export const themeRegistry = [
   { key: 'raidguild-dark', label: 'RaidGuild Dark', prefersColorScheme: 'dark' },
   { key: 'raidguild-light', label: 'RaidGuild Light', prefersColorScheme: 'light' },
+  { key: 'raidguild-classic', label: 'RaidGuild Classic', prefersColorScheme: 'dark' },
 ] as const
 
 export type Theme = (typeof themeRegistry)[number]['key']

@@ -12,7 +12,13 @@ import React, { useState } from 'react'
 import type { Theme } from '../themeRegistry'
 
 import { useTheme } from '..'
-import { normalizeTheme, themeLocalStorageKey, themeRegistry } from '../themeRegistry'
+import {
+  defaultTheme,
+  normalizeTheme,
+  themeAutoPreference,
+  themeLocalStorageKey,
+  themeRegistry,
+} from '../themeRegistry'
 
 export const ThemeSelector: React.FC = () => {
   const { setTheme } = useTheme()
@@ -30,7 +36,11 @@ export const ThemeSelector: React.FC = () => {
 
   React.useEffect(() => {
     const preference = window.localStorage.getItem(themeLocalStorageKey)
-    setValue(normalizeTheme(preference) ?? 'auto')
+    setValue(
+      preference === themeAutoPreference
+        ? themeAutoPreference
+        : (normalizeTheme(preference) ?? defaultTheme),
+    )
   }, [])
 
   return (
@@ -42,7 +52,7 @@ export const ThemeSelector: React.FC = () => {
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value="auto">Auto</SelectItem>
+        <SelectItem value={themeAutoPreference}>Auto</SelectItem>
         {themeRegistry.map((theme) => (
           <SelectItem key={theme.key} value={theme.key}>
             {theme.label}

@@ -217,7 +217,7 @@ function lexicalListContent(items: string[]) {
   }
 }
 
-test('normalizes stored themes and follows system preference in auto mode', async ({ browser }) => {
+test('defaults to RaidGuild Dark and persists explicit theme preferences', async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -227,8 +227,11 @@ test('normalizes stored themes and follows system preference in auto mode', asyn
     }
   })
   await page.goto('/login')
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
+    .toBeNull()
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -238,8 +241,28 @@ test('normalizes stored themes and follows system preference in auto mode', asyn
     .toBe('raidguild-light')
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+
+  await page.evaluate(() => window.localStorage.setItem('payload-theme', 'auto'))
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+
   await page.emulateMedia({ colorScheme: 'dark' })
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+
+  await page.getByRole('combobox', { name: 'Select a theme' }).click()
+  await expect(page.getByRole('option', { name: 'RaidGuild Dark' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'RaidGuild Light' })).toBeVisible()
+  await page.getByRole('option', { name: 'RaidGuild Classic' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
+  await expect(page.locator('html')).toHaveCSS('opacity', '1')
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
+    .toBe('raidguild-classic')
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
 
   await context.close()
 })
