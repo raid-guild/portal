@@ -254,6 +254,7 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await page.getByRole('combobox', { name: 'Select a theme' }).click()
   await expect(page.getByRole('option', { name: 'RaidGuild Dark' })).toBeVisible()
   await expect(page.getByRole('option', { name: 'RaidGuild Light' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'RaidGuild AI' })).toBeVisible()
   await page.getByRole('option', { name: 'RaidGuild Classic' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
@@ -263,6 +264,18 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
+
+  await page.getByRole('combobox', { name: 'Select a theme' }).click()
+  await page.getByRole('option', { name: 'RaidGuild AI' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-ai')
+  await expect(page.locator('html')).toHaveCSS('opacity', '1')
+  await expect(page.locator('html')).toHaveCSS('color-scheme', 'dark')
+  await expect
+    .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
+    .toBe('raidguild-ai')
+
+  await page.reload()
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-ai')
 
   await context.close()
 })

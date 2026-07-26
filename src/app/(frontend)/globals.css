@@ -409,6 +409,7 @@ html {
 html[data-theme='raidguild-dark'],
 html[data-theme='raidguild-light'],
 html[data-theme='raidguild-classic'],
+html[data-theme='raidguild-ai'],
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
