@@ -50,7 +50,7 @@ export const WidgetBubble: React.FC = () => {
   return (
     <Link
       aria-label="Send feedback"
-      className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-sm border border-border bg-card text-primary shadow-lg transition hover:border-primary hover:bg-moloch-500 hover:text-scroll-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:bottom-6 md:right-6"
+      className="fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] right-4 z-40 inline-flex h-11 w-11 items-center justify-center rounded-sm border border-border bg-card text-primary shadow-lg transition hover:border-primary hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 md:bottom-6 md:right-6"
       href={href}
       title="Feedback"
     >

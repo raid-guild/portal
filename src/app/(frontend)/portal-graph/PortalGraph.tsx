@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useThemeTokens } from '@/utilities/themeTokens'
+
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
   ssr: false,
 }) as React.ComponentType<Record<string, unknown>>
@@ -61,13 +63,47 @@ type RuntimeLink = ExplorerGraphData['links'][number] & {
   target: string | ExplorerNode
 }
 
-const nodeColors: Record<ExplorerNode['type'], string> = {
+type GraphTheme = {
+  active: string
+  background: string
+  border: string
+  label: string
+  labelDimmed: string
+  link: string
+  linkActive: string
+  profile: string
+  role: string
+  skill: string
+}
+
+const graphThemeTokens: { [K in keyof GraphTheme]: string } = {
+  active: '--graph-node-active',
+  background: '--graph-background',
+  border: '--graph-node-border',
+  label: '--graph-label',
+  labelDimmed: '--graph-label-dimmed',
+  link: '--graph-link',
+  linkActive: '--graph-link-active',
+  profile: '--graph-node-profile',
+  role: '--graph-node-role',
+  skill: '--graph-node-skill',
+}
+
+const fallbackGraphTheme: GraphTheme = {
+  active: '#F7EFE0',
+  background: 'rgba(10,10,9,1)',
+  border: 'rgba(247,239,224,0.35)',
+  label: '#F7EFE0',
+  labelDimmed: 'rgba(247,239,224,0.45)',
+  link: 'rgba(247,239,224,0.18)',
+  linkActive: 'rgba(224,177,95,0.85)',
   profile: '#F7EFE0',
   role: '#B95B47',
   skill: '#E0B15F',
 }
 
 export const PortalGraph: React.FC<{ data: ExplorerGraphData }> = ({ data }) => {
+  const graphTheme = useThemeTokens(graphThemeTokens, fallbackGraphTheme)
   const [activeTypes, setActiveTypes] = useState<Record<ExplorerNode['type'], boolean>>({
     profile: true,
     role: true,
@@ -270,7 +306,7 @@ export const PortalGraph: React.FC<{ data: ExplorerGraphData }> = ({ data }) => 
           style={{ height: dimensions.height }}
         >
           <ForceGraph2D
-            backgroundColor="rgba(10,10,9,1)"
+            backgroundColor={graphTheme.background}
             cooldownTicks={140}
             d3AlphaDecay={0.018}
             d3VelocityDecay={0.22}
@@ -278,7 +314,7 @@ export const PortalGraph: React.FC<{ data: ExplorerGraphData }> = ({ data }) => 
             graphData={filteredData}
             height={dimensions.height}
             linkColor={(link: RuntimeLink) =>
-              isConnectedLink(link, activeID) ? 'rgba(224,177,95,0.85)' : 'rgba(247,239,224,0.18)'
+              isConnectedLink(link, activeID) ? graphTheme.linkActive : graphTheme.link
             }
             linkDirectionalParticles={(link: RuntimeLink) =>
               isConnectedLink(link, activeID) ? 2 : 0
@@ -290,7 +326,16 @@ export const PortalGraph: React.FC<{ data: ExplorerGraphData }> = ({ data }) => 
               ctx: CanvasRenderingContext2D,
               globalScale: number,
             ) =>
-              drawNode({ activeID, connectedIDs, ctx, globalScale, hoveredID, node, selectedID })
+              drawNode({
+                activeID,
+                connectedIDs,
+                ctx,
+                globalScale,
+                graphTheme,
+                hoveredID,
+                node,
+                selectedID,
+              })
             }
             nodeLabel={(node: ExplorerNode) => node.label}
             nodePointerAreaPaint={(
@@ -433,6 +478,7 @@ const drawNode = ({
   connectedIDs,
   ctx,
   globalScale,
+  graphTheme,
   hoveredID,
   node,
   selectedID,
@@ -441,6 +487,7 @@ const drawNode = ({
   connectedIDs: Set<string>
   ctx: CanvasRenderingContext2D
   globalScale: number
+  graphTheme: GraphTheme
   hoveredID: string | null
   node: ExplorerNode
   selectedID: string | null
@@ -456,10 +503,10 @@ const drawNode = ({
   ctx.globalAlpha = isDimmed ? 0.25 : 1
   ctx.beginPath()
   ctx.arc(x, y, radius + (isSelected || isHovered ? 5 : 0), 0, 2 * Math.PI)
-  ctx.fillStyle = isSelected ? '#F7EFE0' : nodeColors[node.type]
+  ctx.fillStyle = isSelected ? graphTheme.active : graphTheme[node.type]
   ctx.fill()
   ctx.lineWidth = isSelected || isHovered ? 3 : 1
-  ctx.strokeStyle = isSelected || isHovered ? '#E0B15F' : 'rgba(247,239,224,0.35)'
+  ctx.strokeStyle = isSelected || isHovered ? graphTheme.linkActive : graphTheme.border
   ctx.stroke()
 
   if (shouldDrawLabel({ isHovered, isSelected })) {
@@ -468,7 +515,7 @@ const drawNode = ({
     ctx.font = `700 ${fontSize}px serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = isDimmed ? 'rgba(247,239,224,0.45)' : '#F7EFE0'
+    ctx.fillStyle = isDimmed ? graphTheme.labelDimmed : graphTheme.label
     ctx.fillText(label, x, y + radius + 5 / globalScale)
   }
 

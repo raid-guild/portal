@@ -1,8 +1,7 @@
-import type { Theme } from './types'
+import type { Theme } from './themeRegistry'
+import { themeForColorScheme } from './themeRegistry'
 
-export const themeLocalStorageKey = 'payload-theme'
-
-export const defaultTheme = 'light'
+export { defaultTheme, normalizeTheme, themeLocalStorageKey } from './themeRegistry'
 
 export const getImplicitPreference = (): Theme | null => {
   const mediaQuery = '(prefers-color-scheme: dark)'
@@ -10,7 +9,7 @@ export const getImplicitPreference = (): Theme | null => {
   const hasImplicitPreference = typeof mql.matches === 'boolean'
 
   if (hasImplicitPreference) {
-    return mql.matches ? 'dark' : 'light'
+    return themeForColorScheme(mql.matches)
   }
 
   return null

@@ -14,6 +14,7 @@ import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
 
+import './theme.css'
 import './globals.css'
 import { getServerSideURL } from '@/utilities/getURL'
 

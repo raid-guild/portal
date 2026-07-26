@@ -5,8 +5,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 import type { Theme, ThemeContextType } from './types'
 
 import canUseDOM from '@/utilities/canUseDOM'
-import { defaultTheme, getImplicitPreference, themeLocalStorageKey } from './shared'
-import { themeIsValid } from './types'
+import { defaultTheme, getImplicitPreference, normalizeTheme, themeLocalStorageKey } from './shared'
 
 const initialContext: ThemeContextType = {
   setTheme: () => null,
@@ -37,8 +36,9 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     let themeToSet: Theme = defaultTheme
     const preference = window.localStorage.getItem(themeLocalStorageKey)
 
-    if (themeIsValid(preference)) {
-      themeToSet = preference
+    const normalizedPreference = normalizeTheme(preference)
+    if (normalizedPreference) {
+      themeToSet = normalizedPreference
     } else {
       const implicitPreference = getImplicitPreference()
 
@@ -47,8 +47,22 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       }
     }
 
+    if (normalizedPreference && preference !== normalizedPreference) {
+      window.localStorage.setItem(themeLocalStorageKey, normalizedPreference)
+    }
     document.documentElement.setAttribute('data-theme', themeToSet)
     setThemeState(themeToSet)
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+    const applyImplicitPreference = () => {
+      if (normalizeTheme(window.localStorage.getItem(themeLocalStorageKey))) return
+      const implicitPreference = getImplicitPreference() || defaultTheme
+      document.documentElement.setAttribute('data-theme', implicitPreference)
+      setThemeState(implicitPreference)
+    }
+
+    mediaQuery.addEventListener('change', applyImplicitPreference)
+    return () => mediaQuery.removeEventListener('change', applyImplicitPreference)
   }, [])
 
   return <ThemeContext.Provider value={{ setTheme, theme }}>{children}</ThemeContext.Provider>
