@@ -12,6 +12,9 @@ The registry in `src/providers/Theme/themeRegistry.ts` is the source of truth:
 - `raidguild-light` is the complete light counterpart.
 - `raidguild-classic` is a modernized interpretation of the earlier RaidGuild
   design system, with ruby and purple accents and legacy typography.
+- `raidguild-ai` is a dark, systems-oriented theme with restrained near-black
+  surfaces, teal activation accents, RaidGuild magenta contrast, and technical
+  sans/mono typography.
 
 Stored `dark` and `light` preferences are legacy aliases. Theme initialization
 normalizes them to the current keys. Do not remove those aliases without a
@@ -44,6 +47,15 @@ The classic font assets are self-hosted under
 `public/fonts/raidguild-classic`. Their source files came from the archived
 `dot-org-v2/public/fonts` site repository; keep that provenance documented if
 the assets are replaced.
+
+The RaidGuild AI palette and visual direction come from the
+[`raid-guild/ai-solutions-website`](https://github.com/raid-guild/ai-solutions-website)
+implementation and its `docs/design-direction.md`, with
+[`brand.raidguild.org/ai`](https://www.brand.raidguild.org/ai) as the brand
+reference. The source site uses Space Grotesk, Inter, and JetBrains Mono. The
+Portal theme intentionally adds no copied font or image assets: it uses loaded
+system sans/mono stacks while preserving that typographic hierarchy. The
+existing Portal marks and art-directed map assets remain unchanged.
 
 ## Theme contract
 
