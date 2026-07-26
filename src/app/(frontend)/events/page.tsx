@@ -41,15 +41,15 @@ const sessionTypeLabels: Record<SessionType, string> = {
 }
 
 const sessionTypeStyles: Record<SessionType, string> = {
-  'all-hands': 'border-moloch-500/25 bg-moloch-500/10',
-  brownbag: 'border-guild-olive/25 bg-guild-olive/10',
+  'all-hands': 'border-primary/25 bg-primary/10',
+  brownbag: 'border-accent/25 bg-accent/10',
   demo: 'border-success/25 bg-success/10',
   fireside: 'border-primary/30 bg-primary/10',
-  'guest-talk': 'border-primary/30 bg-primary/10',
-  kickoff: 'border-moloch-500/25 bg-moloch-500/10',
-  'office-hours': 'border-scroll-200/25 bg-scroll-200/10',
+  'guest-talk': 'border-accent/30 bg-accent/10',
+  kickoff: 'border-secondary/30 bg-secondary/20',
+  'office-hours': 'border-muted-foreground/25 bg-muted/60',
   pitch: 'border-warning/25 bg-warning/10',
-  workshop: 'border-scroll-200/25 bg-scroll-200/10',
+  workshop: 'border-warning/25 bg-warning/10',
 }
 
 const recurrenceCadenceLabels: Record<NonNullable<Event['recurrenceCadence']>, string> = {
@@ -321,14 +321,14 @@ const SessionRow: React.FC<{
 const SessionVisual: React.FC<{ event: Event; isLive: boolean }> = ({ event, isLive }) => {
   const sessionType = event.sessionType || 'brownbag'
   const visualTone: Record<SessionType, string> = {
-    'all-hands': 'bg-scroll-200',
-    brownbag: 'bg-guild-olive',
+    'all-hands': 'bg-primary',
+    brownbag: 'bg-accent',
     demo: 'bg-success',
     fireside: 'bg-primary',
-    'guest-talk': 'bg-primary',
-    kickoff: 'bg-moloch-500',
-    'office-hours': 'bg-scroll-200',
-    pitch: 'bg-moloch-500',
+    'guest-talk': 'bg-accent',
+    kickoff: 'bg-secondary',
+    'office-hours': 'bg-muted-foreground',
+    pitch: 'bg-warning',
     workshop: 'bg-warning',
   }
 
@@ -339,11 +339,11 @@ const SessionVisual: React.FC<{ event: Event; isLive: boolean }> = ({ event, isL
       href={`/events/${event.id}`}
     >
       {isLive ? (
-        <span className="absolute left-3 top-3 border border-primary bg-neutral-black/70 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-primary">
+        <span className="absolute left-3 top-3 border border-primary bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-primary">
           Live
         </span>
       ) : null}
-      <span className="flex size-16 items-center justify-center rounded-full bg-neutral-black/35 ring-1 ring-white/20 transition-transform group-hover:scale-105">
+      <span className="flex size-16 items-center justify-center rounded-full bg-background/35 ring-1 ring-foreground/20 transition-transform group-hover:scale-105">
         <img alt="" className="h-9 w-9 object-contain opacity-90" src="/assets/symbol-white.svg" />
       </span>
     </Link>

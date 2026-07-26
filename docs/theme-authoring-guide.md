@@ -10,10 +10,17 @@ The registry in `src/providers/Theme/themeRegistry.ts` is the source of truth:
 
 - `raidguild-dark` is the default and preserves the established Portal look.
 - `raidguild-light` is the complete light counterpart.
+- `raidguild-classic` is a modernized interpretation of the earlier RaidGuild
+  design system, with ruby and purple accents and legacy typography.
 
 Stored `dark` and `light` preferences are legacy aliases. Theme initialization
 normalizes them to the current keys. Do not remove those aliases without a
 separate migration plan.
+
+An absent preference uses `raidguild-dark`. Automatic OS color-scheme behavior
+is opt-in: selecting `Auto` stores the explicit `auto` preference. This keeps a
+first visit deterministic while preserving OS-aware switching for people who
+choose it.
 
 The root `data-theme` attribute selects tokens from
 `src/app/(frontend)/theme.css`. `globals.css`, Tailwind, shared components, and
@@ -25,9 +32,18 @@ canvas consumers use those tokens.
 2. Add a complete `[data-theme='<key>']` token block to `theme.css`.
 3. Start from an existing complete token block; do not rely on accidental
    inheritance from another named theme.
-4. Verify the selector, automatic OS preference behavior, persistence, and
+4. Add the key to the initialized-theme visibility selector at the end of
+   `globals.css` so the document becomes visible after initialization.
+5. Load any theme-specific font files globally before referencing them from
+   theme tokens.
+6. Verify the selector, automatic OS preference behavior, persistence, and
    invalid-value fallback.
-5. Run the automated and manual checks below in every supported theme.
+7. Run the automated and manual checks below in every supported theme.
+
+The classic font assets are self-hosted under
+`public/fonts/raidguild-classic`. Their source files came from the archived
+`dot-org-v2/public/fonts` site repository; keep that provenance documented if
+the assets are replaced.
 
 ## Theme contract
 
@@ -35,7 +51,7 @@ Themes may safely change:
 
 - page, panel, card, popover, pill, and inverse surfaces
 - primary, muted, inverse, link, button, status, and focus colors
-- borders, dividers, shadows, and control/card radius
+- borders, dividers, shadows, heading glow, and control/card radius
 - display, body, and mono font families, provided the fonts are already loaded
 - graph background, node types, links, active/dimmed states, and labels
 - map HUD, dialog, marker, outline, and shadow tokens
@@ -77,7 +93,7 @@ corepack pnpm build
 corepack pnpm test:e2e
 ```
 
-Then inspect both themes at desktop and mobile widths on:
+Then inspect all themes at desktop and mobile widths on:
 
 - home and authenticated dashboard
 - project list/detail and contribution request create/edit/detail

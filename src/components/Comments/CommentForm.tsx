@@ -84,7 +84,7 @@ const CommentForm: React.FC<CommentFormProps> = ({ commenterLabel, parent, postI
       </div>
 
       {error && <div className="text-destructive">{error}</div>}
-      {success && <div className="text-guild-olive">Comment submitted successfully.</div>}
+      {success && <div className="text-success">Comment submitted successfully.</div>}
 
       <Button type="submit" disabled={isSubmitting}>
         {isSubmitting ? 'Submitting...' : 'Submit Comment'}

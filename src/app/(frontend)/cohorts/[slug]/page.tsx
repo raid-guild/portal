@@ -367,17 +367,15 @@ const relationDoc = <T extends { id: number }>(item?: number | T | null): T | nu
   typeof item === 'object' && item !== null ? item : null
 
 const heroClassName: Record<NonNullable<Cohort['visualVariant']>, string> = {
-  guild:
-    'border-b border-primary/30 bg-gradient-to-br from-primary/15 via-background to-guild-olive/10',
-  moloch:
-    'border-b border-moloch-500/30 bg-gradient-to-br from-moloch-500/15 via-background to-card',
+  guild: 'border-b border-primary/30 bg-gradient-to-br from-primary/15 via-background to-accent/10',
+  moloch: 'border-b border-secondary/30 bg-gradient-to-br from-secondary/20 via-background to-card',
   scroll:
-    'border-b border-scroll-200/30 bg-gradient-to-br from-scroll-200/15 via-background to-card',
+    'border-b border-muted-foreground/30 bg-gradient-to-br from-muted/70 via-background to-card',
 }
 const heroImageOverlayClassName: Record<NonNullable<Cohort['visualVariant']>, string> = {
-  guild: 'bg-gradient-to-br from-background/95 via-background/80 to-guild-olive/45',
-  moloch: 'bg-gradient-to-br from-background/95 via-background/75 to-moloch-500/45',
-  scroll: 'bg-gradient-to-br from-background/95 via-background/75 to-scroll-200/45',
+  guild: 'bg-gradient-to-br from-background/95 via-background/80 to-accent/45',
+  moloch: 'bg-gradient-to-br from-background/95 via-background/75 to-secondary/45',
+  scroll: 'bg-gradient-to-br from-background/95 via-background/75 to-muted/70',
 }
 
 const formatStatus = (status: Cohort['programStatus']) =>

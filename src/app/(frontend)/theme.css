@@ -1,3 +1,35 @@
+@font-face {
+  font-display: swap;
+  font-family: 'RaidGuild Classic Uncial';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/raidguild-classic/UncialAntiqua/Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'RaidGuild Classic Texturina';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/raidguild-classic/Texturina/Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'RaidGuild Classic Space Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/raidguild-classic/SpaceMono/Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'RaidGuild Classic Space Mono';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/raidguild-classic/SpaceMono/Bold.woff') format('woff');
+}
+
 :root,
 [data-theme='raidguild-dark'],
 [data-theme='dark'] {
@@ -59,6 +91,7 @@
   --shadow-color: 0 0% 0%;
   --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.2);
   --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.35);
+  --heading-shadow: none;
 
   --radius: 0.125rem;
   --radius-card: 0.125rem;
@@ -140,7 +173,38 @@
   --warning: 31 78% 36%;
   --error: 4 62% 41%;
 
+  --surface-page: hsl(var(--background));
+  --surface-panel: hsl(var(--card) / 0.7);
+  --surface-card: hsl(var(--card) / 0.72);
+  --surface-card-hover: hsl(var(--secondary-hover));
+  --surface-popover: hsl(var(--popover));
+  --surface-inverse: hsl(var(--neutral-strong));
+  --text-primary: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --text-inverse: hsl(var(--neutral-soft));
+  --link: hsl(var(--primary));
+  --link-hover: hsl(var(--primary-hover));
+  --button-primary: hsl(var(--primary));
+  --button-primary-hover: hsl(var(--primary-hover));
+  --button-primary-text: hsl(var(--primary-foreground));
+  --button-secondary: hsl(var(--secondary));
+  --button-secondary-hover: hsl(var(--secondary-hover));
+  --pill-bg: hsl(var(--card));
+  --pill-text: hsl(var(--muted-foreground));
+  --divider: hsl(var(--border));
   --shadow-color: 18 28% 13%;
+  --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.14);
+  --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.22);
+  --heading-shadow: none;
+
+  --radius: 0.125rem;
+  --radius-card: 0.125rem;
+  --radius-control: 0.125rem;
+  --radius-pill: 9999px;
+  --font-display-theme: 'Mazius Display', Georgia, serif;
+  --font-body-theme: 'EB Garamond', Georgia, serif;
+  --font-mono-theme: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
   --code-background: hsl(18 28% 13%);
   --code-foreground: hsl(44 55% 98%);
   --code-line-number: hsl(44 55% 98% / 0.42);
@@ -161,6 +225,116 @@
   --graph-node-possible-border: hsl(72 31% 28%);
   --graph-label: hsl(18 28% 13% / 0.94);
   --graph-label-dimmed: hsl(18 28% 13% / 0.48);
+
+  /* The map remains art-directed; its compact contract is intentionally fixed. */
+  --map-panel: rgb(10 5 4 / 0.86);
+  --map-dialog: hsl(10 43% 7%);
+  --map-dialog-raised: hsl(11 39% 11%);
+  --map-border: hsl(43 34% 78%);
+  --map-text: hsl(56 60% 94%);
+  --map-text-muted: hsl(49 47% 88%);
+  --map-focus: hsl(56 60% 94%);
+  --map-marker: hsl(48 96% 53%);
+  --map-marker-glow: rgb(250 204 21 / 0.78);
+  --map-shadow-outline: rgb(10 5 4 / 0.9);
+  --map-shadow: rgb(10 5 4 / 0.45);
+}
+
+[data-theme='raidguild-classic'] {
+  color-scheme: dark;
+
+  --brand-deep: 230 21% 11%;
+  --brand-panel: 220 26% 14%;
+  --brand-raised: 218 24% 18%;
+  --brand-hover: 346 100% 70%;
+  --brand-primary: 347 100% 61%;
+  --neutral-strong: 230 21% 11%;
+  --neutral-soft: 214 32% 91%;
+  --neutral-muted: 214 20% 69%;
+
+  --background: var(--neutral-strong);
+  --foreground: var(--neutral-soft);
+  --card: 0 0% 0%;
+  --card-foreground: var(--neutral-soft);
+  --popover: 0 0% 0%;
+  --popover-foreground: var(--neutral-soft);
+  --primary: var(--brand-primary);
+  --primary-hover: var(--brand-hover);
+  --primary-foreground: var(--neutral-strong);
+  --secondary: 282 57% 42%;
+  --secondary-hover: 258 50% 52%;
+  --secondary-foreground: 0 0% 100%;
+  --muted: 218 24% 18%;
+  --muted-foreground: var(--neutral-muted);
+  --accent: 234 71% 57%;
+  --accent-foreground: 0 0% 100%;
+  --destructive: 347 100% 43%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 347 100% 61% / 0.55;
+  --input: 346 100% 79%;
+  --ring: 346 100% 79%;
+  --success: 148 48% 56%;
+  --warning: 40 67% 58%;
+  --error: 347 100% 68%;
+
+  --surface-page: linear-gradient(
+    135deg,
+    hsl(230 21% 11%) 0%,
+    hsl(0 100% 8%) 52%,
+    hsl(266 69% 14%) 100%
+  );
+  --surface-panel: linear-gradient(135deg, hsl(0 0% 0% / 0.76), hsl(282 57% 42% / 0.12));
+  --surface-card: linear-gradient(145deg, hsl(0 0% 0% / 0.94), hsl(349 82% 13% / 0.52));
+  --surface-card-hover: linear-gradient(145deg, hsl(0 0% 0%), hsl(314 70% 21% / 0.68));
+  --surface-popover: hsl(var(--popover));
+  --surface-inverse: hsl(var(--neutral-soft));
+  --text-primary: hsl(var(--foreground));
+  --text-muted: hsl(var(--muted-foreground));
+  --text-inverse: hsl(var(--neutral-strong));
+  --link: hsl(var(--primary));
+  --link-hover: hsl(var(--primary-hover));
+  --button-primary: hsl(var(--primary));
+  --button-primary-hover: hsl(var(--primary-hover));
+  --button-primary-text: hsl(var(--primary-foreground));
+  --button-secondary: hsl(var(--secondary));
+  --button-secondary-hover: hsl(var(--secondary-hover));
+  --pill-bg: hsl(282 57% 42% / 0.24);
+  --pill-text: hsl(346 100% 79%);
+  --divider: hsl(var(--border));
+  --shadow-color: 0 0% 0%;
+  --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.5), 0 0 0 1px hsl(var(--primary) / 0.08);
+  --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.65),
+    0 0 24px hsl(var(--primary) / 0.16);
+  --heading-shadow: 0 0 0.125em hsl(0 0% 100% / 0.24), 0 0 0.3em hsl(var(--primary) / 0.5);
+
+  --radius: 0.125rem;
+  --radius-card: 0.125rem;
+  --radius-control: 0;
+  --radius-pill: 9999px;
+  --font-display-theme: 'RaidGuild Classic Uncial', Georgia, serif;
+  --font-body-theme: 'RaidGuild Classic Texturina', Georgia, serif;
+  --font-mono-theme: 'RaidGuild Classic Space Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --code-background: hsl(0 0% 0%);
+  --code-foreground: hsl(var(--neutral-soft));
+  --code-line-number: hsl(var(--primary) / 0.58);
+
+  --graph-background: hsl(230 21% 9%);
+  --graph-node-profile: hsl(214 32% 91%);
+  --graph-node-role: hsl(347 100% 61%);
+  --graph-node-skill: hsl(20 98% 56%);
+  --graph-node-article: hsl(214 32% 91%);
+  --graph-node-category: hsl(282 57% 58%);
+  --graph-node-possible: hsl(148 48% 56%);
+  --graph-node-source: hsl(234 71% 68%);
+  --graph-node-topic: hsl(40 67% 58%);
+  --graph-link: hsl(346 100% 79% / 0.24);
+  --graph-link-active: hsl(347 100% 61% / 0.92);
+  --graph-node-active: hsl(0 0% 100%);
+  --graph-node-border: hsl(347 100% 61% / 0.68);
+  --graph-node-possible-border: hsl(148 48% 72%);
+  --graph-label: hsl(214 32% 91% / 0.96);
+  --graph-label-dimmed: hsl(214 20% 69% / 0.5);
 
   /* The map remains art-directed; its compact contract is intentionally fixed. */
   --map-panel: rgb(10 5 4 / 0.86);
