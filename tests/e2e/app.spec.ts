@@ -222,7 +222,9 @@ test('normalizes stored themes and follows system preference in auto mode', asyn
   const page = await context.newPage()
 
   await page.addInitScript(() => {
-    window.localStorage.setItem('payload-theme', 'constructor')
+    if (window.localStorage.getItem('payload-theme') === null) {
+      window.localStorage.setItem('payload-theme', 'constructor')
+    }
   })
   await page.goto('/login')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
