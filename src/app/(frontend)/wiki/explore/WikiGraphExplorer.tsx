@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 
+import { useThemeTokens } from '@/utilities/themeTokens'
 import { WikiArticleGenerateControl } from '../_components/WikiArticleGenerateControl'
 
 const ForceGraph2D = dynamic(() => import('react-force-graph-2d'), {
@@ -114,10 +115,47 @@ type RuntimeLink = Omit<WikiExplorerGraphData['links'][number], 'source' | 'targ
   target: string | { id: string }
 }
 
-const nodeColors: Record<WikiExplorerNode['type'], string> = {
+type GraphTheme = {
+  active: string
+  article: string
+  background: string
+  border: string
+  category: string
+  label: string
+  link: string
+  linkActive: string
+  possible: string
+  possibleBorder: string
+  source: string
+  topic: string
+}
+
+const graphThemeTokens: { [K in keyof GraphTheme]: string } = {
+  active: '--graph-node-active',
+  article: '--graph-node-article',
+  background: '--graph-background',
+  border: '--graph-node-border',
+  category: '--graph-node-category',
+  label: '--graph-label',
+  link: '--graph-link',
+  linkActive: '--graph-link-active',
+  possible: '--graph-node-possible',
+  possibleBorder: '--graph-node-possible-border',
+  source: '--graph-node-source',
+  topic: '--graph-node-topic',
+}
+
+const fallbackGraphTheme: GraphTheme = {
+  active: '#FFFFFF',
   article: '#F7EFE0',
+  background: 'rgba(10,10,9,1)',
+  border: 'rgba(255,255,255,0.45)',
   category: '#B95B47',
+  label: 'rgba(247,239,224,0.94)',
+  link: 'rgba(247,239,224,0.16)',
+  linkActive: 'rgba(224,177,95,0.9)',
   possible: '#7C8A5B',
+  possibleBorder: '#D7E3B0',
   source: '#6F8FAF',
   topic: '#E0B15F',
 }
@@ -126,6 +164,7 @@ export const WikiGraphExplorer: React.FC<{
   canManageWiki: boolean
   data: WikiExplorerGraphData
 }> = ({ canManageWiki, data }) => {
+  const graphTheme = useThemeTokens(graphThemeTokens, fallbackGraphTheme)
   const [activeTypes, setActiveTypes] = useState<Record<WikiExplorerNode['type'], boolean>>({
     article: true,
     category: true,
@@ -717,14 +756,14 @@ export const WikiGraphExplorer: React.FC<{
           style={{ height: dimensions.height }}
         >
           <ForceGraph2D
-            backgroundColor="rgba(10,10,9,1)"
+            backgroundColor={graphTheme.background}
             cooldownTicks={150}
             d3AlphaDecay={0.018}
             d3VelocityDecay={0.22}
             graphData={filteredData}
             height={dimensions.height}
             linkColor={(link: RuntimeLink) =>
-              isConnectedLink(link, activeID) ? 'rgba(224,177,95,0.9)' : 'rgba(247,239,224,0.16)'
+              isConnectedLink(link, activeID) ? graphTheme.linkActive : graphTheme.link
             }
             linkDirectionalParticles={(link: RuntimeLink) =>
               isConnectedLink(link, activeID) ? 2 : 0
@@ -736,7 +775,16 @@ export const WikiGraphExplorer: React.FC<{
               ctx: CanvasRenderingContext2D,
               globalScale: number,
             ) =>
-              drawNode({ activeID, connectedIDs, ctx, globalScale, hoveredID, node, selectedID })
+              drawNode({
+                activeID,
+                connectedIDs,
+                ctx,
+                globalScale,
+                graphTheme,
+                hoveredID,
+                node,
+                selectedID,
+              })
             }
             nodeLabel={(node: WikiExplorerNode) => node.label}
             nodePointerAreaPaint={(
@@ -1136,6 +1184,7 @@ const drawNode = ({
   connectedIDs,
   ctx,
   globalScale,
+  graphTheme,
   hoveredID,
   node,
   selectedID,
@@ -1144,6 +1193,7 @@ const drawNode = ({
   connectedIDs: Set<string>
   ctx: CanvasRenderingContext2D
   globalScale: number
+  graphTheme: GraphTheme
   hoveredID: string | null
   node: WikiExplorerNode
   selectedID: string | null
@@ -1158,15 +1208,15 @@ const drawNode = ({
   ctx.globalAlpha = alpha
   ctx.beginPath()
   ctx.arc(x, y, radius, 0, 2 * Math.PI)
-  ctx.fillStyle = nodeColors[node.type]
+  ctx.fillStyle = graphTheme[node.type]
   ctx.fill()
 
   ctx.lineWidth = isActive ? 3 : node.type === 'possible' ? 1.5 : 1
   ctx.strokeStyle = isActive
-    ? '#FFFFFF'
+    ? graphTheme.active
     : node.type === 'possible'
-      ? '#D7E3B0'
-      : 'rgba(255,255,255,0.45)'
+      ? graphTheme.possibleBorder
+      : graphTheme.border
   ctx.setLineDash(node.type === 'possible' ? [4, 3] : [])
   ctx.stroke()
   ctx.setLineDash([])
@@ -1180,7 +1230,7 @@ const drawNode = ({
     ctx.font = `${fontSize}px sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'top'
-    ctx.fillStyle = 'rgba(247,239,224,0.94)'
+    ctx.fillStyle = graphTheme.label
     ctx.fillText(label, x - labelWidth / 2, y + radius + 6)
   }
 

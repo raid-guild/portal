@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+    /* Deprecated palette aliases remain for branded assets during migration. */
     --moloch-900: 12 61% 10%;
     --moloch-800: 12 61% 11%;
     --moloch-700: 11 56% 18%;
@@ -15,74 +16,6 @@
     --neutral-black: 0 0% 5%;
     --guild-olive: 55 61% 20%;
     --guild-muted: 26 20% 38%;
-
-    --background: var(--neutral-black);
-    --foreground: var(--scroll-100);
-
-    --card: var(--moloch-800);
-    --card-foreground: var(--scroll-100);
-
-    --popover: var(--neutral-black);
-    --popover-foreground: var(--scroll-100);
-
-    --primary: var(--moloch-500);
-    --primary-foreground: var(--scroll-100);
-
-    --secondary: var(--moloch-800);
-    --secondary-foreground: var(--scroll-100);
-
-    --muted: var(--moloch-800);
-    --muted-foreground: var(--scroll-300);
-
-    --accent: var(--moloch-500);
-    --accent-foreground: var(--scroll-100);
-
-    --destructive: 12 44% 46%;
-    --destructive-foreground: var(--scroll-100);
-
-    --border: 56, 60%, 94%, 0.16;
-    --input: 56 60% 94%;
-    --ring: var(--moloch-500);
-
-    --radius: 0.125rem;
-
-    --success: 55 61% 20%;
-    --warning: 38 63% 46%;
-    --error: var(--moloch-500);
-  }
-
-  [data-theme='dark'] {
-    --background: var(--neutral-black);
-    --foreground: var(--scroll-100);
-
-    --card: var(--moloch-800);
-    --card-foreground: var(--scroll-100);
-
-    --popover: var(--neutral-black);
-    --popover-foreground: var(--scroll-100);
-
-    --primary: var(--moloch-500);
-    --primary-foreground: var(--scroll-100);
-
-    --secondary: var(--moloch-800);
-    --secondary-foreground: var(--scroll-100);
-
-    --muted: var(--moloch-800);
-    --muted-foreground: var(--scroll-300);
-
-    --accent: var(--moloch-500);
-    --accent-foreground: var(--scroll-100);
-
-    --destructive: var(--moloch-500);
-    --destructive-foreground: var(--scroll-100);
-
-    --border: 56, 60%, 94%, 0.2;
-    --input: 56 60% 94%;
-    --ring: var(--scroll-200);
-
-    --success: 55 43% 52%;
-    --warning: 38 63% 60%;
-    --error: 12 44% 55%;
   }
 }
 
@@ -91,7 +24,8 @@
     @apply border-border;
   }
   body {
-    @apply bg-background font-serif text-foreground antialiased;
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-body-theme);
     font-feature-settings:
       'kern' 1,
       'liga' 1;
@@ -100,7 +34,8 @@
   h1,
   h2,
   h3 {
-    @apply font-display font-bold;
+    @apply font-bold;
+    font-family: var(--font-display-theme);
   }
 
   a {
@@ -138,19 +73,29 @@
   }
 
   .portal-band {
-    @apply border-y border-border bg-neutral-black py-12;
+    @apply border-y border-border py-12;
+    background: var(--surface-page);
   }
 
   .portal-panel {
-    @apply border border-border bg-card/35 p-5;
+    @apply border border-border p-5;
+    background: var(--surface-panel);
   }
 
   .portal-card {
-    @apply border border-border bg-card/25 p-5 transition-colors hover:bg-card/45;
+    @apply border border-border p-5 transition-colors;
+    background: var(--surface-card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .portal-card:hover {
+    background: var(--surface-card-hover);
   }
 
   .portal-pill {
-    @apply border border-border bg-card/60 px-2 py-1 font-mono text-xs leading-none text-muted-foreground;
+    @apply border border-border px-2 py-1 font-mono text-xs leading-none;
+    background: var(--pill-bg);
+    color: var(--pill-text);
   }
 
   .portal-link {
@@ -163,6 +108,36 @@
 
   .portal-select {
     @apply h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  .portal-field,
+  .portal-textarea {
+    @apply w-full border border-border bg-background/70 px-3 text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    border-radius: var(--radius-control);
+  }
+
+  .portal-field {
+    @apply h-12;
+  }
+
+  .portal-textarea {
+    @apply min-h-24 py-3;
+  }
+
+  .portal-menu {
+    @apply z-20 max-h-56 overflow-y-auto border border-border;
+    background: var(--surface-popover);
+    box-shadow: var(--shadow-emphasis);
+  }
+
+  .portal-callout,
+  .portal-empty-state {
+    @apply border border-border p-4 text-muted-foreground;
+    background: var(--surface-panel);
+  }
+
+  .portal-section-divider {
+    border-color: var(--divider);
   }
 }
 
@@ -182,7 +157,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-dashboard-screen {
-  color: hsl(var(--scroll-100));
+  color: var(--map-text);
   image-rendering: pixelated;
   overflow: hidden;
 }
@@ -226,15 +201,15 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 .map-dialog-panel,
 .map-dpad-button,
 .map-interaction-prompt {
-  background: rgba(10, 5, 4, 0.86);
-  border: 2px solid hsl(var(--scroll-300));
+  background: var(--map-panel);
+  border: 2px solid var(--map-border);
   box-shadow:
-    0 0 0 2px rgba(10, 5, 4, 0.9),
-    0 8px 0 rgba(10, 5, 4, 0.45);
+    0 0 0 2px var(--map-shadow-outline),
+    0 8px 0 var(--map-shadow);
 }
 
 .map-dashboard-status {
-  color: hsl(var(--scroll-100));
+  color: var(--map-text);
   font-size: clamp(0.56rem, 1.2vw, 0.72rem);
   line-height: 1.7;
   max-width: min(42vw, 24rem);
@@ -271,7 +246,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 
 .map-dpad-button {
   align-items: center;
-  color: hsl(var(--scroll-100));
+  color: var(--map-text);
   display: flex;
   height: 2.75rem;
   justify-content: center;
@@ -285,7 +260,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-dpad-button:focus-visible {
-  outline: 2px solid hsl(var(--scroll-100));
+  outline: 2px solid var(--map-focus);
   outline-offset: 3px;
 }
 
@@ -308,7 +283,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 .map-interaction-prompt {
   align-items: center;
   bottom: clamp(0.75rem, 2vw, 1.25rem);
-  color: hsl(var(--scroll-100));
+  color: var(--map-text);
   display: flex;
   gap: 0.75rem;
   justify-content: space-between;
@@ -328,7 +303,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-interaction-prompt span {
-  color: hsl(var(--scroll-200));
+  color: var(--map-text-muted);
   display: block;
   font-size: clamp(0.42rem, 0.78vw, 0.52rem);
   line-height: 1.45;
@@ -347,7 +322,7 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-location-marker:focus-visible .map-location-pin {
-  outline: 2px solid hsl(var(--scroll-100));
+  outline: 2px solid var(--map-focus);
   outline-offset: 3px;
 }
 
@@ -361,17 +336,16 @@ body.map-dashboard-fullscreen [data-portal-footer] {
   animation: map-poi-pulse 2.8s ease-in-out infinite;
   background: transparent;
   border: 0;
-  color: #facc15;
+  color: var(--map-marker);
   display: flex;
-  filter: drop-shadow(0 0 0.35rem rgba(250, 204, 21, 0.78))
-    drop-shadow(0 0.2rem 0 rgba(10, 5, 4, 0.7));
+  filter: drop-shadow(0 0 0.35rem var(--map-marker-glow)) drop-shadow(0 0.2rem 0 var(--map-shadow));
   height: 5rem;
   justify-content: center;
   width: 5rem;
 }
 
 .map-location-marker:disabled .map-location-pin {
-  filter: drop-shadow(0 0 0.2rem rgba(250, 204, 21, 0.45));
+  filter: drop-shadow(0 0 0.2rem var(--map-marker-glow));
 }
 
 @keyframes map-poi-pulse {
@@ -431,6 +405,8 @@ html {
   opacity: 0;
 }
 
+html[data-theme='raidguild-dark'],
+html[data-theme='raidguild-light'],
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;

@@ -93,13 +93,13 @@ export const MapDialog: React.FC<MapDialogProps> = ({
     >
       <div
         className={cn(
-          'map-dialog-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto bg-[#1a0d0b] p-1 outline-none',
+          'map-dialog-panel max-h-[92vh] w-full max-w-3xl overflow-y-auto bg-[var(--map-dialog)] p-1 outline-none',
           className,
         )}
         ref={dialogRef}
         tabIndex={-1}
       >
-        <div className="border border-moloch-500 bg-gradient-to-b from-[#27120f] to-[#0e0706] p-4 sm:p-6">
+        <div className="border border-[var(--map-border)] bg-[var(--map-dialog-raised)] p-4 text-[var(--map-text)] sm:p-6">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="portal-kicker">RaidGuild Realm</p>

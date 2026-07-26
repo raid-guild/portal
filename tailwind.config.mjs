@@ -6,7 +6,7 @@ export default {
     './app/**/*.{ts,tsx}',
     './src/**/*.{ts,tsx}',
   ],
-  darkMode: ['selector', '[data-theme="dark"]'],
+  darkMode: ['selector', '[data-theme="raidguild-dark"]'],
   plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
   prefix: '',
   safelist: [
@@ -110,10 +110,10 @@ export default {
         },
       },
       fontFamily: {
-        display: ['Mazius Display', 'Georgia', 'serif'],
-        mono: ['Ubuntu Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
-        sans: ['EB Garamond', 'Georgia', 'serif'],
-        serif: ['EB Garamond', 'Georgia', 'serif'],
+        display: ['var(--font-display-theme)'],
+        mono: ['var(--font-mono-theme)'],
+        sans: ['var(--font-body-theme)'],
+        serif: ['var(--font-body-theme)'],
       },
       keyframes: {
         'accordion-down': {

@@ -146,7 +146,7 @@ export const ProjectManagementForm: React.FC<Props> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="title" label="Title">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             defaultValue={initialValue.title || ''}
             id="title"
             name="title"
@@ -169,7 +169,7 @@ export const ProjectManagementForm: React.FC<Props> = ({
 
       <Field htmlFor="summary" label="Summary">
         <Textarea
-          className="min-h-24 border-scroll-100/25 bg-card/35"
+          className="portal-textarea"
           defaultValue={initialValue.summary || ''}
           id="summary"
           name="summary"
@@ -194,7 +194,7 @@ export const ProjectManagementForm: React.FC<Props> = ({
       <div className="grid gap-4 sm:grid-cols-2">
         <Field htmlFor="primaryCTALabel" label="Primary CTA label">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             defaultValue={initialValue.primaryCTA?.label || ''}
             id="primaryCTALabel"
             name="primaryCTALabel"
@@ -203,7 +203,7 @@ export const ProjectManagementForm: React.FC<Props> = ({
         </Field>
         <Field htmlFor="primaryCTAURL" label="Primary CTA URL">
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             defaultValue={initialValue.primaryCTA?.url || ''}
             id="primaryCTAURL"
             name="primaryCTAURL"
@@ -327,13 +327,13 @@ const LinkRows: React.FC<{
           key={index}
         >
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             onChange={(event) => updateRow(rows, onChange, index, { label: event.target.value })}
             placeholder="Label"
             value={row.label || ''}
           />
           <Input
-            className="h-12 border-scroll-100/25 bg-card/35"
+            className="portal-field"
             onChange={(event) => updateRow(rows, onChange, index, { url: event.target.value })}
             placeholder="https://..."
             value={row.url || ''}
@@ -341,7 +341,7 @@ const LinkRows: React.FC<{
           <div className="flex gap-2">
             {showType ? (
               <select
-                className="h-12 border border-scroll-100/25 bg-card/35 px-3 text-sm"
+                className="h-12 portal-field"
                 onChange={(event) =>
                   updateRow(rows, onChange, index, { resourceType: event.target.value })
                 }
