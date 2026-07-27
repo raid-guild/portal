@@ -85,6 +85,14 @@ export const Modules: CollectionConfig = {
       required: true,
     },
     {
+      name: 'thumbnail',
+      type: 'upload',
+      admin: {
+        description: 'Optional image used in the member-facing module list.',
+      },
+      relationTo: 'media',
+    },
+    {
       name: 'status',
       type: 'select',
       admin: {

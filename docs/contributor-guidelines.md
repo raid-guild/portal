@@ -263,6 +263,8 @@ enrollment are official.
 
 The `modules` collection is the registry for module discovery and status. It is
 core Portal infrastructure and belongs in the `Portal` Payload admin group.
+Module thumbnails are optional presentation metadata; module discovery must
+retain a useful category-based fallback when no media is attached.
 
 Module-owned Payload collections should be grouped separately from core
 primitive collections:
