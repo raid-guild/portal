@@ -3679,6 +3679,9 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module' }).locator('img'),
+  ).toBeVisible()
   await expect(adminPage.getByText('External app')).toBeVisible()
   await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()

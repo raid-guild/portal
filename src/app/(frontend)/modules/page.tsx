@@ -8,7 +8,7 @@ import { getPayload } from 'payload'
 import { canEditContent, hasVerifiedAccount } from '@/access/roles'
 import { ModuleNotificationSignup } from './ModuleNotificationSignup'
 import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
-import type { Module, NotificationPreference, Profile, Project } from '@/payload-types'
+import type { Media, Module, NotificationPreference, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 
@@ -39,6 +39,24 @@ const categoryDescriptions: Record<NonNullable<Module['category']>, string> = {
   knowledge: 'Research, wiki, memory, and durable context modules.',
   ops: 'Internal workflows for publishing, communication, and operations.',
   tools: 'Utility modules that help members take action or maintain Portal records.',
+}
+
+const categoryStyles: Record<NonNullable<Module['category']>, string> = {
+  analytics: 'border-primary/25 bg-primary/10',
+  community: 'border-success/25 bg-success/10',
+  games: 'border-warning/25 bg-warning/10',
+  knowledge: 'border-accent/25 bg-accent/10',
+  ops: 'border-secondary/30 bg-secondary/20',
+  tools: 'border-muted-foreground/25 bg-muted/60',
+}
+
+const categoryVisualTones: Record<NonNullable<Module['category']>, string> = {
+  analytics: 'bg-primary',
+  community: 'bg-success',
+  games: 'bg-warning',
+  knowledge: 'bg-accent',
+  ops: 'bg-secondary',
+  tools: 'bg-muted-foreground',
 }
 
 const categoryOrder: NonNullable<Module['category']>[] = [
@@ -177,18 +195,20 @@ const ModuleSection: React.FC<{ description?: string; modules: Module[]; title: 
       {description ? (
         <p className="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground">{description}</p>
       ) : null}
-      <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-4 grid gap-0">
         {modules.map((module) => (
-          <ModuleCard key={module.id} module={module} />
+          <ModuleRow key={module.id} module={module} />
         ))}
       </div>
     </section>
   )
 }
 
-const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
+const ModuleRow: React.FC<{ module: Module }> = ({ module }) => {
   const owners = relationDocs<Profile>(module.owners)
   const sourceProject = relationDoc<Project>(module.sourceProject)
+  const thumbnail = relationDoc<Media>(module.thumbnail)
+  const category = module.category || 'tools'
   const entryRoute = toSafeURL(module.entryRoute, { allowRelative: true })
   const launchRoute =
     module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug
@@ -204,79 +224,145 @@ const ModuleCard: React.FC<{ module: Module }> = ({ module }) => {
   const repositoryURL = toSafeURL(module.repositoryURL, { allowRelative: true })
 
   return (
-    <article className="portal-panel">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="portal-kicker">
-            {categoryLabels[module.category || 'tools']} / {statusLabels[module.status || 'idea']}
-          </p>
-          <h3 className="mt-2 portal-heading-sm">{module.name}</h3>
-        </div>
-        {module.featured ? <span className="portal-pill">Featured</span> : null}
-      </div>
-      <p className="mt-4 text-sm leading-6 text-muted-foreground">{module.summary}</p>
+    <article
+      aria-label={module.name}
+      className="grid gap-4 border-b border-border/70 py-5 lg:grid-cols-[14rem_minmax(0,1fr)]"
+    >
+      <ModuleVisual category={category} module={module} thumbnail={thumbnail} />
+      <div className={`border px-5 py-4 ${categoryStyles[category]}`}>
+        <div className="grid gap-5 xl:grid-cols-[1fr_auto]">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="portal-pill">{categoryLabels[category]}</span>
+              <span className="portal-pill">{statusLabels[module.status || 'idea']}</span>
+              {module.featured ? <span className="portal-pill">Featured</span> : null}
+              {module.moduleKind === 'external' ? (
+                <span className="font-mono text-xs text-muted-foreground">
+                  External app{launchRoute ? ' / Uses Portal sign-in' : ''}
+                </span>
+              ) : null}
+            </div>
+            <h3 className="mt-3 portal-heading-sm">
+              {launchRoute ? (
+                <a
+                  className="transition-colors hover:text-primary"
+                  href={launchRoute}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  {module.name}
+                </a>
+              ) : moduleRoute ? (
+                <Link className="transition-colors hover:text-primary" href={moduleRoute}>
+                  {module.name}
+                </Link>
+              ) : (
+                module.name
+              )}
+            </h3>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-muted-foreground">
+              {module.summary}
+            </p>
 
-      <div className="mt-5 space-y-3 text-sm">
-        {owners.length ? (
-          <p>
-            <span className="font-medium">Owners:</span>{' '}
-            {owners.map((owner) => owner.displayName).join(', ')}
-          </p>
-        ) : null}
-        {sourceProject ? (
-          <p>
-            <span className="font-medium">Project:</span> {sourceProject.title}
-          </p>
-        ) : null}
-        {module.corePrimitiveRelationships?.length ? (
-          <p>
-            <span className="font-medium">Connects:</span>{' '}
-            {module.corePrimitiveRelationships
-              .map((relationship) => relationship.primitive)
-              .filter(Boolean)
-              .map((primitive) => primitiveLabels[primitive] || primitive)
-              .join(', ')}
-          </p>
-        ) : null}
-        {module.moduleKind === 'external' ? (
-          <p>
-            <span className="font-medium">External app</span>
-            {launchRoute ? (
-              <span className="text-muted-foreground"> - Uses Portal sign-in</span>
+            {owners.length || sourceProject ? (
+              <p className="mt-4 text-sm text-muted-foreground">
+                {owners.length ? (
+                  <>
+                    <span className="font-medium text-foreground">Owned by</span>{' '}
+                    {owners.map((owner) => owner.displayName).join(', ')}
+                  </>
+                ) : null}
+                {owners.length && sourceProject ? <span className="mx-2">/</span> : null}
+                {sourceProject ? (
+                  <>
+                    <span className="font-medium text-foreground">Project</span>{' '}
+                    {sourceProject.title}
+                  </>
+                ) : null}
+              </p>
             ) : null}
-          </p>
-        ) : null}
-      </div>
 
-      <div className="mt-6 flex flex-wrap gap-3">
-        {launchRoute ? (
-          <a
-            className="portal-admin-link"
-            href={launchRoute}
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {moduleActionLabel}
-          </a>
-        ) : moduleRoute ? (
-          <Link className="portal-admin-link" href={moduleRoute}>
-            {moduleActionLabel}
-          </Link>
-        ) : (
-          <span className="portal-pill">Coming soon</span>
-        )}
-        {specURL ? (
-          <Link className="portal-admin-link" href={specURL}>
-            Spec
-          </Link>
-        ) : null}
-        {repositoryURL ? (
-          <Link className="portal-admin-link" href={repositoryURL}>
-            Source
-          </Link>
-        ) : null}
+            {module.corePrimitiveRelationships?.length ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {module.corePrimitiveRelationships
+                  .map((relationship) => relationship.primitive)
+                  .filter(Boolean)
+                  .map((primitive) => (
+                    <span className="portal-pill" key={`${module.id}-${primitive}`}>
+                      {primitiveLabels[primitive] || primitive}
+                    </span>
+                  ))}
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-wrap content-start gap-3 xl:max-w-52 xl:justify-end">
+            {launchRoute ? (
+              <a
+                className="portal-link"
+                href={launchRoute}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {moduleActionLabel}
+              </a>
+            ) : moduleRoute ? (
+              <Link className="portal-link" href={moduleRoute}>
+                {moduleActionLabel}
+              </Link>
+            ) : (
+              <span className="portal-pill">Coming soon</span>
+            )}
+            {specURL ? (
+              <Link className="portal-link" href={specURL}>
+                Spec
+              </Link>
+            ) : null}
+            {repositoryURL ? (
+              <Link className="portal-link" href={repositoryURL}>
+                Source
+              </Link>
+            ) : null}
+          </div>
+        </div>
       </div>
     </article>
+  )
+}
+
+const ModuleVisual: React.FC<{
+  category: NonNullable<Module['category']>
+  module: Module
+  thumbnail: Media | null
+}> = ({ category, module, thumbnail }) => {
+  const imageURL =
+    thumbnail?.sizes?.medium?.url || thumbnail?.sizes?.square?.url || thumbnail?.url || null
+
+  return (
+    <div
+      className={`relative flex aspect-[4/3] min-h-32 items-center justify-center overflow-hidden border border-border/60 ${categoryVisualTones[category]}`}
+    >
+      {imageURL ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          alt={thumbnail?.alt || ''}
+          className="absolute inset-0 h-full w-full object-cover"
+          src={imageURL}
+        />
+      ) : (
+        <span className="flex size-16 items-center justify-center rounded-full bg-background/35 ring-1 ring-foreground/20">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            alt=""
+            className="h-9 w-9 object-contain opacity-90"
+            src="/assets/symbol-white.svg"
+          />
+        </span>
+      )}
+      <span className="absolute bottom-3 left-3 border border-background/30 bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-foreground">
+        {module.moduleKind === 'external' ? 'External' : 'Portal'}
+      </span>
+    </div>
   )
 }
 

@@ -1091,6 +1091,10 @@ export interface Module {
   id: number;
   name: string;
   summary: string;
+  /**
+   * Optional image used in the member-facing module list.
+   */
+  thumbnail?: (number | null) | Media;
   status: 'idea' | 'prototype' | 'experimental' | 'active' | 'graduated' | 'archived';
   /**
    * High-level product category used to group modules on member surfaces.
@@ -3146,6 +3150,7 @@ export interface ProfileBadgesSelect<T extends boolean = true> {
 export interface ModulesSelect<T extends boolean = true> {
   name?: T;
   summary?: T;
+  thumbnail?: T;
   status?: T;
   category?: T;
   visibility?: T;

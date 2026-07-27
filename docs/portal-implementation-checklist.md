@@ -200,6 +200,8 @@
       related primitives, and graduation criteria fields.
 - [x] Add module categories for grouping modules beyond lifecycle status.
 - [x] Add `/modules` discovery page for visible enabled modules.
+- [x] Present modules as compact discovery rows with optional CMS thumbnails
+      and category-based fallback visuals.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
 - [x] Add verified-user email opt-in for newly available module announcements.

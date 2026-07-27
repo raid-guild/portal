@@ -138,8 +138,9 @@ Recommended sections:
 - Prototype or idea-stage modules looking for contributors.
 - Graduated modules that have become core surfaces.
 
-Each module card should show:
+Each module list row should show:
 
+- an optional thumbnail or category-based fallback visual
 - name
 - short summary
 - category
@@ -170,6 +171,7 @@ Recommended fields:
 name: text, required
 slug: text, unique, required
 summary: textarea, required
+thumbnail: upload -> media, optional
 status: idea / prototype / experimental / active / graduated / archived
 category: ops / tools / analytics / games / knowledge / community
 visibility: public / authenticated / member / admin
