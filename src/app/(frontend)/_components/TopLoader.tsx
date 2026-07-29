@@ -22,13 +22,12 @@ export const startTopLoader = (): void => {
   window.dispatchEvent(new Event(START_EVENT))
 }
 
+// No defaultPrevented check here: next/link's own click handler always calls
+// preventDefault() to perform its client-side navigation, so that flag can't
+// tell a cancelled click apart from an ordinary Link click. A click that
+// really doesn't lead anywhere is caught by the stall timeout below instead.
 const isPlainLeftClick = (event: MouseEvent): boolean =>
-  !event.defaultPrevented &&
-  event.button === 0 &&
-  !event.altKey &&
-  !event.ctrlKey &&
-  !event.metaKey &&
-  !event.shiftKey
+  event.button === 0 && !event.altKey && !event.ctrlKey && !event.metaKey && !event.shiftKey
 
 const startsInAppNavigation = (anchor: HTMLAnchorElement): boolean => {
   if (anchor.hasAttribute('download') || anchor.dataset.topLoader === 'off') return false
