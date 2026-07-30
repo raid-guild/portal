@@ -6,14 +6,15 @@ import type { Post } from '@/payload-types'
 import { Card, CardPostData } from '@/components/Card'
 
 export type Props = {
+  contained?: boolean
   posts: CardPostData[]
 }
 
 export const CollectionArchive: React.FC<Props> = (props) => {
-  const { posts } = props
+  const { contained = true, posts } = props
 
   return (
-    <div className={cn('container')}>
+    <div className={cn(contained && 'container')}>
       <div>
         <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-12 gap-y-4 gap-x-4 lg:gap-y-8 lg:gap-x-8 xl:gap-x-8">
           {posts?.map((result, index) => {
