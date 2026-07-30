@@ -717,6 +717,9 @@ async function verifyPublishedPostsArchiveOrdering(adminPage: Page, publicPage: 
 
   await publicPage.goto('/posts')
   await expect(publicPage.getByRole('link', { name: latestTitle })).toBeVisible()
+  const latestPostRow = publicPage.getByRole('article', { name: latestTitle })
+  await expect(latestPostRow.getByRole('link', { name: 'Read post' })).toBeVisible()
+  await expect(latestPostRow.locator('img')).toBeVisible()
   await expect(publicPage.getByRole('link', { name: oldPostTitles[0] })).toHaveCount(0)
 }
 
