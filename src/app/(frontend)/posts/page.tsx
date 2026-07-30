@@ -3,10 +3,7 @@ import type { Metadata } from 'next/types'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
-import {
-  getPostVisibilityWhere,
-  normalizePostVisibilityFilter,
-} from './postVisibilityFilters'
+import { getPostVisibilityWhere, normalizePostVisibilityFilter } from './postVisibilityFilters'
 import { PostsList } from './PostsList'
 
 export const dynamic = 'force-dynamic'
@@ -30,10 +27,14 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
     limit: 12,
     overrideAccess: false,
     select: {
+      contentType: true,
+      createdAt: true,
       title: true,
       slug: true,
       categories: true,
       meta: true,
+      populatedAuthors: true,
+      publishedAt: true,
       visibility: true,
     },
     sort: '-publishedAt',
