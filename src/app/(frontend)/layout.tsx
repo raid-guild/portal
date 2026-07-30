@@ -8,6 +8,7 @@ import { Header } from '@/Header/Component'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { Providers } from '@/providers'
 import { InitTheme } from '@/providers/Theme/InitTheme'
+import { TopLoader } from './_components/TopLoader'
 import { WidgetBubble } from './_components/WidgetBubble'
 import { JoinCTAAnalytics } from './_components/JoinCTAAnalytics'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
@@ -54,6 +55,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <JoinCTAAnalytics />
+        <React.Suspense fallback={null}>
+          <TopLoader />
+        </React.Suspense>
         <Providers>
           <AdminBar
             adminBarProps={{

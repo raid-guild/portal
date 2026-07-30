@@ -142,6 +142,47 @@
   }
 }
 
+/* Route transition feedback. Portal routes are dynamic, so a click can wait on
+   the server without the page changing yet. */
+.portal-top-loader {
+  height: 2px;
+  left: 0;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 0;
+  top: 0;
+  transition: opacity 200ms ease;
+  z-index: 60;
+}
+
+.portal-top-loader[data-active='true'] {
+  opacity: 1;
+}
+
+.portal-top-loader-bar {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--primary) / 0.35),
+    hsl(var(--primary)),
+    hsl(var(--accent))
+  );
+  box-shadow:
+    0 0 10px hsl(var(--primary) / 0.65),
+    0 0 4px hsl(var(--primary) / 0.85);
+  display: block;
+  height: 100%;
+  width: 0;
+  transition: width 200ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portal-top-loader,
+  .portal-top-loader-bar {
+    transition: none;
+  }
+}
+
 body.map-dashboard-fullscreen {
   overflow: hidden;
 }
