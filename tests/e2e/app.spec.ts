@@ -3518,6 +3518,19 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   })
   expect(archivedModuleResponse.status()).toBe(201)
 
+  const disabledModuleSlug = `disabled-e2e-module-${moduleSuffix}`
+  const disabledModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: `Disabled E2E Module ${moduleSuffix}`,
+      slug: disabledModuleSlug,
+      summary: 'A disabled module must not resolve through a member-facing detail route.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: false,
+    },
+  })
+  expect(disabledModuleResponse.status()).toBe(201)
+
   const invalidExternalModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: `Invalid External E2E Module ${moduleSuffix}`,
@@ -3640,6 +3653,9 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   )
   expect(publicLaunchResponse.status()).toBe(401)
 
+  await publicPage.goto(`/modules/${externalModuleSlug}`)
+  await expect(publicPage.getByRole('heading', { name: '404' })).toBeVisible()
+
   const unverifiedContext = await browser.newContext()
   const unverifiedPage = await unverifiedContext.newPage()
   await loginPortalUser(unverifiedPage, unverifiedLaunchEmail, unverifiedLaunchPassword)
@@ -3682,6 +3698,10 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'External E2E Module' })).toHaveAttribute(
+    'href',
+    `/modules/${externalModuleSlug}`,
+  )
   await expect(
     adminPage.getByRole('article', { name: 'External E2E Module' }).locator('img'),
   ).toBeVisible()
@@ -3694,6 +3714,26 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
   await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(4)
+
+  await adminPage.goto(`/modules/${externalModuleSlug}`)
+  await expect(adminPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Back to modules' })).toHaveAttribute(
+    'href',
+    '/modules',
+  )
+  await expect(adminPage.getByRole('link', { name: 'Launch app' })).toHaveAttribute(
+    'href',
+    `/api/modules/${externalModuleSlug}/launch`,
+  )
+
+  await adminPage.goto(`/modules/archived-e2e-module-${moduleSuffix}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  await adminPage.goto(`/modules/${disabledModuleSlug}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  await adminPage.goto(`/modules/missing-e2e-module-${moduleSuffix}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
 
   const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
     maxRedirects: 0,
