@@ -1460,6 +1460,9 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByRole('heading', { name: memberOnlyPostTitle })).toHaveCount(0)
   await contributorPage.goto('/modules')
   await expect(contributorPage.getByText('Member Only Module')).toHaveCount(0)
+  const contributorModuleDetailResponse = await contributorPage.goto(`/modules/${moduleSlug}`)
+  expect(contributorModuleDetailResponse?.status()).toBe(404)
+  await expect(contributorPage.getByRole('heading', { name: 'Member Only Module' })).toHaveCount(0)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -1490,6 +1493,11 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(memberPage.getByText('Member-only post details')).toBeVisible()
   await memberPage.goto('/modules')
   await expect(memberPage.getByText('Member Only Module')).toBeVisible()
+  await memberPage.goto(`/modules/${moduleSlug}`)
+  await expect(memberPage.getByRole('heading', { name: 'Member Only Module' })).toBeVisible()
+  await expect(
+    memberPage.getByText('A module that should only be visible to users with the member role.'),
+  ).toBeVisible()
   await memberContext.close()
 
   const agentContext = await browser.newContext()

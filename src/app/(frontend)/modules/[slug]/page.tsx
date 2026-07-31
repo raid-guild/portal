@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import type { ReactNode } from 'react'
+import { cache, type ReactNode } from 'react'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
@@ -30,8 +30,7 @@ type Args = {
 
 export default async function ModuleDetailPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
-  const user = await getCurrentUser()
-  const moduleRecord = await getModule(slug, user)
+  const { moduleRecord, user } = await getModulePageData(slug)
 
   if (!moduleRecord) notFound()
 
@@ -191,8 +190,7 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
-  const user = await getCurrentUser()
-  const moduleRecord = await getModule(slug, user)
+  const { moduleRecord } = await getModulePageData(slug)
 
   if (!moduleRecord) return { title: 'Module not found' }
 
@@ -210,7 +208,14 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   }
 }
 
-const getModule = async (
+const getModulePageData = cache(async (slug: string) => {
+  const user = await getCurrentUser()
+  const moduleRecord = await queryModule(slug, user)
+
+  return { moduleRecord, user }
+})
+
+const queryModule = async (
   slug: string,
   user: Awaited<ReturnType<typeof getCurrentUser>>,
 ): Promise<Module | null> => {
