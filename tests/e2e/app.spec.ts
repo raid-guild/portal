@@ -408,7 +408,10 @@ async function verifySeededPosts(page: Page) {
       .getByRole('article')
       .filter({ has: page.getByRole('heading', { exact: true, name: post.title }) })
     await expect(postArticle.getByLabel('Post visibility: Public')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
+    const cohortCard = postArticle.getByRole('region', { name: 'RaidGuild cohort' })
+    const commentsHeading = page.getByRole('heading', { name: 'Comments' })
+    await expect(cohortCard.getByRole('link', { name: 'Join the cohort' })).toBeVisible()
+    await expectVerticalOrder([cohortCard, commentsHeading])
   }
 }
 
@@ -1488,6 +1491,7 @@ async function verifyMemberOnlyProjectVisibility(
     memberPage.getByRole('heading', { exact: true, name: memberOnlyPostTitle }),
   ).toBeVisible()
   await expect(memberPage.getByText('Member-only post details')).toBeVisible()
+  await expect(memberPage.getByRole('region', { name: 'RaidGuild cohort' })).toHaveCount(0)
   await memberPage.goto('/modules')
   await expect(memberPage.getByText('Member Only Module')).toBeVisible()
   await memberContext.close()

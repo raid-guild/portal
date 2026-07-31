@@ -12,6 +12,7 @@ type Props = React.ComponentProps<typeof Link> & {
   formVariant?: 'legacy_sponsor' | 'typed'
   inquiryType: InquiryAnalyticsType
   placement: string
+  postSlug?: string
 }
 
 export const TrackedInquiryLink: React.FC<Props> = ({
@@ -21,6 +22,7 @@ export const TrackedInquiryLink: React.FC<Props> = ({
   inquiryType,
   onClick,
   placement,
+  postSlug,
   ...props
 }) => (
   <Link
@@ -30,12 +32,14 @@ export const TrackedInquiryLink: React.FC<Props> = ({
         form_variant: formVariant,
         inquiry_type: inquiryType,
         placement,
+        ...(postSlug ? { post_slug: postSlug } : {}),
       })
       if (cohortSlug && cohortInterestIntent) {
         trackPortalEvent('Cohort Interest Clicked', {
           cohort_slug: cohortSlug,
           intent: cohortInterestIntent,
           placement,
+          ...(postSlug ? { post_slug: postSlug } : {}),
         })
       }
       onClick?.(event)

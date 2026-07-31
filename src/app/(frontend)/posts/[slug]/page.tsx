@@ -9,6 +9,7 @@ import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
 import RichText from '@/components/RichText'
 import { Comments } from '@/components/Comments'
+import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 
 import type { Event, Post, Thread } from '@/payload-types'
 
@@ -17,6 +18,7 @@ import { generateMeta } from '@/utilities/generateMeta'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import PageClient from './page.client'
 import { hasRole, hasVerifiedAccount } from '@/access/roles'
+import { CohortCalloutCard } from '../../_components/CohortCalloutCard'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +44,9 @@ export default async function Post({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
+  const featuredCohort =
+    post.visibility === 'public' ? await getFeaturedCohort({ visibility: 'public' }) : null
+
   return (
     <article className="pt-16 pb-16">
       <PageClient />
@@ -66,6 +71,16 @@ export default async function Post({ params: paramsPromise }: Args) {
               docs={post.relatedPosts.filter((post) => typeof post === 'object')}
             />
           )}
+
+          {post.visibility === 'public' ? (
+            <div className="mx-auto mt-16 max-w-[48rem]">
+              <CohortCalloutCard
+                cohort={featuredCohort}
+                placement="post_footer_cohort"
+                postSlug={post.slug || slug}
+              />
+            </div>
+          ) : null}
 
           {/* Add Comments section */}
           <div className="max-w-[48rem] mx-auto mt-16">
