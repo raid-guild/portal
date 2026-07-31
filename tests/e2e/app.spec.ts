@@ -408,7 +408,10 @@ async function verifySeededPosts(page: Page) {
       .getByRole('article')
       .filter({ has: page.getByRole('heading', { exact: true, name: post.title }) })
     await expect(postArticle.getByLabel('Post visibility: Public')).toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Comments' })).toBeVisible()
+    const cohortCard = postArticle.getByRole('region', { name: 'RaidGuild cohort' })
+    const commentsHeading = page.getByRole('heading', { name: 'Comments' })
+    await expect(cohortCard.getByRole('link', { name: 'Join the cohort' })).toBeVisible()
+    await expectVerticalOrder([cohortCard, commentsHeading])
   }
 }
 
@@ -1460,6 +1463,9 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByRole('heading', { name: memberOnlyPostTitle })).toHaveCount(0)
   await contributorPage.goto('/modules')
   await expect(contributorPage.getByText('Member Only Module')).toHaveCount(0)
+  const contributorModuleDetailResponse = await contributorPage.goto(`/modules/${moduleSlug}`)
+  expect(contributorModuleDetailResponse?.status()).toBe(404)
+  await expect(contributorPage.getByRole('heading', { name: 'Member Only Module' })).toHaveCount(0)
   await contributorContext.close()
 
   const memberContext = await browser.newContext()
@@ -1488,8 +1494,14 @@ async function verifyMemberOnlyProjectVisibility(
     memberPage.getByRole('heading', { exact: true, name: memberOnlyPostTitle }),
   ).toBeVisible()
   await expect(memberPage.getByText('Member-only post details')).toBeVisible()
+  await expect(memberPage.getByRole('region', { name: 'RaidGuild cohort' })).toHaveCount(0)
   await memberPage.goto('/modules')
   await expect(memberPage.getByText('Member Only Module')).toBeVisible()
+  await memberPage.goto(`/modules/${moduleSlug}`)
+  await expect(memberPage.getByRole('heading', { name: 'Member Only Module' })).toBeVisible()
+  await expect(
+    memberPage.getByText('A module that should only be visible to users with the member role.'),
+  ).toBeVisible()
   await memberContext.close()
 
   const agentContext = await browser.newContext()
@@ -3518,6 +3530,19 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   })
   expect(archivedModuleResponse.status()).toBe(201)
 
+  const disabledModuleSlug = `disabled-e2e-module-${moduleSuffix}`
+  const disabledModuleResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: `Disabled E2E Module ${moduleSuffix}`,
+      slug: disabledModuleSlug,
+      summary: 'A disabled module must not resolve through a member-facing detail route.',
+      status: 'active',
+      visibility: 'authenticated',
+      enabled: false,
+    },
+  })
+  expect(disabledModuleResponse.status()).toBe(201)
+
   const invalidExternalModuleResponse = await adminPage.request.post('/api/modules', {
     data: {
       name: `Invalid External E2E Module ${moduleSuffix}`,
@@ -3640,6 +3665,9 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   )
   expect(publicLaunchResponse.status()).toBe(401)
 
+  await publicPage.goto(`/modules/${externalModuleSlug}`)
+  await expect(publicPage.getByRole('heading', { name: '404' })).toBeVisible()
+
   const unverifiedContext = await browser.newContext()
   const unverifiedPage = await unverifiedContext.newPage()
   await loginPortalUser(unverifiedPage, unverifiedLaunchEmail, unverifiedLaunchPassword)
@@ -3682,6 +3710,10 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'External E2E Module' })).toHaveAttribute(
+    'href',
+    `/modules/${externalModuleSlug}`,
+  )
   await expect(
     adminPage.getByRole('article', { name: 'External E2E Module' }).locator('img'),
   ).toBeVisible()
@@ -3694,6 +3726,26 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
   await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(4)
+
+  await adminPage.goto(`/modules/${externalModuleSlug}`)
+  await expect(adminPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
+  await expect(adminPage.getByRole('link', { name: 'Back to modules' })).toHaveAttribute(
+    'href',
+    '/modules',
+  )
+  await expect(adminPage.getByRole('link', { name: 'Launch app' })).toHaveAttribute(
+    'href',
+    `/api/modules/${externalModuleSlug}/launch`,
+  )
+
+  await adminPage.goto(`/modules/archived-e2e-module-${moduleSuffix}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  await adminPage.goto(`/modules/${disabledModuleSlug}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  await adminPage.goto(`/modules/missing-e2e-module-${moduleSuffix}`)
+  await expect(adminPage.getByRole('heading', { name: '404' })).toBeVisible()
 
   const launchResponse = await adminPage.request.get(`/api/modules/${externalModuleSlug}/launch`, {
     maxRedirects: 0,

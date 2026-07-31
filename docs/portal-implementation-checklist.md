@@ -205,8 +205,8 @@
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
 - [x] Add verified-user email opt-in for newly available module announcements.
-- [ ] Add optional `/modules/[slug]` detail route if module cards need more
-      context.
+- [x] Add `/modules/[slug]` detail routes with access-aware metadata and a
+      distinct canonical app launch action.
 - [x] Add Payload admin grouping guidance: core primitives in `Portal`,
       module-owned collections in `Modules`.
 - [x] Ensure core routes render without module-owned collections or enabled

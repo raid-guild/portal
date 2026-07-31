@@ -36,6 +36,7 @@ import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
 import { DailyVibeNotes } from './DailyVibeNotes'
+import { CohortCalloutCard } from './CohortCalloutCard'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
@@ -787,98 +788,15 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </Button>
         </section>
 
-        <DashboardCohortCard
+        <CohortCalloutCard
           cohort={featuredCohort}
           commitment={cohortCommitment}
           hasProfile={hasProfile}
+          interestPlacement="dashboard_cohort"
+          placement="dashboard_brief"
         />
       </div>
     </main>
-  )
-}
-
-const DashboardCohortCard: React.FC<{
-  cohort?: Cohort | null
-  commitment?: CohortCommitment | null
-  hasProfile: boolean
-}> = ({ cohort, commitment, hasProfile }) => {
-  if (!cohort) {
-    return (
-      <section className="portal-panel border-primary/40 bg-primary/10">
-        <p className="portal-kicker">Next RaidGuild cohort</p>
-        <h2 className="portal-heading-sm mt-3">Interested in the next cohort?</h2>
-        <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          No cohort is scheduled yet. Tell the guild what you would like to explore when the next
-          program takes shape.
-        </p>
-        <TrackedInquiryLink
-          className="portal-admin-link mt-5 inline-flex"
-          cohortInterestIntent="interested"
-          cohortSlug="unscheduled"
-          href="/inquire/general?context=cohort-interest&intent=interested"
-          inquiryType="general"
-          placement="dashboard_cohort"
-        >
-          Signal interest
-        </TrackedInquiryLink>
-      </section>
-    )
-  }
-
-  const cohortHref = `/cohorts/${cohort.slug}`
-  const isGatheringInterest = cohort.programStatus === 'gathering-interest'
-  const isCommitted = commitment?.status === 'committed' || commitment?.status === 'waitlisted'
-  const enrollmentOpen = isCohortEnrollmentOpen(cohort)
-  const heading = isGatheringInterest
-    ? `${getCohortLabel(cohort)} is gathering interest`
-    : enrollmentOpen
-      ? `Join ${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'the cohort'}`
-      : cohort.programStatus === 'active'
-        ? `${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'The cohort'} is underway`
-        : `Next cohort${cohort.cohortNumber ? `: Cohort ${cohort.cohortNumber}` : ''}`
-  const cta = isGatheringInterest
-    ? 'Signal interest'
-    : isCommitted
-      ? 'Open your cohort'
-      : !hasProfile && enrollmentOpen
-        ? 'Complete profile to join'
-        : enrollmentOpen
-          ? 'Join the cohort'
-          : 'Explore the cohort'
-
-  return (
-    <section className="portal-panel border-primary/40 bg-primary/10">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="portal-kicker">Current program</p>
-        <span className="portal-pill">
-          {isCommitted ? 'Committed' : cohort.enrollmentStatus.replace('-', ' ')}
-        </span>
-      </div>
-      <h2 className="portal-heading-sm mt-3">{heading}</h2>
-      <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
-      <p className="mt-4 text-sm leading-6 text-muted-foreground">{cohort.summary}</p>
-      {isGatheringInterest ? (
-        <TrackedInquiryLink
-          className="portal-admin-link mt-5 inline-flex"
-          cohortInterestIntent="interested"
-          cohortSlug={cohort.slug}
-          href={getCohortInquiryHref(cohort, 'interested')}
-          inquiryType="general"
-          placement="dashboard_cohort"
-        >
-          {cta}
-        </TrackedInquiryLink>
-      ) : (
-        <TrackedCohortLink
-          className="portal-admin-link mt-5 inline-flex"
-          cohortSlug={cohort.slug}
-          href={cohortHref}
-          placement="dashboard_brief"
-        >
-          {cta}
-        </TrackedCohortLink>
-      )}
-    </section>
   )
 }
 
