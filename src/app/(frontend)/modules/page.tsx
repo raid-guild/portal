@@ -11,26 +11,17 @@ import { VerifyAccountNotice } from '../_components/VerifyAccountNotice'
 import type { Media, Module, NotificationPreference, Profile, Project } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import {
+  categoryLabels,
+  getModuleAction,
+  getModuleImageURL,
+  primitiveLabels,
+  relationDoc,
+  relationDocs,
+  statusLabels,
+} from './moduleDisplay'
 
 export const dynamic = 'force-dynamic'
-
-const statusLabels: Record<NonNullable<Module['status']>, string> = {
-  active: 'Active',
-  archived: 'Archived',
-  experimental: 'Experimental',
-  graduated: 'Graduated',
-  idea: 'Idea',
-  prototype: 'Prototype',
-}
-
-const categoryLabels: Record<NonNullable<Module['category']>, string> = {
-  analytics: 'Analytics',
-  community: 'Community',
-  games: 'Games',
-  knowledge: 'Knowledge',
-  ops: 'Ops',
-  tools: 'Tools',
-}
 
 const categoryDescriptions: Record<NonNullable<Module['category']>, string> = {
   analytics: 'Dashboards, graphs, reporting, and discovery surfaces.',
@@ -67,16 +58,6 @@ const categoryOrder: NonNullable<Module['category']>[] = [
   'community',
   'games',
 ]
-
-const primitiveLabels: Record<string, string> = {
-  activityItem: 'Activity',
-  brief: 'Briefs',
-  event: 'Sessions',
-  post: 'Posts',
-  profile: 'Profiles',
-  project: 'Projects',
-  thread: 'Threads',
-}
 
 export default async function ModulesPage() {
   const user = await getCurrentUser()
@@ -209,17 +190,8 @@ const ModuleRow: React.FC<{ module: Module }> = ({ module }) => {
   const sourceProject = relationDoc<Project>(module.sourceProject)
   const thumbnail = relationDoc<Media>(module.thumbnail)
   const category = module.category || 'tools'
-  const entryRoute = toSafeURL(module.entryRoute, { allowRelative: true })
-  const launchRoute =
-    module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug
-      ? `/api/modules/${module.slug}/launch`
-      : null
-  const moduleRoute = launchRoute || entryRoute
-  const moduleActionLabel = launchRoute
-    ? 'Launch app'
-    : module.moduleKind === 'external'
-      ? 'Open app'
-      : 'Open module'
+  const moduleAction = getModuleAction(module)
+  const detailRoute = module.slug ? `/modules/${encodeURIComponent(module.slug)}` : null
   const specURL = toSafeURL(module.specURL, { allowRelative: true })
   const repositoryURL = toSafeURL(module.repositoryURL, { allowRelative: true })
 
@@ -238,22 +210,13 @@ const ModuleRow: React.FC<{ module: Module }> = ({ module }) => {
               {module.featured ? <span className="portal-pill">Featured</span> : null}
               {module.moduleKind === 'external' ? (
                 <span className="font-mono text-xs text-muted-foreground">
-                  External app{launchRoute ? ' / Uses Portal sign-in' : ''}
+                  External app{moduleAction.signedLaunch ? ' / Uses Portal sign-in' : ''}
                 </span>
               ) : null}
             </div>
             <h3 className="mt-3 portal-heading-sm">
-              {launchRoute ? (
-                <a
-                  className="transition-colors hover:text-primary"
-                  href={launchRoute}
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  {module.name}
-                </a>
-              ) : moduleRoute ? (
-                <Link className="transition-colors hover:text-primary" href={moduleRoute}>
+              {detailRoute ? (
+                <Link className="transition-colors hover:text-primary" href={detailRoute}>
                   {module.name}
                 </Link>
               ) : (
@@ -297,18 +260,18 @@ const ModuleRow: React.FC<{ module: Module }> = ({ module }) => {
           </div>
 
           <div className="flex flex-wrap content-start gap-3 xl:max-w-52 xl:justify-end">
-            {launchRoute ? (
+            {moduleAction.href && moduleAction.opensNewWindow ? (
               <a
                 className="portal-link"
-                href={launchRoute}
+                href={moduleAction.href}
                 rel="noopener noreferrer"
                 target="_blank"
               >
-                {moduleActionLabel}
+                {moduleAction.label}
               </a>
-            ) : moduleRoute ? (
-              <Link className="portal-link" href={moduleRoute}>
-                {moduleActionLabel}
+            ) : moduleAction.href ? (
+              <Link className="portal-link" href={moduleAction.href}>
+                {moduleAction.label}
               </Link>
             ) : (
               <span className="portal-pill">Coming soon</span>
@@ -335,8 +298,7 @@ const ModuleVisual: React.FC<{
   module: Module
   thumbnail: Media | null
 }> = ({ category, module, thumbnail }) => {
-  const imageURL =
-    thumbnail?.sizes?.medium?.url || thumbnail?.sizes?.square?.url || thumbnail?.url || null
+  const imageURL = getModuleImageURL(thumbnail)
 
   return (
     <div
@@ -423,9 +385,3 @@ const groupModulesByCategory = (modules: Module[]) =>
       modules: modules.filter((module) => (module.category || 'tools') === category),
     }))
     .filter((group) => group.modules.length)
-
-const relationDocs = <T extends { id: number | string }>(items?: (number | T)[] | null): T[] =>
-  items?.filter((item): item is T => item !== null && typeof item === 'object') || []
-
-const relationDoc = <T extends { id: number | string }>(item?: number | T | null): T | null =>
-  item && typeof item === 'object' ? item : null

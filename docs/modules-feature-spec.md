@@ -95,7 +95,6 @@ Module: Infinite Wiki
 - Runtime module installation.
 - Module package manifests.
 - Per-member module enablement.
-- Module detail pages at `/modules/[slug]`.
 - Automated graduation workflows.
 - Module-specific notification subscriptions.
 - Module ratings, comments, or public proposals.
@@ -151,8 +150,11 @@ Each module list row should show:
 - related core primitives
 - spec or documentation link
 
-Module detail pages can be added when a module needs more context than a card
-can hold.
+Each accessible module has a stable detail page at `/modules/[slug]`. The index
+links to that page for context while keeping the module's canonical Open or
+Launch App action separate. Detail pages use the existing module visibility,
+enabled, and archive rules and return the shared not-found state when a record
+is unavailable or inaccessible.
 
 ## CMS Model
 
