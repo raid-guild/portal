@@ -411,6 +411,8 @@ async function verifySeededPosts(page: Page) {
     const cohortCard = postArticle.getByRole('region', { name: 'RaidGuild cohort' })
     const commentsHeading = page.getByRole('heading', { name: 'Comments' })
     await expect(cohortCard.getByRole('link', { name: 'Join the cohort' })).toBeVisible()
+    await expect(cohortCard.getByText(/\d+ days until Cohort 8 starts/)).toBeVisible()
+    await expect(cohortCard.getByText('Starts June 1, 2030')).toBeVisible()
     await expectVerticalOrder([cohortCard, commentsHeading])
   }
 }
