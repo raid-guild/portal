@@ -79,6 +79,16 @@ lives in `docs/`.
 - **Redirects**: Easy management of URL redirects
 - **PostgreSQL Support**: Configured for both local and production use
 
+### Crawler discovery
+
+The public Portal exposes `/robots.txt` and `/sitemap.xml` from Next.js metadata
+routes in `src/app/(frontend)`. To add a public static route to the sitemap, add
+it to `PUBLIC_STATIC_SITEMAP_PATHS` in `sitemap-config.ts`. To add a CMS-backed
+route type, extend `sitemap.ts` with an explicitly paginated query, its public
+visibility and publication filters, and its canonical path builder. Never add a
+collection based only on the existence of a frontend route; member, admin,
+draft, preview, account, API, search, and utility URLs must remain excluded.
+
 ### Railway Setup
 
 Use one-click deploy template:
