@@ -3712,13 +3712,27 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
   await expect(adminPage.getByText('Portal Graph')).toBeVisible()
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
-  await expect(adminPage.getByRole('link', { name: 'External E2E Module' })).toHaveAttribute(
-    'href',
-    `/modules/${externalModuleSlug}`,
-  )
+  const externalModuleArticle = adminPage.getByRole('article', { name: 'External E2E Module' })
   await expect(
-    adminPage.getByRole('article', { name: 'External E2E Module' }).locator('img'),
-  ).toBeVisible()
+    externalModuleArticle.getByRole('link', { name: 'External E2E Module' }),
+  ).toHaveAttribute('href', `/modules/${externalModuleSlug}`)
+  await expect(externalModuleArticle.locator('img')).toBeVisible()
+  await expect(
+    externalModuleArticle.getByRole('link', { name: 'View details for External E2E Module' }),
+  ).toHaveAttribute('href', `/modules/${externalModuleSlug}`)
+  await expect(externalModuleArticle.getByRole('link', { name: 'Launch app' })).toHaveAttribute(
+    'href',
+    `/api/modules/${externalModuleSlug}/launch`,
+  )
+  await expect(externalModuleArticle.locator('a a')).toHaveCount(0)
+  const linkNames = await externalModuleArticle
+    .locator('a')
+    .evaluateAll((links) =>
+      links.map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim() ?? ''),
+    )
+  expect(linkNames.indexOf('Launch app')).toBeLessThan(
+    linkNames.indexOf('View details for External E2E Module'),
+  )
   await expect(adminPage.getByText('External app')).toBeVisible()
   await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
