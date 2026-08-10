@@ -3724,6 +3724,15 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
     'href',
     `/api/modules/${externalModuleSlug}/launch`,
   )
+  await expect(externalModuleArticle.locator('a a')).toHaveCount(0)
+  const linkNames = await externalModuleArticle
+    .locator('a')
+    .evaluateAll((links) =>
+      links.map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim() ?? ''),
+    )
+  expect(linkNames.indexOf('Launch app')).toBeLessThan(
+    linkNames.indexOf('View details for External E2E Module'),
+  )
   await expect(adminPage.getByText('External app')).toBeVisible()
   await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
