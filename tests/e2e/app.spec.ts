@@ -2,6 +2,8 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 
+import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
+
 import {
   adminEmail,
   adminPassword,
@@ -125,6 +127,37 @@ function lexicalContent(content: string) {
       version: 1,
     },
   }
+}
+
+function lexicalContentWithInteractiveEmbed({
+  caption,
+  height,
+  title,
+  url,
+}: {
+  caption: string
+  height: number
+  title: string
+  url: string
+}) {
+  const content = lexicalContent('Interactive workshop artifact.')
+
+  content.root.children.push({
+    fields: {
+      blockName: '',
+      blockType: 'interactiveEmbed',
+      caption,
+      height,
+      showOpenLink: true,
+      title,
+      url,
+    },
+    format: '',
+    type: 'block',
+    version: 2,
+  } as any)
+
+  return content
 }
 
 function lexicalLinkContent(label: string, url: string) {
@@ -939,6 +972,95 @@ async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page)
   await expect(
     publicPage.getByRole('listitem').filter({ hasText: 'First list item' }),
   ).toBeVisible()
+}
+
+async function verifyInteractivePostEmbed(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const title = `Interactive artifact post ${suffix}`
+  const slug = `interactive-artifact-post-${suffix}`
+  const artifactTitle = 'RaidGuild BD thread journeys'
+  const artifactURL = 'https://portal-artifacts-production.up.railway.app/bd-thread-journeys/'
+  const unsafeArtifactURL = 'https://example.com/unapproved-artifact/'
+
+  const approvedNewsletter = renderPortalPostEmail({
+    portalURL: 'https://portal.raidguild.org',
+    post: {
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Approved newsletter fallback.',
+        height: 560,
+        title: artifactTitle,
+        url: artifactURL,
+      }),
+      slug,
+    },
+    subject: title,
+  })
+  expect(approvedNewsletter.text).toContain(`${artifactTitle} ${artifactURL}`)
+
+  const unsafeNewsletter = renderPortalPostEmail({
+    portalURL: 'https://portal.raidguild.org',
+    post: {
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Unsafe newsletter fallback.',
+        height: 560,
+        title: artifactTitle,
+        url: unsafeArtifactURL,
+      }),
+      slug,
+    },
+    subject: title,
+  })
+  expect(unsafeNewsletter.html).not.toContain(unsafeArtifactURL)
+  expect(unsafeNewsletter.text).not.toContain(unsafeArtifactURL)
+
+  const invalidResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Unapproved embed must be rejected.',
+        height: 560,
+        title: artifactTitle,
+        url: unsafeArtifactURL,
+      }),
+      slug: `${slug}-invalid`,
+      title: `${title} invalid`,
+      visibility: 'public',
+    },
+  })
+
+  expect(invalidResponse.status()).toBe(400)
+
+  const createResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      artifactKind: 'embed',
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Concept demonstration from a RaidGuild content workshop.',
+        height: 560,
+        title: artifactTitle,
+        url: artifactURL,
+      }),
+      slug,
+      title,
+      visibility: 'public',
+    },
+  })
+
+  expect(createResponse.status()).toBe(201)
+
+  await publicPage.goto(`/posts/${slug}`)
+  const iframe = publicPage.locator(`iframe[title="${artifactTitle}"]`)
+  await expect(iframe).toHaveAttribute('src', artifactURL)
+  await expect(iframe).toHaveAttribute('sandbox', 'allow-scripts')
+  await expect(iframe).toHaveAttribute('referrerpolicy', 'no-referrer')
+  await expect(iframe).toHaveAttribute('height', '560')
+  await expect(
+    publicPage.getByText('Concept demonstration from a RaidGuild content workshop.'),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('link', { name: 'Open interactive' })).toHaveAttribute(
+    'href',
+    artifactURL,
+  )
 }
 
 async function verifyPublicHome(page: Page) {
@@ -2502,7 +2624,7 @@ async function verifyPortalSkillEndpoint(page: Page) {
   const body = await response.json()
 
   expect(body.name).toBe('portal-ops-skill')
-  expect(body.version).toBe('4')
+  expect(body.version).toBe('5')
   expect(body.aliases).toContain('portal-memory-publisher')
   expect(body.files['SKILL.md']).toContain('Portal Ops Skill')
   expect(body.files['SKILL.md']).toContain('Cohort Page Setup')
@@ -3714,7 +3836,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('External E2E Module')).toBeVisible()
   const externalModuleArticle = adminPage.getByRole('article', { name: 'External E2E Module' })
   await expect(
-    externalModuleArticle.getByRole('link', { name: 'External E2E Module' }),
+    externalModuleArticle.getByRole('link', { exact: true, name: 'External E2E Module' }),
   ).toHaveAttribute('href', `/modules/${externalModuleSlug}`)
   await expect(externalModuleArticle.locator('img')).toBeVisible()
   await expect(
@@ -4715,6 +4837,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCohortHub(page, publicPage)
+  await verifyInteractivePostEmbed(page, publicPage)
   await verifyPostJoinCTAAnalytics(page, publicPage)
   await verifyCMSManagedPageCopy(page, publicPage)
   await verifyMapDashboard(page, browser, publicPage)

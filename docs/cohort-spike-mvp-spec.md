@@ -475,6 +475,14 @@ The MVP is ready when:
 - The UI does not imply task management features that do not exist.
 - Seeded content reflects the May 11, 2026 cohort voice meeting.
 - Public/authenticated/admin visibility rules are respected.
+- Public Posts can contextualize approved interactive workshop artifacts in a
+  scripts-only sandbox without executing arbitrary CMS HTML on the Portal origin.
+- Interactive artifacts remain on the separate RaidGuild artifact origin and
+  enter Posts only through the `interactiveEmbed` rich-text block. Editors and
+  agents cannot paste arbitrary HTML or JavaScript, relax exact-origin
+  validation, or grant same-origin, navigation, form, popup, or Portal API
+  capabilities. Published results that must remain reproducible use stable,
+  versioned artifact paths.
 - Relevant Playwright e2e coverage passes with `corepack pnpm test:e2e`.
 
 ## Open Decisions
