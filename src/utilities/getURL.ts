@@ -15,11 +15,14 @@ export const getServerSideURL = () => {
 }
 
 export const getAbsoluteURL = (path = '/') => {
-  try {
-    return new URL(path, `${getServerSideURL().replace(/\/$/, '')}/`).toString()
-  } catch {
-    return path
+  const serverURL = getServerSideURL()
+  const baseURL = new URL(serverURL)
+
+  if (!['http:', 'https:'].includes(baseURL.protocol)) {
+    throw new Error(`Invalid public server URL protocol: ${baseURL.protocol}`)
   }
+
+  return new URL(path, `${baseURL.toString().replace(/\/$/, '')}/`).toString()
 }
 
 export const getClientSideURL = () => {

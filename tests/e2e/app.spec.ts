@@ -418,10 +418,13 @@ async function expectVerticalOrder(locators: Locator[]) {
 }
 
 async function verifySeededPosts(page: Page) {
-  await page.goto('/posts')
+  const postsResponse = await page.goto('/posts')
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
   await expect(page).toHaveTitle('RaidGuild Portal Posts')
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/posts$/)
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    new URL('/posts', postsResponse!.url()).toString(),
+  )
 
   for (const post of seededPosts) {
     await expect(page.getByRole('link', { name: post.title })).toBeVisible()
@@ -465,20 +468,55 @@ async function verifySeededPosts(page: Page) {
   }
 }
 
-async function verifyTechnicalSEO(page: Page) {
-  const robotsResponse = await page.request.get('/robots.txt')
+async function verifyTechnicalSEO(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const protectedSlug = `sitemap-protected-post-${suffix}`
+  const draftSlug = `sitemap-draft-post-${suffix}`
+  const protectedResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('Protected sitemap exclusion fixture.'),
+      publishedAt: new Date().toISOString(),
+      slug: protectedSlug,
+      title: `Protected sitemap post ${suffix}`,
+      visibility: 'member',
+    },
+  })
+  expect(protectedResponse.status()).toBe(201)
+  const draftResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'draft',
+      content: lexicalContent('Draft sitemap exclusion fixture.'),
+      slug: draftSlug,
+      title: `Draft sitemap post ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(draftResponse.status()).toBe(201)
+
+  const robotsResponse = await publicPage.request.get('/robots.txt')
   expect(robotsResponse.ok()).toBeTruthy()
   const robots = await robotsResponse.text()
   expect(robots).toContain('Disallow: /admin/')
   expect(robots).toMatch(/Sitemap: https?:\/\/[^\s]+\/sitemap\.xml/)
 
-  const sitemapResponse = await page.request.get('/sitemap.xml')
+  const sitemapResponse = await publicPage.request.get('/sitemap.xml')
   expect(sitemapResponse.ok()).toBeTruthy()
   const sitemap = await sitemapResponse.text()
   expect(sitemap).toMatch(/^<\?xml/)
+  const publicOrigin = new URL(sitemapResponse.url()).origin
+  const locations = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
+  expect(locations.length).toBeGreaterThan(0)
+  for (const location of locations) {
+    const url = new URL(location)
+    expect(url.origin).toBe(publicOrigin)
+    expect(url.toString()).toBe(location)
+  }
   for (const post of seededPosts) {
     expect(sitemap).toContain(`/posts/${post.slug}`)
   }
+  expect(sitemap).not.toContain(`/posts/${protectedSlug}`)
+  expect(sitemap).not.toContain(`/posts/${draftSlug}`)
 }
 
 async function verifyCohortHub(adminPage: Page, publicPage: Page) {
@@ -4869,7 +4907,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicPostsRSSFeed(page, publicPage)
   await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
-  await verifyTechnicalSEO(publicPage)
+  await verifyTechnicalSEO(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCohortHub(page, publicPage)
   await verifyInteractivePostEmbed(page, publicPage)
