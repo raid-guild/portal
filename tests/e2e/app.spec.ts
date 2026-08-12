@@ -933,13 +933,31 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   expect(robotsText).toContain('Disallow: /api/')
   expect(robotsText).toContain('Host: https://portal.raidguild.org')
   expect(robotsText).toContain('Sitemap: https://portal.raidguild.org/sitemap.xml')
+  expect(robotsText).toMatch(
+    /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
+  )
 
-  const sitemapResponse = await publicPage.request.get('/sitemap.xml')
-  expect(sitemapResponse.ok()).toBeTruthy()
-  expect(sitemapResponse.headers()['content-type']).toContain('application/xml')
+  const sitemapURLs = [...robotsText.matchAll(/^Sitemap: (https:\/\/[^\s]+)$/gm)].map(
+    (match) => match[1],
+  )
+  const sitemapXMLDocuments: string[] = []
 
-  const sitemapXML = await sitemapResponse.text()
-  expect(sitemapXML).toContain('<urlset')
+  for (const sitemapURL of sitemapURLs) {
+    const response = await publicPage.request.get(new URL(sitemapURL).pathname)
+    expect(response.ok()).toBeTruthy()
+    expect(response.headers()['content-type']).toContain('application/xml')
+
+    const cachedResponse = await publicPage.request.get(new URL(sitemapURL).pathname)
+    expect(cachedResponse.ok()).toBeTruthy()
+    expect(cachedResponse.headers()['x-nextjs-cache']).toBe('HIT')
+
+    const xml = await response.text()
+    expect(xml).toContain('<urlset')
+    expect([...xml.matchAll(/<loc>/g)].length).toBeLessThanOrEqual(5000)
+    sitemapXMLDocuments.push(xml)
+  }
+
+  const sitemapXML = sitemapXMLDocuments.join('\n')
   expect(sitemapXML).toContain('<loc>https://portal.raidguild.org/</loc>')
   expect(sitemapXML).toContain(`<loc>https://portal.raidguild.org/posts/${publicSlug}</loc>`)
   expect(sitemapXML).not.toContain(memberSlug)

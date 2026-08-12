@@ -1,6 +1,9 @@
 import type { MetadataRoute } from 'next'
 
 export const PORTAL_CANONICAL_ORIGIN = 'https://portal.raidguild.org'
+export const SITEMAP_PAGE_SIZE = 100
+// This conservative cap stays well below both the 50,000 URL and 50 MB protocol limits.
+export const SITEMAP_SHARD_ENTRY_LIMIT = 5000
 
 // Add a route here only when it is useful without authentication and intended for indexing.
 export const PUBLIC_STATIC_SITEMAP_PATHS = [

@@ -82,13 +82,19 @@ lives in `docs/`.
 
 ### Crawler discovery
 
-The public Portal exposes `/robots.txt` and `/sitemap.xml` from Next.js metadata
-routes in `src/app/(frontend)`. To add a public static route to the sitemap, add
-it to `PUBLIC_STATIC_SITEMAP_PATHS` in `sitemap-config.ts`. To add a CMS-backed
-route type, extend `sitemap.ts` with an explicitly paginated query, its public
-visibility and publication filters, and its canonical path builder. Never add a
-collection based only on the existence of a frontend route; member, admin,
-draft, preview, account, API, search, and utility URLs must remain excluded.
+The public Portal exposes `/robots.txt`, `/sitemap.xml`, and bounded CMS sitemap
+shards from Next.js metadata routes. Next requires `robots.ts` at the root of
+`src/app`; sitemap files live under `src/app/(frontend)`. Sitemap content uses
+hourly revalidation so crawler traffic does not execute uncached CMS scans on
+every request; `robots.txt` refreshes the lightweight shard manifest from
+collection counts so newly required shards are advertised. To add a public
+static route, update `PUBLIC_STATIC_SITEMAP_PATHS` in `sitemap-config.ts`. To add
+a CMS-backed route type, extend `sitemap-shards.ts` and `sitemaps/sitemap.ts`
+with its publication/visibility filters and canonical path builder. Keep each
+shard below the configured entry limit and advertise it through `robots.txt`.
+Never add a collection based only on the existence of a frontend route; member,
+admin, draft, preview, account, API, search, and utility URLs must remain
+excluded.
 
 ### Railway Setup
 
