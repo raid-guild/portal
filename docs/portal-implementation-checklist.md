@@ -110,6 +110,14 @@
 - [ ] Relate Briefs to Cohorts and show the newest visible update when editorial use justifies the relationship.
 - [ ] Add participant display, capacity/waitlist automation, dedicated interest records, and a Cohort archive only when real operations define their lifecycle and permissions.
 
+## Phase 5D: Interactive Publishing Artifacts
+
+- [x] Add a Post rich-text block for interactive workshop artifacts.
+- [x] Restrict embeds to configured, exact HTTPS artifact origins.
+- [x] Render embeds in a lazy iframe sandbox that grants scripts only.
+- [x] Provide caption, external-open, optional preview-image, and newsletter fallback behavior.
+- [x] Add generated Payload types and end-to-end validation/rendering coverage.
+
 ## Phase 6: External API Hardening
 
 - [ ] Add signup abuse controls before public launch: rate limiting, CAPTCHA, and stricter signup email verification gates. New self-serve signups now start as `unverified`, can manage their own `/me` profile, and become `contributor` only after account email verification.
