@@ -115,6 +115,12 @@
 - [x] Add a Post rich-text block for interactive workshop artifacts.
 - [x] Restrict embeds to configured, exact HTTPS artifact origins.
 - [x] Render embeds in a lazy iframe sandbox that grants scripts only.
+- [x] Keep executable HTML and JavaScript on the separate RaidGuild artifact
+      origin; accept it only through `interactiveEmbed`, without arbitrary CMS
+      HTML, relaxed origin validation, same-origin, navigation, forms, popups,
+      or Portal API access.
+- [x] Use stable, versioned artifact paths when a published Post must retain a
+      reproducible result.
 - [x] Provide caption, external-open, optional preview-image, and newsletter fallback behavior.
 - [x] Add generated Payload types and end-to-end validation/rendering coverage.
 

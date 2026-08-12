@@ -2,6 +2,8 @@ import { expect, test, type Browser, type Locator, type Page } from '@playwright
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 
+import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
+
 import {
   adminEmail,
   adminPassword,
@@ -978,6 +980,38 @@ async function verifyInteractivePostEmbed(adminPage: Page, publicPage: Page) {
   const slug = `interactive-artifact-post-${suffix}`
   const artifactTitle = 'RaidGuild BD thread journeys'
   const artifactURL = 'https://portal-artifacts-production.up.railway.app/bd-thread-journeys/'
+  const unsafeArtifactURL = 'https://example.com/unapproved-artifact/'
+
+  const approvedNewsletter = renderPortalPostEmail({
+    portalURL: 'https://portal.raidguild.org',
+    post: {
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Approved newsletter fallback.',
+        height: 560,
+        title: artifactTitle,
+        url: artifactURL,
+      }),
+      slug,
+    },
+    subject: title,
+  })
+  expect(approvedNewsletter.text).toContain(`${artifactTitle} ${artifactURL}`)
+
+  const unsafeNewsletter = renderPortalPostEmail({
+    portalURL: 'https://portal.raidguild.org',
+    post: {
+      content: lexicalContentWithInteractiveEmbed({
+        caption: 'Unsafe newsletter fallback.',
+        height: 560,
+        title: artifactTitle,
+        url: unsafeArtifactURL,
+      }),
+      slug,
+    },
+    subject: title,
+  })
+  expect(unsafeNewsletter.html).not.toContain(unsafeArtifactURL)
+  expect(unsafeNewsletter.text).not.toContain(unsafeArtifactURL)
 
   const invalidResponse = await adminPage.request.post('/api/posts', {
     data: {
@@ -986,7 +1020,7 @@ async function verifyInteractivePostEmbed(adminPage: Page, publicPage: Page) {
         caption: 'Unapproved embed must be rejected.',
         height: 560,
         title: artifactTitle,
-        url: 'https://example.com/unapproved-artifact/',
+        url: unsafeArtifactURL,
       }),
       slug: `${slug}-invalid`,
       title: `${title} invalid`,

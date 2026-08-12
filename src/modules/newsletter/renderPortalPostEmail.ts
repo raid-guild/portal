@@ -3,7 +3,7 @@ import { toInteractiveArtifactURL } from '@/utilities/interactiveArtifactURL'
 type RichTextNode = {
   children?: RichTextNode[]
   fields?: Record<string, unknown>
-  format?: number
+  format?: number | string
   tag?: string
   text?: string
   type?: string
@@ -235,9 +235,10 @@ const renderText = (nodes: RichTextNode[] | undefined): string => {
       if (node.type === 'text') return node.text || ''
       if (node.type === 'upload') return ''
       if (node.type === 'block' && node.fields?.blockType === 'interactiveEmbed') {
-        return [stringValue(node.fields.title), stringValue(node.fields.url)]
-          .filter(Boolean)
-          .join(' ')
+        const url = toInteractiveArtifactURL(node.fields.url)
+        if (!url) return ''
+
+        return [stringValue(node.fields.title), url].filter(Boolean).join(' ')
       }
 
       return renderText(node.children || getLexicalChildren(node.fields?.content))
