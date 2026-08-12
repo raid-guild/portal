@@ -888,6 +888,91 @@ async function verifyPublicLLMsText(adminPage: Page, publicPage: Page) {
   expect(llmsText).not.toContain('sourceArtifact')
 }
 
+async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
+  const suffix = Date.now()
+  const publicSlug = `sitemap-public-post-${suffix}`
+  const memberSlug = `sitemap-member-post-${suffix}`
+  const draftSlug = `sitemap-draft-post-${suffix}`
+
+  for (const data of [
+    {
+      _status: 'published',
+      content: lexicalContent('Public sitemap content.'),
+      publishedAt: new Date().toISOString(),
+      slug: publicSlug,
+      title: `Sitemap public post ${suffix}`,
+      visibility: 'public',
+    },
+    {
+      _status: 'published',
+      content: lexicalContent('Member sitemap content.'),
+      publishedAt: new Date().toISOString(),
+      slug: memberSlug,
+      title: `Sitemap member post ${suffix}`,
+      visibility: 'member',
+    },
+    {
+      _status: 'draft',
+      content: lexicalContent('Draft sitemap content.'),
+      slug: draftSlug,
+      title: `Sitemap draft post ${suffix}`,
+      visibility: 'public',
+    },
+  ]) {
+    const response = await adminPage.request.post('/api/posts', { data })
+    expect(response.status()).toBe(201)
+  }
+
+  const robotsResponse = await publicPage.request.get('/robots.txt')
+  expect(robotsResponse.ok()).toBeTruthy()
+  expect(robotsResponse.headers()['content-type']).toContain('text/plain')
+
+  const robotsText = await robotsResponse.text()
+  expect(robotsText).toContain('Allow: /')
+  expect(robotsText).toContain('Disallow: /admin/')
+  expect(robotsText).toContain('Disallow: /api/')
+  expect(robotsText).toContain('Host: https://portal.raidguild.org')
+  expect(robotsText).toContain('Sitemap: https://portal.raidguild.org/sitemap.xml')
+  expect(robotsText).toMatch(
+    /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
+  )
+
+  const sitemapURLs = [...robotsText.matchAll(/^Sitemap: (https:\/\/[^\s]+)$/gm)].map(
+    (match) => match[1],
+  )
+  const sitemapXMLDocuments: string[] = []
+
+  for (const sitemapURL of sitemapURLs) {
+    const response = await publicPage.request.get(new URL(sitemapURL).pathname)
+    expect(response.ok()).toBeTruthy()
+    expect(response.headers()['content-type']).toContain('application/xml')
+
+    const cachedResponse = await publicPage.request.get(new URL(sitemapURL).pathname)
+    expect(cachedResponse.ok()).toBeTruthy()
+    expect(cachedResponse.headers()['x-nextjs-cache']).toBe('HIT')
+
+    const xml = await response.text()
+    expect(xml).toContain('<urlset')
+    expect([...xml.matchAll(/<loc>/g)].length).toBeLessThanOrEqual(5000)
+    sitemapXMLDocuments.push(xml)
+  }
+
+  const sitemapXML = sitemapXMLDocuments.join('\n')
+  expect(sitemapXML).toContain('<loc>https://portal.raidguild.org/</loc>')
+  expect(sitemapXML).toContain(`<loc>https://portal.raidguild.org/posts/${publicSlug}</loc>`)
+  expect(sitemapXML).not.toContain(memberSlug)
+  expect(sitemapXML).not.toContain(draftSlug)
+
+  const locations = [...sitemapXML.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1])
+  expect(locations.length).toBeGreaterThan(1)
+  expect(new Set(locations).size).toBe(locations.length)
+  expect(locations.every((url) => url.startsWith('https://portal.raidguild.org/'))).toBe(true)
+
+  for (const excludedPath of ['/admin', '/api/', '/login', '/me/', '/search', '/next/preview']) {
+    expect(locations.some((url) => new URL(url).pathname.startsWith(excludedPath))).toBe(false)
+  }
+}
+
 async function verifyAdminPostPublishPersists(adminPage: Page, publicPage: Page) {
   const suffix = Date.now()
   const title = `Admin publish persistence ${suffix}`
@@ -4837,6 +4922,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyPublicPostsRSSFeed(page, publicPage)
   await verifyPublicLLMsText(page, publicPage)
+  await verifyCrawlerDiscovery(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
   await verifySeededPosts(publicPage)
   await verifyCohortHub(page, publicPage)
