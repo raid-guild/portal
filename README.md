@@ -74,6 +74,7 @@ lives in `docs/`.
 - **Premium Content**: Gated content for authenticated users
 - **Comments**: User commenting system with admin approval
 - **Layout Builder**: Flexible content creation with pre-configured blocks
+- **Interactive Artifacts**: Sandboxed Post embeds from approved artifact origins
 - **Draft Preview**: Preview unpublished content before going live
 - **SEO**: Built-in SEO optimization tools
 - **Redirects**: Easy management of URL redirects
@@ -107,6 +108,10 @@ If the preview does not mount the production media volume, set
 will be proxied to that public origin. Treat that preview as read-only for media:
 uploads written to its ephemeral filesystem will not survive deployment and are
 not copied to the production Portal volume.
+
+Post `interactiveEmbed` blocks accept only exact HTTPS origins listed in
+`INTERACTIVE_ARTIFACT_ORIGINS`. Keep executable artifacts on a separate origin
+from Portal; the frontend renders them in an iframe sandbox with scripts only.
 
 ### Local Setup
 

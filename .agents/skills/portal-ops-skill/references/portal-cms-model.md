@@ -188,6 +188,8 @@ Key fields:
 - `categories`
 - `meta.image`: upload relationship -> `media`; used for post hero/card image
 - inline images: Lexical `mediaBlock` nodes inside `content.root.children`
+- interactive artifacts: Lexical `interactiveEmbed` nodes referencing an
+  approved HTTPS artifact origin
 - `publishedAt`
 - `_status`
 
@@ -198,6 +200,10 @@ source facts are concrete.
 Rule: use `meta.image` for the cover/header image. Use a Lexical `mediaBlock`
 with a Payload media ID for images that should appear inline in the article body.
 Markdown image syntax is not rendered as an inline image.
+
+Rule: interactive HTML and JavaScript never live directly in Post content.
+Use an `interactiveEmbed` block with an approved artifact URL, accessible
+title, optional caption/preview image, bounded height, and external fallback.
 
 ## wikiPages
 

@@ -57,7 +57,7 @@ const portalOpsSkill = {
     'Operate the Portal CMS safely, including cohort setup, sessions, posts, wiki pages, briefs, projects, copy, and memory updates.',
   name: 'portal-ops-skill',
   route: '/api/portal/skills/portal-ops-skill',
-  version: '4',
+  version: '5',
 }
 
 const getPortalOpsSkillResponse = async () => {

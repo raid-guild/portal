@@ -4175,6 +4175,33 @@ export interface CodeBlock {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "InteractiveEmbedBlock".
+ */
+export interface InteractiveEmbedBlock {
+  /**
+   * Accessible title describing the interactive artifact.
+   */
+  title: string;
+  /**
+   * HTTPS URL from the approved RaidGuild artifact host.
+   */
+  url: string;
+  caption?: string | null;
+  /**
+   * Iframe height in pixels (320–1200).
+   */
+  height: number;
+  /**
+   * Optional static fallback for email and other non-interactive surfaces.
+   */
+  previewImage?: (number | null) | Media;
+  showOpenLink?: boolean | null;
+  id?: string | null;
+  blockName?: string | null;
+  blockType: 'interactiveEmbed';
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "auth".
  */
 export interface Auth {

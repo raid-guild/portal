@@ -880,6 +880,38 @@ Example post payload with both a header image and inline image:
 }
 ```
 
+## Post Interactive Artifacts
+
+Posts may embed reviewed interactive workshop artifacts hosted on the separate
+RaidGuild artifact origin. Never paste executable HTML or JavaScript into
+Lexical content and never invent or upload an artifact from source material
+without explicit human approval.
+
+Insert an `interactiveEmbed` block into `content.root.children`:
+
+```json
+{
+  "type": "block",
+  "fields": {
+    "blockType": "interactiveEmbed",
+    "title": "RaidGuild BD thread journeys",
+    "url": "https://portal-artifacts-production.up.railway.app/bd-thread-journeys/",
+    "caption": "Concept demonstration from a reviewed content workshop.",
+    "height": 640,
+    "showOpenLink": true
+  },
+  "format": "",
+  "version": 2
+}
+```
+
+The URL must use an exact HTTPS origin configured in
+`INTERACTIVE_ARTIFACT_ORIGINS`. `title` is required for accessibility. `height`
+must be between 320 and 1200 pixels. `previewImage` may reference a Payload
+media ID and supplies a non-interactive email fallback. Portal renders the live
+artifact in a scripts-only sandbox; agents must not request broader iframe
+permissions.
+
 ## CMS Intake Page Copy
 
 Use `PageCopy` for copy edits to fixed Portal product-flow pages. Do not hardcode

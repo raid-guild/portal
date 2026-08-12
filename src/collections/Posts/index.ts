@@ -18,6 +18,7 @@ import { hasRole } from '@/access/roles'
 import { Banner } from '../../blocks/Banner/config'
 import { Code } from '../../blocks/Code/config'
 import { MediaBlock } from '../../blocks/MediaBlock/config'
+import { InteractiveEmbed } from '../../blocks/InteractiveEmbed/config'
 import { generatePreviewPath } from '../../utilities/generatePreviewPath'
 import { enforcePostWorkflow } from './hooks/enforcePostWorkflow'
 import { populateAuthors } from './hooks/populateAuthors'
@@ -106,7 +107,7 @@ export const Posts: CollectionConfig<'posts'> = {
                     UnorderedListFeature(),
                     OrderedListFeature(),
                     ChecklistFeature(),
-                    BlocksFeature({ blocks: [Banner, Code, MediaBlock] }),
+                    BlocksFeature({ blocks: [Banner, Code, InteractiveEmbed, MediaBlock] }),
                     FixedToolbarFeature(),
                     InlineToolbarFeature(),
                     HorizontalRuleFeature(),

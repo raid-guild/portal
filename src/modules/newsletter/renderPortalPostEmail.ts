@@ -1,7 +1,9 @@
+import { toInteractiveArtifactURL } from '@/utilities/interactiveArtifactURL'
+
 type RichTextNode = {
   children?: RichTextNode[]
   fields?: Record<string, unknown>
-  format?: number
+  format?: number | string
   tag?: string
   text?: string
   type?: string
@@ -148,6 +150,7 @@ const renderNode = (node: RichTextNode, context: RenderContext): string => {
       if (block.blockType === 'mediaBlock') return renderMedia(block.media, context)
       if (block.blockType === 'banner') return renderBanner(block, context)
       if (block.blockType === 'code') return renderCode(block)
+      if (block.blockType === 'interactiveEmbed') return renderInteractiveEmbed(block, context)
 
       return ''
     }
@@ -206,6 +209,23 @@ const renderBanner = (block: Record<string, unknown>, context: RenderContext): s
 const renderCode = (block: Record<string, unknown>): string =>
   `<pre style="margin:22px 0;padding:16px;background:#0d0c0b;color:#f6efe2;overflow:auto;"><code>${escapeHTML(stringValue(block.code))}</code></pre>`
 
+const renderInteractiveEmbed = (block: Record<string, unknown>, context: RenderContext): string => {
+  const url = toInteractiveArtifactURL(block.url)
+
+  if (!url) return ''
+
+  const title = stringValue(block.title) || 'Interactive artifact'
+  const caption = stringValue(block.caption)
+  const preview = renderMedia(block.previewImage, context)
+
+  return `${preview}
+<div style="margin:22px 0;padding:18px;background:#25211d;border:1px solid #3b3328;color:#f6efe2;">
+  <p style="margin:0 0 8px;font-size:18px;font-weight:700;">${escapeHTML(title)}</p>
+  ${caption ? `<p style="margin:0 0 14px;color:#b8ad9b;font-size:14px;line-height:1.5;">${escapeHTML(caption)}</p>` : ''}
+  <a href="${escapeAttribute(listmonkTrackedURL(url))}" style="color:#d7a846;text-decoration:underline;">Open interactive artifact</a>
+</div>`.trim()
+}
+
 const renderText = (nodes: RichTextNode[] | undefined): string => {
   if (!Array.isArray(nodes)) return ''
 
@@ -214,6 +234,12 @@ const renderText = (nodes: RichTextNode[] | undefined): string => {
       if (!node || typeof node !== 'object') return ''
       if (node.type === 'text') return node.text || ''
       if (node.type === 'upload') return ''
+      if (node.type === 'block' && node.fields?.blockType === 'interactiveEmbed') {
+        const url = toInteractiveArtifactURL(node.fields.url)
+        if (!url) return ''
+
+        return [stringValue(node.fields.title), url].filter(Boolean).join(' ')
+      }
 
       return renderText(node.children || getLexicalChildren(node.fields?.content))
     })
