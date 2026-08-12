@@ -420,6 +420,8 @@ async function expectVerticalOrder(locators: Locator[]) {
 async function verifySeededPosts(page: Page) {
   await page.goto('/posts')
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
+  await expect(page).toHaveTitle('RaidGuild Portal Posts')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/posts$/)
 
   for (const post of seededPosts) {
     await expect(page.getByRole('link', { name: post.title })).toBeVisible()
@@ -437,6 +439,19 @@ async function verifySeededPosts(page: Page) {
       `Expected seeded post page /posts/${post.slug} to respond successfully`,
     ).toBeTruthy()
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
+    const canonicalURL = new URL(`/posts/${post.slug}`, response!.url()).toString()
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonicalURL)
+    const structuredData = await page.locator('script[type="application/ld+json"]').textContent()
+    const schemas = JSON.parse(structuredData || '[]') as Array<Record<string, unknown>>
+    expect(schemas.map((schema) => schema['@type'])).toEqual(
+      expect.arrayContaining(['BreadcrumbList', expect.stringMatching(/^(Article|BlogPosting)$/)]),
+    )
+    expect(schemas.find((schema) => schema['@type'] === 'BreadcrumbList')).toBeTruthy()
+    expect(
+      schemas.find((schema) => ['Article', 'BlogPosting'].includes(String(schema['@type'])))?.url,
+    ).toBe(canonicalURL)
     const postArticle = page
       .getByRole('article')
       .filter({ has: page.getByRole('heading', { exact: true, name: post.title }) })
@@ -447,6 +462,22 @@ async function verifySeededPosts(page: Page) {
     await expect(cohortCard.getByText(/\d+ days until Cohort 8 starts/)).toBeVisible()
     await expect(cohortCard.getByText('Starts June 1, 2030')).toBeVisible()
     await expectVerticalOrder([cohortCard, commentsHeading])
+  }
+}
+
+async function verifyTechnicalSEO(page: Page) {
+  const robotsResponse = await page.request.get('/robots.txt')
+  expect(robotsResponse.ok()).toBeTruthy()
+  const robots = await robotsResponse.text()
+  expect(robots).toContain('Disallow: /admin/')
+  expect(robots).toMatch(/Sitemap: https?:\/\/[^\s]+\/sitemap\.xml/)
+
+  const sitemapResponse = await page.request.get('/sitemap.xml')
+  expect(sitemapResponse.ok()).toBeTruthy()
+  const sitemap = await sitemapResponse.text()
+  expect(sitemap).toMatch(/^<\?xml/)
+  for (const post of seededPosts) {
+    expect(sitemap).toContain(`/posts/${post.slug}`)
   }
 }
 
@@ -4838,6 +4869,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicPostsRSSFeed(page, publicPage)
   await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
+  await verifyTechnicalSEO(publicPage)
   await verifySeededPosts(publicPage)
   await verifyCohortHub(page, publicPage)
   await verifyInteractivePostEmbed(page, publicPage)

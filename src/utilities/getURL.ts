@@ -14,6 +14,14 @@ export const getServerSideURL = () => {
   return url
 }
 
+export const getAbsoluteURL = (path = '/') => {
+  try {
+    return new URL(path, `${getServerSideURL().replace(/\/$/, '')}/`).toString()
+  } catch {
+    return path
+  }
+}
+
 export const getClientSideURL = () => {
   if (canUseDOM) {
     const protocol = window.location.protocol

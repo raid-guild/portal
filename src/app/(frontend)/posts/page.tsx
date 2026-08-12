@@ -47,6 +47,7 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 
 export function generateMetadata(): Metadata {
   return {
-    title: `RaidGuild Portal Posts`,
+    alternates: { canonical: '/posts' },
+    title: { absolute: 'RaidGuild Portal Posts' },
   }
 }
