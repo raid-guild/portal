@@ -418,8 +418,13 @@ async function expectVerticalOrder(locators: Locator[]) {
 }
 
 async function verifySeededPosts(page: Page) {
-  await page.goto('/posts')
+  const postsResponse = await page.goto('/posts')
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
+  await expect(page).toHaveTitle('RaidGuild Portal Posts')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
+    'href',
+    new URL('/posts', postsResponse!.url()).toString(),
+  )
 
   for (const post of seededPosts) {
     await expect(page.getByRole('link', { name: post.title })).toBeVisible()
@@ -437,6 +442,19 @@ async function verifySeededPosts(page: Page) {
       `Expected seeded post page /posts/${post.slug} to respond successfully`,
     ).toBeTruthy()
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
+    const canonicalURL = new URL(`/posts/${post.slug}`, response!.url()).toString()
+    await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
+    await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonicalURL)
+    const structuredData = await page.locator('script[type="application/ld+json"]').textContent()
+    const schemas = JSON.parse(structuredData || '[]') as Array<Record<string, unknown>>
+    expect(schemas.map((schema) => schema['@type'])).toEqual(
+      expect.arrayContaining(['BreadcrumbList', expect.stringMatching(/^(Article|BlogPosting)$/)]),
+    )
+    expect(schemas.find((schema) => schema['@type'] === 'BreadcrumbList')).toBeTruthy()
+    expect(
+      schemas.find((schema) => ['Article', 'BlogPosting'].includes(String(schema['@type'])))?.url,
+    ).toBe(canonicalURL)
     const postArticle = page
       .getByRole('article')
       .filter({ has: page.getByRole('heading', { exact: true, name: post.title }) })

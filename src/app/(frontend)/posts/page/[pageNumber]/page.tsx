@@ -62,6 +62,7 @@ export default async function Page({
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { pageNumber } = await paramsPromise
   return {
-    title: `RaidGuild Portal Posts Page ${pageNumber || ''}`,
+    alternates: { canonical: `/posts/page/${pageNumber}` },
+    title: { absolute: `RaidGuild Portal Posts Page ${pageNumber}` },
   }
 }
