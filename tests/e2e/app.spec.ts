@@ -2624,10 +2624,13 @@ async function verifyPortalSkillEndpoint(page: Page) {
   const body = await response.json()
 
   expect(body.name).toBe('portal-ops-skill')
-  expect(body.version).toBe('5')
+  expect(body.version).toBe('6')
   expect(body.aliases).toContain('portal-memory-publisher')
   expect(body.files['SKILL.md']).toContain('Portal Ops Skill')
   expect(body.files['SKILL.md']).toContain('Cohort Page Setup')
+  expect(body.files['SKILL.md']).toContain(
+    'Event Create Idempotency And Approved Duplicate Cleanup',
+  )
   expect(body.files['SKILL.md']).toContain('Wiki Page Creation')
   expect(body.files['references/portal-cms-model.md']).toContain('## cohorts')
   expect(body.files['references/portal-cms-model.md']).toContain('activityItems')
