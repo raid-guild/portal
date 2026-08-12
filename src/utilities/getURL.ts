@@ -14,6 +14,17 @@ export const getServerSideURL = () => {
   return url
 }
 
+export const getAbsoluteURL = (path = '/') => {
+  const serverURL = getServerSideURL()
+  const baseURL = new URL(serverURL)
+
+  if (!['http:', 'https:'].includes(baseURL.protocol)) {
+    throw new Error(`Invalid public server URL protocol: ${baseURL.protocol}`)
+  }
+
+  return new URL(path, `${baseURL.toString().replace(/\/$/, '')}/`).toString()
+}
+
 export const getClientSideURL = () => {
   if (canUseDOM) {
     const protocol = window.location.protocol

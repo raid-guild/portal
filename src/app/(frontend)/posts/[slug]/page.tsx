@@ -19,6 +19,7 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 import PageClient from './page.client'
 import { hasRole, hasVerifiedAccount } from '@/access/roles'
 import { CohortCalloutCard } from '../../_components/CohortCalloutCard'
+import { getAbsoluteURL } from '@/utilities/getURL'
 
 export const dynamic = 'force-dynamic'
 
@@ -49,6 +50,9 @@ export default async function Post({ params: paramsPromise }: Args) {
 
   return (
     <article className="pt-16 pb-16">
+      {post.visibility === 'public' && post._status === 'published' ? (
+        <PostStructuredData post={post} slug={slug} />
+      ) : null}
       <PageClient />
 
       {/* Allows redirects for valid pages too */}
@@ -102,7 +106,58 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   const user = await getCurrentUser()
   const post = await queryPostBySlug({ slug, user })
 
-  return generateMeta({ doc: post })
+  if (!post || post.visibility !== 'public' || post._status !== 'published') return {}
+
+  return generateMeta({ doc: post, path: `/posts/${slug}`, type: 'article' })
+}
+
+const PostStructuredData = ({ post, slug }: { post: Post; slug: string }) => {
+  const canonicalURL = getAbsoluteURL(`/posts/${slug}`)
+  const image =
+    typeof post.meta?.image === 'object' && post.meta.image?.url
+      ? getAbsoluteURL(post.meta.image.url)
+      : undefined
+  const authors = post.populatedAuthors
+    ?.map((author) => author.name)
+    .filter((name): name is string => !!name)
+    .map((name) => ({ '@type': 'Person', name }))
+  const article = {
+    '@context': 'https://schema.org',
+    '@type': post.contentType === 'article' ? 'Article' : 'BlogPosting',
+    '@id': `${canonicalURL}#article`,
+    headline: post.meta?.title || post.title,
+    ...(post.meta?.description ? { description: post.meta.description } : {}),
+    ...(post.publishedAt ? { datePublished: post.publishedAt } : {}),
+    dateModified: post.updatedAt,
+    ...(authors?.length ? { author: authors } : {}),
+    ...(image ? { image } : {}),
+    mainEntityOfPage: { '@id': canonicalURL, '@type': 'WebPage' },
+    publisher: {
+      '@id': `${getAbsoluteURL('/')}#organization`,
+      '@type': 'Organization',
+      name: 'RaidGuild',
+      url: getAbsoluteURL('/'),
+    },
+    url: canonicalURL,
+  }
+  const breadcrumbs = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: getAbsoluteURL('/') },
+      { '@type': 'ListItem', position: 2, name: 'Posts', item: getAbsoluteURL('/posts') },
+      { '@type': 'ListItem', position: 3, name: post.title, item: canonicalURL },
+    ],
+  }
+
+  return (
+    <script
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify([article, breadcrumbs]).replace(/</g, '\\u003c'),
+      }}
+      type="application/ld+json"
+    />
+  )
 }
 
 const queryPostBySlug = cache(

@@ -363,6 +363,56 @@ For recurring sessions, Portal uses copied event metadata rather than a separate
 
 When an agent workflow creates the next occurrence, copy the series fields forward, set `previousOccurrence` on the new event, and patch `nextOccurrence` on the current event. Do not invent recurrence if the current event has no `seriesKey` and `recurrenceCadence`.
 
+## Event Create Idempotency And Approved Duplicate Cleanup
+
+Treat every event-create request as potentially successful until a readback
+proves otherwise. A client timeout, empty response, connection reset, or other
+transport failure is ambiguous: Portal or Discord may have accepted the write
+even though the caller did not receive the response. Do not immediately retry
+the create request.
+
+Before retrying, search `events` for an equivalent record using the strongest
+available identifiers and facts:
+
+- exact Portal event ID or Discord scheduled-event ID/URL, when available
+- normalized title plus exact `startsAt`
+- `seriesKey` and the intended occurrence time for recurring events
+- matching duration/end time, visibility, and related Cohort when needed to
+  distinguish candidates
+
+Then follow this decision rule:
+
+1. If no equivalent event exists, retry once with the same reviewed payload and
+   perform another readback.
+2. If exactly one equivalent event exists, reuse that record. Do not create a
+   replacement. Complete any missing reviewed relationship or recurrence links
+   on the existing record, then read it back.
+3. If multiple candidates exist, stop and present their exact record IDs,
+   timestamps, Discord IDs/URLs, series links, Cohort relationships, and other
+   distinguishing fields for human review. Do not guess which record is
+   canonical and do not delete anything.
+
+Duplicate cleanup is a destructive exception and does not grant agents general
+delete authority. It may proceed only after an editor or admin explicitly
+approves the canonical record ID and every exact duplicate record ID. Before an
+approved deletion, verify that:
+
+- the canonical event contains the intended Discord link/sync state,
+  `relatedCohorts`, series metadata, and `previousOccurrence` /
+  `nextOccurrence` links
+- each proposed duplicate is actually equivalent and orphaned: no unique
+  Discord event, Cohort/series position, comments, resources, artifacts, or
+  other relationships would be lost
+- records that are merely similar occurrences in a recurring series are not
+  treated as duplicates
+
+Have the approving editor/admin perform the deletion or use an explicitly
+approved admin workflow scoped to those IDs. After each deletion, read back the
+canonical event and search again for the deleted ID. Report success only when
+the canonical record still exists with its required links and every approved
+duplicate is absent. If any verification is uncertain or fails, stop for human
+review without further deletes or retries.
+
 ## Event Artifact Ingest
 
 Prism workflows should attach recording, transcript, and summary artifacts through the dedicated ingest endpoint instead of raw-updating event fields:

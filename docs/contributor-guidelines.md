@@ -161,6 +161,13 @@ or threads. Use `member` visibility for sessions that should be readable by
 confirmed members but hidden from unauthenticated visitors and authenticated
 non-member contributors.
 
+Automated Event creation must treat timeouts, empty responses, and connection
+resets as ambiguous writes. Search for an equivalent Event before retrying,
+reuse one exact match, and stop for review when multiple candidates exist.
+Duplicate deletion requires editor/admin approval for the canonical ID and
+every exact duplicate ID, proof that the duplicate is orphaned, and readback
+showing the canonical Event and its schedule/series links remain intact.
+
 Do not build complex native calendar behavior before basic external calendar links work.
 
 ### Profile

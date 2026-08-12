@@ -94,6 +94,9 @@
 - [x] Document review-first Cohort page setup, announcements, related sessions,
       enrollment states, publishing, and route verification in the exposed
       `portal-ops-skill`.
+- [x] Document Event create idempotency for ambiguous responses and restrict
+      duplicate cleanup to exact editor/admin-approved IDs with canonical-link,
+      orphan, and post-delete readback verification.
 
 ## Phase 5C: RaidGuild Cohort Hub Module
 

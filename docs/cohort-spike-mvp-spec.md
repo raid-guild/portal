@@ -400,6 +400,12 @@ create a basic future session from `/events/new`; Payload admin remains
 available for full editorial control and past-session enrichment. The session
 list should separate live, upcoming, and past sessions.
 
+Agent-created Events use read-before-retry idempotency: ambiguous transport
+failures require an equivalent-record search, one match is reused, and multiple
+matches stop for human review. Duplicate cleanup is limited to exact IDs
+approved by an editor/admin after canonical-link and orphan checks, followed by
+readback proving the canonical Event remains linked and the duplicate is gone.
+
 ## Implementation Phases
 
 ### Phase 1: Spec-Aligned UI on Existing Data
