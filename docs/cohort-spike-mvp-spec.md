@@ -400,6 +400,12 @@ create a basic future session from `/events/new`; Payload admin remains
 available for full editorial control and past-session enrichment. The session
 list should separate live, upcoming, and past sessions.
 
+Agent-created Events use read-before-retry idempotency: ambiguous transport
+failures require an equivalent-record search, one match is reused, and multiple
+matches stop for human review. Duplicate cleanup is limited to exact IDs
+approved by an editor/admin after canonical-link and orphan checks, followed by
+readback proving the canonical Event remains linked and the duplicate is gone.
+
 ## Implementation Phases
 
 ### Phase 1: Spec-Aligned UI on Existing Data
@@ -475,6 +481,14 @@ The MVP is ready when:
 - The UI does not imply task management features that do not exist.
 - Seeded content reflects the May 11, 2026 cohort voice meeting.
 - Public/authenticated/admin visibility rules are respected.
+- Public Posts can contextualize approved interactive workshop artifacts in a
+  scripts-only sandbox without executing arbitrary CMS HTML on the Portal origin.
+- Interactive artifacts remain on the separate RaidGuild artifact origin and
+  enter Posts only through the `interactiveEmbed` rich-text block. Editors and
+  agents cannot paste arbitrary HTML or JavaScript, relax exact-origin
+  validation, or grant same-origin, navigation, form, popup, or Portal API
+  capabilities. Published results that must remain reproducible use stable,
+  versioned artifact paths.
 - Relevant Playwright e2e coverage passes with `corepack pnpm test:e2e`.
 
 ## Open Decisions

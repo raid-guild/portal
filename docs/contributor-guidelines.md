@@ -161,6 +161,13 @@ or threads. Use `member` visibility for sessions that should be readable by
 confirmed members but hidden from unauthenticated visitors and authenticated
 non-member contributors.
 
+Automated Event creation must treat timeouts, empty responses, and connection
+resets as ambiguous writes. Search for an equivalent Event before retrying,
+reuse one exact match, and stop for review when multiple candidates exist.
+Duplicate deletion requires editor/admin approval for the canonical ID and
+every exact duplicate ID, proof that the duplicate is orphaned, and readback
+showing the canonical Event and its schedule/series links remain intact.
+
 Do not build complex native calendar behavior before basic external calendar links work.
 
 ### Profile
@@ -260,6 +267,13 @@ course-progress mechanics, or turn a Cohort into a project-management surface.
 Potential programs use the Cohort `gathering-interest` state and the existing
 general inquiry flow; they do not create commitments before dates and
 enrollment are official.
+
+Interactive diagrams remain executable artifacts hosted on the separate
+RaidGuild artifact origin. Embed them inside a Post with the
+`interactiveEmbed` rich-text block. Do not paste arbitrary HTML or JavaScript
+into a Post, relax the approved-origin validation, or grant an embedded iframe
+same-origin, navigation, form, popup, or Portal API access. Use stable,
+versioned artifact paths when a published Post must retain a specific result.
 
 The `modules` collection is the registry for module discovery and status. It is
 core Portal infrastructure and belongs in the `Portal` Payload admin group.

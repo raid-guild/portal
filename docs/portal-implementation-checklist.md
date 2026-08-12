@@ -94,6 +94,9 @@
 - [x] Document review-first Cohort page setup, announcements, related sessions,
       enrollment states, publishing, and route verification in the exposed
       `portal-ops-skill`.
+- [x] Document Event create idempotency for ambiguous responses and restrict
+      duplicate cleanup to exact editor/admin-approved IDs with canonical-link,
+      orphan, and post-delete readback verification.
 
 ## Phase 5C: RaidGuild Cohort Hub Module
 
@@ -109,6 +112,20 @@
 - [x] Add deterministic Cohort seed content, a schema migration, generated Payload types, analytics, and end-to-end coverage.
 - [ ] Relate Briefs to Cohorts and show the newest visible update when editorial use justifies the relationship.
 - [ ] Add participant display, capacity/waitlist automation, dedicated interest records, and a Cohort archive only when real operations define their lifecycle and permissions.
+
+## Phase 5D: Interactive Publishing Artifacts
+
+- [x] Add a Post rich-text block for interactive workshop artifacts.
+- [x] Restrict embeds to configured, exact HTTPS artifact origins.
+- [x] Render embeds in a lazy iframe sandbox that grants scripts only.
+- [x] Keep executable HTML and JavaScript on the separate RaidGuild artifact
+      origin; accept it only through `interactiveEmbed`, without arbitrary CMS
+      HTML, relaxed origin validation, same-origin, navigation, forms, popups,
+      or Portal API access.
+- [x] Use stable, versioned artifact paths when a published Post must retain a
+      reproducible result.
+- [x] Provide caption, external-open, optional preview-image, and newsletter fallback behavior.
+- [x] Add generated Payload types and end-to-end validation/rendering coverage.
 
 ## Phase 6: External API Hardening
 

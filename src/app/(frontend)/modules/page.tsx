@@ -276,6 +276,15 @@ const ModuleRow: React.FC<{ module: Module }> = ({ module }) => {
             ) : (
               <span className="portal-pill">Coming soon</span>
             )}
+            {detailRoute ? (
+              <Link
+                aria-label={`View details for ${module.name}`}
+                className="portal-link"
+                href={detailRoute}
+              >
+                View details
+              </Link>
+            ) : null}
             {specURL ? (
               <Link className="portal-link" href={specURL}>
                 Spec

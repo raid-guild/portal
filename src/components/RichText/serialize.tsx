@@ -2,11 +2,15 @@ import { BannerBlock } from '@/blocks/Banner/Component'
 import { CallToActionBlock } from '@/blocks/CallToAction/Component'
 import { CodeBlock, CodeBlockProps } from '@/blocks/Code/Component'
 import { MediaBlock } from '@/blocks/MediaBlock/Component'
+import { InteractiveEmbedBlock } from '@/blocks/InteractiveEmbed/Component'
 import { Media } from '@/components/Media'
 import React, { Fragment, JSX } from 'react'
 import { CMSLink } from '@/components/Link'
 import { DefaultNodeTypes, SerializedBlockNode } from '@payloadcms/richtext-lexical'
-import type { BannerBlock as BannerBlockProps } from '@/payload-types'
+import type {
+  BannerBlock as BannerBlockProps,
+  InteractiveEmbedBlock as InteractiveEmbedBlockProps,
+} from '@/payload-types'
 
 import {
   IS_BOLD,
@@ -24,7 +28,13 @@ import type {
 
 export type NodeTypes =
   | DefaultNodeTypes
-  | SerializedBlockNode<CTABlockProps | MediaBlockProps | BannerBlockProps | CodeBlockProps>
+  | SerializedBlockNode<
+      | CTABlockProps
+      | MediaBlockProps
+      | BannerBlockProps
+      | CodeBlockProps
+      | InteractiveEmbedBlockProps
+    >
 
 type Props = {
   nodes: NodeTypes[]
@@ -134,6 +144,10 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
               return <BannerBlock className="col-start-2 mb-4" key={index} {...block} />
             case 'code':
               return <CodeBlock className="col-start-2" key={index} {...block} />
+            case 'interactiveEmbed':
+              return (
+                <InteractiveEmbedBlock className="col-start-1 col-span-3" key={index} {...block} />
+              )
             default:
               return null
           }
@@ -175,7 +189,6 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
                     aria-checked={node.checked ? 'true' : 'false'}
                     className={` ${node.checked ? '' : ''}`}
                     key={index}
-                    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-to-interactive-role
                     role="checkbox"
                     tabIndex={-1}
                     value={node?.value}
