@@ -3,6 +3,8 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
+import { normalizePortalTitle } from '@/utilities/generateMeta'
+import { POSTS_META_DESCRIPTION } from '@/utilities/postsMetadata'
 
 import {
   adminEmail,
@@ -419,12 +421,27 @@ async function expectVerticalOrder(locators: Locator[]) {
 
 async function verifySeededPosts(page: Page) {
   const postsResponse = await page.goto('/posts')
+  const postsURL = new URL('/posts', postsResponse!.url()).toString()
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
   await expect(page).toHaveTitle('RaidGuild Portal Posts')
-  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute(
-    'href',
-    new URL('/posts', postsResponse!.url()).toString(),
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    POSTS_META_DESCRIPTION,
   )
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', postsURL)
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', postsURL)
+
+  const paginatedResponse = await page.goto('/posts/page/2')
+  const paginatedURL = new URL('/posts/page/2', paginatedResponse!.url()).toString()
+  await expect(page).toHaveTitle('RaidGuild Portal Posts Page 2')
+  await expect(page.locator('meta[name="description"]')).toHaveAttribute(
+    'content',
+    POSTS_META_DESCRIPTION,
+  )
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', paginatedURL)
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', paginatedURL)
+
+  await page.goto('/posts')
 
   for (const post of seededPosts) {
     await expect(page.getByRole('link', { name: post.title })).toBeVisible()
@@ -442,6 +459,7 @@ async function verifySeededPosts(page: Page) {
       `Expected seeded post page /posts/${post.slug} to respond successfully`,
     ).toBeTruthy()
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
+    await expect(page).toHaveTitle(`${post.title} | RaidGuild Portal`)
     const canonicalURL = new URL(`/posts/${post.slug}`, response!.url()).toString()
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
@@ -467,6 +485,15 @@ async function verifySeededPosts(page: Page) {
     await expectVerticalOrder([cohortCard, commentsHeading])
   }
 }
+
+test('normalizes legacy article title suffixes', () => {
+  expect(normalizePortalTitle('Article | RaidGuild | RaidGuild Portal')).toBe(
+    'Article | RaidGuild Portal',
+  )
+  expect(normalizePortalTitle('RaidGuild field notes')).toBe(
+    'RaidGuild field notes | RaidGuild Portal',
+  )
+})
 
 async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   const cohortPath = '/cohorts/agentic-guild-operations'
