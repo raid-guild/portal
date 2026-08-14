@@ -6,7 +6,7 @@ import { mergeOpenGraph } from './mergeOpenGraph'
 export const POSTS_META_DESCRIPTION =
   'Read RaidGuild updates, recaps, lessons, and announcements from work happening across the community.'
 
-export const generatePostsMetadata = (pageNumber?: string): Metadata => {
+export const generatePostsMetadata = (pageNumber?: number): Metadata => {
   const path = pageNumber ? `/posts/page/${pageNumber}` : '/posts'
   const title = pageNumber ? `RaidGuild Portal Posts Page ${pageNumber}` : 'RaidGuild Portal Posts'
   const canonicalURL = getAbsoluteURL(path)

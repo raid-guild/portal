@@ -441,6 +441,15 @@ async function verifySeededPosts(page: Page) {
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', paginatedURL)
   await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', paginatedURL)
 
+  const paddedPageResponse = await page.goto('/posts/page/01')
+  const normalizedPageURL = new URL('/posts/page/1', paddedPageResponse!.url()).toString()
+  await expect(page).toHaveTitle('RaidGuild Portal Posts Page 1')
+  await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', normalizedPageURL)
+  await expect(page.locator('meta[property="og:url"]')).toHaveAttribute(
+    'content',
+    normalizedPageURL,
+  )
+
   await page.goto('/posts')
 
   for (const post of seededPosts) {
@@ -459,7 +468,7 @@ async function verifySeededPosts(page: Page) {
       `Expected seeded post page /posts/${post.slug} to respond successfully`,
     ).toBeTruthy()
     await expect(page.getByRole('heading', { exact: true, name: post.title })).toBeVisible()
-    await expect(page).toHaveTitle(`${post.title} | RaidGuild Portal`)
+    await expect(page).toHaveTitle(normalizePortalTitle(post.title))
     const canonicalURL = new URL(`/posts/${post.slug}`, response!.url()).toString()
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
