@@ -191,6 +191,11 @@ on `/me` before Portal sets `walletVerifiedAt`. Direct address changes must clea
 verification. Do not infer DAO membership, voting activity, or token holdings
 from an unverified or merely imported address.
 
+Trusted external module launch tokens may include that verified address as a
+Gnosis Chain wallet claim and may derive only the allowlisted `member` and
+`cohort_grad` credentials. Keep raw auth roles separate from derived credentials
+and omit claims when their supporting Portal record is absent.
+
 Do not let profile features distract from brief, project, activity, thread, and event visibility.
 
 ## Content Rules

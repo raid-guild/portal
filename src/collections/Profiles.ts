@@ -1,10 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, FieldAccess } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { ownProfileOrAdmin, privateProfileField, publicProfilesOrOwner } from '@/access/profiles'
 import { admins, adminsFieldAccess, isAdmin } from '@/access/roles'
 
 const handlePattern = /^[a-z0-9_-]+$/i
+const internalProfileField: FieldAccess = () => false
 
 export const Profiles: CollectionConfig = {
   slug: 'profiles',
@@ -151,9 +152,9 @@ export const Profiles: CollectionConfig = {
       name: 'walletVerifiedAt',
       type: 'date',
       access: {
-        create: adminsFieldAccess,
+        create: internalProfileField,
         read: privateProfileField,
-        update: adminsFieldAccess,
+        update: internalProfileField,
       },
       admin: {
         date: {
@@ -166,9 +167,9 @@ export const Profiles: CollectionConfig = {
       name: 'walletVerificationChallengeHash',
       type: 'text',
       access: {
-        create: adminsFieldAccess,
+        create: internalProfileField,
         read: adminsFieldAccess,
-        update: adminsFieldAccess,
+        update: internalProfileField,
       },
       admin: {
         hidden: true,
@@ -178,9 +179,9 @@ export const Profiles: CollectionConfig = {
       name: 'walletVerificationAddress',
       type: 'text',
       access: {
-        create: adminsFieldAccess,
+        create: internalProfileField,
         read: adminsFieldAccess,
-        update: adminsFieldAccess,
+        update: internalProfileField,
       },
       admin: {
         hidden: true,
@@ -190,9 +191,9 @@ export const Profiles: CollectionConfig = {
       name: 'walletVerificationExpiresAt',
       type: 'date',
       access: {
-        create: adminsFieldAccess,
+        create: internalProfileField,
         read: adminsFieldAccess,
-        update: adminsFieldAccess,
+        update: internalProfileField,
       },
       admin: {
         hidden: true,

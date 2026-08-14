@@ -64,7 +64,7 @@ Verify this address as the RaidGuild DAO member address for your Portal profile.
 
 URI: ${url.origin}/me
 Version: 1
-Chain ID: 1
+Chain ID: 100
 Nonce: ${nonce}
 Issued At: ${issuedAt.toISOString()}
 Expiration Time: ${expiresAt.toISOString()}

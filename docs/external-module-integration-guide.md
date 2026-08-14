@@ -82,6 +82,14 @@ Current token shape:
   "handle": "member-handle",
   "picture": "https://portal.raidguild.org/media/avatar.jpg",
   "roles": ["member"],
+  "wallets": [
+    {
+      "address": "0x1234...",
+      "chainId": 100,
+      "verifiedAt": "2026-08-14T18:00:00.000Z"
+    }
+  ],
+  "credentials": ["cohort_grad", "member"],
   "moduleSlug": "your-module-slug",
   "scopes": ["profile:read"],
   "iat": 1780000000,
@@ -89,8 +97,15 @@ Current token shape:
 }
 ```
 
-Only configured optional claims are included. Do not assume `email`, `roles`,
-`profileID`, `handle`, or `picture` are always present.
+Only configured and evidenced optional claims are included. Do not assume
+`email`, `roles`, `profileID`, `handle`, `picture`, `wallets`, or `credentials`
+are always present. Missing evidence omits the claim rather than returning an
+empty or unverified identity.
+
+Wallet entries represent Portal-verified ownership of the profile's RaidGuild
+DAO address on Gnosis Chain (`chainId: 100`). They do not prove current token
+holdings, voting power, or active DAO membership. Current credential values are
+`member` and `cohort_grad`; external apps must ignore unknown future values.
 
 If a module is configured with `includeEmailInLaunch`, Portal requires the
 user's account email to be verified before issuing a launch token. This prevents
@@ -119,6 +134,7 @@ import jwt from 'jsonwebtoken'
 
 type PortalLaunchClaims = {
   aud: string
+  credentials?: ('cohort_grad' | 'member')[]
   email?: string
   exp: number
   handle?: string
@@ -130,6 +146,11 @@ type PortalLaunchClaims = {
   sub: string
   typ: 'portal_module_launch'
   userID: number | string
+  wallets?: {
+    address: string
+    chainId: 100
+    verifiedAt: string
+  }[]
 }
 
 export function verifyPortalLaunchToken(token: string): PortalLaunchClaims {
@@ -167,6 +188,7 @@ Recommended behavior:
 - Use Portal `profileID` for display/profile links when present.
 - Store only the fields needed by the external app.
 - Treat roles as launch-time authorization context.
+- Treat credentials and verified wallets as launch-time evidence, not permanent local truth.
 - Ask the user to launch from Portal again if permissions need to be refreshed.
 
 ## Failure Handling

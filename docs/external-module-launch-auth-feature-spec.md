@@ -153,6 +153,14 @@ Recommended payload:
   "name": "Member Name",
   "handle": "member-handle",
   "roles": ["member"],
+  "wallets": [
+    {
+      "address": "0x1234...",
+      "chainId": 100,
+      "verifiedAt": "2026-08-14T18:00:00.000Z"
+    }
+  ],
+  "credentials": ["cohort_grad", "member"],
   "moduleSlug": "crm",
   "scopes": ["profile:read"],
   "iat": 1780000000,
@@ -167,6 +175,8 @@ Token rules:
 - Include `iss` and verify it in the external app.
 - Include `jti` so replay protection can be added later.
 - Include only the profile fields the module needs.
+- Include wallet claims only after Portal signature verification; a stored or imported address is not enough.
+- Keep credentials to the documented allowlist. Do not turn arbitrary badge slugs into authorization claims.
 - Do not include sensitive profile fields by default.
 - Do not include a reusable Portal auth token.
 
@@ -185,7 +195,15 @@ handle
 avatarURL
 roles
 memberStatus
+wallets
+credentials
 ```
+
+`wallets` currently identifies a verified RaidGuild DAO address on Gnosis Chain
+(`chainId: 100`). `credentials` may contain `member` when the current Portal
+auth role supports it and `cohort_grad` when the linked profile has the canonical
+`cohort-grad` badge. These are launch-time snapshots, not permanent app-local
+permissions.
 
 Default to minimal claims:
 

@@ -3324,7 +3324,7 @@ async function verifyDAOWalletOwnership(page: Page, profileHandle: string) {
   const challenge = await challengeResponse.json()
   expect(challenge.address).toBe(account.address)
   expect(challenge.message).toContain('Verify this address as the RaidGuild DAO member address')
-  expect(challenge.message).toContain('Chain ID: 1')
+  expect(challenge.message).toContain('Chain ID: 100')
 
   const tamperedResponse = await page.request.post('/api/profiles/wallet', {
     data: {
@@ -3822,6 +3822,8 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   const explorerSkillSlug = `explorer-skill-${moduleSuffix}`
   const explorerProfileHandle = `graph-profile-${moduleSuffix}`
   const explorerProfileName = `Graph Profile ${moduleSuffix}`
+  const explorerEmail = `graph-profile-${moduleSuffix}@example.com`
+  const explorerPassword = 'Password123!'
   const externalModuleSlug = `external-e2e-module-${moduleSuffix}`
   const externalModuleAudience = `external-e2e-audience-${moduleSuffix}`
   const externalModuleCallbackURL = `https://external.example.com/portal/callback/${moduleSuffix}`
@@ -3898,9 +3900,45 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   const verifyAdminResponse = await adminPage.request.patch(`/api/users/${adminUserID}`, {
     data: {
       emailVerifiedAt: new Date().toISOString(),
+      roles: ['admin', 'member'],
     },
   })
   expect(verifyAdminResponse.ok()).toBeTruthy()
+
+  const [launchProfileResponse, cohortGradBadgeResponse] = await Promise.all([
+    adminPage.request.get('/api/profiles', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[user][equals]': String(adminUserID),
+      },
+    }),
+    adminPage.request.get('/api/badges', {
+      params: {
+        depth: '0',
+        limit: '1',
+        'where[slug][equals]': 'cohort-grad',
+      },
+    }),
+  ])
+  expect(launchProfileResponse.ok()).toBeTruthy()
+  expect(cohortGradBadgeResponse.ok()).toBeTruthy()
+  const launchProfileID = (await launchProfileResponse.json()).docs?.[0]?.id
+  const cohortGradBadgeID = (await cohortGradBadgeResponse.json()).docs?.[0]?.id
+  expect(launchProfileID).toBeTruthy()
+  expect(cohortGradBadgeID).toBeTruthy()
+
+  const cohortGradAwardResponse = await adminPage.request.post('/api/profileBadges', {
+    data: {
+      awardedAt: new Date().toISOString(),
+      badge: cohortGradBadgeID,
+      note: 'E2E signed module credential coverage.',
+      profiles: [launchProfileID],
+      source: 'cohort',
+      visibility: 'private',
+    },
+  })
+  expect(cohortGradAwardResponse.status()).toBe(201)
 
   const unverifiedLaunchUserResponse = await adminPage.request.post('/api/users', {
     data: {
@@ -3934,14 +3972,16 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
 
   const explorerUserResponse = await adminPage.request.post('/api/users', {
     data: {
-      email: `graph-profile-${moduleSuffix}@example.com`,
+      email: explorerEmail,
       name: explorerProfileName,
-      password: 'Password123!',
+      password: explorerPassword,
       roles: ['contributor'],
     },
   })
   expect(explorerUserResponse.status()).toBe(201)
   const explorerUser = await explorerUserResponse.json()
+  const explorerUserID = explorerUser.doc?.id || explorerUser.id
+  expect(explorerUserID).toBeTruthy()
 
   const explorerProfileResponse = await adminPage.request.post('/api/profiles', {
     data: {
@@ -3957,6 +3997,13 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
     },
   })
   expect(explorerProfileResponse.status()).toBe(201)
+
+  const verifyExplorerResponse = await adminPage.request.patch(`/api/users/${explorerUserID}`, {
+    data: {
+      emailVerifiedAt: new Date().toISOString(),
+    },
+  })
+  expect(verifyExplorerResponse.ok()).toBeTruthy()
 
   await publicPage.goto('/modules')
   await expect(publicPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
@@ -4088,8 +4135,41 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   expect(launchClaims.moduleSlug).toBe(externalModuleSlug)
   expect(launchClaims.email).toBe(adminEmail)
   expect(launchClaims.roles).toContain('admin')
+  expect(launchClaims.credentials).toEqual(['cohort_grad', 'member'])
+  expect(launchClaims.wallets).toEqual([
+    {
+      address: privateKeyToAccount(
+        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+      ).address,
+      chainId: 100,
+      verifiedAt: expect.any(String),
+    },
+  ])
   expect(launchClaims.sub).toMatch(/^user:/)
   expect(launchClaims.userID).toBeTruthy()
+
+  const credentiallessContext = await browser.newContext()
+  try {
+    const credentiallessPage = await credentiallessContext.newPage()
+    await loginPortalUser(credentiallessPage, explorerEmail, explorerPassword)
+    const credentiallessLaunchResponse = await credentiallessPage.request.get(
+      `/api/modules/${externalModuleSlug}/launch`,
+      { maxRedirects: 0 },
+    )
+    expect(credentiallessLaunchResponse.status()).toBe(302)
+    const credentiallessLocation = credentiallessLaunchResponse.headers().location
+    expect(credentiallessLocation).toBeTruthy()
+    const credentiallessToken = new URL(credentiallessLocation!).searchParams.get('token')
+    expect(credentiallessToken).toBeTruthy()
+    const credentiallessClaims = jwt.verify(credentiallessToken!, externalModuleLaunchSecret, {
+      algorithms: ['HS256'],
+      audience: externalModuleAudience,
+    }) as jwt.JwtPayload
+    expect(credentiallessClaims.credentials).toBeUndefined()
+    expect(credentiallessClaims.wallets).toBeUndefined()
+  } finally {
+    await credentiallessContext.close()
+  }
 
   await adminPage.goto('/portal-graph')
   await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()

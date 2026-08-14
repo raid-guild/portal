@@ -227,6 +227,9 @@
 - [x] Add verified-user email opt-in for newly available module announcements.
 - [x] Add `/modules/[slug]` detail routes with access-aware metadata and a
       distinct canonical app launch action.
+- [x] Add short-lived signed external module launch tokens with optional profile claims.
+- [x] Include only verified DAO wallets and allowlisted `member`/`cohort_grad`
+      credentials in signed module handoffs, with omission tests for missing evidence.
 - [x] Add Payload admin grouping guidance: core primitives in `Portal`,
       module-owned collections in `Modules`.
 - [x] Ensure core routes render without module-owned collections or enabled
