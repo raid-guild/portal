@@ -2,12 +2,12 @@ import { MigrateDownArgs, MigrateUpArgs, sql } from '@payloadcms/db-postgres'
 
 export async function up({ db }: MigrateUpArgs): Promise<void> {
   await db.execute(sql`
-    ALTER TABLE "profiles" ADD COLUMN "wallet_verified_at" timestamp(3) with time zone;
-    ALTER TABLE "profiles" ADD COLUMN "wallet_verification_challenge_hash" varchar;
-    ALTER TABLE "profiles" ADD COLUMN "wallet_verification_address" varchar;
-    ALTER TABLE "profiles" ADD COLUMN "wallet_verification_expires_at" timestamp(3) with time zone;
-    CREATE INDEX "profiles_wallet_address_idx" ON "profiles" USING btree ("wallet_address");
-    CREATE UNIQUE INDEX "profiles_verified_wallet_address_idx" ON "profiles" USING btree (lower("wallet_address")) WHERE "wallet_verified_at" IS NOT NULL;
+    ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "wallet_verified_at" timestamp(3) with time zone;
+    ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "wallet_verification_challenge_hash" varchar;
+    ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "wallet_verification_address" varchar;
+    ALTER TABLE "profiles" ADD COLUMN IF NOT EXISTS "wallet_verification_expires_at" timestamp(3) with time zone;
+    CREATE INDEX IF NOT EXISTS "profiles_wallet_address_idx" ON "profiles" USING btree ("wallet_address");
+    CREATE UNIQUE INDEX IF NOT EXISTS "profiles_verified_wallet_address_idx" ON "profiles" USING btree (lower("wallet_address")) WHERE "wallet_verified_at" IS NOT NULL;
   `)
 }
 

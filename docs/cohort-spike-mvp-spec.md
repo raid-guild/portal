@@ -115,7 +115,8 @@ Recommended first-route shape:
 
 Trusted external module launches may receive a verified Gnosis Chain wallet and
 the allowlisted `member` or `cohort_grad` credential. A cohort relationship or
-unverified address alone must not produce either claim.
+unverified address alone must not produce either claim, and each claim group
+requires an explicit module-level opt-in.
 
 Keep navigation small:
 

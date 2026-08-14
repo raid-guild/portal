@@ -175,8 +175,11 @@ Token rules:
 - Include `iss` and verify it in the external app.
 - Include `jti` so replay protection can be added later.
 - Include only the profile fields the module needs.
-- Include wallet claims only after Portal signature verification; a stored or imported address is not enough.
-- Keep credentials to the documented allowlist. Do not turn arbitrary badge slugs into authorization claims.
+- Include wallet claims only when `includeWalletsInLaunch` is enabled and after
+  Portal signature verification; a stored or imported address is not enough.
+- Include credentials only when `includeCredentialsInLaunch` is enabled and
+  keep them to the documented allowlist. Do not turn arbitrary badge slugs into
+  authorization claims.
 - Do not include sensitive profile fields by default.
 - Do not include a reusable Portal auth token.
 
@@ -203,7 +206,7 @@ credentials
 (`chainId: 100`). `credentials` may contain `member` when the current Portal
 auth role supports it and `cohort_grad` when the linked profile has the canonical
 `cohort-grad` badge. These are launch-time snapshots, not permanent app-local
-permissions.
+permissions. Their module-level inclusion settings default to off.
 
 Default to minimal claims:
 

@@ -102,6 +102,10 @@ Only configured and evidenced optional claims are included. Do not assume
 are always present. Missing evidence omits the claim rather than returning an
 empty or unverified identity.
 
+Wallet and credential disclosure are independent, privacy-preserving module
+settings. An administrator must explicitly enable `includeWalletsInLaunch`
+and/or `includeCredentialsInLaunch`; both default to off.
+
 Wallet entries represent Portal-verified ownership of the profile's RaidGuild
 DAO address on Gnosis Chain (`chainId: 100`). They do not prove current token
 holdings, voting power, or active DAO membership. Current credential values are

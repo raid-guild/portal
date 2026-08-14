@@ -2,9 +2,14 @@ import configPromise from '@payload-config'
 import crypto from 'crypto'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
-import { getAddress, isAddress, verifyMessage, type Hex } from 'viem'
+import { createPublicClient, getAddress, http, isAddress, verifyMessage, type Hex } from 'viem'
+import { gnosis } from 'viem/chains'
 
 const WALLET_CHALLENGE_TTL_MS = 10 * 60 * 1000
+const gnosisClient = createPublicClient({
+  chain: gnosis,
+  transport: http(process.env.GNOSIS_RPC_URL),
+})
 
 const noStoreJSON = (body: Record<string, unknown>, init?: ResponseInit) =>
   Response.json(body, {
@@ -21,6 +26,22 @@ const normalizeAddress = (value: unknown): `0x${string}` | null => {
   if (typeof value !== 'string' || !isAddress(value)) return null
 
   return getAddress(value)
+}
+
+const isUniqueConstraintError = (error: unknown): boolean => {
+  let candidate = error
+
+  for (let depth = 0; depth < 4 && candidate && typeof candidate === 'object'; depth += 1) {
+    const databaseError = candidate as { cause?: unknown; code?: string; message?: string }
+
+    if (databaseError.code === '23505' || databaseError.message?.includes('duplicate key')) {
+      return true
+    }
+
+    candidate = databaseError.cause
+  }
+
+  return false
 }
 
 const getOwnedProfile = async (
@@ -146,11 +167,14 @@ export async function POST(request: Request) {
     )
   }
 
-  const signatureIsValid = await verifyMessage({
+  const signaturePayload = {
     address,
     message,
     signature: signature as Hex,
-  }).catch(() => false)
+  }
+  const signatureIsValid =
+    (await verifyMessage(signaturePayload).catch(() => false)) ||
+    (await gnosisClient.verifyMessage(signaturePayload).catch(() => false))
 
   if (!signatureIsValid) {
     return noStoreJSON(
@@ -183,21 +207,32 @@ export async function POST(request: Request) {
 
   const walletVerifiedAt = new Date().toISOString()
 
-  await payload.update({
-    id: profile.id,
-    collection: 'profiles',
-    context: {
-      walletVerification: true,
-    },
-    data: {
-      walletAddress: address,
-      walletVerificationAddress: null,
-      walletVerificationChallengeHash: null,
-      walletVerificationExpiresAt: null,
-      walletVerifiedAt,
-    },
-    overrideAccess: true,
-  })
+  try {
+    await payload.update({
+      id: profile.id,
+      collection: 'profiles',
+      context: {
+        walletVerification: true,
+      },
+      data: {
+        walletAddress: address,
+        walletVerificationAddress: null,
+        walletVerificationChallengeHash: null,
+        walletVerificationExpiresAt: null,
+        walletVerifiedAt,
+      },
+      overrideAccess: true,
+    })
+  } catch (error) {
+    if (isUniqueConstraintError(error)) {
+      return noStoreJSON(
+        { message: 'This wallet is already verified by another Portal profile.' },
+        { status: 409 },
+      )
+    }
+
+    throw error
+  }
 
   return noStoreJSON({ address, walletVerifiedAt })
 }

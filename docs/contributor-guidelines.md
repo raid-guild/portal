@@ -194,7 +194,8 @@ from an unverified or merely imported address.
 Trusted external module launch tokens may include that verified address as a
 Gnosis Chain wallet claim and may derive only the allowlisted `member` and
 `cohort_grad` credentials. Keep raw auth roles separate from derived credentials
-and omit claims when their supporting Portal record is absent.
+and omit claims when their supporting Portal record is absent. Wallet and
+credential claims require separate, explicit module opt-ins that default off.
 
 Do not let profile features distract from brief, project, activity, thread, and event visibility.
 

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 
@@ -29,6 +30,7 @@ export const WalletVerificationCard: React.FC<WalletVerificationCardProps> = ({
   walletAddress,
   walletVerifiedAt,
 }) => {
+  const router = useRouter()
   const [address, setAddress] = useState(walletAddress || null)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -93,6 +95,7 @@ export const WalletVerificationCard: React.FC<WalletVerificationCardProps> = ({
 
       setAddress(verification.address)
       setVerifiedAt(verification.walletVerifiedAt)
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to verify this wallet.')
     } finally {
@@ -118,7 +121,7 @@ export const WalletVerificationCard: React.FC<WalletVerificationCardProps> = ({
           <span className="portal-pill">{verifiedAt ? 'Verified wallet' : 'Not verified'}</span>
           {verifiedAt ? (
             <span className="text-xs text-muted-foreground">
-              Verified {new Date(verifiedAt).toLocaleDateString()}
+              Verified {new Date(verifiedAt).toLocaleDateString('en-US', { timeZone: 'UTC' })}
             </span>
           ) : null}
         </div>

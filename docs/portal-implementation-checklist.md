@@ -229,7 +229,8 @@
       distinct canonical app launch action.
 - [x] Add short-lived signed external module launch tokens with optional profile claims.
 - [x] Include only verified DAO wallets and allowlisted `member`/`cohort_grad`
-      credentials in signed module handoffs, with omission tests for missing evidence.
+      credentials in signed module handoffs, gated by separate default-off
+      module settings, with omission tests for missing evidence and disabled settings.
 - [x] Add Payload admin grouping guidance: core primitives in `Portal`,
       module-owned collections in `Modules`.
 - [x] Ensure core routes render without module-owned collections or enabled

@@ -17,6 +17,9 @@ import {
 } from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
+const daoWalletTestAccount = privateKeyToAccount(
+  '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+)
 
 type CapturedPlausibleEvent = {
   name: string
@@ -3303,9 +3306,7 @@ async function verifyRecentContributors(page: Page, profileHandle: string) {
 }
 
 async function verifyDAOWalletOwnership(page: Page, profileHandle: string) {
-  const account = privateKeyToAccount(
-    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-  )
+  const account = daoWalletTestAccount
 
   await page.goto(`/me?walletVerified=${Date.now()}#wallet`)
   await expect(page.getByRole('heading', { name: 'Verify your member wallet' })).toBeVisible()
@@ -3888,9 +3889,14 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
       includeRolesInLaunch: true,
       includeProfileInLaunch: true,
       includeHandleInLaunch: true,
+      includeWalletsInLaunch: true,
+      includeCredentialsInLaunch: true,
     },
   })
   expect(externalModuleResponse.status()).toBe(201)
+  const externalModule = await externalModuleResponse.json()
+  const externalModuleID = externalModule.doc?.id || externalModule.id
+  expect(externalModuleID).toBeTruthy()
 
   const adminMeResponse = await adminPage.request.get('/api/users/me')
   expect(adminMeResponse.ok()).toBeTruthy()
@@ -4138,9 +4144,7 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   expect(launchClaims.credentials).toEqual(['cohort_grad', 'member'])
   expect(launchClaims.wallets).toEqual([
     {
-      address: privateKeyToAccount(
-        '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
-      ).address,
+      address: daoWalletTestAccount.address,
       chainId: 100,
       verifiedAt: expect.any(String),
     },
@@ -4170,6 +4174,32 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   } finally {
     await credentiallessContext.close()
   }
+
+  const disableIdentityClaimsResponse = await adminPage.request.patch(
+    `/api/modules/${externalModuleID}`,
+    {
+      data: {
+        includeCredentialsInLaunch: false,
+        includeWalletsInLaunch: false,
+      },
+    },
+  )
+  expect(disableIdentityClaimsResponse.ok()).toBeTruthy()
+  const privateClaimsLaunchResponse = await adminPage.request.get(
+    `/api/modules/${externalModuleSlug}/launch`,
+    { maxRedirects: 0 },
+  )
+  expect(privateClaimsLaunchResponse.status()).toBe(302)
+  const privateClaimsLocation = privateClaimsLaunchResponse.headers().location
+  expect(privateClaimsLocation).toBeTruthy()
+  const privateClaimsToken = new URL(privateClaimsLocation!).searchParams.get('token')
+  expect(privateClaimsToken).toBeTruthy()
+  const privateClaims = jwt.verify(privateClaimsToken!, externalModuleLaunchSecret, {
+    algorithms: ['HS256'],
+    audience: externalModuleAudience,
+  }) as jwt.JwtPayload
+  expect(privateClaims.credentials).toBeUndefined()
+  expect(privateClaims.wallets).toBeUndefined()
 
   await adminPage.goto('/portal-graph')
   await expect(adminPage.getByRole('heading', { name: 'Portal Graph' })).toBeVisible()

@@ -304,14 +304,16 @@ const getProfileForUser = async (userID: string | number) => {
   if (!profile) return null
 
   // Internal claim and wallet-challenge state is never serialized into client components.
-  return {
-    ...profile,
-    claimEmail: undefined,
-    sourceCRMID: undefined,
-    walletVerificationAddress: undefined,
-    walletVerificationChallengeHash: undefined,
-    walletVerificationExpiresAt: undefined,
-  }
+  const {
+    claimEmail: _claimEmail,
+    sourceCRMID: _sourceCRMID,
+    walletVerificationAddress: _walletVerificationAddress,
+    walletVerificationChallengeHash: _walletVerificationChallengeHash,
+    walletVerificationExpiresAt: _walletVerificationExpiresAt,
+    ...safeProfile
+  } = profile
+
+  return safeProfile
 }
 
 const getProfileSkills = async () => {

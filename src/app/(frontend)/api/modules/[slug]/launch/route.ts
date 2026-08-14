@@ -44,6 +44,7 @@ type LaunchWallet = {
 const DEFAULT_LAUNCH_TTL_SECONDS = 120
 const MAX_LAUNCH_TTL_SECONDS = 600
 const MIN_LAUNCH_TTL_SECONDS = 30
+const COHORT_GRAD_BADGE_SLUG = 'cohort-grad'
 
 const getLaunchIssuer = (): string => getServerSideURL().replace(/\/+$/, '')
 
@@ -106,8 +107,14 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     return Response.json({ message: 'Module launch secret is not configured.' }, { status: 500 })
   }
 
-  const profile = await getProfileForUser(payload, user.id)
-  const credentials = await getLaunchCredentials(payload, profile, user)
+  const needsProfile =
+    portalModule.includeProfileInLaunch ||
+    portalModule.includeWalletsInLaunch ||
+    portalModule.includeCredentialsInLaunch
+  const profile = needsProfile ? await getProfileForUser(payload, user.id) : null
+  const credentials = portalModule.includeCredentialsInLaunch
+    ? await getLaunchCredentials(payload, profile, user)
+    : []
   const token = signLaunchToken({
     credentials,
     portalModule,
@@ -224,11 +231,11 @@ const signLaunchToken = ({
     claims.roles = user.roles.filter(Boolean)
   }
 
-  if (credentials.length) {
+  if (portalModule.includeCredentialsInLaunch && credentials.length) {
     claims.credentials = credentials
   }
 
-  if (profile) {
+  if (profile && portalModule.includeWalletsInLaunch) {
     const wallets = getVerifiedWallets(profile)
     if (wallets.length) claims.wallets = wallets
   }
@@ -272,7 +279,7 @@ const getLaunchCredentials = async (
     pagination: false,
     where: {
       slug: {
-        equals: 'cohort-grad',
+        equals: COHORT_GRAD_BADGE_SLUG,
       },
     },
   })

@@ -1167,6 +1167,14 @@ export interface Module {
    */
   includeAvatarInLaunch?: boolean | null;
   /**
+   * Include Portal-verified wallet ownership in signed launch tokens.
+   */
+  includeWalletsInLaunch?: boolean | null;
+  /**
+   * Include allowlisted Portal credentials in signed launch tokens.
+   */
+  includeCredentialsInLaunch?: boolean | null;
+  /**
    * Internal notes for the external app integration.
    */
   integrationNotes?: string | null;
@@ -3177,6 +3185,8 @@ export interface ModulesSelect<T extends boolean = true> {
   includeProfileInLaunch?: T;
   includeHandleInLaunch?: T;
   includeAvatarInLaunch?: T;
+  includeWalletsInLaunch?: T;
+  includeCredentialsInLaunch?: T;
   integrationNotes?: T;
   adminRoute?: T;
   specURL?: T;
