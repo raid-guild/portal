@@ -137,7 +137,65 @@ export const Profiles: CollectionConfig = {
       name: 'walletAddress',
       type: 'text',
       access: {
+        create: adminsFieldAccess,
         read: privateProfileField,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        description:
+          'Ethereum address used for RaidGuild DAO membership. Member changes require signed wallet verification.',
+      },
+      index: true,
+    },
+    {
+      name: 'walletVerifiedAt',
+      type: 'date',
+      access: {
+        create: adminsFieldAccess,
+        read: privateProfileField,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        readOnly: true,
+      },
+    },
+    {
+      name: 'walletVerificationChallengeHash',
+      type: 'text',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'walletVerificationAddress',
+      type: 'text',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'walletVerificationExpiresAt',
+      type: 'date',
+      access: {
+        create: adminsFieldAccess,
+        read: adminsFieldAccess,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        hidden: true,
       },
     },
     {
@@ -258,6 +316,24 @@ export const Profiles: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeChange: [
+      ({ context, data, originalDoc }) => {
+        if (context.walletVerification || data.walletAddress === undefined) return data
+
+        const previousAddress = originalDoc?.walletAddress || null
+        const nextAddress = data.walletAddress || null
+
+        if (previousAddress === nextAddress) return data
+
+        return {
+          ...data,
+          walletVerificationAddress: null,
+          walletVerificationChallengeHash: null,
+          walletVerificationExpiresAt: null,
+          walletVerifiedAt: null,
+        }
+      },
+    ],
     beforeValidate: [
       ({ data, req, operation }) => {
         const normalizedData = data?.claimEmail

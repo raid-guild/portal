@@ -689,7 +689,14 @@ export interface Profile {
   bio: string;
   avatar?: (number | null) | Media;
   location?: string | null;
+  /**
+   * Ethereum address used for RaidGuild DAO membership. Member changes require signed wallet verification.
+   */
   walletAddress?: string | null;
+  walletVerifiedAt?: string | null;
+  walletVerificationChallengeHash?: string | null;
+  walletVerificationAddress?: string | null;
+  walletVerificationExpiresAt?: string | null;
   links?:
     | {
         label: string;
@@ -3546,6 +3553,10 @@ export interface ProfilesSelect<T extends boolean = true> {
   avatar?: T;
   location?: T;
   walletAddress?: T;
+  walletVerifiedAt?: T;
+  walletVerificationChallengeHash?: T;
+  walletVerificationAddress?: T;
+  walletVerificationExpiresAt?: T;
   links?:
     | T
     | {

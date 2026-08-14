@@ -1,6 +1,7 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
+import { privateKeyToAccount } from 'viem/accounts'
 
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
 
@@ -3301,6 +3302,84 @@ async function verifyRecentContributors(page: Page, profileHandle: string) {
   await expect(populatedSection.getByText(/Contribution/)).toBeVisible()
 }
 
+async function verifyDAOWalletOwnership(page: Page, profileHandle: string) {
+  const account = privateKeyToAccount(
+    '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
+  )
+
+  await page.goto(`/me?walletVerified=${Date.now()}#wallet`)
+  await expect(page.getByRole('heading', { name: 'Verify your member wallet' })).toBeVisible()
+  await expect(page.getByText(/address connected to your RaidGuild DAO membership/i)).toBeVisible()
+  await expect(page.getByText('No DAO member wallet is connected.')).toBeVisible()
+
+  const challengeResponse = await page.request.post('/api/profiles/wallet', {
+    data: {
+      address: account.address,
+      intent: 'challenge',
+    },
+  })
+  expect(challengeResponse.ok()).toBeTruthy()
+  expect(challengeResponse.headers()['cache-control']).toContain('no-store')
+
+  const challenge = await challengeResponse.json()
+  expect(challenge.address).toBe(account.address)
+  expect(challenge.message).toContain('Verify this address as the RaidGuild DAO member address')
+  expect(challenge.message).toContain('Chain ID: 1')
+
+  const tamperedResponse = await page.request.post('/api/profiles/wallet', {
+    data: {
+      address: account.address,
+      intent: 'verify',
+      message: `${challenge.message}\nTampered`,
+      signature: await account.signMessage({ message: challenge.message }),
+    },
+  })
+  expect(tamperedResponse.status()).toBe(403)
+
+  const signature = await account.signMessage({ message: challenge.message })
+  const verificationResponse = await page.request.post('/api/profiles/wallet', {
+    data: {
+      address: account.address,
+      intent: 'verify',
+      message: challenge.message,
+      signature,
+    },
+  })
+  expect(verificationResponse.ok()).toBeTruthy()
+
+  const verification = await verificationResponse.json()
+  expect(verification.address).toBe(account.address)
+  expect(verification.walletVerifiedAt).toBeTruthy()
+
+  const replayResponse = await page.request.post('/api/profiles/wallet', {
+    data: {
+      address: account.address,
+      intent: 'verify',
+      message: challenge.message,
+      signature,
+    },
+  })
+  expect(replayResponse.status()).toBe(403)
+
+  const profileResponse = await page.request.get('/api/profiles', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[handle][equals]': profileHandle,
+    },
+  })
+  expect(profileResponse.ok()).toBeTruthy()
+
+  const profile = (await profileResponse.json()).docs?.[0]
+  expect(profile.walletAddress).toBe(account.address)
+  expect(profile.walletVerifiedAt).toBe(verification.walletVerifiedAt)
+  expect(profile.walletVerificationChallengeHash).toBeFalsy()
+
+  await page.goto(`/me?walletVerified=${Date.now()}#wallet`)
+  await expect(page.getByText('Verified wallet', { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Change verified wallet' })).toBeVisible()
+}
+
 async function verifyProfileClaimFlow(adminPage: Page, browser: Browser) {
   const email = 'legacy-profile@example.com'
   const password = 'ChangeMe123!'
@@ -4915,6 +4994,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyInboxAndNotificationPreferences(page)
   await verifyFeedbackWidget(page)
   const adminProfileHandle = await createProfileAndVerifyContributorCreateLinks(page)
+  await verifyDAOWalletOwnership(page, adminProfileHandle)
   await verifyRecentContributors(page, adminProfileHandle)
   await verifyProfileClaimFlow(page, browser)
   await verifyLegacyMemberImport(page)

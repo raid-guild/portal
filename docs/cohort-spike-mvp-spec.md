@@ -111,7 +111,7 @@ Recommended first-route shape:
 - `/projects` for active project spikes
 - `/projects/[slug]` for a single project spike
 - `/members` remains contributor discovery
-- `/me` remains profile onboarding/editing
+- `/me` remains profile onboarding/editing and private RaidGuild DAO wallet verification
 
 Keep navigation small:
 

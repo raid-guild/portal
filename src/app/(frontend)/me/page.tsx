@@ -11,6 +11,7 @@ import { EmailVerificationCard } from '../_components/EmailVerificationCard'
 import { NotificationPreferencesForm } from './NotificationPreferencesForm'
 import { ProfileWizardForm } from '../_components/ProfileWizardForm'
 import { ProfileAvatarCard } from './ProfileAvatarCard'
+import { WalletVerificationCard } from './WalletVerificationCard'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { getSafeNextPath } from '@/utilities/safeNextPath'
 
@@ -93,6 +94,9 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         <a className="portal-admin-link" href="#account">
           Account
         </a>
+        <a className="portal-admin-link" href="#wallet">
+          DAO wallet
+        </a>
         <a className="portal-admin-link" href="#notifications">
           Notifications
         </a>
@@ -137,6 +141,14 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
             <li>Visibility: public, authenticated members, or private.</li>
           </ul>
         </div>
+      </section>
+
+      <section className="mt-12" id="wallet">
+        <WalletVerificationCard
+          profileExists={Boolean(profile)}
+          walletAddress={profile?.walletAddress}
+          walletVerifiedAt={profile?.walletVerifiedAt}
+        />
       </section>
 
       <section className="mt-12" id="account">
@@ -287,7 +299,19 @@ const getProfileForUser = async (userID: string | number) => {
     },
   })
 
-  return result.docs[0] || null
+  const profile = result.docs[0]
+
+  if (!profile) return null
+
+  // Internal claim and wallet-challenge state is never serialized into client components.
+  return {
+    ...profile,
+    claimEmail: undefined,
+    sourceCRMID: undefined,
+    walletVerificationAddress: undefined,
+    walletVerificationChallengeHash: undefined,
+    walletVerificationExpiresAt: undefined,
+  }
 }
 
 const getProfileSkills = async () => {

@@ -185,6 +185,12 @@ records with `claimStatus: unclaimed`, blank `user`, and private `claimEmail`
 for matching a future signup. Use the admin-only legacy import route for the old
 CRM CSV; do not add those external records to the deterministic app seed.
 
+Treat `walletAddress` as a private RaidGuild DAO identity link, not a public
+profile claim. A member must prove control with the short-lived signed challenge
+on `/me` before Portal sets `walletVerifiedAt`. Direct address changes must clear
+verification. Do not infer DAO membership, voting activity, or token holdings
+from an unverified or merely imported address.
+
 Do not let profile features distract from brief, project, activity, thread, and event visibility.
 
 ## Content Rules
