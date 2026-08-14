@@ -185,6 +185,18 @@ records with `claimStatus: unclaimed`, blank `user`, and private `claimEmail`
 for matching a future signup. Use the admin-only legacy import route for the old
 CRM CSV; do not add those external records to the deterministic app seed.
 
+Treat `walletAddress` as a private RaidGuild DAO identity link, not a public
+profile claim. A member must prove control with the short-lived signed challenge
+on `/me` before Portal sets `walletVerifiedAt`. Direct address changes must clear
+verification. Do not infer DAO membership, voting activity, or token holdings
+from an unverified or merely imported address.
+
+Trusted external module launch tokens may include that verified address as a
+Gnosis Chain wallet claim and may derive only the allowlisted `member` and
+`cohort_grad` credentials. Keep raw auth roles separate from derived credentials
+and omit claims when their supporting Portal record is absent. Wallet and
+credential claims require separate, explicit module opt-ins that default off.
+
 Do not let profile features distract from brief, project, activity, thread, and event visibility.
 
 ## Content Rules

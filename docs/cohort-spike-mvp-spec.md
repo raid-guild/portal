@@ -111,7 +111,12 @@ Recommended first-route shape:
 - `/projects` for active project spikes
 - `/projects/[slug]` for a single project spike
 - `/members` remains contributor discovery
-- `/me` remains profile onboarding/editing
+- `/me` remains profile onboarding/editing and private RaidGuild DAO wallet verification
+
+Trusted external module launches may receive a verified Gnosis Chain wallet and
+the allowlisted `member` or `cohort_grad` credential. A cohort relationship or
+unverified address alone must not produce either claim, and each claim group
+requires an explicit module-level opt-in.
 
 Keep navigation small:
 

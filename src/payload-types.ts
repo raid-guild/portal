@@ -689,7 +689,14 @@ export interface Profile {
   bio: string;
   avatar?: (number | null) | Media;
   location?: string | null;
+  /**
+   * Ethereum address used for RaidGuild DAO membership. Member changes require signed wallet verification.
+   */
   walletAddress?: string | null;
+  walletVerifiedAt?: string | null;
+  walletVerificationChallengeHash?: string | null;
+  walletVerificationAddress?: string | null;
+  walletVerificationExpiresAt?: string | null;
   links?:
     | {
         label: string;
@@ -1159,6 +1166,14 @@ export interface Module {
    * Include a public avatar URL when the linked profile has one.
    */
   includeAvatarInLaunch?: boolean | null;
+  /**
+   * Include Portal-verified wallet ownership in signed launch tokens.
+   */
+  includeWalletsInLaunch?: boolean | null;
+  /**
+   * Include allowlisted Portal credentials in signed launch tokens.
+   */
+  includeCredentialsInLaunch?: boolean | null;
   /**
    * Internal notes for the external app integration.
    */
@@ -3170,6 +3185,8 @@ export interface ModulesSelect<T extends boolean = true> {
   includeProfileInLaunch?: T;
   includeHandleInLaunch?: T;
   includeAvatarInLaunch?: T;
+  includeWalletsInLaunch?: T;
+  includeCredentialsInLaunch?: T;
   integrationNotes?: T;
   adminRoute?: T;
   specURL?: T;
@@ -3546,6 +3563,10 @@ export interface ProfilesSelect<T extends boolean = true> {
   avatar?: T;
   location?: T;
   walletAddress?: T;
+  walletVerifiedAt?: T;
+  walletVerificationChallengeHash?: T;
+  walletVerificationAddress?: T;
+  walletVerificationExpiresAt?: T;
   links?:
     | T
     | {

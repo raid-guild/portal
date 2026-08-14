@@ -352,6 +352,22 @@ export const Modules: CollectionConfig = {
       defaultValue: false,
     },
     {
+      name: 'includeWalletsInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include Portal-verified wallet ownership in signed launch tokens.',
+      },
+      defaultValue: false,
+    },
+    {
+      name: 'includeCredentialsInLaunch',
+      type: 'checkbox',
+      admin: {
+        description: 'Include allowlisted Portal credentials in signed launch tokens.',
+      },
+      defaultValue: false,
+    },
+    {
       name: 'integrationNotes',
       type: 'textarea',
       admin: {

@@ -5,6 +5,17 @@ import type { Page, Post } from '../payload-types'
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getAbsoluteURL } from './getURL'
 
+const SITE_TITLE = 'RaidGuild Portal'
+const TRAILING_SITE_SUFFIXES = /(?:\s*\|\s*RaidGuild(?:\s+Portal)?\s*)+$/i
+
+export const normalizePortalTitle = (sourceTitle?: string | null) => {
+  if (!sourceTitle) return SITE_TITLE
+
+  const normalizedTitle = sourceTitle.replace(TRAILING_SITE_SUFFIXES, '').trim()
+
+  return normalizedTitle ? `${normalizedTitle} | ${SITE_TITLE}` : SITE_TITLE
+}
+
 export const generateMeta = async (args: {
   doc: Partial<Page> | Partial<Post>
   path?: string
@@ -21,11 +32,7 @@ export const generateMeta = async (args: {
       : undefined
 
   const sourceTitle = doc?.meta?.title || ('title' in doc ? doc.title : undefined)
-  const title = sourceTitle
-    ? sourceTitle.includes('RaidGuild Portal')
-      ? sourceTitle
-      : `${sourceTitle} | RaidGuild Portal`
-    : 'RaidGuild Portal'
+  const title = normalizePortalTitle(sourceTitle)
   const canonicalPath = path || (typeof doc?.slug === 'string' ? `/${doc.slug}` : '/')
   const canonicalURL = getAbsoluteURL(canonicalPath)
   const authors =

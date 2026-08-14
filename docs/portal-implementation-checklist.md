@@ -22,6 +22,7 @@
 - [x] Use `media` for profile avatars.
 - [x] Add field-level access for private contact fields.
 - [x] Add profile handle validation and uniqueness.
+- [x] Keep profile wallet addresses private and add signed ownership verification for DAO member addresses.
 - [x] Add an admin-only legacy member CSV import with dry-run support.
 - [x] Generate Payload types after collection changes.
 
@@ -37,7 +38,9 @@
   - [ ] one or two `profileRoles`
 - [ ] Add profile completion utility.
 - [ ] Add avatar upload through Payload `media`.
+- [x] Add `/me` wallet connect and verification state without requiring a transaction.
 - [ ] Add e2e coverage for profile creation.
+- [x] Add e2e coverage for wallet challenge tampering, replay prevention, and verified persistence.
 
 ## Phase 4: Directory And Public Profiles
 
@@ -224,6 +227,10 @@
 - [x] Add verified-user email opt-in for newly available module announcements.
 - [x] Add `/modules/[slug]` detail routes with access-aware metadata and a
       distinct canonical app launch action.
+- [x] Add short-lived signed external module launch tokens with optional profile claims.
+- [x] Include only verified DAO wallets and allowlisted `member`/`cohort_grad`
+      credentials in signed module handoffs, gated by separate default-off
+      module settings, with omission tests for missing evidence and disabled settings.
 - [x] Add Payload admin grouping guidance: core primitives in `Portal`,
       module-owned collections in `Modules`.
 - [x] Ensure core routes render without module-owned collections or enabled
