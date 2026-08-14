@@ -6,9 +6,18 @@ import { notFound } from 'next/navigation'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { getPostVisibilityWhere, normalizePostVisibilityFilter } from '../../postVisibilityFilters'
 import { PostsList } from '../../PostsList'
+import { generatePostsMetadata } from '@/utilities/postsMetadata'
 
 export const dynamic = 'force-dynamic'
 const POSTS_PER_PAGE = 12
+
+const parsePageNumber = (pageNumber: string) => {
+  const sanitizedPageNumber = Number(pageNumber)
+
+  if (!Number.isSafeInteger(sanitizedPageNumber) || sanitizedPageNumber < 1) notFound()
+
+  return sanitizedPageNumber
+}
 
 type Args = {
   params: Promise<{
@@ -29,9 +38,7 @@ export default async function Page({
   const searchParams = await searchParamsPromise
   const visibility = normalizePostVisibilityFilter(searchParams, user)
 
-  const sanitizedPageNumber = Number(pageNumber)
-
-  if (!Number.isInteger(sanitizedPageNumber) || sanitizedPageNumber < 1) notFound()
+  const sanitizedPageNumber = parsePageNumber(pageNumber)
 
   const posts = await payload.find({
     collection: 'posts',
@@ -61,8 +68,5 @@ export default async function Page({
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { pageNumber } = await paramsPromise
-  return {
-    alternates: { canonical: `/posts/page/${pageNumber}` },
-    title: { absolute: `RaidGuild Portal Posts Page ${pageNumber}` },
-  }
+  return generatePostsMetadata(parsePageNumber(pageNumber))
 }

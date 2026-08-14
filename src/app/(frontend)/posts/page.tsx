@@ -5,6 +5,7 @@ import { getPayload } from 'payload'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { getPostVisibilityWhere, normalizePostVisibilityFilter } from './postVisibilityFilters'
 import { PostsList } from './PostsList'
+import { generatePostsMetadata } from '@/utilities/postsMetadata'
 
 export const dynamic = 'force-dynamic'
 
@@ -46,8 +47,5 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 }
 
 export function generateMetadata(): Metadata {
-  return {
-    alternates: { canonical: '/posts' },
-    title: { absolute: 'RaidGuild Portal Posts' },
-  }
+  return generatePostsMetadata()
 }
