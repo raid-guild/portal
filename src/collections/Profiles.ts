@@ -1,10 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import type { CollectionConfig, FieldAccess } from 'payload'
 
 import { authenticated } from '@/access/authenticated'
 import { ownProfileOrAdmin, privateProfileField, publicProfilesOrOwner } from '@/access/profiles'
 import { admins, adminsFieldAccess, isAdmin } from '@/access/roles'
 
 const handlePattern = /^[a-z0-9_-]+$/i
+const internalProfileField: FieldAccess = () => false
 
 export const Profiles: CollectionConfig = {
   slug: 'profiles',
@@ -137,7 +138,65 @@ export const Profiles: CollectionConfig = {
       name: 'walletAddress',
       type: 'text',
       access: {
+        create: adminsFieldAccess,
         read: privateProfileField,
+        update: adminsFieldAccess,
+      },
+      admin: {
+        description:
+          'Ethereum address used for RaidGuild DAO membership. Member changes require signed wallet verification.',
+      },
+      index: true,
+    },
+    {
+      name: 'walletVerifiedAt',
+      type: 'date',
+      access: {
+        create: internalProfileField,
+        read: privateProfileField,
+        update: internalProfileField,
+      },
+      admin: {
+        date: {
+          pickerAppearance: 'dayAndTime',
+        },
+        readOnly: true,
+      },
+    },
+    {
+      name: 'walletVerificationChallengeHash',
+      type: 'text',
+      access: {
+        create: internalProfileField,
+        read: adminsFieldAccess,
+        update: internalProfileField,
+      },
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'walletVerificationAddress',
+      type: 'text',
+      access: {
+        create: internalProfileField,
+        read: adminsFieldAccess,
+        update: internalProfileField,
+      },
+      admin: {
+        hidden: true,
+      },
+    },
+    {
+      name: 'walletVerificationExpiresAt',
+      type: 'date',
+      access: {
+        create: internalProfileField,
+        read: adminsFieldAccess,
+        update: internalProfileField,
+      },
+      admin: {
+        hidden: true,
       },
     },
     {
@@ -258,6 +317,24 @@ export const Profiles: CollectionConfig = {
     },
   ],
   hooks: {
+    beforeChange: [
+      ({ context, data, originalDoc }) => {
+        if (context.walletVerification || data.walletAddress === undefined) return data
+
+        const previousAddress = originalDoc?.walletAddress || null
+        const nextAddress = data.walletAddress || null
+
+        if (previousAddress === nextAddress) return data
+
+        return {
+          ...data,
+          walletVerificationAddress: null,
+          walletVerificationChallengeHash: null,
+          walletVerificationExpiresAt: null,
+          walletVerifiedAt: null,
+        }
+      },
+    ],
     beforeValidate: [
       ({ data, req, operation }) => {
         const normalizedData = data?.claimEmail

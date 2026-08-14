@@ -3,6 +3,7 @@ import crypto from 'crypto'
 import jwt from 'jsonwebtoken'
 import { headers } from 'next/headers'
 import { getPayload } from 'payload'
+import { getAddress, isAddress } from 'viem'
 
 import type { Media, Module, Profile, User } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -16,6 +17,7 @@ type Args = {
 
 type LaunchTokenPayload = {
   aud: string
+  credentials?: LaunchCredential[]
   email?: string
   handle?: string
   iss: string
@@ -28,11 +30,21 @@ type LaunchTokenPayload = {
   sub: string
   typ: 'portal_module_launch'
   userID: number | string
+  wallets?: LaunchWallet[]
+}
+
+type LaunchCredential = 'cohort_grad' | 'member'
+
+type LaunchWallet = {
+  address: string
+  chainId: 100
+  verifiedAt: string
 }
 
 const DEFAULT_LAUNCH_TTL_SECONDS = 120
 const MAX_LAUNCH_TTL_SECONDS = 600
 const MIN_LAUNCH_TTL_SECONDS = 30
+const COHORT_GRAD_BADGE_SLUG = 'cohort-grad'
 
 const getLaunchIssuer = (): string => getServerSideURL().replace(/\/+$/, '')
 
@@ -46,31 +58,34 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     return Response.json({ message: 'Log in to launch this module.' }, { status: 401 })
   }
 
-  const module = await getLaunchableModule(payload, slug, user)
+  const portalModule = await getLaunchableModule(payload, slug, user)
 
-  if (!module) {
+  if (!portalModule) {
     return Response.json({ message: 'Module not found.' }, { status: 404 })
   }
 
-  if (module.moduleKind !== 'external' || module.authMode !== 'signed_launch') {
+  if (portalModule.moduleKind !== 'external' || portalModule.authMode !== 'signed_launch') {
     return Response.json(
       { message: 'This module is not configured for signed external launch.' },
       { status: 400 },
     )
   }
 
-  if (!userHasRequiredRole(user, module.launchRequiredRoles)) {
-    return Response.json({ message: 'You do not have permission to launch this module.' }, { status: 403 })
+  if (!userHasRequiredRole(user, portalModule.launchRequiredRoles)) {
+    return Response.json(
+      { message: 'You do not have permission to launch this module.' },
+      { status: 403 },
+    )
   }
 
-  if (module.includeEmailInLaunch && !user.emailVerifiedAt) {
+  if (portalModule.includeEmailInLaunch && !user.emailVerifiedAt) {
     return Response.json(
       { message: 'Verify your email before launching this module.' },
       { status: 403 },
     )
   }
 
-  const callbackURL = toSafeURL(module.externalCallbackURL, {
+  const callbackURL = toSafeURL(portalModule.externalCallbackURL, {
     allowRelative: false,
     protocols: ['https:'],
   })
@@ -79,12 +94,12 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     return Response.json({ message: 'Module callback URL is not configured.' }, { status: 500 })
   }
 
-  const secretKey = module.launchSecretEnvKey?.trim()
+  const secretKey = portalModule.launchSecretEnvKey?.trim()
   const secret = secretKey ? process.env[secretKey] : ''
 
   if (!secret) {
     payload.logger.error({
-      moduleSlug: module.slug,
+      moduleSlug: portalModule.slug,
       msg: 'External module launch secret is missing.',
       secretKey,
     })
@@ -92,9 +107,17 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     return Response.json({ message: 'Module launch secret is not configured.' }, { status: 500 })
   }
 
-  const profile = module.includeProfileInLaunch ? await getProfileForUser(payload, user.id) : null
+  const needsProfile =
+    portalModule.includeProfileInLaunch ||
+    portalModule.includeWalletsInLaunch ||
+    portalModule.includeCredentialsInLaunch
+  const profile = needsProfile ? await getProfileForUser(payload, user.id) : null
+  const credentials = portalModule.includeCredentialsInLaunch
+    ? await getLaunchCredentials(payload, profile, user)
+    : []
   const token = signLaunchToken({
-    module,
+    credentials,
+    portalModule,
     profile,
     secret,
     user,
@@ -103,7 +126,7 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
   redirectURL.searchParams.set('token', token)
 
   payload.logger.info({
-    moduleSlug: module.slug,
+    moduleSlug: portalModule.slug,
     msg: 'External module launch token issued.',
     userID: user.id,
   })
@@ -170,30 +193,33 @@ const getProfileForUser = async (
 }
 
 const signLaunchToken = ({
-  module,
+  credentials,
+  portalModule,
   profile,
   secret,
   user,
 }: {
-  module: Module
+  credentials: LaunchCredential[]
+  portalModule: Module
   profile: Profile | null
   secret: string
   user: User
 }): string => {
   const issuer = getLaunchIssuer()
-  const audience = module.launchAudience?.trim() || module.slug || String(module.id)
-  const ttlSeconds = normalizeTTL(module.launchTokenTTLSeconds)
+  const audience =
+    portalModule.launchAudience?.trim() || portalModule.slug || String(portalModule.id)
+  const ttlSeconds = normalizeTTL(portalModule.launchTokenTTLSeconds)
   const claims: LaunchTokenPayload = {
     aud: audience,
     iss: issuer,
-    moduleSlug: module.slug || String(module.id),
+    moduleSlug: portalModule.slug || String(portalModule.id),
     scopes: ['profile:read'],
     sub: `user:${user.id}`,
     typ: 'portal_module_launch',
     userID: user.id,
   }
 
-  if (module.includeEmailInLaunch && user.emailVerifiedAt && user.email) {
+  if (portalModule.includeEmailInLaunch && user.emailVerifiedAt && user.email) {
     claims.email = user.email
   }
 
@@ -201,19 +227,28 @@ const signLaunchToken = ({
     claims.name = user.name
   }
 
-  if (module.includeRolesInLaunch && user.roles?.length) {
+  if (portalModule.includeRolesInLaunch && user.roles?.length) {
     claims.roles = user.roles.filter(Boolean)
   }
 
-  if (profile) {
+  if (portalModule.includeCredentialsInLaunch && credentials.length) {
+    claims.credentials = credentials
+  }
+
+  if (profile && portalModule.includeWalletsInLaunch) {
+    const wallets = getVerifiedWallets(profile)
+    if (wallets.length) claims.wallets = wallets
+  }
+
+  if (profile && portalModule.includeProfileInLaunch) {
     claims.profileID = profile.id
     claims.name = profile.displayName || claims.name
 
-    if (module.includeHandleInLaunch && profile.handle) {
+    if (portalModule.includeHandleInLaunch && profile.handle) {
       claims.handle = profile.handle
     }
 
-    if (module.includeAvatarInLaunch) {
+    if (portalModule.includeAvatarInLaunch) {
       const avatarURL = getMediaURL(profile.avatar)
       if (avatarURL) claims.picture = avatarURL
     }
@@ -224,6 +259,73 @@ const signLaunchToken = ({
     expiresIn: ttlSeconds,
     jwtid: crypto.randomUUID(),
   })
+}
+
+const getLaunchCredentials = async (
+  payload: Awaited<ReturnType<typeof getPayload>>,
+  profile: Profile | null,
+  user: User,
+): Promise<LaunchCredential[]> => {
+  const credentials = new Set<LaunchCredential>()
+
+  if (user.roles?.includes('member')) credentials.add('member')
+  if (!profile) return Array.from(credentials)
+
+  const cohortGradBadge = await payload.find({
+    collection: 'badges',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      slug: {
+        equals: COHORT_GRAD_BADGE_SLUG,
+      },
+    },
+  })
+  const badgeID = cohortGradBadge.docs[0]?.id
+
+  if (!badgeID) return Array.from(credentials)
+
+  const cohortGradAward = await payload.find({
+    collection: 'profileBadges',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      and: [
+        { badge: { equals: badgeID } },
+        {
+          profiles: {
+            in: [profile.id],
+          },
+        },
+      ],
+    },
+  })
+
+  if (cohortGradAward.docs.length) credentials.add('cohort_grad')
+
+  return Array.from(credentials).sort()
+}
+
+const getVerifiedWallets = (profile: Profile): LaunchWallet[] => {
+  if (!profile.walletAddress || !profile.walletVerifiedAt || !isAddress(profile.walletAddress)) {
+    return []
+  }
+
+  const verifiedAt = new Date(profile.walletVerifiedAt)
+
+  if (!Number.isFinite(verifiedAt.getTime())) return []
+
+  return [
+    {
+      address: getAddress(profile.walletAddress),
+      chainId: 100,
+      verifiedAt: verifiedAt.toISOString(),
+    },
+  ]
 }
 
 const getMediaURL = (media: number | Media | null | undefined): string | undefined => {
@@ -242,10 +344,7 @@ const normalizeTTL = (value: number | null | undefined): number => {
   return Math.min(MAX_LAUNCH_TTL_SECONDS, Math.max(MIN_LAUNCH_TTL_SECONDS, Math.floor(value)))
 }
 
-const userHasRequiredRole = (
-  user: User,
-  requiredRoles: Module['launchRequiredRoles'],
-): boolean => {
+const userHasRequiredRole = (user: User, requiredRoles: Module['launchRequiredRoles']): boolean => {
   if (!requiredRoles?.length) return true
 
   return requiredRoles.some((role) => user.roles?.includes(role))
