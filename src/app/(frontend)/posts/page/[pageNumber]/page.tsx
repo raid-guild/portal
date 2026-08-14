@@ -14,7 +14,7 @@ const POSTS_PER_PAGE = 12
 const parsePageNumber = (pageNumber: string) => {
   const sanitizedPageNumber = Number(pageNumber)
 
-  if (!Number.isInteger(sanitizedPageNumber) || sanitizedPageNumber < 1) notFound()
+  if (!Number.isSafeInteger(sanitizedPageNumber) || sanitizedPageNumber < 1) notFound()
 
   return sanitizedPageNumber
 }

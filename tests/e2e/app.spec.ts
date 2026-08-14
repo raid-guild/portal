@@ -450,6 +450,9 @@ async function verifySeededPosts(page: Page) {
     normalizedPageURL,
   )
 
+  const unsafePageResponse = await page.goto('/posts/page/9007199254740993')
+  expect(unsafePageResponse?.status()).toBe(404)
+
   await page.goto('/posts')
 
   for (const post of seededPosts) {
