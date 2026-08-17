@@ -6,6 +6,7 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import type {
   ActivityItem,
   ContributionRequest,
@@ -17,7 +18,7 @@ import type {
   Thread,
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { generateMeta } from '@/utilities/generateMeta'
 import { toSafeURL } from '@/utilities/safeURL'
 import { SessionDateTime } from '../../_components/SessionDateTime'
 
@@ -50,6 +51,11 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
 
   return (
     <main className="container pb-24 pt-12">
+      <PublicStructuredData
+        description={thread.summary}
+        name={thread.title}
+        path={`/threads/${thread.slug}`}
+      />
       <section className="grid gap-8 lg:grid-cols-[1fr_22rem]">
         <div>
           <p className="portal-kicker">Thread</p>
@@ -256,15 +262,7 @@ export async function generateMetadata({ params }: ThreadPageProps): Promise<Met
     }
   }
 
-  return {
-    description: thread.summary,
-    openGraph: mergeOpenGraph({
-      description: thread.summary,
-      title: thread.title,
-      url: `/threads/${thread.slug}`,
-    }),
-    title: thread.title,
-  }
+  return generateMeta({ doc: thread, path: `/threads/${thread.slug}` })
 }
 
 const getThreadBySlug = async (

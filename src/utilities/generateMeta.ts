@@ -1,7 +1,5 @@
 import type { Metadata } from 'next'
 
-import type { Page, Post } from '../payload-types'
-
 import { mergeOpenGraph } from './mergeOpenGraph'
 import { getAbsoluteURL } from './getURL'
 
@@ -16,25 +14,58 @@ export const normalizePortalTitle = (sourceTitle?: string | null) => {
   return normalizedTitle ? `${normalizedTitle} | ${SITE_TITLE}` : SITE_TITLE
 }
 
+type MetadataImage = { alt?: string | null; url?: string | null }
+
+export type PortalMetadataDocument = {
+  _status?: string | null
+  description?: unknown
+  meta?: {
+    description?: string | null
+    image?: MetadataImage | number | null
+    title?: string | null
+  } | null
+  name?: string | null
+  populatedAuthors?: Array<{ name?: string | null }> | null
+  publishedAt?: string | null
+  slug?: string | null
+  summary?: string | null
+  title?: string | null
+  updatedAt?: string | null
+  visibility?: string | null
+}
+
+const normalizeDescription = (value?: unknown) => {
+  const normalized = typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : undefined
+  if (!normalized) return undefined
+  return normalized.length > 200 ? `${normalized.slice(0, 197).trimEnd()}…` : normalized
+}
+
 export const generateMeta = async (args: {
-  doc: Partial<Page> | Partial<Post>
+  doc: PortalMetadataDocument
+  description?: string
+  image?: MetadataImage | null
   path?: string
   type?: 'article' | 'website'
 }): Promise<Metadata> => {
   const { doc, path, type = 'website' } = args || {}
 
+  if (doc?._status === 'draft' || (doc?.visibility && doc.visibility !== 'public')) {
+    return { robots: { follow: false, index: false } }
+  }
+
+  const sourceImage = args.image || doc?.meta?.image
   const ogImage =
-    typeof doc?.meta?.image === 'object' &&
-    doc.meta.image !== null &&
-    'url' in doc.meta.image &&
-    typeof doc.meta.image.url === 'string'
-      ? getAbsoluteURL(doc.meta.image.url)
+    typeof sourceImage === 'object' && sourceImage !== null && typeof sourceImage.url === 'string'
+      ? getAbsoluteURL(sourceImage.url)
       : undefined
 
-  const sourceTitle = doc?.meta?.title || ('title' in doc ? doc.title : undefined)
+  const sourceTitle = doc?.meta?.title || doc.title || doc.name
   const title = normalizePortalTitle(sourceTitle)
   const canonicalPath = path || (typeof doc?.slug === 'string' ? `/${doc.slug}` : '/')
   const canonicalURL = getAbsoluteURL(canonicalPath)
+  const description = normalizeDescription(
+    args.description || doc?.meta?.description || doc.summary || doc.description,
+  )
   const authors =
     'populatedAuthors' in doc
       ? doc.populatedAuthors?.map((author) => author.name).filter((name): name is string => !!name)
@@ -42,9 +73,9 @@ export const generateMeta = async (args: {
 
   return {
     alternates: { canonical: canonicalURL },
-    description: doc?.meta?.description,
+    description,
     openGraph: mergeOpenGraph({
-      description: doc?.meta?.description || '',
+      description,
       images: ogImage
         ? [
             {
@@ -63,6 +94,12 @@ export const generateMeta = async (args: {
           }
         : {}),
     }),
+    twitter: {
+      card: 'summary_large_image',
+      description,
+      images: ogImage ? [ogImage] : undefined,
+      title,
+    },
     title: { absolute: title },
   }
 }

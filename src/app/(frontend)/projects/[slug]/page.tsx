@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 
 import { canContributeContent, hasRole, hasVerifiedAccount } from '@/access/roles'
 import { Comments } from '@/components/Comments'
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
@@ -21,6 +22,7 @@ import type {
   User,
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { generateMeta } from '@/utilities/generateMeta'
 import { toSafeURL } from '@/utilities/safeURL'
 import { SessionDateTime } from '../../_components/SessionDateTime'
 import { getProfileIDForUser, isProjectStewardProfile } from '../formData'
@@ -82,6 +84,13 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
 
   return (
     <main className="container pb-24 pt-12">
+      <PublicStructuredData
+        description={project.summary}
+        image={typeof project.coverImage === 'object' ? project.coverImage?.url : null}
+        name={project.title}
+        path={`/projects/${project.slug}`}
+        type="Project"
+      />
       <ProjectCoverImage coverImage={project.coverImage} title={project.title} />
 
       <section className="grid gap-8 border-b border-border pb-10 pt-8 lg:grid-cols-[1fr_18rem]">
@@ -319,10 +328,12 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   const user = await getCurrentUser()
   const project = await queryProjectBySlug({ slug, user })
 
-  return {
-    description: project?.summary,
-    title: project?.title || 'Project',
-  }
+  if (!project) return {}
+  return generateMeta({
+    doc: project,
+    image: typeof project.coverImage === 'object' ? project.coverImage : null,
+    path: `/projects/${slug}`,
+  })
 }
 
 const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (

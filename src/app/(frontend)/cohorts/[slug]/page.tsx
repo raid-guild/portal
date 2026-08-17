@@ -9,7 +9,9 @@ import { getPayload } from 'payload'
 import type { Cohort, Event, Media, Module, Post, Profile, Project, Thread } from '@/payload-types'
 import { getCohortLabel, isCohortEnrollmentOpen } from '@/cohorts/selectFeaturedCohort'
 import { Button } from '@/components/ui/button'
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { generateMeta } from '@/utilities/generateMeta'
 import { toSafeURL } from '@/utilities/safeURL'
 import { getYouTubeEmbedURL } from '@/utilities/videoEmbed'
 import { DashboardWeeklySessionStrip } from '../../_components/DashboardWeeklySessionStrip'
@@ -55,6 +57,12 @@ export default async function CohortPage({ params }: Args) {
 
   return (
     <main className="pb-24">
+      <PublicStructuredData
+        description={cohort.summary}
+        image={heroMedia?.url}
+        name={cohort.title}
+        path={`/cohorts/${cohort.slug}`}
+      />
       <section
         className={`relative overflow-hidden border-b border-primary/30 ${heroMedia?.url ? '' : heroClassName[cohort.visualVariant || 'guild']}`}
       >
@@ -295,7 +303,9 @@ export default async function CohortPage({ params }: Args) {
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
   const { slug } = await params
   const data = await getCohortPageData(slug, null)
-  return data ? { description: data.cohort.summary, title: data.cohort.title } : {}
+  if (!data) return {}
+  const heroMedia = relationDoc<Media>(data.cohort.heroMedia)
+  return generateMeta({ doc: data.cohort, image: heroMedia, path: `/cohorts/${slug}` })
 }
 
 const getCohortPageData = cache(
