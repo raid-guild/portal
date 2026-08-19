@@ -55,7 +55,7 @@ export default async function sitemap({
 
   const payload = await getPayload({ config: configPromise })
   const firstPage = shardIndex * (SITEMAP_SHARD_ENTRY_LIMIT / SITEMAP_PAGE_SIZE) + 1
-  const select = { publishedAt: true, slug: true, updatedAt: true } as const
+  const select = { handle: true, id: true, publishedAt: true, slug: true, updatedAt: true } as const
   const documents = await collectDocuments(
     (page) =>
       payload.find({
@@ -64,8 +64,8 @@ export default async function sitemap({
         limit: SITEMAP_PAGE_SIZE,
         overrideAccess: false,
         page,
-        select,
-        sort: 'slug',
+        select: select as never,
+        sort: definition.sort || 'slug',
         where: definition.where,
       }),
     firstPage,
@@ -73,7 +73,7 @@ export default async function sitemap({
 
   return deduplicateSitemap(
     documents
-      .map((document) => documentEntry(document, definition.pathForSlug))
+      .map((document) => documentEntry(document, definition.pathForDocument))
       .filter((entry): entry is MetadataRoute.Sitemap[number] => Boolean(entry)),
   )
 }

@@ -7,7 +7,9 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { canEditContent } from '@/access/roles'
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import type { Media, Module, Profile, Project, Thread } from '@/payload-types'
+import { generateMeta } from '@/utilities/generateMeta'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 import {
@@ -47,6 +49,12 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
 
   return (
     <main className="container pb-24 pt-12">
+      <PublicStructuredData
+        description={moduleRecord.summary}
+        image={imageURL}
+        name={moduleRecord.name}
+        path={`/modules/${moduleRecord.slug}`}
+      />
       <Link className="portal-link" href="/modules">
         Back to modules
       </Link>
@@ -197,15 +205,11 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   const thumbnail = relationDoc<Media>(moduleRecord.thumbnail)
   const imageURL = getModuleImageURL(thumbnail)
 
-  return {
-    description: moduleRecord.summary,
-    openGraph: {
-      description: moduleRecord.summary,
-      images: imageURL ? [{ alt: thumbnail?.alt || moduleRecord.name, url: imageURL }] : undefined,
-      title: moduleRecord.name,
-    },
-    title: moduleRecord.name,
-  }
+  return generateMeta({
+    doc: moduleRecord,
+    image: imageURL ? { alt: thumbnail?.alt || moduleRecord.name, url: imageURL } : null,
+    path: `/modules/${moduleRecord.slug}`,
+  })
 }
 
 const getModulePageData = cache(async (slug: string) => {

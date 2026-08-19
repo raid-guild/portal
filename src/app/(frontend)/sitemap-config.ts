@@ -19,6 +19,8 @@ export const PUBLIC_STATIC_SITEMAP_PATHS = [
 ] as const
 
 export type SitemapDocument = {
+  handle?: string | null
+  id?: number | string
   publishedAt?: string | null
   slug?: string | null
   updatedAt?: string | null
@@ -34,13 +36,11 @@ export const sitemapEntry = (
 
 export const documentEntry = (
   document: SitemapDocument,
-  pathForSlug: (slug: string) => string,
+  pathForDocument: (document: SitemapDocument) => string | null,
 ): MetadataRoute.Sitemap[number] | null => {
-  const slug = document.slug?.trim()
-
-  if (!slug || slug.includes('/') || slug === '.' || slug === '..') return null
-
-  return sitemapEntry(pathForSlug(slug), document.updatedAt || document.publishedAt)
+  const path = pathForDocument(document)
+  if (!path || !path.startsWith('/') || path.includes('..')) return null
+  return sitemapEntry(path, document.updatedAt || document.publishedAt)
 }
 
 export const deduplicateSitemap = (entries: MetadataRoute.Sitemap): MetadataRoute.Sitemap =>

@@ -1,17 +1,18 @@
 import { getPayload, type CollectionSlug, type Where } from 'payload'
 
 import configPromise from '@payload-config'
-import { SITEMAP_SHARD_ENTRY_LIMIT } from './sitemap-config'
+import { SITEMAP_SHARD_ENTRY_LIMIT, type SitemapDocument } from './sitemap-config'
 
 type SitemapCollection = Extract<
   CollectionSlug,
-  'cohorts' | 'pages' | 'posts' | 'projects' | 'threads' | 'wikiPages'
+  'cohorts' | 'events' | 'modules' | 'pages' | 'posts' | 'profiles' | 'projects' | 'threads' | 'wikiPages'
 >
 
 export type SitemapCollectionDefinition = {
   collection: SitemapCollection
   id: string
-  pathForSlug: (slug: string) => string
+  pathForDocument: (document: SitemapDocument) => string | null
+  sort?: string
   where: Where
 }
 
@@ -19,43 +20,65 @@ const published = { _status: { equals: 'published' as const } }
 const publicVisibility = { visibility: { equals: 'public' as const } }
 const hasSlug = { slug: { exists: true } }
 const reviewed = { reviewStatus: { equals: 'reviewed' as const } }
+const slugPath = (prefix: string) => (document: SitemapDocument) =>
+  document.slug ? `${prefix}/${document.slug}` : null
 
 export const SITEMAP_COLLECTIONS: SitemapCollectionDefinition[] = [
   {
     collection: 'pages',
     id: 'pages',
-    pathForSlug: (slug) => `/${slug}`,
+    pathForDocument: (document) => (document.slug ? `/${document.slug}` : null),
     where: { and: [published, hasSlug, { slug: { not_equals: 'home' } }] },
   },
   {
     collection: 'posts',
     id: 'posts',
-    pathForSlug: (slug) => `/posts/${slug}`,
+    pathForDocument: slugPath('/posts'),
     where: { and: [published, publicVisibility, hasSlug] },
   },
   {
     collection: 'cohorts',
     id: 'cohorts',
-    pathForSlug: (slug) => `/cohorts/${slug}`,
+    pathForDocument: slugPath('/cohorts'),
     where: { and: [published, publicVisibility, hasSlug] },
   },
   {
     collection: 'projects',
     id: 'projects',
-    pathForSlug: (slug) => `/projects/${slug}`,
+    pathForDocument: slugPath('/projects'),
     where: { and: [published, publicVisibility, hasSlug] },
   },
   {
     collection: 'threads',
     id: 'threads',
-    pathForSlug: (slug) => `/threads/${slug}`,
+    pathForDocument: slugPath('/threads'),
     where: { and: [published, publicVisibility, hasSlug] },
   },
   {
     collection: 'wikiPages',
     id: 'wiki-pages',
-    pathForSlug: (slug) => `/wiki/${slug}`,
+    pathForDocument: slugPath('/wiki'),
     where: { and: [published, publicVisibility, reviewed, hasSlug] },
+  },
+  {
+    collection: 'modules',
+    id: 'modules',
+    pathForDocument: slugPath('/modules'),
+    where: { and: [publicVisibility, hasSlug, { enabled: { equals: true } }] },
+  },
+  {
+    collection: 'profiles',
+    id: 'profiles',
+    pathForDocument: (document) => (document.handle ? `/members/${document.handle}` : null),
+    sort: 'handle',
+    where: { and: [publicVisibility, { handle: { exists: true } }] },
+  },
+  {
+    collection: 'events',
+    id: 'events',
+    pathForDocument: (document) => (document.id ? `/events/${document.id}` : null),
+    sort: 'id',
+    where: { and: [published, publicVisibility] },
   },
 ]
 

@@ -485,6 +485,21 @@ corepack pnpm test:e2e
 
 If you cannot run the relevant verification, state that clearly.
 
+## Public metadata contract
+
+Editors and agents provide content facts; Portal owns technical SEO/AEO output. For every
+public record, supply a truthful title or name and the best available summary/description.
+Supply a record image when one exists, but do not manufacture authors, dates, citations, or
+participants. Posts and reviewed Wiki pages are publications and should preserve their real
+authors, publication/update dates, and source artifact/session fields. Other primitives are
+public pages and must not be presented as articles.
+
+Canonical URLs, the `RaidGuild Portal` title suffix, Open Graph/Twitter cards, the shared
+1200x630 fallback image, robots policy, sitemap eligibility, and structured data are derived by
+the application. Draft, authenticated/member-only, private, protected, disabled, and unreviewed
+records stay out of public metadata and sitemaps. An agent should block publication only when no
+truthful title or description can be derived from the record itself.
+
 ## Good First Workstreams
 
 Good initial work should map cleanly to the MVP:
