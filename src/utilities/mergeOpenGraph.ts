@@ -8,9 +8,9 @@ const defaultOpenGraph: Metadata['openGraph'] = {
   images: [
     {
       alt: 'RaidGuild Portal',
-      height: 166,
-      url: `${getServerSideURL()}/assets/image.png`,
-      width: 589,
+      height: 630,
+      url: `${getServerSideURL()}/assets/raidguild-portal-social.png`,
+      width: 1200,
     },
   ],
   siteName: 'RaidGuild Portal',

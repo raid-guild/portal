@@ -6,7 +6,9 @@ import React from 'react'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import type { Event, Post, Profile, Project } from '@/payload-types'
+import { generateMeta } from '@/utilities/generateMeta'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
 import { getBadgeSummariesByProfile, type BadgeSummary } from '../badgeData'
@@ -37,6 +39,13 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
 
   return (
     <main className="container pb-24 pt-12">
+      <PublicStructuredData
+        description={profile.bio}
+        image={avatar?.url}
+        name={profile.displayName}
+        path={`/members/${profile.handle}`}
+        type="ProfilePage"
+      />
       <section className="grid gap-8 lg:grid-cols-[1fr_18rem]">
         <div>
           <p className="mb-4 portal-kicker">Member Profile</p>
@@ -103,8 +112,21 @@ export default async function MemberProfilePage({ params }: MemberProfilePagePro
   )
 }
 
-export const metadata: Metadata = {
-  title: 'Member Profile',
+export async function generateMetadata({ params }: MemberProfilePageProps): Promise<Metadata> {
+  const { handle } = await params
+  const profile = await getProfile(handle, null)
+  if (!profile) return {}
+  const avatar = typeof profile.avatar === 'object' ? profile.avatar : null
+  return generateMeta({
+    doc: {
+      description: profile.bio,
+      name: profile.displayName,
+      updatedAt: profile.updatedAt,
+      visibility: profile.visibility,
+    },
+    image: avatar,
+    path: `/members/${profile.handle}`,
+  })
 }
 
 const Taxonomy: React.FC<{ title: string; values: string[] }> = ({ title, values }) => (

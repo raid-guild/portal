@@ -8,6 +8,7 @@ import { getPayload } from 'payload'
 import { canContributeContent, canEditContent, hasRole, hasVerifiedAccount } from '@/access/roles'
 import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
+import { PublicStructuredData } from '@/components/PublicStructuredData'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ContributionRequest,
@@ -21,6 +22,7 @@ import type {
 } from '@/payload-types'
 import { createGoogleCalendarURL } from '@/utilities/calendarLinks'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
+import { generateMeta } from '@/utilities/generateMeta'
 import { toSafeURL } from '@/utilities/safeURL'
 import { getYouTubeEmbedURL } from '@/utilities/videoEmbed'
 import { SessionDateTime } from '../../_components/SessionDateTime'
@@ -151,6 +153,14 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
 
   return (
     <main className="container pb-24 pt-12">
+      <PublicStructuredData
+        description={event.summary}
+        endDate={event.endsAt}
+        name={event.title}
+        path={`/events/${event.id}`}
+        startDate={event.startsAt}
+        type="Event"
+      />
       <Link className="portal-link" href="/events">
         Back to sessions
       </Link>
@@ -416,10 +426,12 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
   const user = await getCurrentUser()
   const event = await getEvent(id, user)
 
-  return {
-    description: event?.summary || 'RaidGuild session details and source links.',
-    title: event?.title || 'Session',
-  }
+  if (!event) return {}
+  return generateMeta({
+    description: event.summary || 'RaidGuild session details and source links.',
+    doc: event,
+    path: `/events/${event.id}`,
+  })
 }
 
 const Section: React.FC<{ children: React.ReactNode; title: string }> = ({ children, title }) => (

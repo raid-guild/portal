@@ -514,7 +514,18 @@ test('normalizes legacy article title suffixes', () => {
 async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   const cohortPath = '/cohorts/agentic-guild-operations'
 
-  await publicPage.goto(cohortPath)
+  const cohortPageResponse = await publicPage.goto(cohortPath)
+  const cohortURL = new URL(cohortPath, cohortPageResponse!.url()).toString()
+  await expect(publicPage.locator('link[rel="canonical"]')).toHaveAttribute('href', cohortURL)
+  await expect(publicPage.locator('meta[name="twitter:card"]')).toHaveAttribute(
+    'content',
+    'summary_large_image',
+  )
+  const cohortSchema = JSON.parse(
+    (await publicPage.locator('script[type="application/ld+json"]').first().textContent()) || '{}',
+  ) as Record<string, unknown>
+  expect(cohortSchema['@type']).toBe('WebPage')
+  expect(cohortSchema.url).toBe(cohortURL)
   await expect(
     publicPage.getByRole('heading', { name: 'Agentic Guild Operations', exact: true }),
   ).toBeVisible()

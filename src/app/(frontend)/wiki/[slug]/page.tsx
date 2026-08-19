@@ -20,6 +20,7 @@ import type {
 } from '@/payload-types'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { generateMeta } from '@/utilities/generateMeta'
 import { toSafeURL } from '@/utilities/safeURL'
 import { SessionDateTime } from '../../_components/SessionDateTime'
 import { WikiArticleGenerateControl } from '../_components/WikiArticleGenerateControl'
@@ -666,13 +667,5 @@ export async function generateMetadata({ params }: Args): Promise<Metadata> {
     }
   }
 
-  return {
-    title: `${page.title} | RaidGuild Wiki`,
-    description: page.summary,
-    openGraph: mergeOpenGraph({
-      title: page.title,
-      description: page.summary,
-      url: `/wiki/${page.slug}`,
-    }),
-  }
+  return generateMeta({ doc: page, path: `/wiki/${page.slug}`, type: 'article' })
 }
