@@ -32,12 +32,12 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ header }) => {
 
   return (
     <header
-      className="container relative z-20"
+      className="sticky top-0 z-40 border-t-[6px] border-primary bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/85"
       data-portal-header
       {...(theme ? { 'data-theme': theme } : {})}
     >
-      <div className="flex justify-between border-b border-border py-6">
-        <Link href="/">
+      <div className="container flex min-h-[4.5rem] items-center justify-between gap-4 border-b border-border py-3 lg:min-h-24">
+        <Link className="shrink-0" href="/">
           <Logo loading="eager" priority="high" />
         </Link>
         <HeaderNav header={header} />

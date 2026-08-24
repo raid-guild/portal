@@ -256,7 +256,7 @@ function lexicalListContent(items: string[]) {
   }
 }
 
-test('defaults to RaidGuild Dark and persists explicit theme preferences', async ({ browser }) => {
+test('defaults to Louchi Day and persists explicit theme preferences', async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -268,8 +268,10 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await page.goto('/login')
   const header = page.locator('[data-portal-header]')
 
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-brand-reign', 'louchi')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(239, 233, 215)')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
@@ -285,8 +287,8 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'auto'))
   await page.reload()
@@ -298,8 +300,8 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
 
   await page.getByRole('combobox', { name: 'Select a theme' }).click()
-  await expect(page.getByRole('option', { name: 'RaidGuild Dark' })).toBeVisible()
-  await expect(page.getByRole('option', { name: 'RaidGuild Light' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'Louchi Night' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'Louchi Day' })).toBeVisible()
   await expect(page.getByRole('option', { name: 'RaidGuild AI' })).toBeVisible()
   await page.getByRole('option', { name: 'RaidGuild Classic' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')

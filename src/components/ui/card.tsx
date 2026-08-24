@@ -1,11 +1,10 @@
-/* eslint-disable jsx-a11y/heading-has-content */
 import { cn } from 'src/utilities/cn'
 import * as React from 'react'
 
 const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
     <div
-      className={cn('rounded-sm border border-border bg-card/60 text-card-foreground', className)}
+      className={cn('rounded-md border border-border bg-card text-card-foreground', className)}
       ref={ref}
       {...props}
     />
@@ -31,7 +30,7 @@ const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
-  <p className={cn('text-sm text-muted-foreground', className)} ref={ref} {...props} />
+  <p className={cn('text-base leading-6 text-muted-foreground', className)} ref={ref} {...props} />
 ))
 CardDescription.displayName = 'CardDescription'
 

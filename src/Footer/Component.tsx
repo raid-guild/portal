@@ -29,13 +29,13 @@ export async function Footer() {
   const navItems = footer?.navItems || []
 
   return (
-    <footer className="border-t border-border bg-card text-foreground" data-portal-footer>
-      <div className="container flex flex-col gap-8 py-8 md:flex-row md:justify-between">
+    <footer className="border-t border-border bg-background text-foreground" data-portal-footer>
+      <div className="container flex flex-col gap-8 py-10 md:flex-row md:items-center md:justify-between">
         <Link className="flex items-center" href="/">
           <Logo />
         </Link>
 
-        <div className="flex flex-col-reverse items-start gap-4 md:flex-row md:items-center">
+        <div className="flex flex-col-reverse items-start gap-5 md:flex-row md:items-center">
           <ThemeSelector />
           <nav className="flex flex-col md:flex-row gap-4" aria-label="Footer navigation">
             {navItems.map(({ link }, i) => {

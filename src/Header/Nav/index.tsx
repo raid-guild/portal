@@ -123,7 +123,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
     .join('')
 
   return (
-    <nav className="flex gap-3 items-center">
+    <nav className="flex items-center gap-2 md:gap-3">
       {navItems.map(({ link }, i) => {
         return <CMSLink key={i} {...normalizeNavLink(link)} appearance="link" />
       })}
@@ -133,7 +133,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
             aria-expanded={open}
             aria-haspopup="menu"
             aria-label="Open account menu"
-            className="flex h-9 items-center gap-2 rounded-sm border border-border bg-card/30 px-2 text-foreground transition hover:border-primary hover:text-primary"
+            className="flex h-10 items-center gap-2 rounded-md border border-border bg-card px-2 text-foreground transition hover:border-primary hover:text-primary"
             onClick={() => setOpen((current) => !current)}
             type="button"
           >
@@ -153,7 +153,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
           </button>
           {open ? (
             <div
-              className="absolute right-0 top-11 z-50 w-56 border border-border bg-background p-2 text-foreground shadow-lg"
+              className="absolute right-0 top-12 z-50 w-56 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-lg"
               role="menu"
             >
               <div className="border-b border-border px-3 py-2">
@@ -224,7 +224,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
         </div>
       ) : (
         <Link
-          className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:text-foreground"
+          className="font-sans text-base font-bold text-primary transition-colors hover:text-foreground"
           href="/login"
         >
           Login

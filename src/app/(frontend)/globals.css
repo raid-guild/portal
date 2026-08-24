@@ -1,6 +1,12 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@config '../../../tailwind.config.mjs';
+@plugin '@tailwindcss/typography';
+
+/* Content block columns are assembled dynamically and cannot be discovered
+   from complete class names in source. */
+@source inline('lg:col-span-4 lg:col-span-6 lg:col-span-8 lg:col-span-12');
 
 @layer base {
   :root {
@@ -26,17 +32,31 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body-theme);
+    font-variant: normal;
+    font-variant-caps: normal;
     font-feature-settings:
       'kern' 1,
-      'liga' 1;
+      'liga' 1,
+      'smcp' 0,
+      'c2sc' 0,
+      'pcap' 0,
+      'c2pc' 0;
+    transition:
+      background-color 240ms ease,
+      color 240ms ease;
   }
 
   h1,
   h2,
   h3 {
-    @apply font-bold;
     font-family: var(--font-display-theme);
+    font-weight: 700;
     text-shadow: var(--heading-shadow);
+  }
+
+  strong,
+  b {
+    font-weight: inherit;
   }
 
   a {
@@ -46,27 +66,27 @@
 
 @layer components {
   .portal-kicker {
-    @apply font-mono text-xs uppercase leading-none tracking-[0.08em] text-muted-foreground;
+    @apply font-mono text-xs leading-5 text-muted-foreground;
   }
 
   .portal-title {
-    @apply font-display text-4xl font-bold leading-[1.08] text-foreground md:text-5xl;
+    @apply font-display text-5xl font-bold leading-[1.05] tracking-[-0.01em] text-foreground md:text-6xl;
   }
 
   .portal-title-lg {
-    @apply font-display text-5xl font-bold leading-[1.05] text-foreground md:text-6xl;
+    @apply font-display text-5xl font-bold leading-[0.98] tracking-[-0.02em] text-foreground sm:text-6xl md:text-7xl lg:text-[5rem];
   }
 
   .portal-heading {
-    @apply font-display text-2xl font-bold leading-tight text-foreground;
+    @apply font-display text-3xl font-bold leading-[1.15] text-foreground md:text-4xl;
   }
 
   .portal-heading-sm {
-    @apply font-display text-xl font-bold leading-tight text-foreground;
+    @apply font-display text-xl font-bold leading-[1.25] text-foreground md:text-2xl;
   }
 
   .portal-body {
-    @apply text-base leading-7 text-muted-foreground;
+    @apply text-lg leading-7 text-muted-foreground;
   }
 
   .portal-body-sm {
@@ -74,18 +94,20 @@
   }
 
   .portal-band {
-    @apply border-y border-border py-12;
+    @apply border-t border-border py-14 md:py-20;
     background: var(--surface-page);
   }
 
   .portal-panel {
-    @apply border border-border p-5;
+    @apply border border-border p-5 md:p-6;
     background: var(--surface-panel);
+    border-radius: var(--radius-card);
   }
 
   .portal-card {
-    @apply border border-border p-5 transition-colors;
+    @apply border border-border p-5 transition-colors md:p-6;
     background: var(--surface-card);
+    border-radius: var(--radius-card);
     box-shadow: var(--shadow-soft);
   }
 
@@ -97,18 +119,21 @@
     @apply border border-border px-2 py-1 font-mono text-xs leading-none;
     background: var(--pill-bg);
     color: var(--pill-text);
+    border-radius: var(--radius-pill);
   }
 
   .portal-link {
-    @apply text-sm font-bold text-foreground underline decoration-primary/50 transition-colors hover:text-primary;
+    @apply text-base text-foreground underline decoration-primary/60 transition-colors hover:text-primary;
   }
 
   .portal-admin-link {
-    @apply inline-flex h-10 items-center rounded-sm border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary;
+    @apply inline-flex h-10 items-center border border-border bg-transparent px-4 font-mono text-sm text-foreground transition-colors hover:border-primary hover:text-primary;
+    border-radius: var(--radius-control);
   }
 
   .portal-select {
-    @apply h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    @apply h-11 w-full border border-border bg-background px-3 text-base text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    border-radius: var(--radius-control);
   }
 
   .portal-field,
@@ -118,7 +143,7 @@
   }
 
   .portal-field {
-    @apply h-12;
+    @apply h-11;
   }
 
   .portal-textarea {
@@ -135,6 +160,7 @@
   .portal-empty-state {
     @apply border border-border p-4 text-muted-foreground;
     background: var(--surface-panel);
+    border-radius: var(--radius-card);
   }
 
   .portal-section-divider {
