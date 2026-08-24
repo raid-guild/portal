@@ -37,7 +37,7 @@ export const ThemeSelector: React.FC = () => {
   React.useEffect(() => {
     const preference = window.localStorage.getItem(themeLocalStorageKey)
     setValue(
-      preference === themeAutoPreference
+      preference === themeAutoPreference || preference === null
         ? themeAutoPreference
         : (normalizeTheme(preference) ?? defaultTheme),
     )
@@ -52,7 +52,7 @@ export const ThemeSelector: React.FC = () => {
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={themeAutoPreference}>Auto</SelectItem>
+        <SelectItem value={themeAutoPreference}>System</SelectItem>
         {themeRegistry.map((theme) => (
           <SelectItem key={theme.key} value={theme.key}>
             {theme.label}

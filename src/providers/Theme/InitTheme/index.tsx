@@ -41,7 +41,7 @@ const themeScript = `
       if (preference !== normalizedPreference) {
         window.localStorage.setItem('${themeLocalStorageKey}', normalizedPreference)
       }
-    } else if (preference === '${themeAutoPreference}') {
+    } else if (preference === '${themeAutoPreference}' || preference === null) {
       var implicitPreference = getImplicitPreference()
 
       if (implicitPreference) {
@@ -49,6 +49,7 @@ const themeScript = `
       }
     } else if (preference !== null) {
       window.localStorage.removeItem('${themeLocalStorageKey}')
+      themeToSet = getImplicitPreference() || themeToSet
     }
 
     document.documentElement.setAttribute('data-theme', themeToSet)

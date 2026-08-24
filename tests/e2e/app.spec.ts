@@ -256,7 +256,7 @@ function lexicalListContent(items: string[]) {
   }
 }
 
-test('defaults to Louchi Day and persists explicit theme preferences', async ({ browser }) => {
+test('defaults to the system theme and persists explicit theme preferences', async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -277,6 +277,11 @@ test('defaults to Louchi Day and persists explicit theme preferences', async ({ 
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBeNull()
 
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await page.emulateMedia({ colorScheme: 'light' })
+
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
@@ -289,6 +294,9 @@ test('defaults to Louchi Day and persists explicit theme preferences', async ({ 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
   await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+  await page.getByRole('combobox', { name: 'Select a theme' }).click()
+  await expect(page.getByRole('option', { name: 'System' })).toBeVisible()
+  await page.keyboard.press('Escape')
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'auto'))
   await page.reload()

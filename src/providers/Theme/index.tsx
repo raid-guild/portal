@@ -45,7 +45,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     const normalizedPreference = normalizeTheme(preference)
     if (normalizedPreference) {
       themeToSet = normalizedPreference
-    } else if (preference === themeAutoPreference) {
+    } else if (preference === themeAutoPreference || preference === null) {
       const implicitPreference = getImplicitPreference()
 
       if (implicitPreference) {
@@ -53,6 +53,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } else if (preference !== null) {
       window.localStorage.removeItem(themeLocalStorageKey)
+      themeToSet = getImplicitPreference() || defaultTheme
     }
 
     if (normalizedPreference && preference !== normalizedPreference) {
@@ -63,7 +64,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
     const applyImplicitPreference = () => {
-      if (window.localStorage.getItem(themeLocalStorageKey) !== themeAutoPreference) return
+      const preference = window.localStorage.getItem(themeLocalStorageKey)
+      if (preference !== null && preference !== themeAutoPreference) return
       const implicitPreference = getImplicitPreference() || defaultTheme
       document.documentElement.setAttribute('data-theme', implicitPreference)
       setThemeState(implicitPreference)
