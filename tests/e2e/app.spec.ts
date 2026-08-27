@@ -423,7 +423,7 @@ async function expectVerticalOrder(locators: Locator[]) {
   }
 }
 
-async function verifySeededPosts(page: Page) {
+async function verifySeededPosts(adminPage: Page, page: Page) {
   const postsResponse = await page.goto('/posts')
   const postsURL = new URL('/posts', postsResponse!.url()).toString()
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
@@ -500,6 +500,39 @@ async function verifySeededPosts(page: Page) {
     await expect(cohortCard.getByText('Starts June 1, 2030')).toBeVisible()
     await expectVerticalOrder([cohortCard, commentsHeading])
   }
+
+  const suffix = Date.now()
+  const generalPostSlug = `general-inquiry-footer-${suffix}`
+  const generalPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('A public post without the cohort category.'),
+      publishedAt: new Date().toISOString(),
+      slug: generalPostSlug,
+      title: `General inquiry footer ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(generalPostResponse.status()).toBe(201)
+
+  await installPlausibleCapture(page)
+  await page.goto(`/posts/${generalPostSlug}`)
+  const generalCard = page.getByRole('region', { name: 'Work with RaidGuild' })
+  const generalLink = generalCard.getByRole('link', { name: 'Make a general inquiry' })
+  await expect(generalLink).toHaveAttribute('href', '/inquire/general')
+  await expect(page.getByRole('region', { name: 'RaidGuild cohort' })).toHaveCount(0)
+  await expectVerticalOrder([generalCard, page.getByRole('heading', { name: 'Comments' })])
+  await generalLink.click()
+  await expect(page).toHaveURL(/\/inquire\/general$/)
+  expect(await capturedPlausibleEvents(page, 'Inquiry CTA Clicked')).toContainEqual({
+    name: 'Inquiry CTA Clicked',
+    props: {
+      form_variant: 'typed',
+      inquiry_type: 'general',
+      placement: 'post_footer_general_inquiry',
+      post_slug: generalPostSlug,
+    },
+  })
 }
 
 test('normalizes legacy article title suffixes', () => {
@@ -5182,7 +5215,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicLLMsText(page, publicPage)
   await verifyCrawlerDiscovery(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
-  await verifySeededPosts(publicPage)
+  await verifySeededPosts(page, publicPage)
   await verifyCohortHub(page, publicPage)
   await verifyInteractivePostEmbed(page, publicPage)
   await verifyPostJoinCTAAnalytics(page, publicPage)

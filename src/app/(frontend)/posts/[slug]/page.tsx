@@ -19,6 +19,7 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 import PageClient from './page.client'
 import { hasRole, hasVerifiedAccount } from '@/access/roles'
 import { CohortCalloutCard } from '../../_components/CohortCalloutCard'
+import { TrackedInquiryLink } from '../../_components/TrackedInquiryLink'
 import { getAbsoluteURL } from '@/utilities/getURL'
 
 export const dynamic = 'force-dynamic'
@@ -45,8 +46,13 @@ export default async function Post({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
+  const isCohortPost = post.categories?.some(
+    (category) => typeof category === 'object' && category.slug === 'cohort',
+  )
   const featuredCohort =
-    post.visibility === 'public' ? await getFeaturedCohort({ visibility: 'public' }) : null
+    post.visibility === 'public' && isCohortPost
+      ? await getFeaturedCohort({ visibility: 'public' })
+      : null
 
   return (
     <article className="pt-16 pb-16">
@@ -78,11 +84,30 @@ export default async function Post({ params: paramsPromise }: Args) {
 
           {post.visibility === 'public' ? (
             <div className="mx-auto mt-16 max-w-[48rem]">
-              <CohortCalloutCard
-                cohort={featuredCohort}
-                placement="post_footer_cohort"
-                postSlug={post.slug || slug}
-              />
+              {isCohortPost ? (
+                <CohortCalloutCard
+                  cohort={featuredCohort}
+                  placement="post_footer_cohort"
+                  postSlug={post.slug || slug}
+                />
+              ) : (
+                <section aria-label="Work with RaidGuild" className="portal-panel">
+                  <p className="portal-kicker">Have a project in mind?</p>
+                  <h2 className="portal-heading-sm mt-3">Start a conversation with RaidGuild</h2>
+                  <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                    Tell us what you are building and where the guild could help.
+                  </p>
+                  <TrackedInquiryLink
+                    className="portal-admin-link mt-5 inline-flex"
+                    href="/inquire/general"
+                    inquiryType="general"
+                    placement="post_footer_general_inquiry"
+                    postSlug={post.slug || slug}
+                  >
+                    Make a general inquiry
+                  </TrackedInquiryLink>
+                </section>
+              )}
             </div>
           ) : null}
 

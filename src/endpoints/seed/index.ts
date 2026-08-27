@@ -259,7 +259,7 @@ export const seed = async ({
 
     // Create categories
     payload.logger.info(`- Seeding categories...`)
-    await Promise.all([
+    const [, , , cohortCategory] = await Promise.all([
       payload.create({
         collection: 'categories',
         data: {
@@ -276,6 +276,13 @@ export const seed = async ({
         collection: 'categories',
         data: {
           title: 'Finance',
+        },
+      }),
+      payload.create({
+        collection: 'categories',
+        data: {
+          slug: 'cohort',
+          title: 'Cohort',
         },
       }),
     ])
@@ -315,6 +322,7 @@ export const seed = async ({
           ),
         ]),
         authors: [demoAuthor.id],
+        categories: [cohortCategory.id],
         meta: {
           description:
             'A seeded portal update for validating public post, comment, and moderation flows.',
