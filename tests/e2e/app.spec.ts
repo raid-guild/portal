@@ -423,7 +423,7 @@ async function expectVerticalOrder(locators: Locator[]) {
   }
 }
 
-async function verifySeededPosts(page: Page) {
+async function verifySeededPosts(adminPage: Page, page: Page) {
   const postsResponse = await page.goto('/posts')
   const postsURL = new URL('/posts', postsResponse!.url()).toString()
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
@@ -500,6 +500,39 @@ async function verifySeededPosts(page: Page) {
     await expect(cohortCard.getByText('Starts June 1, 2030')).toBeVisible()
     await expectVerticalOrder([cohortCard, commentsHeading])
   }
+
+  const suffix = Date.now()
+  const generalPostSlug = `general-inquiry-footer-${suffix}`
+  const generalPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('A public post without the cohort category.'),
+      publishedAt: new Date().toISOString(),
+      slug: generalPostSlug,
+      title: `General inquiry footer ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(generalPostResponse.status()).toBe(201)
+
+  await installPlausibleCapture(page)
+  await page.goto(`/posts/${generalPostSlug}`)
+  const generalCard = page.getByRole('region', { name: 'Work with RaidGuild' })
+  const generalLink = generalCard.getByRole('link', { name: 'Make a general inquiry' })
+  await expect(generalLink).toHaveAttribute('href', '/inquire/general')
+  await expect(page.getByRole('region', { name: 'RaidGuild cohort' })).toHaveCount(0)
+  await expectVerticalOrder([generalCard, page.getByRole('heading', { name: 'Comments' })])
+  await generalLink.click()
+  await expect(page).toHaveURL(/\/inquire\/general$/)
+  expect(await capturedPlausibleEvents(page, 'Inquiry CTA Clicked')).toContainEqual({
+    name: 'Inquiry CTA Clicked',
+    props: {
+      form_variant: 'typed',
+      inquiry_type: 'general',
+      placement: 'post_footer_general_inquiry',
+      post_slug: generalPostSlug,
+    },
+  })
 }
 
 test('normalizes legacy article title suffixes', () => {
@@ -958,6 +991,40 @@ async function verifyPublicLLMsText(adminPage: Page, publicPage: Page) {
   expect(llmsText).not.toContain('/admin')
   expect(llmsText).not.toContain('/next/preview')
   expect(llmsText).not.toContain('sourceArtifact')
+
+  const htmlResponse = await publicPage.request.get('/')
+  expect(htmlResponse.headers()['content-type']).toContain('text/html')
+  expect(htmlResponse.headers().link).toContain('</llms.txt>; rel="service-doc"')
+  expect(htmlResponse.headers().link).toContain('</sitemap.xml>; rel="sitemap"')
+
+  const markdownHeaders = { Accept: 'text/html, text/markdown; q=0.9' }
+  const homeMarkdown = await publicPage.request.get('/', { headers: markdownHeaders })
+  expect(homeMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await homeMarkdown.text()).toContain('# RaidGuild Portal')
+
+  const listMarkdown = await publicPage.request.get('/posts', { headers: markdownHeaders })
+  expect(listMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await listMarkdown.text()).toContain(publicTitle)
+
+  const detailMarkdown = await publicPage.request.get(`/posts/llms-public-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(detailMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await detailMarkdown.text()).toContain(publicTitle)
+
+  const privateMarkdown = await publicPage.request.get(`/posts/llms-member-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(privateMarkdown.status()).toBe(404)
+  expect(await privateMarkdown.text()).not.toContain(memberTitle)
+
+  for (const excludedPath of ['/admin', '/api/users', '/login', '/dashboard', '/me']) {
+    const excludedResponse = await publicPage.request.get(excludedPath, {
+      headers: { Accept: 'text/markdown' },
+      maxRedirects: 0,
+    })
+    expect(excludedResponse.headers()['content-type'] || '').not.toContain('text/markdown')
+  }
 }
 
 async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
@@ -1005,6 +1072,24 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   expect(robotsText).toContain('Disallow: /api/')
   expect(robotsText).toContain('Host: https://portal.raidguild.org')
   expect(robotsText).toContain('Sitemap: https://portal.raidguild.org/sitemap.xml')
+  expect(robotsText).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no')
+  for (const agent of [
+    'GPTBot',
+    'ChatGPT-User',
+    'OAI-SearchBot',
+    'Google-Extended',
+    'ClaudeBot',
+    'Claude-Web',
+    'anthropic-ai',
+    'PerplexityBot',
+    'CCBot',
+    'Amazonbot',
+    'Bytespider',
+    'Applebot-Extended',
+    'cohere-ai',
+  ]) {
+    expect(robotsText).toContain(`User-agent: ${agent}\nAllow: /`)
+  }
   expect(robotsText).toMatch(
     /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
   )
@@ -5182,7 +5267,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyPublicLLMsText(page, publicPage)
   await verifyCrawlerDiscovery(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
-  await verifySeededPosts(publicPage)
+  await verifySeededPosts(page, publicPage)
   await verifyCohortHub(page, publicPage)
   await verifyInteractivePostEmbed(page, publicPage)
   await verifyPostJoinCTAAnalytics(page, publicPage)

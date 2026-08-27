@@ -248,7 +248,7 @@ export interface Page {
     description?: string | null;
   };
   publishedAt?: string | null;
-  slug?: string | null;
+  slug: string;
   slugLock?: boolean | null;
   updatedAt: string;
   createdAt: string;
@@ -477,6 +477,8 @@ export interface ArchiveBlock {
 export interface Category {
   id: number;
   title: string;
+  slug?: string | null;
+  slugLock?: boolean | null;
   parent?: (number | null) | Category;
   breadcrumbs?:
     | {
@@ -3768,6 +3770,8 @@ export interface MediaSelect<T extends boolean = true> {
  */
 export interface CategoriesSelect<T extends boolean = true> {
   title?: T;
+  slug?: T;
+  slugLock?: T;
   parent?: T;
   breadcrumbs?:
     | T
