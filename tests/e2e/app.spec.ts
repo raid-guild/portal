@@ -991,6 +991,40 @@ async function verifyPublicLLMsText(adminPage: Page, publicPage: Page) {
   expect(llmsText).not.toContain('/admin')
   expect(llmsText).not.toContain('/next/preview')
   expect(llmsText).not.toContain('sourceArtifact')
+
+  const htmlResponse = await publicPage.request.get('/')
+  expect(htmlResponse.headers()['content-type']).toContain('text/html')
+  expect(htmlResponse.headers().link).toContain('</llms.txt>; rel="service-doc"')
+  expect(htmlResponse.headers().link).toContain('</sitemap.xml>; rel="sitemap"')
+
+  const markdownHeaders = { Accept: 'text/html, text/markdown; q=0.9' }
+  const homeMarkdown = await publicPage.request.get('/', { headers: markdownHeaders })
+  expect(homeMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await homeMarkdown.text()).toContain('# RaidGuild Portal')
+
+  const listMarkdown = await publicPage.request.get('/posts', { headers: markdownHeaders })
+  expect(listMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await listMarkdown.text()).toContain(publicTitle)
+
+  const detailMarkdown = await publicPage.request.get(`/posts/llms-public-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(detailMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await detailMarkdown.text()).toContain(publicTitle)
+
+  const privateMarkdown = await publicPage.request.get(`/posts/llms-member-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(privateMarkdown.status()).toBe(404)
+  expect(await privateMarkdown.text()).not.toContain(memberTitle)
+
+  for (const excludedPath of ['/admin', '/api/users', '/login', '/dashboard', '/me']) {
+    const excludedResponse = await publicPage.request.get(excludedPath, {
+      headers: { Accept: 'text/markdown' },
+      maxRedirects: 0,
+    })
+    expect(excludedResponse.headers()['content-type'] || '').not.toContain('text/markdown')
+  }
 }
 
 async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
@@ -1038,6 +1072,24 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   expect(robotsText).toContain('Disallow: /api/')
   expect(robotsText).toContain('Host: https://portal.raidguild.org')
   expect(robotsText).toContain('Sitemap: https://portal.raidguild.org/sitemap.xml')
+  expect(robotsText).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no')
+  for (const agent of [
+    'GPTBot',
+    'ChatGPT-User',
+    'OAI-SearchBot',
+    'Google-Extended',
+    'ClaudeBot',
+    'Claude-Web',
+    'anthropic-ai',
+    'PerplexityBot',
+    'CCBot',
+    'Amazonbot',
+    'Bytespider',
+    'Applebot-Extended',
+    'cohere-ai',
+  ]) {
+    expect(robotsText).toContain(`User-agent: ${agent}\nAllow: /`)
+  }
   expect(robotsText).toMatch(
     /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
   )

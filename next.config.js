@@ -9,6 +9,19 @@ const NEXT_PUBLIC_SERVER_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/((?!api(?:/|$)|admin(?:/|$)|_next(?:/|$)).*)',
+        headers: [
+          {
+            key: 'Link',
+            value: '</llms.txt>; rel="service-doc", </sitemap.xml>; rel="sitemap"',
+          },
+        ],
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
