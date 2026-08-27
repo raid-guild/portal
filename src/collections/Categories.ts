@@ -22,6 +22,11 @@ export const Categories: CollectionConfig = {
       type: 'text',
       required: true,
     },
-    ...slugField('title'),
+    ...slugField('title', {
+      slugOverrides: {
+        required: true,
+        unique: true,
+      },
+    }),
   ],
 }

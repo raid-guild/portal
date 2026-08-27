@@ -46,9 +46,7 @@ export default async function Post({ params: paramsPromise }: Args) {
     return <PayloadRedirects url={url} />
   }
 
-  const isCohortPost = post.categories?.some(
-    (category) => typeof category === 'object' && category.slug === 'cohort',
-  )
+  const isCohortPost = await postHasCategorySlug(post, 'cohort')
   const featuredCohort =
     post.visibility === 'public' && isCohortPost
       ? await getFeaturedCohort({ visibility: 'public' })
@@ -208,6 +206,34 @@ const queryPostBySlug = cache(
     return result.docs?.[0] || null
   },
 )
+
+const postHasCategorySlug = async (post: Post, slug: string) => {
+  const categories = post.categories || []
+
+  if (categories.some((category) => typeof category === 'object' && category.slug === slug)) {
+    return true
+  }
+
+  const categoryIDs = categories.filter(
+    (category): category is number => typeof category === 'number',
+  )
+
+  if (categoryIDs.length === 0) return false
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'categories',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    where: {
+      and: [{ id: { in: categoryIDs } }, { slug: { equals: slug } }],
+    },
+  })
+
+  return result.docs.length > 0
+}
 
 const queryRestrictedPublishedPostBySlug = cache(async (slug: string) => {
   const payload = await getPayload({ config: configPromise })
