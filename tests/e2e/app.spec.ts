@@ -1093,6 +1093,9 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   expect(robotsText).toMatch(
     /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
   )
+  // Module detail pages require authentication, so anonymous sitemap generation must not query
+  // the modules collection or advertise module-detail shards.
+  expect(robotsText).not.toContain('/sitemaps/sitemap/modules-')
 
   const sitemapURLs = [...robotsText.matchAll(/^Sitemap: (https:\/\/[^\s]+)$/gm)].map(
     (match) => match[1],
