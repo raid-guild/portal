@@ -263,18 +263,21 @@ export const seed = async ({
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'technology',
           title: 'Technology',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'news',
           title: 'News',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'finance',
           title: 'Finance',
         },
       }),
@@ -291,18 +294,21 @@ export const seed = async ({
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'design',
           title: 'Design',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'software',
           title: 'Software',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'engineering',
           title: 'Engineering',
         },
       }),

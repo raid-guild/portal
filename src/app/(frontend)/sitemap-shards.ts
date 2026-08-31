@@ -5,7 +5,7 @@ import { SITEMAP_SHARD_ENTRY_LIMIT, type SitemapDocument } from './sitemap-confi
 
 type SitemapCollection = Extract<
   CollectionSlug,
-  'cohorts' | 'events' | 'modules' | 'pages' | 'posts' | 'profiles' | 'projects' | 'threads' | 'wikiPages'
+  'cohorts' | 'events' | 'pages' | 'posts' | 'profiles' | 'projects' | 'threads' | 'wikiPages'
 >
 
 export type SitemapCollectionDefinition = {
@@ -59,12 +59,6 @@ export const SITEMAP_COLLECTIONS: SitemapCollectionDefinition[] = [
     id: 'wiki-pages',
     pathForDocument: slugPath('/wiki'),
     where: { and: [published, publicVisibility, reviewed, hasSlug] },
-  },
-  {
-    collection: 'modules',
-    id: 'modules',
-    pathForDocument: slugPath('/modules'),
-    where: { and: [publicVisibility, hasSlug, { enabled: { equals: true } }] },
   },
   {
     collection: 'profiles',
