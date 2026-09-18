@@ -4173,8 +4173,39 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   )
   expect(publicLaunchResponse.status()).toBe(401)
 
-  await publicPage.goto(`/modules/${externalModuleSlug}`)
+  const missingModuleResponse = await publicPage.goto(`/modules/missing-e2e-module-${moduleSuffix}`)
+  expect(missingModuleResponse?.status()).toBe(404)
   await expect(publicPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  const archivedModuleDetailResponse = await publicPage.goto(
+    `/modules/archived-e2e-module-${moduleSuffix}`,
+  )
+  expect(archivedModuleDetailResponse?.status()).toBe(404)
+
+  const disabledModuleDetailResponse = await publicPage.goto(`/modules/${disabledModuleSlug}`)
+  expect(disabledModuleDetailResponse?.status()).toBe(404)
+
+  const protectedModuleResponse = await publicPage.goto(`/modules/${externalModuleSlug}`)
+  expect(protectedModuleResponse?.status()).toBe(200)
+  await expect(
+    publicPage.getByRole('heading', { name: 'This page requires Portal access' }),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'External E2E Module' })).toHaveCount(0)
+  await expect(
+    publicPage.getByText('An external module that should launch through a signed Portal token.'),
+  ).toHaveCount(0)
+  const protectedModuleLogin = publicPage.getByRole('link', { name: 'Log in' })
+  await expect(protectedModuleLogin).toHaveAttribute(
+    'href',
+    `/login?next=${encodeURIComponent(`/modules/${externalModuleSlug}`)}`,
+  )
+  await protectedModuleLogin.click()
+  await fillFirst(publicPage.getByLabel(/^email$/i), adminEmail)
+  await fillFirst(publicPage.getByLabel(/^password$/i), adminPassword)
+  await publicPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(publicPage).toHaveURL(new RegExp(`/modules/${externalModuleSlug}$`))
+  await expect(publicPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
+  await publicPage.context().clearCookies()
 
   const unverifiedContext = await browser.newContext()
   const unverifiedPage = await unverifiedContext.newPage()
