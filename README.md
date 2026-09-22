@@ -1,3 +1,5 @@
+Public module integrations: see [the catalog API contract](docs/public-module-catalog.md).
+
 <p align="center">
   <a href="https://funkyton.com/payload-cms/">
     <picture>

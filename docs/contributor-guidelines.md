@@ -1,5 +1,7 @@
 # Contributor Guidelines
 
+Public module integrations must use the allowlisted [catalog API](public-module-catalog.md), not authenticated collection responses. Never expose launch configuration or member-only modules.
+
 ## Purpose
 
 This portal should make real cohort activity visible and help people find a useful next step.
