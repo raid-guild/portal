@@ -1,59 +1,12 @@
 import configPromise from '@payload-config'
-import { getPayload, type Where } from 'payload'
+import { getPayload, type CollectionSlug } from 'payload'
 import { headers } from 'next/headers'
-import { NextResponse } from 'next/server'
+
+import { adapters, type MarkdownRouteKey } from './adapters'
+import { escape, joinSections } from './lib/markdownPrimitives'
+import { publicWhere, response } from './lib/response'
 
 export const dynamic = 'force-dynamic'
-
-type MarkdownDocument = {
-  content?: { root?: { children?: unknown[] } } | null
-  id: number | string
-  slug?: string | null
-  summary?: string | null
-  title?: string | null
-  updatedAt?: string | null
-}
-
-type LexicalNode = { children?: LexicalNode[]; text?: string }
-
-const listCollections = {
-  cohorts: { collection: 'cohorts', key: 'slug' },
-  events: { collection: 'events', key: 'id' },
-  posts: { collection: 'posts', key: 'slug' },
-  projects: { collection: 'projects', key: 'slug' },
-  threads: { collection: 'threads', key: 'slug' },
-  wiki: { collection: 'wikiPages', key: 'slug' },
-} as const
-
-const text = (nodes: unknown[] | undefined): string[] =>
-  nodes?.flatMap((node) => {
-    if (!node || typeof node !== 'object') return []
-    const lexical = node as LexicalNode
-    return [typeof lexical.text === 'string' ? lexical.text : '', ...text(lexical.children)].filter(
-      Boolean,
-    )
-  }) ?? []
-
-const clean = (value: string): string => value.replace(/\s+/g, ' ').trim()
-const escape = (value: string): string => clean(value).replace(/([\\[\]()*_`#|])/g, '\\$1')
-
-const response = (markdown: string, status = 200) =>
-  new NextResponse(`${markdown.trim()}\n`, {
-    status,
-    headers: {
-      'Cache-Control': status === 200 ? 'public, max-age=60, s-maxage=300' : 'no-store',
-      'Content-Type': 'text/markdown; charset=utf-8',
-      Vary: 'Accept',
-    },
-  })
-
-const publicWhere = (field?: string, value?: string): Where => ({
-  and: [
-    { _status: { equals: 'published' } },
-    { visibility: { equals: 'public' } },
-    ...(field && value ? [{ [field]: { equals: value } }] : []),
-  ],
-})
 
 export async function GET() {
   const path = (await headers()).get('x-portal-markdown-path') || ''
@@ -65,13 +18,13 @@ export async function GET() {
     )
   }
 
-  const route = listCollections[parts[0] as keyof typeof listCollections]
-  if (!route || parts.length > 2) return response('# Not found', 404)
+  const key = parts[0] as MarkdownRouteKey
+  const adapter = adapters[key]
+  if (!adapter || parts.length > 2) return response('# Not found', 404)
 
   const payload = await getPayload({ config: configPromise })
-  const isWiki = route.collection === 'wikiPages'
   const result = await payload.find({
-    collection: route.collection,
+    collection: adapter.collection as CollectionSlug,
     draft: false,
     limit: parts[1] ? 1 : 50,
     overrideAccess: false,
@@ -79,32 +32,36 @@ export async function GET() {
     sort: '-updatedAt',
     where: {
       and: [
-        ...(publicWhere(parts[1] ? route.key : undefined, parts[1]).and || []),
-        ...(isWiki ? [{ reviewStatus: { equals: 'reviewed' } }] : []),
+        ...(publicWhere(parts[1] ? adapter.key : undefined, parts[1]).and || []),
+        ...(adapter.extraWhere?.(parts) ? [adapter.extraWhere(parts) as NonNullable<unknown>] : []),
       ],
     },
   })
-  const docs = result.docs as MarkdownDocument[]
+  const docs = result.docs as unknown as Array<
+    Record<string, unknown> & { id: number; title?: string }
+  >
 
   if (parts[1]) {
     const doc = docs[0]
     if (!doc) return response('# Not found', 404)
-    const body = doc.summary || clean(text(doc.content?.root?.children).join(' '))
+
+    const sections = adapter.renderDetail(doc as never)
+    const body = joinSections(sections)
+
     return response(
-      [
-        `# ${escape(doc.title || 'Untitled')}`,
-        body ? `\n${body}` : '',
-        `\nCanonical: ${path}`,
-      ].join('\n'),
+      [`# ${escape(doc.title || 'Untitled')}`, body ? `\n${body}` : '', `\nCanonical: ${path}`].join(
+        '\n',
+      ),
     )
   }
 
-  const title =
-    parts[0] === 'wiki' ? 'Reviewed Wiki Pages' : `${parts[0][0].toUpperCase()}${parts[0].slice(1)}`
+  const title = key === 'wiki' ? 'Reviewed Wiki Pages' : `${key[0].toUpperCase()}${key.slice(1)}`
   const items = docs.map((doc) => {
-    const key = route.key === 'id' ? doc.id : doc.slug
-    const summary = doc.summary ? ` - ${escape(doc.summary)}` : ''
-    return `- [${escape(doc.title || 'Untitled')}](/${parts[0]}/${key})${summary}`
+    const idOrSlug = adapter.key === 'id' ? doc.id : (doc.slug as string | number | undefined)
+    const summary = adapter.listSummary?.(doc as never) ?? (doc.summary as string | undefined)
+    const suffix = summary ? ` - ${escape(summary)}` : ''
+    return `- [${escape((doc.title as string) || 'Untitled')}](/${key}/${idOrSlug})${suffix}`
   })
+
   return response([`# ${title}`, '', ...items].join('\n'))
 }
