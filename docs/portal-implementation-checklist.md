@@ -1,5 +1,11 @@
 # Portal Implementation Checklist
 
+## Public module catalog
+
+- [x] Add an allowlisted anonymous catalog for enabled/public modules.
+- [x] Preserve authenticated collection access and signed-launch checks.
+- [ ] Deploy through staging and verify the community website integration.
+
 ## Phase 1: Access Foundations
 
 - [x] Add auth roles to `users`.

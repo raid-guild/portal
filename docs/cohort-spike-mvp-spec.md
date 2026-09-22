@@ -1,5 +1,7 @@
 # Cohort Project Spike MVP Spec
 
+The optional Modules feature exposes an enabled/public-only [catalog projection](public-module-catalog.md) for the community website. Core primitives and collection permissions are unchanged.
+
 ## Decision
 
 Build the first MVP as a lightweight cohort project spike portal.
