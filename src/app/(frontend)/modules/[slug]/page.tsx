@@ -32,9 +32,13 @@ type Args = {
 
 export default async function ModuleDetailPage({ params: paramsPromise }: Args) {
   const { slug = '' } = await paramsPromise
-  const { moduleRecord, user } = await getModulePageData(slug)
+  const { isRestricted, moduleRecord, user } = await getModulePageData(slug)
 
-  if (!moduleRecord) notFound()
+  if (!moduleRecord) {
+    if (isRestricted) return <RestrictedModuleAccess slug={slug} />
+
+    notFound()
+  }
 
   const category = moduleRecord.category || 'tools'
   const thumbnail = relationDoc<Media>(moduleRecord.thumbnail)
@@ -198,7 +202,14 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
-  const { moduleRecord } = await getModulePageData(slug)
+  const { isRestricted, moduleRecord } = await getModulePageData(slug)
+
+  if (isRestricted) {
+    return {
+      robots: { follow: false, index: false },
+      title: 'Portal access required',
+    }
+  }
 
   if (!moduleRecord) return { title: 'Module not found' }
 
@@ -215,8 +226,9 @@ export async function generateMetadata({ params: paramsPromise }: Args): Promise
 const getModulePageData = cache(async (slug: string) => {
   const user = await getCurrentUser()
   const moduleRecord = await queryModule(slug, user)
+  const isRestricted = !user && !moduleRecord ? await queryRestrictedModuleBySlug(slug) : false
 
-  return { moduleRecord, user }
+  return { isRestricted, moduleRecord, user }
 })
 
 const queryModule = async (
@@ -243,6 +255,60 @@ const queryModule = async (
   })
 
   return result.docs[0] || null
+}
+
+const queryRestrictedModuleBySlug = cache(async (slug: string) => {
+  if (!slug) return false
+
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'modules',
+    depth: 0,
+    limit: 1,
+    overrideAccess: true,
+    pagination: false,
+    select: {
+      slug: true,
+    },
+    where: {
+      and: [
+        { slug: { equals: slug } },
+        { enabled: { equals: true } },
+        { status: { not_equals: 'archived' } },
+        { visibility: { in: ['authenticated', 'member'] } },
+      ],
+    },
+  })
+
+  return result.docs.length > 0
+})
+
+const RestrictedModuleAccess = ({ slug }: { slug: string }) => {
+  const modulePath = `/modules/${slug}`
+
+  return (
+    <main className="container pb-24 pt-20">
+      <section className="max-w-3xl border border-border bg-card/30 p-8">
+        <p className="portal-kicker">Protected page</p>
+        <h1 className="portal-title mt-4">This page requires Portal access</h1>
+        <p className="mt-5 text-base leading-7 text-muted-foreground">
+          This page is available to signed-in Portal members. Log in to continue, or join the cohort
+          if you need an account.
+        </p>
+        <div className="mt-8 flex flex-wrap gap-3">
+          <Link
+            className="portal-admin-link"
+            href={`/login?next=${encodeURIComponent(modulePath)}`}
+          >
+            Log in
+          </Link>
+          <Link className="portal-admin-link" href="/join">
+            Join
+          </Link>
+        </div>
+      </section>
+    </main>
+  )
 }
 
 const ModuleImage = ({
