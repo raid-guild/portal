@@ -17,7 +17,7 @@ export function proxy(request: NextRequest) {
   const headers = new Headers(request.headers)
   headers.set('x-portal-markdown-path', request.nextUrl.pathname)
 
-  return NextResponse.rewrite(new URL('/_markdown', request.url), {
+  return NextResponse.rewrite(new URL('/md-view', request.url), {
     request: { headers },
   })
 }
