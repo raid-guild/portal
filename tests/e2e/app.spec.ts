@@ -480,6 +480,20 @@ async function verifySeededPosts(adminPage: Page, page: Page) {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonicalURL)
+    // A post-hydration router.refresh() used to append a second copy of the head
+    // metadata, so wait for the page to settle before counting the tags.
+    await page.waitForLoadState('networkidle')
+    for (const selector of [
+      'title',
+      'link[rel="canonical"]',
+      'meta[property="og:type"]',
+      'meta[property="og:url"]',
+    ]) {
+      await expect(
+        page.locator(selector),
+        `Expected a single ${selector} in the document`,
+      ).toHaveCount(1)
+    }
     const structuredData = await page.locator('script[type="application/ld+json"]').textContent()
     const schemas = JSON.parse(structuredData || '[]') as Array<Record<string, unknown>>
     expect(schemas.map((schema) => schema['@type'])).toEqual(
