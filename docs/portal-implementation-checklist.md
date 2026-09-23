@@ -297,6 +297,32 @@
 - [ ] Add focused tests for renderer, permissions, and API behavior.
 - [ ] Add e2e coverage for the `/newsletter` editor flow.
 
+## Phase 12: Content Reactions (Likes And Bookmarks)
+
+- [x] Add `contentReactions` collection (`kind`, `actorType`, `user`,
+      `profile`, `anonymousId`, `targetCollection`, `targetId`, `ipHash`)
+      covering posts, events, projects, threads, and wiki pages.
+- [x] Add two partial unique indexes (member rows keyed by `user_id`,
+      anonymous rows keyed by `anonymous_id`) declared directly in the
+      migration, since Payload's config `indexes` cannot express a partial
+      index.
+- [x] Add `POST /api/reactions` as an idempotent set (`active: boolean`)
+      open to anonymous visitors for likes, requiring a verified member for
+      bookmarks, and treating a `23505` duplicate write as success.
+- [x] Add anonymous actor identity via a best-effort `portal_anon_id`
+      cookie; store only a salted IP hash (`ipHash`), never a raw IP.
+- [x] Adopt an anonymous visitor's likes/bookmarks onto their account on
+      sign-in (`adoptAnonymousReactions`) so one human is not counted twice.
+- [x] Add a `ReactionBar` heart/bookmark control on post, event, project,
+      thread, and wiki page detail pages, with anonymous likes and a
+      sign-in/verify prompt in place of the bookmark control.
+- [x] Add `/me/saved` with `?kind=` and `?type=` filters over a member's
+      own likes and bookmarks.
+- [x] Keep module favorites (`raidguild:module-favorites:v1`) browser-local
+      and unrelated to `contentReactions`.
+- [x] Add e2e coverage for anonymous/member/admin access isolation,
+      adoption on sign-in, and `/me/saved` filters.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. First slice includes daily check-in

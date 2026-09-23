@@ -9,6 +9,7 @@ import { canContributeContent, canEditContent, hasRole, hasVerifiedAccount } fro
 import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
 import { PublicStructuredData } from '@/components/PublicStructuredData'
+import { ReactionBar } from '@/components/ReactionBar'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ContributionRequest,
@@ -213,6 +214,14 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
                 Edit session
               </Link>
             ) : null}
+          </div>
+          <div className="mt-4">
+            <ReactionBar
+              collection="events"
+              id={event.id}
+              path={`/events/${event.id}`}
+              user={user}
+            />
           </div>
         </aside>
       </section>

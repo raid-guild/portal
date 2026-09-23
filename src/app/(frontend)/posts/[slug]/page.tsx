@@ -9,6 +9,7 @@ import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
 import RichText from '@/components/RichText'
 import { Comments } from '@/components/Comments'
+import { ReactionBar } from '@/components/ReactionBar'
 import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
 
 import type { Event, Post, Thread } from '@/payload-types'
@@ -66,6 +67,9 @@ export default async function Post({ params: paramsPromise }: Args) {
 
       <div className="flex flex-col items-center gap-4 pt-8">
         <div className="container">
+          <div className="mx-auto mb-8 max-w-[48rem]">
+            <ReactionBar collection="posts" id={post.id} path={`/posts/${post.slug}`} user={user} />
+          </div>
           <PostSourceContext post={post} />
           <RichText
             analyticsContext={{ placement: 'post-body', postSlug: post.slug || slug }}
