@@ -7,6 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { PublicStructuredData } from '@/components/PublicStructuredData'
+import { ReactionBar } from '@/components/ReactionBar'
 import type {
   ActivityItem,
   ContributionRequest,
@@ -63,13 +64,19 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
           <p className="mt-5 max-w-3xl text-base leading-7 text-muted-foreground">
             {thread.summary}
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap items-center gap-3">
             <span className="portal-pill">{thread.threadStatus}</span>
             {thread.lastActiveAt ? (
               <span className="text-sm text-muted-foreground">
                 Updated {formatDate(thread.lastActiveAt)}
               </span>
             ) : null}
+            <ReactionBar
+              collection="threads"
+              id={thread.id}
+              path={`/threads/${thread.slug}`}
+              user={user}
+            />
           </div>
         </div>
         <aside className="portal-panel">

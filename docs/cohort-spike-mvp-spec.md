@@ -547,3 +547,36 @@ accessible module records across Tools, Artifacts, and games. Arcade remains
 reachable through its desktop entrance or mobile shortcut. Favorites are not
 account-synced, public likes, or usage tracking; unavailable storage falls back
 to the current visit with a visible notice.
+
+### Content reactions: likes and bookmarks
+
+The `contentReactions` collection records likes and bookmarks on posts,
+events, projects, threads, and wiki pages as one row per (actor, kind,
+target), written only through `POST /api/reactions`. Likes are public: any
+visitor, signed in or not, can like content, and the like count is public.
+Bookmarks are private and require a verified member — there is no anonymous
+bookmark state, and unverified members are pointed at account verification
+instead of a working bookmark control.
+
+Anonymous visitors are deduped by a `portal_anon_id` cookie the reactions
+route mints on first use, not by IP or fingerprinting; this is best-effort,
+so clearing cookies or switching browsers creates a new anonymous actor.
+Only a salted SHA-256 hash of the request IP is stored (`ipHash`), never the
+raw IP, and it exists for abuse review only. When an anonymous visitor with
+existing likes signs in, `adoptAnonymousReactions` reassigns that cookie's
+rows to their account on their next write through the reactions route, so
+the same human is not counted twice.
+
+Module favorites (`raidguild:module-favorites:v1`, browser-local IDs for the
+Guild Cabinet, described above) are unrelated to content reactions: they are
+not public likes, not account-synced, and never stored in `contentReactions`.
+
+Query trending content directly against Postgres:
+
+```sql
+SELECT target_collection, target_id,
+       count(*) FILTER (WHERE kind='like') AS likes,
+       count(*) FILTER (WHERE kind='like' AND actor_type='anonymous') AS anon_likes,
+       count(*) FILTER (WHERE kind='bookmark') AS bookmarks
+FROM content_reactions GROUP BY 1,2 ORDER BY likes DESC;
+```

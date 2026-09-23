@@ -33,10 +33,15 @@ export const PortalSearchForm: React.FC<{
 
 export const PortalPagination: React.FC<{
   basePath: string
+  /**
+   * Extra query params (e.g. filter state) that should survive pagination.
+   * Merged into every generated page link alongside `page` and `q`.
+   */
+  extraParams?: SearchParams
   page?: number | null
   query?: string
   totalPages?: number | null
-}> = ({ basePath, page = 1, query = '', totalPages = 1 }) => {
+}> = ({ basePath, extraParams = {}, page = 1, query = '', totalPages = 1 }) => {
   if (!page || !totalPages || totalPages <= 1) return null
 
   const hasPrevious = page > 1
@@ -47,7 +52,7 @@ export const PortalPagination: React.FC<{
     <nav aria-label="Pagination" className="mt-10 flex flex-wrap items-center gap-2">
       <PaginationLink
         disabled={!hasPrevious}
-        href={getListHref(basePath, { page: page - 1, q: query })}
+        href={getListHref(basePath, { ...extraParams, page: page - 1, q: query })}
       >
         Previous
       </PaginationLink>
@@ -59,7 +64,7 @@ export const PortalPagination: React.FC<{
         ) : (
           <PaginationLink
             active={item === page}
-            href={getListHref(basePath, { page: item, q: query })}
+            href={getListHref(basePath, { ...extraParams, page: item, q: query })}
             key={item}
           >
             {item}
@@ -68,7 +73,7 @@ export const PortalPagination: React.FC<{
       )}
       <PaginationLink
         disabled={!hasNext}
-        href={getListHref(basePath, { page: page + 1, q: query })}
+        href={getListHref(basePath, { ...extraParams, page: page + 1, q: query })}
       >
         Next
       </PaginationLink>

@@ -5,6 +5,7 @@ import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
@@ -798,6 +799,9 @@ export const Projects: CollectionConfig = {
       },
     }),
   ],
+  hooks: {
+    afterDelete: [deleteReactionsForTarget('projects')],
+  },
   versions: {
     drafts: true,
     maxPerDoc: 25,

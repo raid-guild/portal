@@ -9,6 +9,7 @@ import { getPayload } from 'payload'
 import { canContributeContent, hasRole, hasVerifiedAccount } from '@/access/roles'
 import { Comments } from '@/components/Comments'
 import { PublicStructuredData } from '@/components/PublicStructuredData'
+import { ReactionBar } from '@/components/ReactionBar'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ActivityItem,
@@ -113,14 +114,19 @@ export default async function ProjectPage({ params: paramsPromise }: Args) {
               </span>
             ))}
           </div>
-          {canManageProject ? (
-            <Link
-              className="portal-admin-link mt-6 inline-flex"
-              href={`/projects/${project.slug}/edit`}
-            >
-              Manage project
-            </Link>
-          ) : null}
+          <div className="mt-6 flex flex-wrap items-center gap-4">
+            <ReactionBar
+              collection="projects"
+              id={project.id}
+              path={`/projects/${project.slug}`}
+              user={user}
+            />
+            {canManageProject ? (
+              <Link className="portal-admin-link inline-flex" href={`/projects/${project.slug}/edit`}>
+                Manage project
+              </Link>
+            ) : null}
+          </div>
         </div>
         <aside className="portal-panel text-sm">
           <p className="font-bold">Project state</p>
