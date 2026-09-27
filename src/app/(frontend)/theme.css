@@ -1,5 +1,61 @@
 @font-face {
   font-display: swap;
+  font-family: 'Grinder';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/brand-fonts/louchi/Grinder-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Grinder';
+  font-style: italic;
+  font-weight: 400;
+  src: url('/brand-fonts/louchi/Grinder-Italic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Grinder Retalic';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/brand-fonts/louchi/Grinder-Retalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Ubuntu';
+  font-style: normal;
+  font-weight: 100 900;
+  src: url('/fonts/louchi/Ubuntu-Variable.ttf') format('truetype');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Ubuntu';
+  font-style: italic;
+  font-weight: 100 900;
+  src: url('/fonts/louchi/Ubuntu-Italic-Variable.ttf') format('truetype');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Ubuntu Mono';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/fonts/louchi/UbuntuMono-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Ubuntu Mono';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/fonts/louchi/UbuntuMono-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-display: swap;
   font-family: 'RaidGuild Classic Uncial';
   font-style: normal;
   font-weight: 400;
@@ -35,93 +91,96 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Louchi 1.1 night semantic surface map. */
-  --brand-deep: 206.4 67.6% 7.3%;
-  --brand-panel: 204 63.6% 10.8%;
-  --brand-raised: 198.9 54% 19.6%;
-  --brand-hover: 187.5 75% 74.9%;
-  --brand-primary: 339.8 84% 58.4%;
-  --neutral-strong: 204.4 65.9% 8%;
-  --neutral-soft: 47.4 40.4% 90.8%;
-  --neutral-muted: 178.5 39.2% 80%;
+  --brand-deep: 183.636 62.264% 10.392%;
+  --brand-panel: 233.617 39.496% 23.333%;
+  --brand-raised: 198.889 54% 19.608%;
+  --brand-hover: 340 78.75% 68.627%;
+  --brand-primary: 339.775 83.962% 58.431%;
+  --neutral-strong: 240 20% 2.941%;
+  --neutral-soft: 45 42.857% 89.02%;
+  --neutral-muted: 178.5 39.216% 80%;
 
-  --background: var(--neutral-strong);
-  --foreground: 52 24.6% 88%;
-  --card: var(--brand-panel);
-  --card-foreground: var(--neutral-soft);
-  --popover: var(--brand-deep);
-  --popover-foreground: var(--neutral-soft);
-  --primary: var(--brand-primary);
-  --primary-hover: 339.8 84% 64%;
-  --primary-foreground: var(--neutral-soft);
-  --secondary: var(--brand-raised);
-  --secondary-hover: 198.9 54% 25%;
-  --secondary-foreground: var(--neutral-soft);
-  --muted: 198.8 53.7% 18.6%;
-  --muted-foreground: var(--neutral-muted);
-  --accent: 187.5 75% 74.9%;
-  --accent-foreground: var(--neutral-strong);
-  --destructive: 6.7 57.9% 45.7%;
-  --destructive-foreground: var(--neutral-soft);
-  --border: 195.7 25.3% 32.5%;
-  --input: 195.7 25.3% 32.5%;
-  --ring: 187.5 75% 74.9%;
-  --success: 151 44% 50%;
-  --warning: 64.8 72.8% 59.6%;
-  --error: 6.7 57.9% 55%;
+  --background: 234.34 51.456% 20.196%;
+  --foreground: 45 42.857% 89.02%;
+  --card: 233.617 39.496% 23.333%;
+  --card-foreground: 45 42.857% 89.02%;
+  --popover: 234.34 51.456% 20.196%;
+  --popover-foreground: 45 42.857% 89.02%;
+  --primary: 339.775 83.962% 58.431%;
+  --primary-hover: 340 78.75% 68.627%;
+  --primary-foreground: 240 20% 2.941%;
+  --secondary: 198.889 54% 19.608%;
+  --secondary-hover: 176.757 27.407% 26.471%;
+  --secondary-foreground: 47.368 40.426% 90.784%;
+  --muted: 198.824 53.684% 18.627%;
+  --muted-foreground: 178.5 39.216% 80%;
+  --accent: 187.5 75% 74.902%;
+  --accent-foreground: 204.444 65.854% 8.039%;
+  --destructive: 340 78.75% 68.627%;
+  --destructive-foreground: 240 20% 2.941%;
+  --border: 195.714 25.301% 32.549%;
+  --input: 195.714 25.301% 32.549%;
+  --ring: 187.5 75% 74.902%;
+  --success: 64.8 72.816% 59.608%;
+  --warning: 47.586 35.802% 84.118%;
+  --error: 340 78.75% 68.627%;
 
   --surface-page: hsl(var(--background));
   --surface-panel: hsl(var(--card));
   --surface-card: hsl(var(--card));
   --surface-card-hover: hsl(var(--secondary));
   --surface-popover: hsl(var(--popover));
-  --surface-inverse: hsl(var(--neutral-soft));
+  --surface-inverse: hsl(45 42.857% 89.02%);
   --text-primary: hsl(var(--foreground));
   --text-muted: hsl(var(--muted-foreground));
-  --text-inverse: hsl(var(--neutral-strong));
-  --link: hsl(var(--primary));
-  --link-hover: hsl(var(--primary-hover));
+  --text-inverse: hsl(177.931 47.541% 11.961%);
+  --link: hsl(187.5 75% 74.902%);
+  --link-hover: hsl(178.5 39.216% 80%);
   --button-primary: hsl(var(--primary));
   --button-primary-hover: hsl(var(--primary-hover));
   --button-primary-text: hsl(var(--primary-foreground));
   --button-secondary: hsl(var(--secondary));
   --button-secondary-hover: hsl(var(--secondary-hover));
-  --pill-bg: hsl(var(--secondary));
-  --pill-text: hsl(var(--foreground));
+  --pill-bg: hsl(var(--card) / 0.6);
+  --pill-text: hsl(var(--muted-foreground));
   --divider: hsl(var(--border));
-  --shadow-color: 206.4 67.6% 3%;
-  --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.24);
-  --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.42);
+  --shadow-color: 0 0% 0%;
+  --shadow-soft: 0 8px 24px hsl(var(--shadow-color) / 0.2);
+  --shadow-emphasis: 0 18px 50px hsl(var(--shadow-color) / 0.35);
   --heading-shadow: none;
 
   --radius: 0.625rem;
-  --radius-card: var(--radius);
-  --radius-control: calc(var(--radius) - 0.125rem);
+  --radius-card: 0.625rem;
+  --radius-control: 0.625rem;
+  --radius-ui-control: var(--radius-control);
+  --radius-ui-card: var(--radius-card);
+  --radius-ui-menu: var(--radius-card);
   --radius-pill: 9999px;
-  --font-display-theme: 'Mazius Display', Georgia, serif;
-  --font-body-theme: 'EB Garamond', Georgia, serif;
+  --font-display-theme: 'Grinder', Arial, sans-serif;
+  --font-retalic-theme: 'Grinder Retalic', Arial, sans-serif;
+  --font-body-theme: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
   --font-mono-theme: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --code-background: hsl(var(--popover));
-  --code-foreground: hsl(var(--neutral-soft));
-  --code-line-number: hsl(var(--neutral-soft) / 0.35);
+  --code-background: hsl(206.4 67.568% 7.255%);
+  --code-foreground: hsl(45 42.857% 89.02%);
+  --code-line-number: hsl(178.5 39.216% 80% / 0.65);
 
-  --graph-background: hsl(var(--background));
-  --graph-node-profile: hsl(var(--foreground));
-  --graph-node-role: hsl(var(--primary));
-  --graph-node-skill: hsl(var(--accent));
-  --graph-node-article: hsl(var(--foreground));
-  --graph-node-category: hsl(var(--primary));
-  --graph-node-possible: hsl(var(--accent));
-  --graph-node-source: hsl(var(--muted-foreground));
-  --graph-node-topic: hsl(var(--accent));
-  --graph-link: hsl(var(--foreground) / 0.18);
-  --graph-link-active: hsl(var(--accent) / 0.9);
-  --graph-node-active: hsl(var(--foreground));
-  --graph-node-border: hsl(var(--muted-foreground) / 0.5);
-  --graph-node-possible-border: hsl(var(--accent));
-  --graph-label: hsl(var(--foreground) / 0.94);
-  --graph-label-dimmed: hsl(var(--muted-foreground) / 0.55);
+  --graph-background: hsl(234.34 51.456% 20.196%);
+  --graph-node-profile: hsl(45 42.857% 89.02%);
+  --graph-node-role: hsl(339.775 83.962% 58.431%);
+  --graph-node-skill: hsl(187.5 75% 74.902%);
+  --graph-node-article: hsl(45 42.857% 89.02%);
+  --graph-node-category: hsl(340 78.75% 68.627%);
+  --graph-node-possible: hsl(64.8 72.816% 59.608%);
+  --graph-node-source: hsl(187.5 75% 74.902%);
+  --graph-node-topic: hsl(187.5 75% 74.902%);
+  --graph-link: hsl(45 42.857% 89.02% / 0.22);
+  --graph-link-active: hsl(187.5 75% 74.902% / 0.9);
+  --graph-node-active: hsl(48 100% 98.039%);
+  --graph-node-border: hsl(195.714 25.301% 32.549%);
+  --graph-node-possible-border: hsl(64.8 72.816% 59.608%);
+  --graph-label: hsl(45 42.857% 89.02% / 0.96);
+  --graph-label-dimmed: hsl(178.5 39.216% 80% / 0.75);
 
   --map-panel: rgb(10 5 4 / 0.86);
   --map-dialog: hsl(10 43% 7%);
@@ -140,52 +199,51 @@
 [data-theme='light'] {
   color-scheme: light;
 
-  /* Louchi 1.1 day semantic surface map. */
-  --brand-deep: 183.6 62.3% 10.4%;
-  --brand-panel: 44.2 48.7% 92.4%;
-  --brand-raised: 178.5 39.2% 80%;
-  --brand-hover: 339.8 84% 48%;
-  --brand-primary: 339.8 84% 58.4%;
-  --neutral-strong: 177.9 47.5% 12%;
-  --neutral-soft: 45 42.9% 89%;
-  --neutral-muted: 172.3 20% 30.4%;
+  --brand-deep: 183.636 62.264% 10.392%;
+  --brand-panel: 44.211 48.718% 92.353%;
+  --brand-raised: 178.5 39.216% 80%;
+  --brand-hover: 340 78.75% 68.627%;
+  --brand-primary: 339.775 83.962% 58.431%;
+  --neutral-strong: 240 20% 2.941%;
+  --neutral-soft: 45 42.857% 89.02%;
+  --neutral-muted: 172.258 20% 30.392%;
 
-  --background: var(--neutral-soft);
-  --foreground: var(--neutral-strong);
-  --card: var(--brand-panel);
-  --card-foreground: var(--neutral-strong);
-  --popover: var(--brand-panel);
-  --popover-foreground: var(--neutral-strong);
-  --primary: var(--brand-primary);
-  --primary-hover: var(--brand-hover);
-  --primary-foreground: var(--neutral-soft);
-  --secondary: var(--brand-raised);
-  --secondary-hover: 178.5 39.2% 72%;
-  --secondary-foreground: var(--neutral-strong);
-  --muted: 102 18.5% 89.4%;
-  --muted-foreground: var(--neutral-muted);
-  --accent: 64.8 72.8% 59.6%;
-  --accent-foreground: var(--neutral-strong);
-  --destructive: 6.7 57.9% 45.7%;
-  --destructive-foreground: var(--neutral-soft);
-  --border: 162.9 12% 65.7%;
-  --input: 162.9 12% 65.7%;
-  --ring: var(--brand-primary);
-  --success: 151 44% 36%;
-  --warning: 54 72% 38%;
-  --error: 6.7 57.9% 45.7%;
+  --background: 45 42.857% 89.02%;
+  --foreground: 177.931 47.541% 11.961%;
+  --card: 44.211 48.718% 92.353%;
+  --card-foreground: 177.931 47.541% 11.961%;
+  --popover: 44.211 48.718% 92.353%;
+  --popover-foreground: 177.931 47.541% 11.961%;
+  --primary: 339.775 83.962% 58.431%;
+  --primary-hover: 340 78.75% 68.627%;
+  --primary-foreground: 240 20% 2.941%;
+  --secondary: 178.5 39.216% 80%;
+  --secondary-hover: 178.442 39.896% 62.157%;
+  --secondary-foreground: 177.931 47.541% 11.961%;
+  --muted: 102 18.519% 89.412%;
+  --muted-foreground: 172.258 20% 30.392%;
+  --accent: 64.8 72.816% 59.608%;
+  --accent-foreground: 177.931 47.541% 11.961%;
+  --destructive: 6.667 57.94% 45.686%;
+  --destructive-foreground: 48 100% 98.039%;
+  --border: 162.857 12% 65.686%;
+  --input: 162.857 12% 65.686%;
+  --ring: 177.931 47.541% 11.961%;
+  --success: 70 51.316% 29.804%;
+  --warning: 34.706 66.234% 30.196%;
+  --error: 6.667 57.94% 45.686%;
 
   --surface-page: hsl(var(--background));
   --surface-panel: hsl(var(--card));
   --surface-card: hsl(var(--card));
-  --surface-card-hover: hsl(var(--secondary-hover));
+  --surface-card-hover: hsl(var(--secondary));
   --surface-popover: hsl(var(--popover));
-  --surface-inverse: hsl(var(--neutral-strong));
+  --surface-inverse: hsl(177.931 47.541% 11.961%);
   --text-primary: hsl(var(--foreground));
   --text-muted: hsl(var(--muted-foreground));
-  --text-inverse: hsl(var(--neutral-soft));
-  --link: hsl(var(--primary));
-  --link-hover: hsl(var(--primary-hover));
+  --text-inverse: hsl(45 42.857% 89.02%);
+  --link: hsl(176.757 27.407% 26.471%);
+  --link-hover: hsl(177.931 47.541% 11.961%);
   --button-primary: hsl(var(--primary));
   --button-primary-hover: hsl(var(--primary-hover));
   --button-primary-text: hsl(var(--primary-foreground));
@@ -200,33 +258,37 @@
   --heading-shadow: none;
 
   --radius: 0.625rem;
-  --radius-card: var(--radius);
-  --radius-control: calc(var(--radius) - 0.125rem);
+  --radius-card: 0.625rem;
+  --radius-control: 0.625rem;
+  --radius-ui-control: var(--radius-control);
+  --radius-ui-card: var(--radius-card);
+  --radius-ui-menu: var(--radius-card);
   --radius-pill: 9999px;
-  --font-display-theme: 'Mazius Display', Georgia, serif;
-  --font-body-theme: 'EB Garamond', Georgia, serif;
+  --font-display-theme: 'Grinder', Arial, sans-serif;
+  --font-retalic-theme: 'Grinder Retalic', Arial, sans-serif;
+  --font-body-theme: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
   --font-mono-theme: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --code-background: hsl(var(--brand-deep));
-  --code-foreground: hsl(var(--neutral-soft));
-  --code-line-number: hsl(var(--neutral-soft) / 0.42);
+  --code-background: hsl(206.4 67.568% 7.255%);
+  --code-foreground: hsl(45 42.857% 89.02%);
+  --code-line-number: hsl(178.5 39.216% 80% / 0.65);
 
-  --graph-background: hsl(var(--background));
-  --graph-node-profile: hsl(var(--foreground));
-  --graph-node-role: hsl(var(--primary));
-  --graph-node-skill: hsl(var(--accent));
-  --graph-node-article: hsl(var(--foreground));
-  --graph-node-category: hsl(var(--primary));
-  --graph-node-possible: hsl(var(--accent));
-  --graph-node-source: hsl(var(--muted-foreground));
-  --graph-node-topic: hsl(var(--accent));
-  --graph-link: hsl(var(--foreground) / 0.22);
-  --graph-link-active: hsl(var(--primary) / 0.88);
-  --graph-node-active: hsl(var(--primary-hover));
-  --graph-node-border: hsl(var(--foreground) / 0.5);
-  --graph-node-possible-border: hsl(var(--accent-foreground));
-  --graph-label: hsl(var(--foreground) / 0.94);
-  --graph-label-dimmed: hsl(var(--foreground) / 0.48);
+  --graph-background: hsl(45 42.857% 89.02%);
+  --graph-node-profile: hsl(177.931 47.541% 11.961%);
+  --graph-node-role: hsl(339.775 83.962% 58.431%);
+  --graph-node-skill: hsl(64.8 72.816% 59.608%);
+  --graph-node-article: hsl(177.931 47.541% 11.961%);
+  --graph-node-category: hsl(340.5 48.387% 48.627%);
+  --graph-node-possible: hsl(70 51.316% 29.804%);
+  --graph-node-source: hsl(176.757 27.407% 26.471%);
+  --graph-node-topic: hsl(64.8 72.816% 59.608%);
+  --graph-link: hsl(177.931 47.541% 11.961% / 0.22);
+  --graph-link-active: hsl(64.8 72.816% 59.608% / 0.9);
+  --graph-node-active: hsl(177.931 47.541% 11.961%);
+  --graph-node-border: hsl(162.857 12% 65.686%);
+  --graph-node-possible-border: hsl(70 51.316% 29.804%);
+  --graph-label: hsl(177.931 47.541% 11.961% / 0.96);
+  --graph-label-dimmed: hsl(172.258 20% 30.392% / 0.75);
 
   /* The map remains art-directed; its compact contract is intentionally fixed. */
   --map-panel: rgb(10 5 4 / 0.86);
@@ -309,6 +371,9 @@
   --radius: 0.125rem;
   --radius-card: 0.125rem;
   --radius-control: 0;
+  --radius-ui-control: 0;
+  --radius-ui-card: 0;
+  --radius-ui-menu: 0.25rem;
   --radius-pill: 9999px;
   /*
    * The reference uses Space Grotesk, Inter, and JetBrains Mono. Keep this
@@ -423,6 +488,9 @@
   --radius: 0.125rem;
   --radius-card: 0.125rem;
   --radius-control: 0;
+  --radius-ui-control: 0;
+  --radius-ui-card: 0;
+  --radius-ui-menu: 0.25rem;
   --radius-pill: 9999px;
   --font-display-theme: 'RaidGuild Classic Uncial', Georgia, serif;
   --font-body-theme: 'RaidGuild Classic Texturina', Georgia, serif;

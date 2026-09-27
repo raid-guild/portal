@@ -99,7 +99,7 @@ export const ModuleNotificationSignup: React.FC<ModuleNotificationSignupProps> =
         <div className="flex flex-wrap gap-3">
           <button
             className={
-              subscribed ? 'portal-admin-link border-primary text-primary' : 'portal-admin-link'
+              subscribed ? 'portal-admin-link border-primary text-link' : 'portal-admin-link'
             }
             disabled={isSaving || !emailVerified}
             onClick={() => void savePreference(true)}

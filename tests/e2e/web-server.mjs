@@ -80,6 +80,8 @@ async function main() {
   await waitForPostgres()
 
   run('corepack', ['pnpm', 'deps:native'])
+  // Match Railway: the image must build against an empty database before migrations.
+  run('corepack', ['pnpm', 'build'])
   // Establish the clean test schema before the app starts. Production deploys
   // run this as Railway's pre-deploy command, separately from image builds.
   run('corepack', ['pnpm', 'payload', 'migrate'])
@@ -98,7 +100,6 @@ async function main() {
     '-c',
     `DO $$ BEGIN IF to_regclass('public.payload_migrations') IS NULL THEN RAISE EXCEPTION 'Payload migrations did not initialize the E2E database'; END IF; END $$;`,
   ])
-  run('corepack', ['pnpm', 'build'])
 
   const app = isWindows
     ? spawn('cmd.exe', ['/c', 'corepack', 'pnpm', 'start'], {

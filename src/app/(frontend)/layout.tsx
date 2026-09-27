@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const widgetBubbleEnabled = isWidgetBubbleEnabled()
 
   return (
-    <html data-brand-reign="louchi" lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <head>
         <InitTheme />
         <script

@@ -406,7 +406,7 @@ const PublicCohortSection: React.FC<{
               <span className="portal-pill">{cohort.programStatus.replaceAll('-', ' ')}</span>
             </div>
             <h3 className="mt-3 portal-heading-sm">{cohortLabel}</h3>
-            <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
+            <p className="mt-2 font-serif text-xl font-bold text-link">{cohort.theme}</p>
             <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
               {cohort.summary}
             </p>
@@ -811,7 +811,7 @@ const DashboardNavItem: React.FC<{
       className="group flex min-h-24 items-center gap-4 px-4 py-4 transition-colors hover:bg-card/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:px-5"
       href={href}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-link-hover">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -820,7 +820,7 @@ const DashboardNavItem: React.FC<{
       </span>
       <ArrowRight
         aria-hidden="true"
-        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-link-hover"
       />
     </Link>
   </li>
@@ -916,7 +916,7 @@ const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
         />
       ) : null}
       <div className="flex flex-wrap items-center gap-3">
-        <p className="portal-kicker text-primary">{spotlight.kind}</p>
+        <p className="portal-kicker text-link">{spotlight.kind}</p>
         {spotlight.expiresAt ? (
           <span className="text-xs text-muted-foreground">
             Until {formatDate(spotlight.expiresAt)}
@@ -936,7 +936,7 @@ const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
         </p>
       ) : null}
       {target.label ? (
-        <p className="mt-5 inline-flex border border-primary/70 px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary">
+        <p className="mt-5 inline-flex border border-primary/70 px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] text-link">
           {target.label}
         </p>
       ) : null}
@@ -1085,7 +1085,7 @@ const RecentContributorsList: React.FC<{ contributors: RecentContributor[] }> = 
               src={avatarURL}
             />
           ) : (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-xs font-bold uppercase text-primary">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-xs font-bold uppercase text-link">
               {getInitials(label)}
             </span>
           )}

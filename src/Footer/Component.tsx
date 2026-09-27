@@ -29,23 +29,23 @@ export async function Footer() {
   const navItems = footer?.navItems || []
 
   return (
-    <footer className="border-t border-border bg-background text-foreground" data-portal-footer>
-      <div className="container flex flex-col gap-8 py-10 md:flex-row md:items-center md:justify-between">
+    <footer className="border-t border-border bg-card text-foreground" data-portal-footer>
+      <div className="container flex flex-col gap-8 py-8 md:flex-row md:justify-between">
         <Link className="flex items-center" href="/">
           <Logo />
         </Link>
 
-        <div className="flex flex-col-reverse items-start gap-5 md:flex-row md:items-center">
+        <div className="flex flex-col-reverse items-start gap-4 md:flex-row md:items-center">
           <ThemeSelector />
           <nav className="flex flex-col md:flex-row gap-4" aria-label="Footer navigation">
             {navItems.map(({ link }, i) => {
-              return <CMSLink className="text-foreground hover:text-primary" key={i} {...link} />
+              return <CMSLink className="text-foreground hover:text-link-hover" key={i} {...link} />
             })}
           </nav>
           <nav className="flex gap-4" aria-label="RaidGuild social links">
             {socialLinks.map((link) => (
               <a
-                className="text-foreground transition-colors hover:text-primary"
+                className="text-foreground transition-colors hover:text-link-hover"
                 href={link.url}
                 key={link.label}
                 rel="noreferrer"

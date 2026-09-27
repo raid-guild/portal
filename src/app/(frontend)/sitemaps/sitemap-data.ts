@@ -9,9 +9,7 @@ import {
   SITEMAP_SHARD_ENTRY_LIMIT,
   type SitemapDocument,
 } from '../sitemap-config'
-import { getSitemapShardIDs, SITEMAP_COLLECTIONS } from '../sitemap-shards'
-
-export const revalidate = 3600
+import { SITEMAP_COLLECTIONS } from '../sitemap-shards'
 
 type SitemapPage = {
   docs: SitemapDocument[]
@@ -36,10 +34,6 @@ const collectDocuments = async (
   }
 
   return documents.slice(0, SITEMAP_SHARD_ENTRY_LIMIT)
-}
-
-export async function generateSitemaps(): Promise<Array<{ id: string }>> {
-  return getSitemapShardIDs()
 }
 
 export default async function sitemap({

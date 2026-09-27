@@ -168,7 +168,7 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
                 <button
                   className={
                     values[field.key] === option
-                      ? 'portal-admin-link border-primary text-primary'
+                      ? 'portal-admin-link border-primary text-link'
                       : 'portal-admin-link'
                   }
                   disabled={option === 'email' && !emailVerified}
@@ -199,7 +199,7 @@ export const NotificationPreferencesForm: React.FC<NotificationPreferencesFormPr
               <button
                 className={
                   activityDigestFrequency === option
-                    ? 'portal-admin-link border-primary text-primary'
+                    ? 'portal-admin-link border-primary text-link'
                     : 'portal-admin-link'
                 }
                 key={option}

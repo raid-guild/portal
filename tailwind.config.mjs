@@ -1,7 +1,28 @@
 /** @type {import('tailwindcss').Config} */
-const tailwindConfig = {
+export default {
+  content: [
+    './pages/**/*.{ts,tsx}',
+    './components/**/*.{ts,tsx}',
+    './app/**/*.{ts,tsx}',
+    './src/**/*.{ts,tsx}',
+  ],
   darkMode: ['selector', '[data-theme="raidguild-dark"]'],
+  plugins: [require('tailwindcss-animate'), require('@tailwindcss/typography')],
   prefix: '',
+  safelist: [
+    'lg:col-span-4',
+    'lg:col-span-6',
+    'lg:col-span-8',
+    'lg:col-span-12',
+    'border-border',
+    'bg-card',
+    'border-error',
+    'bg-error/30',
+    'border-success',
+    'bg-success/30',
+    'border-warning',
+    'bg-warning/30',
+  ],
   theme: {
     container: {
       center: true,
@@ -14,7 +35,7 @@ const tailwindConfig = {
         xl: '2rem',
       },
       screens: {
-        '2xl': '80rem',
+        '2xl': '86rem',
         lg: '64rem',
         md: '48rem',
         sm: '40rem',
@@ -60,6 +81,8 @@ const tailwindConfig = {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
+        link: 'var(--link)',
+        'link-hover': 'var(--link-hover)',
         ring: 'hsl(var(--ring))',
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
@@ -136,5 +159,3 @@ const tailwindConfig = {
     },
   },
 }
-
-export default tailwindConfig

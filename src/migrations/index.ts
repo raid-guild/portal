@@ -54,6 +54,7 @@ import * as migration_20260724_180000_cohort_commitment_cascades from './2026072
 import * as migration_20260727_192500_module_thumbnail from './20260727_192500_module_thumbnail'
 import * as migration_20260814_120000_profile_wallet_verification from './20260814_120000_profile_wallet_verification'
 import * as migration_20260814_130000_module_launch_identity_claim_flags from './20260814_130000_module_launch_identity_claim_flags'
+import * as migration_20260827_140000_category_slug from './20260827_140000_category_slug'
 
 export const migrations = [
   {
@@ -335,5 +336,10 @@ export const migrations = [
     up: migration_20260814_130000_module_launch_identity_claim_flags.up,
     down: migration_20260814_130000_module_launch_identity_claim_flags.down,
     name: '20260814_130000_module_launch_identity_claim_flags',
+  },
+  {
+    up: migration_20260827_140000_category_slug.up,
+    down: migration_20260827_140000_category_slug.down,
+    name: '20260827_140000_category_slug',
   },
 ]

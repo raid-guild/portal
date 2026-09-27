@@ -85,7 +85,7 @@ export const CohortCalloutCard: React.FC<Props> = ({
         </span>
       </div>
       <h2 className="portal-heading-sm mt-3">{heading}</h2>
-      <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
+      <p className="mt-2 font-serif text-xl font-bold text-link">{cohort.theme}</p>
       {countdown ? (
         <div className="mt-4 border-l-2 border-primary bg-background/30 px-4 py-3">
           <p className="font-serif text-lg font-bold text-foreground">{countdown.label}</p>

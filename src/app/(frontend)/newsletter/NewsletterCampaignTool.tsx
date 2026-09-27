@@ -578,22 +578,22 @@ export const NewsletterCampaignTool: React.FC<Props> = ({
 }
 
 const inputClassName =
-  'h-11 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+  'h-11 w-full rounded-[var(--radius-ui-control)] border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
 
 const sourceModeButtonClassName =
-  'min-h-16 rounded-sm border border-border bg-transparent p-4 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+  'min-h-16 rounded-[var(--radius-ui-control)] border border-border bg-transparent p-4 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-link-hover'
 
-const sourceModeButtonActiveClassName = `${sourceModeButtonClassName} border-primary text-primary`
+const sourceModeButtonActiveClassName = `${sourceModeButtonClassName} border-primary text-link`
 
 const audienceButtonClassName =
-  'flex min-h-16 w-full items-center justify-between gap-4 rounded-sm border border-border bg-background/40 p-4 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+  'flex min-h-16 w-full items-center justify-between gap-4 rounded-[var(--radius-ui-control)] border border-border bg-background/40 p-4 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-link-hover'
 
-const audienceButtonActiveClassName = `${audienceButtonClassName} border-primary text-primary`
+const audienceButtonActiveClassName = `${audienceButtonClassName} border-primary text-link`
 
 const postOptionButtonClassName =
-  'flex min-h-14 w-full items-center justify-between gap-4 rounded-sm border border-transparent p-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary'
+  'flex min-h-14 w-full items-center justify-between gap-4 rounded-[var(--radius-ui-control)] border border-transparent p-3 text-left font-mono text-xs uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-link-hover'
 
-const postOptionButtonActiveClassName = `${postOptionButtonClassName} border-primary text-primary`
+const postOptionButtonActiveClassName = `${postOptionButtonClassName} border-primary text-link`
 
 const getInitialPostSearch = (campaign?: NewsletterCampaign | null): string => {
   if (!campaign || typeof campaign.post === 'number') return ''
@@ -610,7 +610,7 @@ const NewsletterField: React.FC<{
   <label className="block">
     <span className="flex items-center gap-2 text-sm font-bold text-foreground">
       {label}
-      {required ? <span className="text-primary">*</span> : null}
+      {required ? <span className="text-link">*</span> : null}
     </span>
     <span className="mt-2 block">{children}</span>
     {help ? (

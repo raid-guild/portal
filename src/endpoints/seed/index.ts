@@ -259,23 +259,33 @@ export const seed = async ({
 
     // Create categories
     payload.logger.info(`- Seeding categories...`)
-    await Promise.all([
+    const [, , , cohortCategory] = await Promise.all([
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'technology',
           title: 'Technology',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'news',
           title: 'News',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'finance',
           title: 'Finance',
+        },
+      }),
+      payload.create({
+        collection: 'categories',
+        data: {
+          slug: 'cohort',
+          title: 'Cohort',
         },
       }),
     ])
@@ -284,18 +294,21 @@ export const seed = async ({
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'design',
           title: 'Design',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'software',
           title: 'Software',
         },
       }),
       payload.create({
         collection: 'categories',
         data: {
+          slug: 'engineering',
           title: 'Engineering',
         },
       }),
@@ -315,6 +328,7 @@ export const seed = async ({
           ),
         ]),
         authors: [demoAuthor.id],
+        categories: [cohortCategory.id],
         meta: {
           description:
             'A seeded portal update for validating public post, comment, and moderation flows.',

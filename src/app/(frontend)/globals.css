@@ -1,12 +1,6 @@
-@import 'tailwindcss';
-@import 'tw-animate-css';
-
-@config '../../../tailwind.config.mjs';
-@plugin '@tailwindcss/typography';
-
-/* Content block columns are assembled dynamically and cannot be discovered
-   from complete class names in source. */
-@source inline('lg:col-span-4 lg:col-span-6 lg:col-span-8 lg:col-span-12');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -32,31 +26,17 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-body-theme);
-    font-variant: normal;
-    font-variant-caps: normal;
     font-feature-settings:
       'kern' 1,
-      'liga' 1,
-      'smcp' 0,
-      'c2sc' 0,
-      'pcap' 0,
-      'c2pc' 0;
-    transition:
-      background-color 240ms ease,
-      color 240ms ease;
+      'liga' 1;
   }
 
   h1,
   h2,
   h3 {
+    @apply font-bold;
     font-family: var(--font-display-theme);
-    font-weight: 700;
     text-shadow: var(--heading-shadow);
-  }
-
-  strong,
-  b {
-    font-weight: inherit;
   }
 
   a {
@@ -66,27 +46,27 @@
 
 @layer components {
   .portal-kicker {
-    @apply font-mono text-xs leading-5 text-muted-foreground;
+    @apply font-mono text-xs uppercase leading-none tracking-[0.08em] text-muted-foreground;
   }
 
   .portal-title {
-    @apply font-display text-5xl font-bold leading-[1.05] tracking-[-0.01em] text-foreground md:text-6xl;
+    @apply font-display text-4xl font-bold leading-[1.08] text-foreground md:text-5xl;
   }
 
   .portal-title-lg {
-    @apply font-display text-5xl font-bold leading-[0.98] tracking-[-0.02em] text-foreground sm:text-6xl md:text-7xl lg:text-[5rem];
+    @apply font-display text-5xl font-bold leading-[1.05] text-foreground md:text-6xl;
   }
 
   .portal-heading {
-    @apply font-display text-3xl font-bold leading-[1.15] text-foreground md:text-4xl;
+    @apply font-display text-2xl font-bold leading-tight text-foreground;
   }
 
   .portal-heading-sm {
-    @apply font-display text-xl font-bold leading-[1.25] text-foreground md:text-2xl;
+    @apply font-display text-xl font-bold leading-tight text-foreground;
   }
 
   .portal-body {
-    @apply text-lg leading-7 text-muted-foreground;
+    @apply text-base leading-7 text-muted-foreground;
   }
 
   .portal-body-sm {
@@ -94,20 +74,18 @@
   }
 
   .portal-band {
-    @apply border-t border-border py-14 md:py-20;
+    @apply border-y border-border py-12;
     background: var(--surface-page);
   }
 
   .portal-panel {
-    @apply border border-border p-5 md:p-6;
+    @apply border border-border p-5;
     background: var(--surface-panel);
-    border-radius: var(--radius-card);
   }
 
   .portal-card {
-    @apply border border-border p-5 transition-colors md:p-6;
+    @apply border border-border p-5 transition-colors;
     background: var(--surface-card);
-    border-radius: var(--radius-card);
     box-shadow: var(--shadow-soft);
   }
 
@@ -119,21 +97,20 @@
     @apply border border-border px-2 py-1 font-mono text-xs leading-none;
     background: var(--pill-bg);
     color: var(--pill-text);
-    border-radius: var(--radius-pill);
   }
 
   .portal-link {
-    @apply text-base text-foreground underline decoration-primary/60 transition-colors hover:text-primary;
+    @apply text-sm font-bold text-foreground underline decoration-primary/50 transition-colors hover:text-[var(--link-hover)];
   }
 
   .portal-admin-link {
-    @apply inline-flex h-10 items-center border border-border bg-transparent px-4 font-mono text-sm text-foreground transition-colors hover:border-primary hover:text-primary;
-    border-radius: var(--radius-control);
+    border-radius: var(--radius-ui-control);
+    @apply inline-flex h-10 items-center border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-[var(--link-hover)];
   }
 
   .portal-select {
-    @apply h-11 w-full border border-border bg-background px-3 text-base text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
-    border-radius: var(--radius-control);
+    border-radius: var(--radius-ui-control);
+    @apply h-10 w-full border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   .portal-field,
@@ -143,7 +120,7 @@
   }
 
   .portal-field {
-    @apply h-11;
+    @apply h-12;
   }
 
   .portal-textarea {
@@ -160,12 +137,106 @@
   .portal-empty-state {
     @apply border border-border p-4 text-muted-foreground;
     background: var(--surface-panel);
-    border-radius: var(--radius-card);
   }
 
   .portal-section-divider {
     border-color: var(--divider);
   }
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(.portal-panel, .portal-card, .portal-menu, .portal-callout, .portal-empty-state):not(
+    .map-dashboard-screen,
+    .map-dashboard-screen *
+  ) {
+  border-radius: var(--radius-card);
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  .portal-pill:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  border-radius: var(--radius-pill);
+}
+
+/* Existing mark geometry, with an explicit ink asset for the Day canvas. */
+.portal-logo-ink {
+  display: none;
+}
+html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-default {
+  display: none;
+}
+html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-ink {
+  display: block;
+}
+
+/* Louchi display cuts have native weight 400. Keep map pixel typography intact. */
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    [class*='portal-title'],
+    [class*='portal-heading'],
+    .font-display
+  ):not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-display-theme);
+  font-weight: 400;
+  font-synthesis: none;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  .font-retalic:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-retalic-theme);
+  font-style: normal;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    [class*='portal-title'],
+    [class*='portal-heading'],
+    .font-display
+  ):not(.map-dashboard-screen, .map-dashboard-screen *)
+  .font-bold {
+  font-weight: 400;
+  font-synthesis: none;
 }
 
 /* Route transition feedback. Portal routes are dynamic, so a click can wait on
@@ -225,6 +296,9 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-dashboard-screen {
+  --radius-ui-control: 0;
+  --radius-ui-card: 0;
+  --radius-ui-menu: 0.25rem;
   color: var(--map-text);
   image-rendering: pixelated;
   overflow: hidden;

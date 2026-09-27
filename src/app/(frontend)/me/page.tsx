@@ -259,7 +259,7 @@ const CreatedList: React.FC<{
       {items.length ? (
         items.map((item) => (
           <article className="text-sm" key={item.id}>
-            <Link className="font-medium hover:text-primary" href={recordHref(item)}>
+            <Link className="font-medium hover:text-link-hover" href={recordHref(item)}>
               {item.title}
             </Link>
             {'_status' in item ? <p className="portal-kicker">{item._status || 'draft'}</p> : null}

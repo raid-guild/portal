@@ -1,5 +1,11 @@
 # Portal Implementation Checklist
 
+## Public module catalog
+
+- [x] Add an allowlisted anonymous catalog for enabled/public modules.
+- [x] Preserve authenticated collection access and signed-launch checks.
+- [ ] Deploy through staging and verify the community website integration.
+
 ## Phase 1: Access Foundations
 
 - [x] Add auth roles to `users`.
@@ -220,7 +226,8 @@
       related primitives, and graduation criteria fields.
 - [x] Add module categories for grouping modules beyond lifecycle status.
 - [x] Add `/modules` discovery page for visible enabled modules.
-- [x] Present modules as compact discovery rows with optional CMS thumbnails
+- [x] Present modules in a responsive Guild Cabinet with Tools / Artifacts tabs,
+      an Arcade destination, search, category filters, and optional CMS thumbnails
       and category-based fallback visuals.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
@@ -305,3 +312,19 @@
 - [ ] Module/plugin registry.
 - [ ] Discord replacement features.
 - [ ] Project management features.
+
+Sitemap shards use on-demand ISR at `/sitemaps/sitemap/[id].xml` (one-hour
+revalidation). Build-time static params are empty so a fresh Railway preview can
+build before its pre-deploy migrations create CMS tables. Robots discovers live
+shard IDs at request time; sitemap queries retain anonymous access filters.
+
+The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
+text, and controls in all three destinations. The decorative Arcade entrance
+retains its dark illustrated palette independently of the selected theme.
+
+Module favorites are browser-local IDs stored under `raidguild:module-favorites:v1`.
+The Favorites destination replaces the Arcade tab and includes only currently
+accessible module records across Tools, Artifacts, and games. Arcade remains
+reachable through its desktop entrance or mobile shortcut. Favorites are not
+account-synced, public likes, or usage tracking; unavailable storage falls back
+to the current visit with a visible notice.

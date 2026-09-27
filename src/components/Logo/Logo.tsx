@@ -1,3 +1,4 @@
+import clsx from 'clsx'
 import React from 'react'
 
 interface Props {
@@ -6,21 +7,35 @@ interface Props {
   priority?: 'auto' | 'high' | 'low'
 }
 
-export const Logo = ({ className }: Props) => {
+export const Logo = (props: Props) => {
+  const { loading: loadingFromProps, priority: priorityFromProps, className } = props
+
+  const loading = loadingFromProps || 'lazy'
+  const priority = priorityFromProps || 'low'
+
   return (
-    <span className={`inline-flex items-center gap-3 text-foreground ${className || ''}`}>
-      <span
-        aria-label="RaidGuild crossed swords"
-        className="block h-10 w-10 shrink-0 bg-current"
-        role="img"
-        style={{
-          mask: "url('/assets/symbol-m800.svg') center / contain no-repeat",
-          WebkitMask: "url('/assets/symbol-m800.svg') center / contain no-repeat",
-        }}
+    /* eslint-disable @next/next/no-img-element */
+    <>
+      <img
+        alt="RaidGuild Cohort"
+        width={609}
+        height={164}
+        loading={loading}
+        fetchPriority={priority}
+        decoding="async"
+        className={clsx('portal-logo-default w-full max-w-[11rem] h-auto', className)}
+        src="/assets/raidguild-cohort-logo.svg"
       />
-      <span className="hidden font-display text-xl font-bold leading-none tracking-[-0.01em] sm:inline">
-        RaidGuild Portal
-      </span>
-    </span>
+      <img
+        alt="RaidGuild Cohort"
+        width={609}
+        height={164}
+        loading={loading}
+        fetchPriority={priority}
+        decoding="async"
+        className={clsx('portal-logo-ink w-full max-w-[11rem] h-auto', className)}
+        src="/assets/raidguild-cohort-logo-ink.svg"
+      />
+    </>
   )
 }

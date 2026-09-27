@@ -256,6 +256,22 @@ function lexicalListContent(items: string[]) {
   }
 }
 
+async function verifyOrdinaryContentHeaderThemes(browser: Browser) {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  for (const theme of ['raidguild-dark', 'raidguild-light']) {
+    await page.goto('/login')
+    await page.evaluate((value) => window.localStorage.setItem('payload-theme', value), theme)
+    for (const route of ['/posts', '/search', `/posts/${seededPosts[0].slug}`]) {
+      const response = await page.goto(route)
+      expect(response?.ok(), `Expected content route ${route} to load successfully`).toBeTruthy()
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+      await expect(page.locator('[data-portal-header]')).toHaveAttribute('data-theme', theme)
+    }
+  }
+  await context.close()
+}
+
 test('defaults to the system theme and persists explicit theme preferences', async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
@@ -268,10 +284,8 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await page.goto('/login')
   const header = page.locator('[data-portal-header]')
 
-  await expect(page.locator('html')).toHaveAttribute('data-brand-reign', 'louchi')
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
   await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(239, 233, 215)')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
@@ -281,6 +295,33 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
   await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
   await page.emulateMedia({ colorScheme: 'light' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
+  const loadedFonts = await page.evaluate(async () => {
+    const requests = [
+      '400 24px "Grinder"',
+      'italic 400 24px "Grinder"',
+      '400 24px "Grinder Retalic"',
+      '400 16px "Ubuntu"',
+      'italic 400 16px "Ubuntu"',
+      '400 12px "Ubuntu Mono"',
+      '700 12px "Ubuntu Mono"',
+    ]
+    return Promise.all(
+      requests.map(async (request) => {
+        const faces = await document.fonts.load(request, 'RaidGuild')
+        return faces.length > 0 && faces.every((face) => face.status === 'loaded')
+      }),
+    )
+  })
+  expect(loadedFonts).toEqual(Array(7).fill(true))
+  await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
+  const displayHeading = page.locator('h1').first()
+  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
+  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
+  await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -290,10 +331,17 @@ test('defaults to the system theme and persists explicit theme preferences', asy
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-light')
 
+  await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
+  await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
+
+  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
+  await expect(displayHeading).toHaveCSS('font-weight', '400')
+
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
   await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
   await page.getByRole('combobox', { name: 'Select a theme' }).click()
   await expect(page.getByRole('option', { name: 'System' })).toBeVisible()
   await page.keyboard.press('Escape')
@@ -308,8 +356,8 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
 
   await page.getByRole('combobox', { name: 'Select a theme' }).click()
-  await expect(page.getByRole('option', { name: 'Louchi Night' })).toBeVisible()
-  await expect(page.getByRole('option', { name: 'Louchi Day' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'RaidGuild Dark' })).toBeVisible()
+  await expect(page.getByRole('option', { name: 'RaidGuild Light' })).toBeVisible()
   await expect(page.getByRole('option', { name: 'RaidGuild AI' })).toBeVisible()
   await page.getByRole('option', { name: 'RaidGuild Classic' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
@@ -318,6 +366,9 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-classic')
+
+  await expect(displayHeading).toHaveCSS('font-family', /RaidGuild Classic Uncial/)
+  await expect(displayHeading).toHaveCSS('text-transform', 'none')
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
@@ -433,7 +484,7 @@ async function expectVerticalOrder(locators: Locator[]) {
   }
 }
 
-async function verifySeededPosts(page: Page) {
+async function verifySeededPosts(adminPage: Page, page: Page) {
   const postsResponse = await page.goto('/posts')
   const postsURL = new URL('/posts', postsResponse!.url()).toString()
   await expect(page.getByRole('heading', { name: 'Posts' })).toBeVisible()
@@ -510,6 +561,39 @@ async function verifySeededPosts(page: Page) {
     await expect(cohortCard.getByText('Starts June 1, 2030')).toBeVisible()
     await expectVerticalOrder([cohortCard, commentsHeading])
   }
+
+  const suffix = Date.now()
+  const generalPostSlug = `general-inquiry-footer-${suffix}`
+  const generalPostResponse = await adminPage.request.post('/api/posts', {
+    data: {
+      _status: 'published',
+      content: lexicalContent('A public post without the cohort category.'),
+      publishedAt: new Date().toISOString(),
+      slug: generalPostSlug,
+      title: `General inquiry footer ${suffix}`,
+      visibility: 'public',
+    },
+  })
+  expect(generalPostResponse.status()).toBe(201)
+
+  await installPlausibleCapture(page)
+  await page.goto(`/posts/${generalPostSlug}`)
+  const generalCard = page.getByRole('region', { name: 'Work with RaidGuild' })
+  const generalLink = generalCard.getByRole('link', { name: 'Make a general inquiry' })
+  await expect(generalLink).toHaveAttribute('href', '/inquire/general')
+  await expect(page.getByRole('region', { name: 'RaidGuild cohort' })).toHaveCount(0)
+  await expectVerticalOrder([generalCard, page.getByRole('heading', { name: 'Comments' })])
+  await generalLink.click()
+  await expect(page).toHaveURL(/\/inquire\/general$/)
+  expect(await capturedPlausibleEvents(page, 'Inquiry CTA Clicked')).toContainEqual({
+    name: 'Inquiry CTA Clicked',
+    props: {
+      form_variant: 'typed',
+      inquiry_type: 'general',
+      placement: 'post_footer_general_inquiry',
+      post_slug: generalPostSlug,
+    },
+  })
 }
 
 test('normalizes legacy article title suffixes', () => {
@@ -968,6 +1052,40 @@ async function verifyPublicLLMsText(adminPage: Page, publicPage: Page) {
   expect(llmsText).not.toContain('/admin')
   expect(llmsText).not.toContain('/next/preview')
   expect(llmsText).not.toContain('sourceArtifact')
+
+  const htmlResponse = await publicPage.request.get('/')
+  expect(htmlResponse.headers()['content-type']).toContain('text/html')
+  expect(htmlResponse.headers().link).toContain('</llms.txt>; rel="service-doc"')
+  expect(htmlResponse.headers().link).toContain('</sitemap.xml>; rel="sitemap"')
+
+  const markdownHeaders = { Accept: 'text/html, text/markdown; q=0.9' }
+  const homeMarkdown = await publicPage.request.get('/', { headers: markdownHeaders })
+  expect(homeMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await homeMarkdown.text()).toContain('# RaidGuild Portal')
+
+  const listMarkdown = await publicPage.request.get('/posts', { headers: markdownHeaders })
+  expect(listMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await listMarkdown.text()).toContain(publicTitle)
+
+  const detailMarkdown = await publicPage.request.get(`/posts/llms-public-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(detailMarkdown.headers()['content-type']).toContain('text/markdown')
+  expect(await detailMarkdown.text()).toContain(publicTitle)
+
+  const privateMarkdown = await publicPage.request.get(`/posts/llms-member-post-${suffix}`, {
+    headers: markdownHeaders,
+  })
+  expect(privateMarkdown.status()).toBe(404)
+  expect(await privateMarkdown.text()).not.toContain(memberTitle)
+
+  for (const excludedPath of ['/admin', '/api/users', '/login', '/dashboard', '/me']) {
+    const excludedResponse = await publicPage.request.get(excludedPath, {
+      headers: { Accept: 'text/markdown' },
+      maxRedirects: 0,
+    })
+    expect(excludedResponse.headers()['content-type'] || '').not.toContain('text/markdown')
+  }
 }
 
 async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
@@ -1015,14 +1133,43 @@ async function verifyCrawlerDiscovery(adminPage: Page, publicPage: Page) {
   expect(robotsText).toContain('Disallow: /api/')
   expect(robotsText).toContain('Host: https://portal.raidguild.org')
   expect(robotsText).toContain('Sitemap: https://portal.raidguild.org/sitemap.xml')
+  expect(robotsText).toContain('Content-Signal: search=yes, ai-input=yes, ai-train=no')
+  for (const agent of [
+    'GPTBot',
+    'ChatGPT-User',
+    'OAI-SearchBot',
+    'Google-Extended',
+    'ClaudeBot',
+    'Claude-Web',
+    'anthropic-ai',
+    'PerplexityBot',
+    'CCBot',
+    'Amazonbot',
+    'Bytespider',
+    'Applebot-Extended',
+    'cohere-ai',
+  ]) {
+    expect(robotsText).toContain(`User-agent: ${agent}\nAllow: /`)
+  }
   expect(robotsText).toMatch(
     /Sitemap: https:\/\/portal\.raidguild\.org\/sitemaps\/sitemap\/posts-\d+\.xml/,
   )
+  // Module detail pages require authentication, so anonymous sitemap generation must not query
+  // the modules collection or advertise module-detail shards.
+  expect(robotsText).not.toContain('/sitemaps/sitemap/modules-')
 
   const sitemapURLs = [...robotsText.matchAll(/^Sitemap: (https:\/\/[^\s]+)$/gm)].map(
     (match) => match[1],
   )
   const sitemapXMLDocuments: string[] = []
+
+  for (const path of [
+    '/sitemaps/sitemap/posts-0',
+    '/sitemaps/sitemap/modules-0.xml',
+    '/sitemaps/sitemap/posts-999999.xml',
+  ]) {
+    expect((await publicPage.request.get(path)).status()).toBe(404)
+  }
 
   for (const sitemapURL of sitemapURLs) {
     const response = await publicPage.request.get(new URL(sitemapURL).pathname)
@@ -4087,8 +4234,39 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   )
   expect(publicLaunchResponse.status()).toBe(401)
 
-  await publicPage.goto(`/modules/${externalModuleSlug}`)
+  const missingModuleResponse = await publicPage.goto(`/modules/missing-e2e-module-${moduleSuffix}`)
+  expect(missingModuleResponse?.status()).toBe(404)
   await expect(publicPage.getByRole('heading', { name: '404' })).toBeVisible()
+
+  const archivedModuleDetailResponse = await publicPage.goto(
+    `/modules/archived-e2e-module-${moduleSuffix}`,
+  )
+  expect(archivedModuleDetailResponse?.status()).toBe(404)
+
+  const disabledModuleDetailResponse = await publicPage.goto(`/modules/${disabledModuleSlug}`)
+  expect(disabledModuleDetailResponse?.status()).toBe(404)
+
+  const protectedModuleResponse = await publicPage.goto(`/modules/${externalModuleSlug}`)
+  expect(protectedModuleResponse?.status()).toBe(200)
+  await expect(
+    publicPage.getByRole('heading', { name: 'This page requires Portal access' }),
+  ).toBeVisible()
+  await expect(publicPage.getByRole('heading', { name: 'External E2E Module' })).toHaveCount(0)
+  await expect(
+    publicPage.getByText('An external module that should launch through a signed Portal token.'),
+  ).toHaveCount(0)
+  const protectedModuleLogin = publicPage.getByRole('link', { name: 'Log in' })
+  await expect(protectedModuleLogin).toHaveAttribute(
+    'href',
+    `/login?next=${encodeURIComponent(`/modules/${externalModuleSlug}`)}`,
+  )
+  await protectedModuleLogin.click()
+  await fillFirst(publicPage.getByLabel(/^email$/i), adminEmail)
+  await fillFirst(publicPage.getByLabel(/^password$/i), adminPassword)
+  await publicPage.getByRole('button', { name: /log in to the brief/i }).click()
+  await expect(publicPage).toHaveURL(new RegExp(`/modules/${externalModuleSlug}$`))
+  await expect(publicPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
+  await publicPage.context().clearCookies()
 
   const unverifiedContext = await browser.newContext()
   const unverifiedPage = await unverifiedContext.newPage()
@@ -4115,7 +4293,9 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   }
 
   await adminPage.goto('/modules')
-  await expect(adminPage.getByRole('heading', { name: 'Portal modules' })).toBeVisible()
+  await expect(
+    adminPage.getByRole('heading', { name: 'Good things, made by the guild.' }),
+  ).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Manage modules' })).toBeVisible()
   await expect(
     adminPage.getByRole('heading', { name: 'Get notified when new modules go live' }),
@@ -4153,7 +4333,6 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   expect(linkNames.indexOf('Launch app')).toBeLessThan(
     linkNames.indexOf('View details for External E2E Module'),
   )
-  await expect(adminPage.getByText('External app')).toBeVisible()
   await expect(adminPage.getByText('Uses Portal sign-in')).toBeVisible()
   await expect(adminPage.getByRole('link', { name: 'Launch app' })).toBeVisible()
   await expect(adminPage.getByText('Infinite Wiki')).toBeVisible()
@@ -4162,6 +4341,142 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   await expect(adminPage.getByText('Archived E2E Module')).toHaveCount(0)
   await expect(adminPage.getByText('Coming soon')).toHaveCount(2)
   await expect(adminPage.getByRole('link', { name: 'Open module' })).toHaveCount(4)
+
+  const artifactName = `E2E Standalone Artifact ${moduleSuffix}`
+  const gameName = `E2E Arcade Game ${moduleSuffix}`
+  for (const data of [
+    {
+      name: artifactName,
+      slug: `e2e-artifact-${moduleSuffix}`,
+      category: 'analytics',
+      entryRoute: 'https://portal-artifacts-production.up.railway.app/desert-walker/',
+    },
+    {
+      name: gameName,
+      slug: `e2e-game-${moduleSuffix}`,
+      category: 'games',
+      entryRoute: 'https://example.com/game',
+    },
+  ]) {
+    const result = await adminPage.request.post('/api/modules', {
+      data: {
+        ...data,
+        summary: 'A discoverable cabinet experience.',
+        moduleKind: 'external',
+        authMode: 'none',
+        enabled: true,
+        status: 'prototype',
+        visibility: 'authenticated',
+      },
+    })
+    expect(result.status()).toBe(201)
+  }
+  // The collection must respond to the actual global switcher in every destination.
+  for (const destination of ['tools', 'artifacts', 'arcade']) {
+    await adminPage.goto(`/modules?view=${destination}`)
+    const palettes: string[][] = []
+    for (const theme of ['Light', 'Dark']) {
+      await adminPage.getByRole('combobox', { name: 'Select a theme' }).click()
+      await adminPage.getByRole('option', { name: `RaidGuild ${theme}`, exact: true }).click()
+      await expect(adminPage.locator('html')).toHaveAttribute(
+        'data-theme',
+        `raidguild-${theme.toLowerCase()}`,
+      )
+      palettes.push(
+        await adminPage
+          .locator('main')
+          .evaluate((main) => [
+            getComputedStyle(main).backgroundColor,
+            getComputedStyle(main.querySelector('article')!).backgroundColor,
+            getComputedStyle(main.querySelector('h1')!).color,
+            getComputedStyle(main.querySelector('input')!).color,
+          ]),
+      )
+      await adminPage.evaluate(() => window.scrollTo(0, 0))
+      await adminPage.screenshot({
+        path: test.info().outputPath(`modules-${destination}-${theme.toLowerCase()}.png`),
+      })
+    }
+    for (let index = 0; index < palettes[0].length; index += 1) {
+      expect(palettes[0][index]).not.toBe(palettes[1][index])
+    }
+  }
+  await adminPage.goto('/modules?view=tools')
+  const destinations = adminPage.getByRole('navigation', { name: 'Module destinations' })
+  await expect(destinations.getByRole('link', { name: /^Arcade/ })).toHaveCount(0)
+  await adminPage
+    .getByRole('button', { name: 'Add External E2E Module to favorites', exact: true })
+    .click()
+  await adminPage.goto('/modules?view=arcade')
+  await adminPage.getByRole('button', { name: `Add ${gameName} to favorites`, exact: true }).click()
+  await destinations.getByRole('link', { name: /^Favorites/ }).click()
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: gameName, exact: true })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: artifactName, exact: true })).toHaveCount(0)
+  await adminPage.reload()
+  await expect(
+    adminPage.getByRole('button', { name: `Remove ${gameName} from favorites`, exact: true }),
+  ).toHaveAttribute('aria-pressed', 'true')
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill(gameName)
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toHaveCount(0)
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill('')
+  await adminPage
+    .getByRole('button', { name: `Remove ${gameName} from favorites`, exact: true })
+    .click()
+  await adminPage
+    .getByRole('button', { name: 'Remove External E2E Module from favorites', exact: true })
+    .click()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.reload()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.evaluate(() => localStorage.setItem('raidguild:module-favorites:v1', '{broken'))
+  await adminPage.reload()
+  await expect(adminPage.getByRole('heading', { name: 'Your favorites start here.' })).toBeVisible()
+  await adminPage.goto('/modules?view=tools')
+  await adminPage.evaluate(() => {
+    const original = Storage.prototype.setItem
+    Storage.prototype.setItem = function (key, value) {
+      if (key === 'raidguild:module-favorites:v1')
+        throw new DOMException('Storage disabled', 'SecurityError')
+      return original.call(this, key, value)
+    }
+  })
+  await adminPage
+    .getByRole('button', { name: 'Add External E2E Module to favorites', exact: true })
+    .click()
+  await expect(
+    adminPage.getByText('Browser storage is unavailable. Favorites will last for this visit only.'),
+  ).toBeVisible()
+  await destinations.getByRole('link', { name: /^Favorites/ }).click()
+  await expect(
+    adminPage.getByRole('article', { name: 'External E2E Module', exact: true }),
+  ).toBeVisible()
+  await adminPage.reload()
+  await adminPage.goto('/modules?view=artifacts')
+  await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: 'External E2E Module' })).toHaveCount(0)
+  await adminPage.getByRole('searchbox', { name: 'Search modules' }).fill('no-such-experience')
+  await expect(adminPage.getByText('Nothing here matches yet.')).toBeVisible()
+  await adminPage.getByRole('button', { name: 'Clear filters' }).click()
+  await expect(adminPage.getByRole('article', { name: artifactName })).toBeVisible()
+  await adminPage.getByRole('link', { name: 'Enter the arcade' }).click()
+  await expect(adminPage).toHaveURL(/view=arcade/)
+  await expect(adminPage.getByRole('article', { name: gameName })).toBeVisible()
+  await expect(adminPage.getByRole('article', { name: artifactName })).toHaveCount(0)
+  await adminPage.setViewportSize({ width: 390, height: 844 })
+  await expect(
+    adminPage
+      .getByRole('navigation', { name: 'Module destinations' })
+      .getByRole('link', { name: /^Tools/ }),
+  ).toBeVisible()
+  expect(
+    await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true)
+  await adminPage.setViewportSize({ width: 1280, height: 720 })
 
   await adminPage.goto(`/modules/${externalModuleSlug}`)
   await expect(adminPage.getByRole('heading', { name: 'External E2E Module' })).toBeVisible()
@@ -5159,6 +5474,7 @@ async function verifyFeedbackWidget(page: Page) {
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
+  await verifyOrdinaryContentHeaderThemes(browser)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)
@@ -5189,10 +5505,10 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyBadgesFeature(page, browser, publicPage)
   await verifyPublishedPostsArchiveOrdering(page, publicPage)
   await verifyPublicPostsRSSFeed(page, publicPage)
-  await verifyPublicLLMsText(page, publicPage)
   await verifyCrawlerDiscovery(page, publicPage)
+  await verifyPublicLLMsText(page, publicPage)
   await verifyAdminPostPublishPersists(page, publicPage)
-  await verifySeededPosts(publicPage)
+  await verifySeededPosts(page, publicPage)
   await verifyCohortHub(page, publicPage)
   await verifyInteractivePostEmbed(page, publicPage)
   await verifyPostJoinCTAAnalytics(page, publicPage)
