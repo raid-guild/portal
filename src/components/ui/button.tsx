@@ -4,7 +4,7 @@ import { type VariantProps, cva } from 'class-variance-authority'
 import * as React from 'react'
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-sm font-mono text-xs font-bold uppercase tracking-[0.08em] ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius-ui-control)] font-mono text-xs font-bold uppercase tracking-[0.08em] ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     defaultVariants: {
       size: 'default',
@@ -23,9 +23,9 @@ const buttonVariants = cva(
           'border border-primary bg-primary text-primary-foreground hover:border-primary/90 hover:bg-[hsl(var(--primary-hover))]',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
         ghost: 'hover:bg-card hover:text-foreground',
-        link: 'items-start justify-start text-primary underline-offset-4 hover:text-[hsl(var(--primary-hover))] hover:underline',
+        link: 'items-start justify-start text-[var(--link)] underline-offset-4 hover:text-[var(--link-hover)] hover:underline',
         outline:
-          'border border-border bg-transparent text-foreground hover:border-primary hover:text-primary',
+          'border border-border bg-transparent text-foreground hover:border-primary hover:text-[var(--link-hover)]',
         secondary:
           'border border-border bg-secondary text-secondary-foreground hover:bg-[hsl(var(--secondary-hover))]',
       },

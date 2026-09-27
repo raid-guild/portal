@@ -100,15 +100,17 @@
   }
 
   .portal-link {
-    @apply text-sm font-bold text-foreground underline decoration-primary/50 transition-colors hover:text-primary;
+    @apply text-sm font-bold text-foreground underline decoration-primary/50 transition-colors hover:text-[var(--link-hover)];
   }
 
   .portal-admin-link {
-    @apply inline-flex h-10 items-center rounded-sm border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-primary;
+    border-radius: var(--radius-ui-control);
+    @apply inline-flex h-10 items-center border border-border bg-transparent px-4 font-mono text-xs font-bold uppercase tracking-[0.08em] text-foreground transition-colors hover:border-primary hover:text-[var(--link-hover)];
   }
 
   .portal-select {
-    @apply h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+    border-radius: var(--radius-ui-control);
+    @apply h-10 w-full border border-border bg-background/70 px-3 text-sm text-foreground ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
   }
 
   .portal-field,
@@ -140,6 +142,101 @@
   .portal-section-divider {
     border-color: var(--divider);
   }
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(.portal-panel, .portal-card, .portal-menu, .portal-callout, .portal-empty-state):not(
+    .map-dashboard-screen,
+    .map-dashboard-screen *
+  ) {
+  border-radius: var(--radius-card);
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  .portal-pill:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  border-radius: var(--radius-pill);
+}
+
+/* Existing mark geometry, with an explicit ink asset for the Day canvas. */
+.portal-logo-ink {
+  display: none;
+}
+html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-default {
+  display: none;
+}
+html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-ink {
+  display: block;
+}
+
+/* Louchi display cuts have native weight 400. Keep map pixel typography intact. */
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    [class*='portal-title'],
+    [class*='portal-heading'],
+    .font-display
+  ):not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-display-theme);
+  font-weight: 400;
+  font-synthesis: none;
+  text-transform: uppercase;
+  letter-spacing: -0.015em;
+  overflow-wrap: anywhere;
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  .font-retalic:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-retalic-theme);
+  font-style: normal;
+  font-weight: 400;
+  font-synthesis: none;
+}
+
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  :is(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    [class*='portal-title'],
+    [class*='portal-heading'],
+    .font-display
+  ):not(.map-dashboard-screen, .map-dashboard-screen *)
+  .font-bold {
+  font-weight: 400;
+  font-synthesis: none;
 }
 
 /* Route transition feedback. Portal routes are dynamic, so a click can wait on
@@ -199,6 +296,9 @@ body.map-dashboard-fullscreen [data-portal-footer] {
 }
 
 .map-dashboard-screen {
+  --radius-ui-control: 0;
+  --radius-ui-card: 0;
+  --radius-ui-menu: 0.25rem;
   color: var(--map-text);
   image-rendering: pixelated;
   overflow: hidden;

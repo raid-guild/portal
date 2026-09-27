@@ -256,6 +256,22 @@ function lexicalListContent(items: string[]) {
   }
 }
 
+async function verifyOrdinaryContentHeaderThemes(browser: Browser) {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  for (const theme of ['raidguild-dark', 'raidguild-light']) {
+    await page.goto('/login')
+    await page.evaluate((value) => window.localStorage.setItem('payload-theme', value), theme)
+    for (const route of ['/posts', '/search', `/posts/${seededPosts[0].slug}`]) {
+      const response = await page.goto(route)
+      expect(response?.ok(), `Expected content route ${route} to load successfully`).toBeTruthy()
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+      await expect(page.locator('[data-portal-header]')).toHaveAttribute('data-theme', theme)
+    }
+  }
+  await context.close()
+}
+
 test('defaults to RaidGuild Dark and persists explicit theme preferences', async ({ browser }) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
@@ -275,6 +291,31 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBeNull()
 
+  const loadedFonts = await page.evaluate(async () => {
+    const requests = [
+      '400 24px "Grinder"',
+      'italic 400 24px "Grinder"',
+      '400 24px "Grinder Retalic"',
+      '400 16px "Ubuntu"',
+      'italic 400 16px "Ubuntu"',
+      '400 12px "Ubuntu Mono"',
+      '700 12px "Ubuntu Mono"',
+    ]
+    return Promise.all(
+      requests.map(async (request) => {
+        const faces = await document.fonts.load(request, 'RaidGuild')
+        return faces.length > 0 && faces.every((face) => face.status === 'loaded')
+      }),
+    )
+  })
+  expect(loadedFonts).toEqual(Array(7).fill(true))
+  await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
+  const displayHeading = page.locator('h1').first()
+  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
+  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
+  await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
+
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
@@ -282,6 +323,12 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-light')
+
+  await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
+  await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
+
+  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
+  await expect(displayHeading).toHaveCSS('font-weight', '400')
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
@@ -308,6 +355,9 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-classic')
+
+  await expect(displayHeading).toHaveCSS('font-family', /RaidGuild Classic Uncial/)
+  await expect(displayHeading).toHaveCSS('text-transform', 'none')
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
@@ -5413,6 +5463,7 @@ async function verifyFeedbackWidget(page: Page) {
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
+  await verifyOrdinaryContentHeaderThemes(browser)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)

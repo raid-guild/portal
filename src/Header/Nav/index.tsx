@@ -133,7 +133,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
             aria-expanded={open}
             aria-haspopup="menu"
             aria-label="Open account menu"
-            className="flex h-9 items-center gap-2 rounded-sm border border-border bg-card/30 px-2 text-foreground transition hover:border-primary hover:text-primary"
+            className="flex h-9 items-center gap-2 rounded-[var(--radius-ui-control)] border border-border bg-card/30 px-2 text-foreground transition hover:border-primary hover:text-link-hover"
             onClick={() => setOpen((current) => !current)}
             type="button"
           >
@@ -224,7 +224,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
         </div>
       ) : (
         <Link
-          className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:text-foreground"
+          className="font-mono text-xs font-bold uppercase tracking-[0.08em] text-link transition-colors hover:text-foreground"
           href="/login"
         >
           Login
@@ -232,7 +232,7 @@ export const HeaderNav: React.FC<{ header: HeaderType }> = ({ header }) => {
       )}
       <Link href="/search">
         <span className="sr-only">Search</span>
-        <SearchIcon className="w-5 text-primary" />
+        <SearchIcon className="w-5 text-link" />
       </Link>
     </nav>
   )

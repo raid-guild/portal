@@ -90,7 +90,7 @@ export default async function ThreadDetailPage({ params }: ThreadPageProps) {
 
       {activeSpotlights.length ? (
         <section className="mt-12 border border-primary/60 bg-card/70 p-6 shadow-[var(--shadow-emphasis)]">
-          <p className="portal-kicker text-primary">Spotlight</p>
+          <p className="portal-kicker text-link">Spotlight</p>
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {activeSpotlights.map((spotlight) => (
               <article className="border border-primary/30 bg-background/50 p-4" key={spotlight.id}>
@@ -559,7 +559,7 @@ const EventCard: React.FC<{ event: Event }> = ({ event }) => (
     event.summaryArtifactURL ||
     event.sourceArtifactURL ||
     event.resources?.length ? (
-      <p className="mt-3 portal-kicker text-primary">Resources attached</p>
+      <p className="mt-3 portal-kicker text-link">Resources attached</p>
     ) : null}
   </Link>
 )

@@ -15,15 +15,27 @@ export const Logo = (props: Props) => {
 
   return (
     /* eslint-disable @next/next/no-img-element */
-    <img
-      alt="RaidGuild Cohort"
-      width={609}
-      height={164}
-      loading={loading}
-      fetchPriority={priority}
-      decoding="async"
-      className={clsx('w-full max-w-[11rem] h-auto', className)}
-      src="/assets/raidguild-cohort-logo.svg"
-    />
+    <>
+      <img
+        alt="RaidGuild Cohort"
+        width={609}
+        height={164}
+        loading={loading}
+        fetchPriority={priority}
+        decoding="async"
+        className={clsx('portal-logo-default w-full max-w-[11rem] h-auto', className)}
+        src="/assets/raidguild-cohort-logo.svg"
+      />
+      <img
+        alt="RaidGuild Cohort"
+        width={609}
+        height={164}
+        loading={loading}
+        fetchPriority={priority}
+        decoding="async"
+        className={clsx('portal-logo-ink w-full max-w-[11rem] h-auto', className)}
+        src="/assets/raidguild-cohort-logo-ink.svg"
+      />
+    </>
   )
 }

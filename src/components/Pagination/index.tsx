@@ -53,7 +53,7 @@ const PageLink: React.FC<{
       'border px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] transition-colors',
       active
         ? 'border-primary bg-primary text-primary-foreground'
-        : 'border-border text-foreground hover:border-primary hover:text-primary',
+        : 'border-border text-foreground hover:border-primary hover:text-link-hover',
       disabled ? 'pointer-events-none opacity-40' : '',
     ]
       .filter(Boolean)

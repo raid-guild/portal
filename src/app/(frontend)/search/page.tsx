@@ -6,7 +6,6 @@ import { getPayload } from 'payload'
 import React from 'react'
 import { Post } from '@/payload-types'
 import { Search } from '@/search/Component'
-import PageClient from './page.client'
 import { CardPostData } from '@/components/Card'
 
 type Args = {
@@ -62,7 +61,6 @@ export default async function Page({ searchParams: searchParamsPromise }: Args) 
 
   return (
     <div className="pt-24 pb-24">
-      <PageClient />
       <div className="container mb-16">
         <div className="prose dark:prose-invert max-w-none">
           <h1 className="sr-only">Search</h1>

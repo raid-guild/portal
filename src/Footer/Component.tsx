@@ -39,13 +39,13 @@ export async function Footer() {
           <ThemeSelector />
           <nav className="flex flex-col md:flex-row gap-4" aria-label="Footer navigation">
             {navItems.map(({ link }, i) => {
-              return <CMSLink className="text-foreground hover:text-primary" key={i} {...link} />
+              return <CMSLink className="text-foreground hover:text-link-hover" key={i} {...link} />
             })}
           </nav>
           <nav className="flex gap-4" aria-label="RaidGuild social links">
             {socialLinks.map((link) => (
               <a
-                className="text-foreground transition-colors hover:text-primary"
+                className="text-foreground transition-colors hover:text-link-hover"
                 href={link.url}
                 key={link.label}
                 rel="noreferrer"

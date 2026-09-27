@@ -67,7 +67,7 @@ export const DashboardWeeklySessionStrip: React.FC<{
                 <p className="portal-kicker">{day.weekday}</p>
                 {day.isToday ? <span className="portal-pill text-[10px]">Today</span> : null}
               </div>
-              <p className={cn('mt-1 text-2xl font-bold', day.isToday ? 'text-primary' : null)}>
+              <p className={cn('mt-1 text-2xl font-bold', day.isToday ? 'text-link' : null)}>
                 {day.dayNumber}
               </p>
               <div className="mt-3 space-y-2">

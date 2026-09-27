@@ -88,7 +88,7 @@ export default async function CohortPage({ params }: Args) {
               {enrollmentOpen ? <span className="portal-pill">Enrollment open</span> : null}
             </div>
             <h1 className="portal-title-lg mt-6">{cohort.title}</h1>
-            <p className="mt-5 font-serif text-2xl font-bold text-primary">{cohort.theme}</p>
+            <p className="mt-5 font-serif text-2xl font-bold text-link">{cohort.theme}</p>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-muted-foreground">
               {cohort.summary}
             </p>

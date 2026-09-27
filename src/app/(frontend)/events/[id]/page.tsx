@@ -574,7 +574,7 @@ const ProfileLink: React.FC<{ profile: Profile }> = ({ profile }) => {
   if (!href) return <span className="portal-pill">{profile.displayName}</span>
 
   return (
-    <Link className="portal-pill transition-colors hover:text-primary" href={href}>
+    <Link className="portal-pill transition-colors hover:text-link-hover" href={href}>
       {profile.displayName}
     </Link>
   )
@@ -603,7 +603,7 @@ const RelationList: React.FC<{
       {items.map((item) =>
         item.href ? (
           <Link
-            className="portal-pill transition-colors hover:text-primary"
+            className="portal-pill transition-colors hover:text-link-hover"
             href={item.href}
             key={item.label}
           >

@@ -245,7 +245,7 @@ const SessionRow: React.FC<{
               />
             </div>
             <h3 className="mt-3 portal-heading-sm">
-              <Link className="transition-colors hover:text-primary" href={`/events/${event.id}`}>
+              <Link className="transition-colors hover:text-link-hover" href={`/events/${event.id}`}>
                 {event.title}
               </Link>
             </h3>
@@ -339,7 +339,7 @@ const SessionVisual: React.FC<{ event: Event; isLive: boolean }> = ({ event, isL
       href={`/events/${event.id}`}
     >
       {isLive ? (
-        <span className="absolute left-3 top-3 border border-primary bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-primary">
+        <span className="absolute left-3 top-3 border border-primary bg-background/80 px-2 py-1 font-mono text-[10px] uppercase tracking-[0.12em] text-link">
           Live
         </span>
       ) : null}
