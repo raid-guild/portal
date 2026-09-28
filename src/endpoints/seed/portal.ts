@@ -586,6 +586,17 @@ export const seedPortalContent = async ({
       ),
     )
 
+    // The post page only renders the cohort CTA for posts in the `cohort` category.
+    const cohortCategory = await upsert({
+      collection: 'categories',
+      match: { slug: 'cohort' },
+      payload,
+      data: {
+        slug: 'cohort',
+        title: 'Cohort',
+      },
+    })
+
     const portalUpdatePost = await upsert({
       collection: 'posts',
       match: { slug: 'cohort-project-spike-portal-update' },
@@ -601,6 +612,7 @@ export const seedPortalContent = async ({
           ),
         ]),
         authors: req.user ? [req.user.id] : undefined,
+        categories: [cohortCategory.id],
         meta: {
           description: 'A portal update for validating public post, comment, and moderation flows.',
         },

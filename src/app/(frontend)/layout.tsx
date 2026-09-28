@@ -64,7 +64,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               preview: isEnabled,
             }}
           />
-          <LivePreviewListener />
+          {/*
+            RefreshRouteOnSave calls router.refresh() on mount. Mounting it for every
+            visitor re-fetches each page and makes Next 16 append a second copy of the
+            streamed <title>/<meta>/<link> tags to <head>. Live preview always enters
+            through /next/preview, which enables draft mode, so gate it on that.
+          */}
+          {isEnabled ? <LivePreviewListener /> : null}
 
           <Header />
           {children}
