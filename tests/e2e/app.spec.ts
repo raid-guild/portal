@@ -5973,16 +5973,30 @@ test('code modules validate repository links and render the Code cabinet', async
   await expect(card.getByText(`github.com/raid-guild/${slug}`).first()).toBeVisible()
   await expect(card.getByRole('link', { name: 'View repository' })).toHaveAttribute('href', repositoryURL)
   await page.screenshot({ path: testInfo.outputPath('code-desktop.png'), fullPage: true })
-  await page.setViewportSize({ width: 900, height: 700 })
   const generatedCover = card.getByRole('img', { name: `Repository cover for ${name}` })
-  await expect(generatedCover).toBeVisible()
-  const coverFits = await generatedCover.evaluate((cover) => {
-    const coverBottom = cover.getBoundingClientRect().bottom
-    const repositoryText = cover.querySelector('small')
-    return Boolean(repositoryText && repositoryText.getBoundingClientRect().bottom <= coverBottom)
-  })
-  expect(coverFits).toBeTruthy()
-  await page.screenshot({ path: testInfo.outputPath('code-midwidth-generated-cover.png'), fullPage: true })
+  for (const width of [900, 600]) {
+    await page.setViewportSize({ width, height: 700 })
+    await expect(generatedCover).toBeVisible()
+    const coverFits = await generatedCover.evaluate((cover) => {
+      const preview = cover.parentElement
+      const mark = cover.firstElementChild
+      const content = cover.lastElementChild
+      const favorite = preview?.querySelector('button')
+      const badge = preview?.querySelector(':scope > span')
+      if (!mark || !content || !favorite || !badge) return false
+      const markBox = mark.getBoundingClientRect()
+      const contentBox = content.getBoundingClientRect()
+      const favoriteBox = favorite.getBoundingClientRect()
+      const badgeBox = badge.getBoundingClientRect()
+      const coverBox = cover.getBoundingClientRect()
+      return markBox.right < favoriteBox.left &&
+        markBox.bottom < contentBox.top &&
+        contentBox.bottom < badgeBox.top &&
+        contentBox.bottom <= coverBox.bottom
+    })
+    expect(coverFits).toBeTruthy()
+    await page.screenshot({ path: testInfo.outputPath(`code-${width}px-generated-cover.png`), fullPage: true })
+  }
   await page.getByRole('searchbox', { name: 'Search modules' }).fill(slug)
   await expect(card).toBeVisible()
   await page.getByRole('searchbox', { name: 'Search modules' }).fill('no matching repository')
