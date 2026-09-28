@@ -21,6 +21,7 @@ import { recordWikiPagePublishedActivity } from '@/collections/WikiPages/hooks/r
 import { MediaBlock } from '@/blocks/MediaBlock/config'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 
 export const WikiPages: CollectionConfig = {
   slug: 'wikiPages',
@@ -423,6 +424,7 @@ export const WikiPages: CollectionConfig = {
   ],
   hooks: {
     afterChange: [recordWikiPagePublishedActivity],
+    afterDelete: [deleteReactionsForTarget('wikiPages')],
     beforeChange: [
       ({ data, originalDoc }) => {
         const nextStatus = data?._status ?? originalDoc?._status

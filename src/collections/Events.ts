@@ -4,6 +4,7 @@ import { getProfileIDsForUser } from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { canContributeContent, contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 import { createEventPublishedNotifications } from './Events/hooks/createEventPublishedNotifications'
 import { recordEventPublishedActivity } from './Events/hooks/recordEventPublishedActivity'
 
@@ -570,6 +571,7 @@ export const Events: CollectionConfig = {
   ],
   hooks: {
     afterChange: [createEventPublishedNotifications, recordEventPublishedActivity],
+    afterDelete: [deleteReactionsForTarget('events')],
   },
   versions: {
     drafts: true,

@@ -55,6 +55,7 @@ import * as migration_20260727_192500_module_thumbnail from './20260727_192500_m
 import * as migration_20260814_120000_profile_wallet_verification from './20260814_120000_profile_wallet_verification'
 import * as migration_20260814_130000_module_launch_identity_claim_flags from './20260814_130000_module_launch_identity_claim_flags'
 import * as migration_20260827_140000_category_slug from './20260827_140000_category_slug'
+import * as migration_20260922_120000_content_reactions from './20260922_120000_content_reactions'
 
 export const migrations = [
   {
@@ -341,5 +342,10 @@ export const migrations = [
     up: migration_20260827_140000_category_slug.up,
     down: migration_20260827_140000_category_slug.down,
     name: '20260827_140000_category_slug',
+  },
+  {
+    up: migration_20260922_120000_content_reactions.up,
+    down: migration_20260922_120000_content_reactions.down,
+    name: '20260922_120000_content_reactions',
   },
 ]

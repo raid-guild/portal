@@ -14,6 +14,7 @@ import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
 import { CohortCommitments } from './collections/CohortCommitments'
 import { Cohorts } from './collections/Cohorts'
+import { ContentReactions } from './collections/ContentReactions'
 import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
@@ -166,6 +167,7 @@ export default buildConfig({
     Notifications,
     NotificationPreferences,
     FeedbackSubmissions,
+    ContentReactions,
     SignupAttempts,
     PageCopy,
     Profiles,

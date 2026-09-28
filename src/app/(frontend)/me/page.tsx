@@ -103,6 +103,9 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         <a className="portal-admin-link" href="#activity">
           Activity
         </a>
+        <Link className="portal-admin-link" href="/me/saved">
+          Saved
+        </Link>
       </nav>
 
       <section className="mt-12" id="profile">
@@ -226,6 +229,10 @@ const PortalLinks: React.FC<{
       <Link className="portal-admin-link justify-between" href="/inbox">
         <span>Inbox</span>
         {unreadNotifications ? <span>{unreadNotifications} unread</span> : <span>Open</span>}
+      </Link>
+      <Link className="portal-admin-link justify-between" href="/me/saved">
+        <span>Saved</span>
+        <span>Open</span>
       </Link>
       <Link className="portal-admin-link justify-between" href="/dashboard">
         <span>Daily check-in</span>
