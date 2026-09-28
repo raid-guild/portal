@@ -176,8 +176,9 @@ summary: textarea, required
 thumbnail: upload -> media, optional
 status: idea / prototype / experimental / active / graduated / archived
 category: ops / tools / analytics / games / knowledge / community
+moduleKind: internal / external / code (code requires an HTTPS repository URL)
 visibility: public / authenticated / member / admin
-entryRoute: text
+entryRoute: text (optional demo URL for code)
 adminRoute: text
 specURL: text
 repositoryURL: text

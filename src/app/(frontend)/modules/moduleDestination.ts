@@ -1,10 +1,11 @@
 import type { Module } from '@/payload-types'
 
-export type ModuleDestination = 'tools' | 'artifacts' | 'arcade'
+export type ModuleDestination = 'tools' | 'artifacts' | 'arcade' | 'code'
 
 // The artifact service is the current registry boundary. Use parsed URLs so a
 // matching word in a description or unrelated domain cannot reclassify an app.
 export function getModuleDestination(module: Module): ModuleDestination {
+  if (module.moduleKind === 'code') return 'code'
   if (module.category === 'games') return 'arcade'
   try {
     const entry = new URL(module.entryRoute || '')

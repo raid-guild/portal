@@ -12,6 +12,8 @@ import type { Media, Module, Profile, Project, Thread } from '@/payload-types'
 import { generateMeta } from '@/utilities/generateMeta'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { toSafeURL } from '@/utilities/safeURL'
+import { codeRepositoryURL, repositoryLabel } from '@/utilities/moduleRepository'
+import { CodeRepositoryCover } from '../CodeRepositoryCover'
 import {
   categoryLabels,
   getModuleAction,
@@ -49,7 +51,13 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
   const relatedThreads = relationDocs<Thread>(moduleRecord.relatedThreads)
   const action = getModuleAction(moduleRecord)
   const specURL = toSafeURL(moduleRecord.specURL, { allowRelative: true })
-  const repositoryURL = toSafeURL(moduleRecord.repositoryURL, { allowRelative: true })
+  const repositoryURL = moduleRecord.moduleKind === 'code'
+    ? codeRepositoryURL(moduleRecord.repositoryURL)
+    : toSafeURL(moduleRecord.repositoryURL, { allowRelative: true })
+  const repository = moduleRecord.moduleKind === 'code' ? repositoryLabel(repositoryURL) : null
+  const demoURL = moduleRecord.moduleKind === 'code'
+    ? toSafeURL(moduleRecord.entryRoute, { allowRelative: true, protocols: ['http:', 'https:'] })
+    : null
 
   return (
     <main className="container pb-24 pt-12">
@@ -71,6 +79,9 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
             {moduleRecord.featured ? <span className="portal-pill">Featured</span> : null}
             {moduleRecord.moduleKind === 'external' ? (
               <span className="font-mono text-xs text-muted-foreground">External app</span>
+            ) : null}
+            {moduleRecord.moduleKind === 'code' ? (
+              <span className="font-mono text-xs text-muted-foreground">Code repository</span>
             ) : null}
           </div>
           <h1 className="mt-5 portal-title">{moduleRecord.name}</h1>
@@ -102,9 +113,10 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
         </div>
 
         <aside className="portal-panel overflow-hidden p-0">
-          <ModuleImage imageURL={imageURL} name={moduleRecord.name} thumbnail={thumbnail} />
+          <ModuleImage imageURL={imageURL} name={moduleRecord.name} thumbnail={thumbnail} repository={repository} />
           <div className="p-5">
-            <p className="portal-kicker">Open module</p>
+            <p className="portal-kicker">{moduleRecord.moduleKind === 'code' ? 'Explore code' : 'Open module'}</p>
+            {repository ? <p className="mt-2 break-all font-mono text-xs text-muted-foreground">{repository}</p> : null}
             {action.href ? (
               action.opensNewWindow ? (
                 <a
@@ -132,6 +144,9 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
               <p className="mt-3 text-xs leading-5 text-muted-foreground">
                 Opens the connected app using your Portal sign-in.
               </p>
+            ) : null}
+            {demoURL ? (
+              <Link className="portal-link mt-4 inline-flex" href={demoURL}>Open demo</Link>
             ) : null}
           </div>
         </aside>
@@ -188,7 +203,7 @@ export default async function ModuleDetailPage({ params: paramsPromise }: Args) 
                 Spec
               </Link>
             ) : null}
-            {repositoryURL ? (
+            {repositoryURL && moduleRecord.moduleKind !== 'code' ? (
               <Link className="portal-link" href={repositoryURL}>
                 Source
               </Link>
@@ -315,10 +330,12 @@ const ModuleImage = ({
   imageURL,
   name,
   thumbnail,
+  repository,
 }: {
   imageURL: string | null
   name: string
   thumbnail: Media | null
+  repository: string | null
 }) => (
   <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden border-b border-border bg-muted-foreground">
     {imageURL ? (
@@ -328,6 +345,8 @@ const ModuleImage = ({
         className="absolute inset-0 h-full w-full object-cover"
         src={imageURL}
       />
+    ) : repository ? (
+      <CodeRepositoryCover name={name} repository={repository} />
     ) : (
       // eslint-disable-next-line @next/next/no-img-element
       <img alt="" className="h-14 w-14 object-contain opacity-90" src="/assets/symbol-white.svg" />

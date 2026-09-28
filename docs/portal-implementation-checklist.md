@@ -226,9 +226,11 @@
       related primitives, and graduation criteria fields.
 - [x] Add module categories for grouping modules beyond lifecycle status.
 - [x] Add `/modules` discovery page for visible enabled modules.
-- [x] Present modules in a responsive Guild Cabinet with Tools / Artifacts tabs,
-      an Arcade destination, search, category filters, and optional CMS thumbnails
-      and category-based fallback visuals.
+- [x] Present modules in a responsive Guild Cabinet with Tools / Artifacts / Code
+      tabs, an Arcade destination, search, category filters, optional CMS thumbnails,
+      and a local repository cover for code without an image.
+- [x] Add code modules with a required HTTPS repository destination, optional
+      demo, and no signed launch configuration.
 - [x] Add unauthenticated `/modules` teaser with join/login CTAs.
 - [x] Add dashboard entry point for modules.
 - [x] Add verified-user email opt-in for newly available module announcements.

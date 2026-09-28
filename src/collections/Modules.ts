@@ -1,10 +1,11 @@
-import type { CollectionConfig } from 'payload'
+import { APIError, type CollectionConfig } from 'payload'
 
 import { deleteModules, manageModules, readVisibleModules } from '@/access/modules'
 import { authRoleOptions } from '@/access/roles'
 import { createModulePublishedNotifications } from './Modules/hooks/createModulePublishedNotifications'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { codeRepositoryURL } from '@/utilities/moduleRepository'
 
 const envKeyPattern = /^[A-Z][A-Z0-9_]*$/
 
@@ -224,7 +225,7 @@ export const Modules: CollectionConfig = {
       name: 'entryRoute',
       type: 'text',
       admin: {
-        description: 'Member-facing route when the module has a usable surface.',
+        description: 'Member-facing route, or optional demo URL for a code repository.',
       },
       validate: (value) => validateSafeURL(value, { allowRelative: true }),
     },
@@ -232,7 +233,7 @@ export const Modules: CollectionConfig = {
       name: 'moduleKind',
       type: 'select',
       admin: {
-        description: 'Internal modules open Portal routes. External modules launch another app.',
+        description: 'Internal modules open Portal routes, external modules launch apps, and code modules open repositories.',
         position: 'sidebar',
       },
       defaultValue: 'internal',
@@ -246,6 +247,10 @@ export const Modules: CollectionConfig = {
           label: 'External',
           value: 'external',
         },
+        {
+          label: 'Code / Repository',
+          value: 'code',
+        },
       ],
       required: true,
     },
@@ -255,6 +260,7 @@ export const Modules: CollectionConfig = {
       admin: {
         description: 'Signed launch redirects through Portal and hands off a short-lived token.',
         position: 'sidebar',
+        condition: (data) => data.moduleKind !== 'code',
       },
       defaultValue: 'none',
       index: true,
@@ -275,6 +281,7 @@ export const Modules: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'HTTPS callback URL that receives the launch token.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       validate: validateExternalCallbackURL,
     },
@@ -283,6 +290,7 @@ export const Modules: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Environment variable key containing this module launch signing secret.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       validate: validateEnvKey,
     },
@@ -291,6 +299,7 @@ export const Modules: CollectionConfig = {
       type: 'text',
       admin: {
         description: 'Audience claim expected by the external app. Defaults to the module slug.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
     },
     {
@@ -298,6 +307,7 @@ export const Modules: CollectionConfig = {
       type: 'number',
       admin: {
         description: 'Short-lived launch token TTL. Keep this low.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: 120,
       validate: validateTTL,
@@ -307,6 +317,7 @@ export const Modules: CollectionConfig = {
       type: 'select',
       admin: {
         description: 'Optional additional user roles required to launch this external module.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       hasMany: true,
       options: authRoleOptions,
@@ -316,6 +327,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include the user email claim in signed launch tokens.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: true,
     },
@@ -324,6 +336,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include Portal auth roles in signed launch tokens.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: true,
     },
@@ -332,6 +345,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include the linked Portal profile ID/name when one exists.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: true,
     },
@@ -340,6 +354,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include the linked public profile handle when one exists.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: true,
     },
@@ -348,6 +363,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include a public avatar URL when the linked profile has one.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: false,
     },
@@ -356,6 +372,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include Portal-verified wallet ownership in signed launch tokens.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: false,
     },
@@ -364,6 +381,7 @@ export const Modules: CollectionConfig = {
       type: 'checkbox',
       admin: {
         description: 'Include allowlisted Portal credentials in signed launch tokens.',
+        condition: (data) => data.moduleKind === 'external' && data.authMode === 'signed_launch',
       },
       defaultValue: false,
     },
@@ -372,6 +390,7 @@ export const Modules: CollectionConfig = {
       type: 'textarea',
       admin: {
         description: 'Internal notes for the external app integration.',
+        condition: (data) => data.moduleKind === 'external',
       },
     },
     {
@@ -394,9 +413,12 @@ export const Modules: CollectionConfig = {
       name: 'repositoryURL',
       type: 'text',
       admin: {
-        description: 'Optional implementation repository or PR link.',
+        description: 'Required HTTPS repository URL for code modules; optional source link for other modules.',
       },
-      validate: (value) => validateSafeURL(value, { allowRelative: true }),
+      validate: (value, { siblingData }) =>
+        (siblingData as { moduleKind?: string } | undefined)?.moduleKind === 'code' && value !== undefined
+          ? codeRepositoryURL(value) ? true : 'Code modules require an absolute HTTPS repository URL without credentials.'
+          : validateSafeURL(value, { allowRelative: true }),
     },
     {
       name: 'owners',
@@ -514,6 +536,34 @@ export const Modules: CollectionConfig = {
   ],
   hooks: {
     afterChange: [createModulePublishedNotifications],
+    beforeValidate: [({ data, originalDoc }) => {
+      if (!data) return data
+      const kind = data.moduleKind ?? originalDoc?.moduleKind ?? 'internal'
+      if (kind !== 'code') return data
+      const repositoryURL = 'repositoryURL' in data ? data.repositoryURL : originalDoc?.repositoryURL
+      if (!codeRepositoryURL(repositoryURL)) {
+        throw new APIError('Code modules require an absolute HTTPS repository URL without credentials.', 400)
+      }
+      // The repository is a plain outbound link. Old app launch configuration must
+      // not survive a kind switch, including partial API updates.
+      return {
+        ...data,
+        authMode: 'none',
+        externalCallbackURL: null,
+        launchSecretEnvKey: null,
+        launchAudience: null,
+        launchTokenTTLSeconds: null,
+        launchRequiredRoles: [],
+        integrationNotes: null,
+        includeEmailInLaunch: false,
+        includeRolesInLaunch: false,
+        includeProfileInLaunch: false,
+        includeHandleInLaunch: false,
+        includeAvatarInLaunch: false,
+        includeWalletsInLaunch: false,
+        includeCredentialsInLaunch: false,
+      }
+    }],
   },
   timestamps: true,
 }

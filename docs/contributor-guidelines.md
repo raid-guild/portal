@@ -536,14 +536,19 @@ A contribution is done when:
 
 ### Guild Cabinet discovery
 
-`/modules` presents Tools, Artifacts, and Arcade destinations, selected with
-`?view=tools`, `?view=artifacts`, or `?view=arcade`. Existing module categories
-remain secondary filters. Games belong to Arcade; records pointing to the
+`/modules` presents Tools, Artifacts, Code, and Arcade destinations, selected with
+`?view=tools`, `?view=artifacts`, `?view=code`, or `?view=arcade`. Existing module categories
+remain secondary filters. Code records belong to Code regardless of category;
+other games belong to Arcade; records pointing to the
 portal-artifacts service or its exact GitHub repository belong to Artifacts;
 other modules belong to Tools. Keep this classification in `moduleDestination.ts`
-while the artifact service is the registry boundary. No schema migration is needed.
+while the artifact service is the registry boundary. The `code` module kind
+requires an absolute HTTPS `repositoryURL` without credentials. `entryRoute`
+is an optional demo. Code records have no signed launch configuration.
 
-Cards use CMS screenshots, not live app data. Preserve module access filtering,
+Cards use CMS screenshots when supplied. Code records without a thumbnail use
+a deterministic repository cover made from their name and repository host/path,
+with no remote image request. Preserve module access filtering,
 signed launch URLs, detail pages, and announcement preferences. Only public card
 fields are passed to the interactive client component; integration notes and
 launch configuration stay on the server. The generated arcade doorway is a
@@ -555,12 +560,12 @@ build before its pre-deploy migrations create CMS tables. Robots discovers live
 shard IDs at request time; sitemap queries retain anonymous access filters.
 
 The Guild Cabinet uses Portal theme tokens for collection backgrounds, cards,
-text, and controls in all three destinations. The decorative Arcade entrance
+text, and controls in all destinations. The decorative Arcade entrance
 retains its dark illustrated palette independently of the selected theme.
 
 Module favorites are browser-local IDs stored under `raidguild:module-favorites:v1`.
 The Favorites destination replaces the Arcade tab and includes only currently
-accessible module records across Tools, Artifacts, and games. Arcade remains
+accessible module records across Tools, Artifacts, Code, and games. Arcade remains
 reachable through its desktop entrance or mobile shortcut. Favorites are not
 account-synced, public likes, or usage tracking; unavailable storage falls back
 to the current visit with a visible notice.

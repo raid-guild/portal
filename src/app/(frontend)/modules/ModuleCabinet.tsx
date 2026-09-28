@@ -3,10 +3,11 @@
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
-import { ArrowUpRight, BookOpen, Gamepad2, Search, Wrench, ArrowRight, Star } from 'lucide-react'
+import { ArrowUpRight, BookOpen, Code2, Gamepad2, Search, Wrench, ArrowRight, Star } from 'lucide-react'
 import { categoryLabels, statusLabels } from './moduleDisplay'
 import type { ModuleDestination } from './moduleDestination'
 import styles from './cabinet.module.css'
+import { CodeRepositoryCover } from './CodeRepositoryCover'
 
 const favoritesKey = 'raidguild:module-favorites:v1'
 const readFavorites = (): number[] => {
@@ -25,6 +26,8 @@ export type CabinetModule = {
   destination: ModuleDestination
   image: string | null
   imageAlt: string
+  isCode: boolean
+  repository: string | null
   detail: string | null
   action: { href: string | null; label: string; opensNewWindow: boolean; signedLaunch: boolean }
 }
@@ -39,7 +42,7 @@ export function ModuleCabinet({
   const params = useSearchParams()
   const requested = params.get('view')
   const view: ModuleDestination | 'favorites' =
-    requested === 'arcade' || requested === 'artifacts' || requested === 'favorites'
+    requested === 'arcade' || requested === 'artifacts' || requested === 'code' || requested === 'favorites'
       ? requested
       : 'tools'
   const [query, setQuery] = useState('')
@@ -85,7 +88,7 @@ export function ModuleCabinet({
   const filtered = inView.filter(
     (module) =>
       (activeCategory === 'all' || module.category === activeCategory) &&
-      `${module.name} ${module.summary}`.toLowerCase().includes(query.trim().toLowerCase()),
+      `${module.name} ${module.summary} ${module.repository || ''}`.toLowerCase().includes(query.trim().toLowerCase()),
   )
   const games = modules.filter((module) => module.destination === 'arcade')
   const counts = (destination: ModuleDestination | 'favorites') =>
@@ -144,6 +147,7 @@ export function ModuleCabinet({
                 [
                   { key: 'tools', label: 'Tools', Icon: Wrench },
                   { key: 'artifacts', label: 'Artifacts', Icon: BookOpen },
+                  { key: 'code', label: 'Code', Icon: Code2 },
                   { key: 'favorites', label: 'Favorites', Icon: Star },
                 ] as const
               ).map(({ key, label, Icon }) => (
@@ -194,6 +198,8 @@ export function ModuleCabinet({
                     ? 'Your everyday toolkit'
                     : view === 'artifacts'
                       ? 'The curiosity collection'
+                      : view === 'code'
+                        ? 'The source shelf'
                       : 'Choose your game'}
               </p>
               <p>
@@ -203,6 +209,8 @@ export function ModuleCabinet({
                     ? 'Find a useful next step.'
                     : view === 'artifacts'
                       ? 'Interactive ideas, built to explore.'
+                      : view === 'code'
+                        ? 'Explore the repositories behind guild projects.'
                       : 'Pick a world and step inside.'}
               </p>
             </div>
@@ -263,7 +271,7 @@ export function ModuleCabinet({
                 {inView.length
                   ? 'Try a different search or category.'
                   : view === 'favorites'
-                    ? 'Star a tool, artifact, or game to find it here.'
+                    ? 'Star a tool, artifact, code repository, or game to find it here.'
                     : 'Check back for new guild experiences.'}
               </p>
               {inView.length > 0 && (
@@ -353,14 +361,18 @@ function ModuleCard({
   const action = module.action
   return (
     <article className={styles.card} aria-label={module.name}>
-      <div className={styles.preview}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={module.image || '/assets/symbol-m800.svg'}
-          alt={module.imageAlt}
-          loading="lazy"
-          className={!module.image ? styles.fallback : undefined}
-        />
+      <div className={`${styles.preview} ${module.isCode && !module.image ? styles.codePreview : ''}`}>
+        {module.isCode && !module.image && module.repository ? (
+          <CodeRepositoryCover name={module.name} repository={module.repository} />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={module.image || '/assets/symbol-m800.svg'}
+            alt={module.imageAlt}
+            loading="lazy"
+            className={!module.image ? styles.fallback : undefined}
+          />
+        )}
         <button
           type="button"
           className={styles.favorite}
@@ -380,6 +392,7 @@ function ModuleCard({
         </p>
         <h2>{module.detail ? <Link href={module.detail}>{module.name}</Link> : module.name}</h2>
         <p className={styles.summary}>{module.summary.replace(/^Standalone artifact:\s*/i, '')}</p>
+        {module.repository && <p className={styles.repositoryLabel}>{module.repository}</p>}
         <div className={styles.cardLinks}>
           {action.href ? (
             <a

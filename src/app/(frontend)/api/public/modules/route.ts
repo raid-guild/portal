@@ -17,7 +17,7 @@ export async function GET(request: Request) {
       // projection deliberately bypasses it; the predicate is not caller supplied.
       overrideAccess: true,
       where: { and: [{ enabled: { equals: true } }, { visibility: { equals: 'public' } }] },
-      select: { slug: true, name: true, summary: true, category: true, thumbnail: true, enabled: true, visibility: true, entryRoute: true, authMode: true },
+      select: { slug: true, name: true, summary: true, category: true, thumbnail: true, enabled: true, visibility: true, entryRoute: true, authMode: true, moduleKind: true, repositoryURL: true },
       depth: 1,
       limit: 100,
       page,

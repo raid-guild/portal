@@ -5907,3 +5907,137 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await commentPublicContext.close()
   await publicContext.close()
 })
+
+test('code modules validate repository links and render the Code cabinet', async ({ page }, testInfo) => {
+  const me = await page.request.get('/api/users/me')
+  const meBody = await me.json()
+  if (!meBody.user?.id) {
+    const login = await page.request.post('/api/users/login', {
+      data: { email: adminEmail, password: adminPassword },
+    })
+    if (!login.ok()) {
+      const first = await page.request.post('/api/users/first-register', {
+        data: { email: adminEmail, password: adminPassword, name: 'Playwright Admin' },
+      })
+      expect(first.ok()).toBeTruthy()
+      const loginAfterRegister = await page.request.post('/api/users/login', {
+        data: { email: adminEmail, password: adminPassword },
+      })
+      expect(loginAfterRegister.ok()).toBeTruthy()
+    }
+  }
+  const userResponse = await page.request.get('/api/users/me')
+  const user = (await userResponse.json()).user
+  expect(user?.id).toBeTruthy()
+  const verified = await page.request.patch(`/api/users/${user.id}`, {
+    data: { emailVerifiedAt: new Date().toISOString(), roles: ['admin', 'member'] },
+  })
+  expect(verified.ok()).toBeTruthy()
+
+  const suffix = Date.now()
+  const slug = `code-e2e-${suffix}`
+  const name = `Code E2E ${suffix}`
+  const repositoryURL = `https://github.com/raid-guild/${slug}`
+  const base = {
+    name, slug, summary: 'A repository for the guild to explore.', status: 'active',
+    enabled: true, visibility: 'public', category: 'games', moduleKind: 'code',
+    entryRoute: 'https://demo.example.com/play',
+  }
+  for (const badURL of [undefined, '/relative', 'http://github.com/raid-guild/demo', 'https://user:pass@github.com/repo']) {
+    const invalid = await page.request.post('/api/modules', {
+      data: { ...base, slug: `${slug}-invalid-${String(badURL).length}`, repositoryURL: badURL },
+    })
+    expect(invalid.status()).toBe(400)
+  }
+  const created = await page.request.post('/api/modules', {
+    data: { ...base, repositoryURL, authMode: 'signed_launch', launchSecretEnvKey: 'SHOULD_CLEAR' },
+  })
+  expect(created.status()).toBe(201)
+  const code = (await created.json()).doc
+  expect(code.authMode).toBe('none')
+  expect(code.launchSecretEnvKey).toBeFalsy()
+
+  const badUpdate = await page.request.patch(`/api/modules/${code.id}`, { data: { repositoryURL: '/relative' } })
+  expect(badUpdate.status()).toBe(400)
+  const catalog = await page.request.get('/api/public/modules')
+  expect(catalog.ok()).toBeTruthy()
+  const catalogCard = (await catalog.json()).docs.find((entry: { id: string }) => entry.id === slug)
+  expect(catalogCard.href).toBe(repositoryURL)
+  expect(Object.keys(catalogCard).sort()).toEqual(['category', 'description', 'href', 'id', 'image', 'title'])
+
+  await page.goto('/modules?view=code')
+  await expect(page.getByRole('link', { name: /Code \d+/ })).toBeVisible()
+  const card = page.getByRole('article', { name })
+  await expect(card).toBeVisible()
+  await expect(card.getByRole('img', { name: `Repository cover for ${name}` })).toBeVisible()
+  await expect(card.getByText(`github.com/raid-guild/${slug}`).first()).toBeVisible()
+  await expect(card.getByRole('link', { name: 'View repository' })).toHaveAttribute('href', repositoryURL)
+  await page.screenshot({ path: testInfo.outputPath('code-desktop.png'), fullPage: true })
+  const generatedCover = card.getByRole('img', { name: `Repository cover for ${name}` })
+  for (const width of [900, 600]) {
+    await page.setViewportSize({ width, height: 700 })
+    await expect(generatedCover).toBeVisible()
+    const coverFits = await generatedCover.evaluate((cover) => {
+      const preview = cover.parentElement
+      const mark = cover.firstElementChild
+      const content = cover.lastElementChild
+      const favorite = preview?.querySelector('button')
+      const badge = preview?.querySelector(':scope > span')
+      if (!mark || !content || !favorite || !badge) return false
+      const markBox = mark.getBoundingClientRect()
+      const contentBox = content.getBoundingClientRect()
+      const favoriteBox = favorite.getBoundingClientRect()
+      const badgeBox = badge.getBoundingClientRect()
+      const coverBox = cover.getBoundingClientRect()
+      return markBox.right < favoriteBox.left &&
+        markBox.bottom < contentBox.top &&
+        contentBox.bottom < badgeBox.top &&
+        contentBox.bottom <= coverBox.bottom
+    })
+    expect(coverFits).toBeTruthy()
+    await page.screenshot({ path: testInfo.outputPath(`code-${width}px-generated-cover.png`), fullPage: true })
+  }
+  await page.getByRole('searchbox', { name: 'Search modules' }).fill(slug)
+  await expect(card).toBeVisible()
+  await page.getByRole('searchbox', { name: 'Search modules' }).fill('no matching repository')
+  await expect(card).toHaveCount(0)
+  await page.goto(`/modules/${slug}`)
+  await expect(page.getByRole('img', { name: `Repository cover for ${name}` })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'View repository' })).toHaveAttribute('href', repositoryURL)
+  await expect(page.getByRole('link', { name: 'Open demo' })).toHaveAttribute('href', 'https://demo.example.com/play')
+
+  const switched = await page.request.patch(`/api/modules/${code.id}`, {
+    data: { moduleKind: 'external', authMode: 'signed_launch', externalCallbackURL: 'https://app.example.com/callback', launchSecretEnvKey: 'E2E_EXTERNAL_MODULE_LAUNCH_SECRET', launchTokenTTLSeconds: 300 },
+  })
+  expect(switched.ok()).toBeTruthy()
+  const backToCode = await page.request.patch(`/api/modules/${code.id}`, { data: { moduleKind: 'code' } })
+  expect(backToCode.ok()).toBeTruthy()
+  const switchedCode = (await backToCode.json()).doc
+  expect(switchedCode.authMode).toBe('none')
+  expect(switchedCode.externalCallbackURL).toBeFalsy()
+  expect(switchedCode.launchSecretEnvKey).toBeFalsy()
+  expect(switchedCode.launchTokenTTLSeconds).toBeFalsy()
+
+  const cover = await page.request.post('/api/media', {
+    multipart: {
+      _payload: JSON.stringify({ alt: 'Custom code cover' }),
+      file: {
+        name: 'code-cover.png',
+        mimeType: 'image/png',
+        buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScL/nwAAAABJRU5ErkJggg==', 'base64'),
+      },
+    },
+  })
+  expect(cover.status()).toBe(201)
+  const media = (await cover.json()).doc
+  const withCover = await page.request.patch(`/api/modules/${code.id}`, { data: { thumbnail: media.id } })
+  expect(withCover.ok()).toBeTruthy()
+
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/modules?view=code')
+  await expect(page.getByRole('article', { name })).toBeVisible()
+  await expect(page.getByRole('link', { name: /Code \d+/ })).toBeVisible()
+  await expect(page.getByRole('article', { name }).getByRole('img', { name: 'Custom code cover' })).toBeVisible()
+  await expect(page.getByRole('article', { name }).getByRole('img', { name: `Repository cover for ${name}` })).toHaveCount(0)
+  await page.screenshot({ path: testInfo.outputPath('code-mobile-uploaded-cover.png'), fullPage: true })
+})

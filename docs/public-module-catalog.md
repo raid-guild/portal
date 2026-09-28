@@ -9,6 +9,8 @@ collection read access or signed-launch authentication. The response explicitly
 allowlists `id` (slug), `title`, `description`, `category`, `image` (nullable HTTPS
 thumbnail), and `href`. No secrets, callbacks, authors, roles, or related records
 are serialized. Signed-launch modules link to the Portal detail page.
+Code modules link directly to their validated HTTPS repository and keep the
+same response fields. Their optional demo URL and launch fields are not exposed.
 
 Responses may be cached for up to five minutes. Removing public visibility can
 therefore take up to that cache interval to disappear from a consumer.

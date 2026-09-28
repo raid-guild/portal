@@ -1,5 +1,6 @@
 import type { Media, Module } from '@/payload-types'
 import { toSafeURL } from '@/utilities/safeURL'
+import { codeRepositoryURL } from '@/utilities/moduleRepository'
 
 export const statusLabels: Record<NonNullable<Module['status']>, string> = {
   active: 'Active',
@@ -35,16 +36,18 @@ export const getModuleAction = (module: Module) => {
       ? `/api/modules/${encodeURIComponent(module.slug)}/launch`
       : null
   const entryRoute = toSafeURL(module.entryRoute, { allowRelative: true })
-  const href = signedLaunch || entryRoute
+  const href = module.moduleKind === 'code' ? codeRepositoryURL(module.repositoryURL) : signedLaunch || entryRoute
 
   return {
     href,
-    label: signedLaunch
+    label: module.moduleKind === 'code'
+      ? 'View repository'
+      : signedLaunch
       ? 'Launch app'
       : module.moduleKind === 'external'
         ? 'Open app'
         : 'Open module',
-    opensNewWindow: Boolean(signedLaunch),
+    opensNewWindow: Boolean(signedLaunch || module.moduleKind === 'code'),
     signedLaunch: Boolean(signedLaunch),
   }
 }

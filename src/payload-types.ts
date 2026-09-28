@@ -1119,17 +1119,17 @@ export interface Module {
   featured?: boolean | null;
   sortOrder?: number | null;
   /**
-   * Member-facing route when the module has a usable surface.
+   * Member-facing route, or optional demo URL for a code repository.
    */
   entryRoute?: string | null;
   /**
-   * Internal modules open Portal routes. External modules launch another app.
+   * Internal modules open Portal routes, external modules launch apps, and code modules open repositories.
    */
-  moduleKind: 'internal' | 'external';
+  moduleKind: 'internal' | 'external' | 'code';
   /**
    * Signed launch redirects through Portal and hands off a short-lived token.
    */
-  authMode: 'none' | 'signed_launch';
+  authMode?: ('none' | 'signed_launch') | null;
   /**
    * HTTPS callback URL that receives the launch token.
    */
@@ -1191,7 +1191,7 @@ export interface Module {
    */
   specURL?: string | null;
   /**
-   * Optional implementation repository or PR link.
+   * Required HTTPS repository URL for code modules; optional source link for other modules.
    */
   repositoryURL?: string | null;
   /**
