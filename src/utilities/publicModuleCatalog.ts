@@ -1,4 +1,5 @@
 import type { Module } from '../payload-types'
+import { codeRepositoryURL } from './moduleRepository'
 
 const origin = 'https://portal.raidguild.org'
 
@@ -22,6 +23,8 @@ export function publicModuleCard(module: Module) {
     category: module.category,
     image: absolute(thumbnail?.sizes?.medium?.url || thumbnail?.url),
     // Signed-launch apps retain Portal's authentication and role checks.
-    href: module.authMode === 'signed_launch' ? detailURL : absolute(module.entryRoute) || detailURL,
+    href: module.moduleKind === 'code'
+      ? codeRepositoryURL(module.repositoryURL) || detailURL
+      : module.authMode === 'signed_launch' ? detailURL : absolute(module.entryRoute) || detailURL,
   }
 }

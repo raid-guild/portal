@@ -13,6 +13,7 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { getModuleAction, getModuleImageURL, relationDoc } from './moduleDisplay'
 import { ModuleCabinet } from './ModuleCabinet'
 import { getModuleDestination } from './moduleDestination'
+import { repositoryLabel } from '@/utilities/moduleRepository'
 
 export const dynamic = 'force-dynamic'
 
@@ -41,6 +42,8 @@ export default async function ModulesPage() {
       destination: getModuleDestination(module),
       image: getModuleImageURL(thumbnail),
       imageAlt: thumbnail?.alt || '',
+      isCode: module.moduleKind === 'code',
+      repository: module.moduleKind === 'code' ? repositoryLabel(module.repositoryURL) : null,
       detail: module.slug ? `/modules/${encodeURIComponent(module.slug)}` : null,
       action: getModuleAction(module),
     }

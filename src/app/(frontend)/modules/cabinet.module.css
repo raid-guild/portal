@@ -205,6 +205,9 @@
   background: var(--cabinet-preview);
   border-bottom: 1px solid var(--line);
 }
+.codePreview {
+  min-height: 180px;
+}
 .preview > img {
   width: 100%;
   height: 100%;
@@ -215,6 +218,61 @@
   object-fit: contain;
   padding: 45px;
   opacity: 0.35;
+}
+.codeCover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 16px;
+  overflow: hidden;
+  color: #f9f5ea;
+  background-color: #253642;
+  background-image: radial-gradient(circle at 80% 12%, #ffffff25, transparent 35%),
+    repeating-linear-gradient(135deg, transparent 0 28px, #ffffff0d 29px 30px);
+}
+.codeCover_slate { background-color: #253642; }
+.codeCover_moss { background-color: #31463b; }
+.codeCover_aubergine { background-color: #443245; }
+.codeCover_copper { background-color: #694436; }
+.codeCoverMark {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  font: 700 26px/1 var(--font-geist-mono), monospace;
+  opacity: 0.8;
+}
+.codeCoverText { display: grid; gap: 4px; min-width: 0; }
+.codeCoverEyebrow {
+  font: 10px/1.3 var(--font-geist-mono), monospace;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  opacity: 0.78;
+}
+.codeCoverText strong {
+  font: 500 clamp(17px, 2vw, 28px)/1.1 var(--font-display-theme);
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.codeCoverText small {
+  font: 11px/1.4 var(--font-geist-mono), monospace;
+  overflow-wrap: anywhere;
+  opacity: 0.83;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.repositoryLabel {
+  margin-top: 10px;
+  color: var(--cabinet-muted);
+  font: 10px/1.5 var(--font-geist-mono), monospace;
+  overflow-wrap: anywhere;
 }
 .badge {
   position: absolute;

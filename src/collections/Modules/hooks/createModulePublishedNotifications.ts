@@ -3,6 +3,7 @@ import type { CollectionAfterChangeHook } from 'payload'
 import type { Module } from '@/payload-types'
 import { createNotificationsForEligibleUsers } from '@/notifications/createNotification'
 import { toSafeURL } from '@/utilities/safeURL'
+import { codeRepositoryURL } from '@/utilities/moduleRepository'
 
 export const createModulePublishedNotifications: CollectionAfterChangeHook<Module> = async ({
   context,
@@ -55,9 +56,10 @@ const isEligibleForModuleNotification = (module: Partial<Module>) =>
   module.visibility !== 'admin'
 
 const getModuleActionLabel = (module: Module) =>
-  module.moduleKind === 'external' ? 'Open module app' : 'Open module'
+  module.moduleKind === 'code' ? 'View repository' : module.moduleKind === 'external' ? 'Open module app' : 'Open module'
 
 const getModuleActionURL = (module: Module) => {
+  if (module.moduleKind === 'code') return codeRepositoryURL(module.repositoryURL) || '/modules'
   if (module.moduleKind === 'external' && module.authMode === 'signed_launch' && module.slug) {
     return `/api/modules/${module.slug}/launch`
   }

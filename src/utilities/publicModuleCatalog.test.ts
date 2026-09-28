@@ -21,3 +21,11 @@ test('signed launch stays behind Portal and unsafe links fall back', () => {
     assert.equal(publicModuleCard({ ...sample, ...overrides })!.href, 'https://portal.raidguild.org/modules/test-tool')
   }
 })
+test('code cards use the repository and preserve the public allowlist', () => {
+  const card = publicModuleCard({ ...sample, moduleKind: 'code', authMode: 'signed_launch', repositoryURL: 'https://github.com/raid-guild/example', entryRoute: 'https://demo.example.com' })!
+  assert.equal(card.href, 'https://github.com/raid-guild/example')
+  assert.deepEqual(Object.keys(card).sort(), ['category', 'description', 'href', 'id', 'image', 'title'])
+  for (const repositoryURL of ['/relative', 'http://example.com/repo', 'https://user:pass@example.com/repo']) {
+    assert.equal(publicModuleCard({ ...sample, moduleKind: 'code', repositoryURL })!.href, 'https://portal.raidguild.org/modules/test-tool')
+  }
+})
