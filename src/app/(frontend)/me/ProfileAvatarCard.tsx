@@ -6,15 +6,20 @@ import type { Media, Profile } from '@/payload-types'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { avatarUploadError } from '@/utilities/avatarUploadError'
 
 type ProfileAvatarCardProps = {
+  canEditProfile: boolean
   profile?: Profile | null
 }
 
 const getMediaURL = (media?: Media | number | null) =>
   typeof media === 'object' && media ? media.url || media.sizes?.square?.url || null : null
 
-export const ProfileAvatarCard: React.FC<ProfileAvatarCardProps> = ({ profile }) => {
+export const ProfileAvatarCard: React.FC<ProfileAvatarCardProps> = ({
+  canEditProfile,
+  profile,
+}) => {
   const [error, setError] = useState<string | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [previewURL, setPreviewURL] = useState<string | null>(getMediaURL(profile?.avatar))
@@ -23,7 +28,7 @@ export const ProfileAvatarCard: React.FC<ProfileAvatarCardProps> = ({ profile })
   const saveAvatar = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
-    if (!profile) return
+    if (!profile || !canEditProfile) return
 
     setError(null)
     setSuccess(null)
@@ -47,7 +52,7 @@ export const ProfileAvatarCard: React.FC<ProfileAvatarCardProps> = ({ profile })
         method: 'POST',
       })
 
-      if (!uploadRes.ok) throw new Error('Unable to upload avatar.')
+      if (!uploadRes.ok) throw new Error(avatarUploadError(uploadRes.status))
 
       const uploadJSON = await uploadRes.json()
       const avatarID = uploadJSON.doc?.id || uploadJSON.id
@@ -80,13 +85,15 @@ export const ProfileAvatarCard: React.FC<ProfileAvatarCardProps> = ({ profile })
         <div className="min-w-0 flex-1">
           <p className="portal-kicker">Profile image</p>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {profile
-              ? 'Upload a square image for your public profile and member listings.'
-              : 'Create or claim a profile before adding a profile image.'}
+            {!canEditProfile
+              ? 'Verify your email before uploading a profile image.'
+              : profile
+                ? 'Upload a square image for your public profile and member listings.'
+                : 'Create or claim a profile before adding a profile image.'}
           </p>
         </div>
       </div>
-      {profile ? (
+      {profile && canEditProfile ? (
         <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
           <div>
             <Label htmlFor="avatarFile">Image</Label>

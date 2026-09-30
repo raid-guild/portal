@@ -14,6 +14,7 @@ import { ProfileAvatarCard } from './ProfileAvatarCard'
 import { WalletVerificationCard } from './WalletVerificationCard'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { getSafeNextPath } from '@/utilities/safeNextPath'
+import { hasVerifiedAccount } from '@/access/roles'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
 
   const createdRecords = await getCreatedRecords(user, profile)
   const nextPath = getSafeNextPath(searchParams.next)
+  const canEditProfile = hasVerifiedAccount(user)
 
   return (
     <main className="container pb-24 pt-12">
@@ -70,7 +72,7 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
             Manage your public identity, avatar, links, skills, roles, and visibility without
             entering Payload Admin.
           </p>
-          <ProfileAvatarCard profile={profile} />
+          <ProfileAvatarCard canEditProfile={canEditProfile} profile={profile} />
         </div>
         <div className="space-y-4">
           <EmailVerificationCard email={user.email} emailVerifiedAt={user.emailVerifiedAt} />
@@ -107,9 +109,19 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
 
       <section className="mt-12" id="profile">
         <h2 className="mb-4 portal-heading">Profile wizard</h2>
+        {!canEditProfile ? (
+          <p
+            className="mb-6 max-w-2xl border-l-2 border-primary pl-4 text-sm leading-6"
+            role="status"
+          >
+            Verify your email before creating or editing your profile or uploading an avatar. Use
+            the Verify email button in the account summary above, then open the link we send you.
+          </p>
+        ) : null}
         <ProfileWizardForm
           accountEmail={user.email}
           accountUserID={user.id}
+          canEditProfile={canEditProfile}
           claimableProfiles={profile ? [] : claimableProfiles}
           profile={profile}
           roles={roles}

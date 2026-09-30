@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 import { Button } from '@/components/ui/button'
 
@@ -13,6 +14,7 @@ export const EmailVerificationCard: React.FC<EmailVerificationCardProps> = ({
   email,
   emailVerifiedAt,
 }) => {
+  const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
@@ -69,7 +71,10 @@ export const EmailVerificationCard: React.FC<EmailVerificationCardProps> = ({
 
       setVerifiedAt(json?.emailVerifiedAt || new Date().toISOString())
       setSuccess('Email verified.')
-      window.history.replaceState(null, '', '/me')
+      const url = new URL(window.location.href)
+      url.searchParams.delete('verifyEmailToken')
+      window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+      router.refresh()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to verify email.')
     } finally {
