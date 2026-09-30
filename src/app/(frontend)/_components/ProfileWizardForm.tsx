@@ -9,10 +9,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { consumeSignupAnalyticsContext, trackPortalEvent } from '@/utilities/analytics'
+import { avatarUploadError } from '@/utilities/avatarUploadError'
 
 type ProfileWizardFormProps = {
   accountEmail?: string | null
   accountUserID: number | string
+  canEditProfile: boolean
   claimableProfiles?: Profile[]
   profile?: Profile | null
   roles: ProfileRole[]
@@ -55,6 +57,7 @@ const validationErrorFrom = (json: any) =>
 export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   accountEmail,
   accountUserID,
+  canEditProfile,
   claimableProfiles = [],
   profile,
   roles,
@@ -134,6 +137,11 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
   const submitProfile = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    if (!canEditProfile) {
+      setError('Verify your email before saving your profile.')
+      return
+    }
+
     if (step !== profileSteps.length - 1) return
 
     if (isSubmittingRef.current) return
@@ -201,7 +209,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
         })
 
         if (!uploadRes.ok) {
-          throw new Error('Unable to upload avatar.')
+          throw new Error(avatarUploadError(uploadRes.status))
         }
 
         const uploadJSON = await uploadRes.json()
@@ -329,7 +337,7 @@ export const ProfileWizardForm: React.FC<ProfileWizardFormProps> = ({
         </section>
       ) : null}
 
-      <form className="portal-panel" noValidate onSubmit={submitProfile}>
+      <form className="portal-panel" hidden={!canEditProfile} noValidate onSubmit={submitProfile}>
         <Stepper currentStep={step} />
 
         <div className="mt-8">

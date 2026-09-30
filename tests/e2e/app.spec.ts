@@ -3259,6 +3259,11 @@ async function verifyContributorAdminCreateAccess(page: Page) {
   await page.goto('/me')
   await expect(page.getByRole('heading', { name: 'Profile wizard' })).toBeVisible()
   await expect(page.getByText('Email not verified', { exact: true })).toBeVisible()
+  await expect(
+    page.getByText(/Verify your email before creating or editing your profile/),
+  ).toBeVisible()
+  await expect(page.getByLabel(/^display name$/i)).not.toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next' })).not.toBeVisible()
 
   const emailVerificationToken = signAccountEmailVerificationToken({
     email,
@@ -3266,8 +3271,12 @@ async function verifyContributorAdminCreateAccess(page: Page) {
     purpose: 'account-email',
     userID: String(createdUserID),
   })
-  await page.goto(`/me?verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`)
+  await page.goto(
+    `/me?next=%2Fprojects&verifyEmailToken=${encodeURIComponent(emailVerificationToken)}`,
+  )
   await expect(page.getByText('Email verified.', { exact: true })).toBeVisible()
+  await expect(page.getByLabel(/^display name$/i)).toBeVisible()
+  await expect(page).toHaveURL(/\/me\?next=%2Fprojects$/)
 
   const verifiedUserResponse = await page.request.get(`/api/users/${createdUserID}`)
   expect(verifiedUserResponse.ok()).toBeTruthy()
@@ -3334,6 +3343,24 @@ async function createProfileAndVerifyContributorCreateLinks(page: Page) {
   await fillFirst(page.getByLabel(/^x$/i), 'playwright')
   await page.getByRole('button', { name: /save profile/i }).click()
   await expect(page.getByText('Profile saved.')).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Save image' })).toBeVisible()
+
+  const imageInput = page.getByLabel('Image', { exact: true })
+  await imageInput.setInputFiles('public/assets/image.png')
+  await page.route('**/api/media', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({ status: 403, body: JSON.stringify({ message: 'Forbidden' }) })
+      return
+    }
+    await route.continue()
+  })
+  await page.getByRole('button', { name: 'Save image' }).click()
+  await expect(page.getByText('Verify your email before uploading an avatar.')).toBeVisible()
+  await page.unroute('**/api/media')
+
+  await page.getByRole('button', { name: 'Save image' }).click()
+  await expect(page.getByText('Avatar saved.')).toBeVisible()
   expect(await capturedPlausibleEvents(page, 'Profile Completed')).toEqual([
     {
       name: 'Profile Completed',
