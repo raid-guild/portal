@@ -1789,6 +1789,17 @@ async function verifyMemberOnlyProjectVisibility(
   const eventBody = await eventResponse.json()
   const memberOnlyEventID = eventBody.doc?.id || eventBody.id
   expect(memberOnlyEventID).toBeTruthy()
+  const memberTranscript = '# Member planning transcript'
+  const memberTranscriptSave = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      eventID: memberOnlyEventID,
+      transcript: {
+        markdown: memberTranscript,
+        sourceSessionID: '64702ca2-a6ba-448d-b9c4-b924cbeae222',
+      },
+    },
+  })
+  expect(memberTranscriptSave.ok()).toBeTruthy()
 
   const postResponse = await adminPage.request.post('/api/posts', {
     data: {
@@ -1868,6 +1879,7 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(publicPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const publicEventDetailResponse = await publicPage.goto(`/events/${memberOnlyEventID}`)
   expect(publicEventDetailResponse?.status()).toBe(404)
+  expect((await publicPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)).status()).toBe(404)
   await publicPage.goto('/posts')
   await expect(publicPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const publicPostDetailResponse = await publicPage.goto(`/posts/${memberOnlyPostSlug}`)
@@ -1894,6 +1906,7 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const contributorEventDetailResponse = await contributorPage.goto(`/events/${memberOnlyEventID}`)
   expect(contributorEventDetailResponse?.status()).toBe(404)
+  expect((await contributorPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)).status()).toBe(404)
   await contributorPage.goto('/posts')
   await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
@@ -1925,6 +1938,9 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(memberPage.getByText(memberOnlyEventTitle)).toBeVisible()
   await memberPage.goto(`/events/${memberOnlyEventID}`)
   await expect(memberPage.getByRole('heading', { name: memberOnlyEventTitle })).toBeVisible()
+  const memberTranscriptResponse = await memberPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)
+  expect(memberTranscriptResponse.status()).toBe(200)
+  expect(await memberTranscriptResponse.text()).toBe(memberTranscript)
   await memberPage.goto('/posts')
   await expect(memberPage.getByRole('link', { name: memberOnlyPostTitle })).toBeVisible()
   await expect(memberPage.getByRole('link', { name: 'Members' })).toBeVisible()
@@ -2888,7 +2904,11 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
   expect(ingestResponse.ok()).toBeTruthy()
   const ingestBody = await ingestResponse.json()
   expect(ingestBody.matchedBy).toBe('discordScheduledEventID')
-  expect(ingestBody.event).toMatchObject({
+  expect(ingestBody.eventID).toBeTruthy()
+  const ingestedEventResponse = await adminPage.request.get(`/api/events/${ingestBody.eventID}`)
+  expect(ingestedEventResponse.ok()).toBeTruthy()
+  const ingestedEvent = await ingestedEventResponse.json()
+  expect(ingestedEvent).toMatchObject({
     recordingURL: 'https://example.com/recording',
     sourceArtifactID: `artifact-${suffix}`,
     sourceArtifactURL: 'https://example.com/summary',
@@ -2901,21 +2921,77 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
     params: {
       depth: '0',
       limit: '1',
-      'where[sourceKey][equals]': `event:${ingestBody.event.id}:artifact-ingested`,
+      'where[sourceKey][equals]': `event:${ingestBody.eventID}:artifact-ingested`,
     },
   })
   expect(activityResponse.ok()).toBeTruthy()
   const activityBody = await activityResponse.json()
   expect(activityBody.docs?.[0]).toMatchObject({
     activityType: 'event',
-    relatedEvent: ingestBody.event.id,
-    sourceKey: `event:${ingestBody.event.id}:artifact-ingested`,
+    relatedEvent: ingestBody.eventID,
+    sourceKey: `event:${ingestBody.eventID}:artifact-ingested`,
     sourceLabel: 'Session summary',
     sourceURL: 'https://example.com/summary',
     title: `Added session artifacts: ${title}`,
     visibility: 'public',
     _status: 'published',
   })
+
+  const transcript = '# Recorded session\n\nPrivate transcript fixture.'
+  const sourceSessionID = '64702ca2-a6ba-448d-b9c4-b924cbeae222'
+  const transcriptRequest = {
+    eventID: ingestBody.eventID,
+    transcript: { markdown: transcript, sourceSessionID },
+  }
+  const saved = await adminPage.request.post('/api/events/artifacts/ingest', { data: transcriptRequest })
+  expect(saved.status()).toBe(200)
+  expect((await saved.json()).transcript).toBe('stored')
+  const publicTranscript = await publicPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(publicTranscript.status()).toBe(200)
+  expect(await publicTranscript.text()).toBe(transcript)
+  expect(publicTranscript.headers()['cache-control']).toContain('no-store')
+
+  const duplicate = await adminPage.request.post('/api/events/artifacts/ingest', { data: transcriptRequest })
+  expect((await duplicate.json()).transcript).toBe('unchanged')
+  const conflicting = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: { eventID: ingestBody.eventID, transcript: { markdown: 'Different body', sourceSessionID } },
+  })
+  expect(conflicting.status()).toBe(409)
+
+  const memberOnly = await adminPage.request.patch(`/api/events/${ingestBody.eventID}`, {
+    data: { visibility: 'member' },
+  })
+  expect(memberOnly.ok()).toBeTruthy()
+  const denied = await publicPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(denied.status()).toBe(404)
+  const adminTranscript = await adminPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(adminTranscript.status()).toBe(200)
+
+  const racingEvent = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      publishedAt: new Date().toISOString(),
+      sessionType: 'workshop',
+      startsAt: startsAt.toISOString(),
+      title: `Playwright transcript race ${suffix}`,
+      visibility: 'member',
+    },
+  })
+  expect(racingEvent.status()).toBe(201)
+  const racingEventBody = await racingEvent.json()
+  const racingEventID = racingEventBody.doc?.id || racingEventBody.id
+  const candidates = Array.from({ length: 8 }, (_, index) => `# Concurrent transcript ${index}`)
+  const attempts = await Promise.all(candidates.map((markdown) =>
+    adminPage.request.post('/api/events/artifacts/ingest', {
+      data: { eventID: racingEventID, transcript: { markdown, sourceSessionID } },
+    }),
+  ))
+  expect(attempts.filter((attempt) => attempt.status() === 200)).toHaveLength(1)
+  expect(attempts.filter((attempt) => attempt.status() === 409)).toHaveLength(candidates.length - 1)
+  const winner = attempts.findIndex((attempt) => attempt.status() === 200)
+  const persisted = await adminPage.request.get(`/api/events/${racingEventID}/transcript`)
+  expect(persisted.status()).toBe(200)
+  expect(await persisted.text()).toBe(candidates[winner])
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {

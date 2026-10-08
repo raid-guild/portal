@@ -123,16 +123,18 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     ...relatedProfiles,
     ...(fallbackSpeaker ? [fallbackSpeaker] : []),
   ])
-  const sourceLinks = [
+  const sourceLinks = (canViewFullDetails ? [
     { href: event.recordingURL, label: 'Recording' },
     { href: event.summaryArtifactURL, label: 'Summary artifact' },
-    { href: event.transcriptArtifactURL, label: 'Transcript artifact' },
     { href: event.sourceArtifactURL, label: 'Source artifact' },
-  ].flatMap((link) => {
+  ] : []).flatMap((link) => {
     const safeURL = toSafeURL(link.href)
 
     return safeURL ? [{ href: safeURL, label: link.label }] : []
   })
+  if (event.transcript?.markdown) {
+    sourceLinks.push({ href: `/api/events/${event.id}/transcript`, label: 'Download transcript' })
+  }
   const hasSourceLinks = sourceLinks.length > 0
   const resources = (event.resources || []).flatMap((resource) => {
     const safeURL = toSafeURL(resource.url)
@@ -262,7 +264,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </Section>
       ) : null}
 
-      {canViewFullDetails && isPast ? (
+      {(canViewFullDetails || Boolean(event.transcript?.markdown)) && isPast ? (
         <Section title="Source Material">
           {hasSourceLinks ? (
             <>

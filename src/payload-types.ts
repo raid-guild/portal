@@ -592,6 +592,15 @@ export interface Event {
   discordSyncError?: string | null;
   recordingURL?: string | null;
   transcriptArtifactURL?: string | null;
+  /**
+   * Portal-owned transcript. Access follows this Event visibility.
+   */
+  transcript?: {
+    markdown?: string | null;
+    sourceSessionID?: string | null;
+    sha256?: string | null;
+    ingestedAt?: string | null;
+  };
   summaryArtifactURL?: string | null;
   sourceArtifactURL?: string | null;
   /**
@@ -2923,6 +2932,14 @@ export interface EventsSelect<T extends boolean = true> {
   discordSyncError?: T;
   recordingURL?: T;
   transcriptArtifactURL?: T;
+  transcript?:
+    | T
+    | {
+        markdown?: T;
+        sourceSessionID?: T;
+        sha256?: T;
+        ingestedAt?: T;
+      };
   summaryArtifactURL?: T;
   sourceArtifactURL?: T;
   sourceArtifactID?: T;

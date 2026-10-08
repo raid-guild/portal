@@ -580,3 +580,12 @@ SELECT target_collection, target_id,
        count(*) FILTER (WHERE kind='bookmark') AS bookmarks
 FROM content_reactions GROUP BY 1,2 ORDER BY likes DESC;
 ```
+# Recorded Event transcripts
+
+Recorded Events may own a full Markdown transcript. Readers can download it
+through `/api/events/:id/transcript` when they can read the published Event:
+public Events are public, authenticated Events need a verified account, and
+member Events need a member or agent role. Admin and draft Events remain
+restricted to editors and admins. Publishers attach transcripts through the
+authenticated artifact ingest route; raw transcripts do not go to public
+Prism Memory by default.

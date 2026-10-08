@@ -354,3 +354,10 @@ accessible module records across Tools, Artifacts, and games. Arcade remains
 reachable through its desktop entrance or mobile shortcut. Favorites are not
 account-synced, public likes, or usage tracking; unavailable storage falls back
 to the current visit with a visible notice.
+# Recorded Event transcripts
+
+- [x] Store transcript Markdown and provenance on the Event with a migration.
+- [x] Read and download transcript through Event visibility, with no-store responses.
+- [x] Limit authenticated ingest size and reject conflicting replacements.
+- [ ] Configure the live recording publisher to fetch from the adapter's token-protected transcript endpoint and ingest the matched Portal Event.
+- [ ] Backfill Event 142 after the Portal change is deployed; keep it member-only.

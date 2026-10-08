@@ -597,3 +597,20 @@ SELECT target_collection, target_id,
        count(*) FILTER (WHERE kind='bookmark') AS bookmarks
 FROM content_reactions GROUP BY 1,2 ORDER BY likes DESC;
 ```
+# Recorded session transcripts
+
+An Event owns its full Markdown transcript. A published Event's transcript follows
+the Event visibility: public, authenticated, or member. Draft and admin Events
+remain restricted to editors and admins. The download route
+`GET /api/events/:id/transcript` checks Event access on every request and returns
+`Cache-Control: private, no-store`.
+
+The recording publisher must fetch `transcript.md` from the communication
+adapter with `X-Adapter-Token`, then send the text to the authenticated
+`POST /api/events/artifacts/ingest` route as
+`{ "eventID": 142, "transcript": { "markdown": "...", "sourceSessionID": "..." } }`.
+The route limits requests to 2 MiB, computes SHA-256, and atomically claims an
+empty transcript slot in the same database transaction as Payload's versioned
+Event update. It accepts identical retries and rejects conflicting transcript
+replacements even when publishers race. Do not attach a raw transcript
+to public Prism Memory or use `transcriptArtifactURL` for new recordings.
