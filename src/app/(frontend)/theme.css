@@ -3,7 +3,7 @@
   font-family: 'Grinder';
   font-style: normal;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Regular.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/Grinder-Refined-Regular.woff2') format('woff2');
 }
 
 @font-face {
@@ -11,7 +11,7 @@
   font-family: 'Grinder';
   font-style: italic;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Italic.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/Grinder-Refined-Italic.woff2') format('woff2');
 }
 
 @font-face {
@@ -19,7 +19,7 @@
   font-family: 'Grinder Retalic';
   font-style: normal;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Retalic.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/Grinder-Refined-Retalic.woff2') format('woff2');
 }
 
 @font-face {

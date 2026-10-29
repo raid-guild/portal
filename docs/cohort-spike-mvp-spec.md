@@ -480,7 +480,7 @@ Use:
 
 The MVP is ready when:
 
-- A visitor can understand current cohort activity from the first screen.
+- A visitor can distinguish the current cohort from the next announced cohort; if none is announced, the portal says so and offers an interest action.
 - The latest brief includes real, dated, human-readable activity.
 - A user can find the next session and calendar action immediately.
 - Project spikes show status, contributors, current state, activity, and ways to contribute.

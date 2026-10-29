@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
-import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
+import { getCohortCards } from '@/cohorts/getFeaturedCohort'
 import React from 'react'
 
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
@@ -23,12 +23,13 @@ export default async function HomePage() {
 
     return (
       <PortalDashboard
-        cohortCommitment={dashboardData.cohortCommitment}
+        currentCommitment={dashboardData.currentCommitment}
+        nextCommitment={dashboardData.nextCommitment}
         dashboardStats={dashboardData.dashboardStats}
         dailyBrief={dashboardData.dailyBrief}
         dailyEngagementSummary={dashboardData.dailyEngagementSummary}
         featuredModules={dashboardData.featuredModules}
-        featuredCohort={dashboardData.featuredCohort}
+        cohortCards={dashboardData.cohortCards}
         pointEvents={dashboardData.pointSummary.events}
         pointsTotal={dashboardData.pointSummary.total}
         profile={dashboardData.profile}
@@ -57,7 +58,7 @@ export default async function HomePage() {
     <PortalPublicHome
       cohortSessionThemes={cohortSnapshot.sessionThemes}
       copy={copy}
-      featuredCohort={cohortSnapshot.cohort}
+      cohortCards={cohortSnapshot.cohortCards}
       posts={posts}
       spotlights={spotlights}
       upcomingEvents={upcomingEvents}
@@ -107,7 +108,7 @@ const getRecentPosts = async () => {
 
 const getPublicCohortSnapshot = async () => {
   const payload = await getPayload({ config: configPromise })
-  const cohort = await getFeaturedCohort({ visibility: 'public' })
+  const cohortCards = await getCohortCards({ visibility: 'public' })
 
   const pastSessions = await payload.find({
     collection: 'events',
@@ -128,7 +129,7 @@ const getPublicCohortSnapshot = async () => {
   })
 
   return {
-    cohort,
+    cohortCards,
     sessionThemes: pastSessions.docs.slice(0, 3),
   }
 }

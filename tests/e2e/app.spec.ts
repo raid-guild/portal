@@ -1,11 +1,15 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import jwt from 'jsonwebtoken'
 import { privateKeyToAccount } from 'viem/accounts'
 
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
 import { normalizePortalTitle } from '@/utilities/generateMeta'
 import { POSTS_META_DESCRIPTION } from '@/utilities/postsMetadata'
+import { selectCohortCards } from '@/cohorts/selectFeaturedCohort'
+import type { Cohort } from '@/payload-types'
 
 import {
   adminEmail,
@@ -19,6 +23,26 @@ import {
 } from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
+
+test('cohort cards choose active and earliest upcoming independently', () => {
+  const cohort = (id: number, status: Cohort['programStatus'], startsAt?: string) =>
+    ({ id, slug: `cohort-${id}`, programStatus: status, startsAt }) as Cohort
+  const cards = selectCohortCards([
+    cohort(1, 'gathering-interest'),
+    cohort(2, 'upcoming', '2027-02-01T00:00:00.000Z'),
+    cohort(3, 'active', '2026-10-01T00:00:00.000Z'),
+    cohort(4, 'upcoming', '2026-11-01T00:00:00.000Z'),
+  ])
+  expect(cards.current?.id).toBe(3)
+  expect(cards.next?.id).toBe(4)
+  expect(selectCohortCards([cohort(3, 'active'), cohort(1, 'gathering-interest')]).next?.id).toBe(1)
+  expect(selectCohortCards([cohort(3, 'active')]).next).toBeNull()
+  expect(
+    selectCohortCards([cohort(5, 'upcoming'), cohort(4, 'upcoming', '2027-04-01T00:00:00.000Z')])
+      .next?.id,
+  ).toBe(4)
+  expect(selectCohortCards([cohort(5, 'upcoming'), cohort(4, 'upcoming')]).next?.id).toBe(4)
+})
 const daoWalletTestAccount = privateKeyToAccount(
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
 )
@@ -726,7 +750,7 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   )
 
   await publicPage.goto('/')
-  await expect(publicPage.getByText('Potential future cohort')).toBeVisible()
+  await expect(publicPage.getByText('Future cohort · Gathering interest')).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Signal interest' })).toBeVisible()
 
   const restoreCohortResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
@@ -737,6 +761,95 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
     },
   })
   expect(restoreCohortResponse.ok()).toBeTruthy()
+
+  await verifyCohortCards(adminPage, publicPage, cohort, cohortPath)
+}
+
+async function verifyCohortCards(
+  adminPage: Page,
+  publicPage: Page,
+  cohort: { id: number },
+  cohortPath: string,
+) {
+  const nextCohortResponse = await adminPage.request.post('/api/cohorts', {
+    data: {
+      _status: 'published',
+      cohortNumber: 9,
+      enrollmentStatus: 'open',
+      programStatus: 'upcoming',
+      slug: 'e2e-next-cohort',
+      startsAt: '2027-01-01T00:00:00.000Z',
+      summary: 'An upcoming cohort with its own commitment state.',
+      theme: 'Future guild work',
+      title: 'E2E Next Cohort',
+      visibility: 'public',
+      visualVariant: 'guild',
+    },
+  })
+  expect(nextCohortResponse.ok()).toBeTruthy()
+  const nextCohort = (await nextCohortResponse.json()).doc
+  try {
+    const activeResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: { _status: 'published', programStatus: 'active' },
+    })
+    expect(activeResponse.ok()).toBeTruthy()
+
+    await publicPage.goto('/')
+    await expect(publicPage.getByRole('region', { name: 'Current cohort: Cohort 8' })).toBeVisible()
+    const publicNextCard = publicPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(publicNextCard).toBeVisible()
+    await expect(publicNextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    const screenshotDir = process.env.E2E_COHORT_SCREENSHOTS_DIR
+    if (screenshotDir) {
+      mkdirSync(screenshotDir, { recursive: true })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = publicPage.viewportSize()
+      await publicPage.setViewportSize({ width: 390, height: 844 })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await publicPage.setViewportSize(viewport)
+    }
+
+    await adminPage.goto('/dashboard')
+    const currentCard = adminPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    const nextCard = adminPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(currentCard.getByText('Committed')).toBeVisible()
+    await expect(currentCard.getByRole('link', { name: 'Open your cohort' })).toHaveAttribute(
+      'href',
+      cohortPath,
+    )
+    await expect(nextCard.getByText('Enrollment open')).toBeVisible()
+    await expect(nextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    if (screenshotDir) {
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = adminPage.viewportSize()
+      await adminPage.setViewportSize({ width: 390, height: 844 })
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await adminPage.setViewportSize(viewport)
+    }
+  } finally {
+    await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: { _status: 'published', programStatus: 'upcoming' },
+    })
+    await adminPage.request.delete(`/api/cohorts/${nextCohort.id}`)
+  }
 }
 
 async function verifyPostJoinCTAAnalytics(adminPage: Page, publicPage: Page) {
@@ -1401,7 +1514,11 @@ async function verifyPublicHome(page: Page) {
   await expect(page.getByRole('heading', { name: 'RaidGuild Cohorts' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Find a Team' })).toHaveCount(0)
   await expect(page.getByText('Agents that strengthen real community work')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Join Cohort 8' })).toBeVisible()
+  const nextCohortCard = page.getByRole('region', { name: 'Next cohort: Cohort 8' })
+  await expect(nextCohortCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+    'href',
+    '/cohorts/agentic-guild-operations',
+  )
   await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
 }
@@ -5470,6 +5587,69 @@ async function verifyFeedbackWidget(page: Page) {
     type: 'bug',
   })
 }
+
+test('isolated cohort cards show current and next with separate commitments', async ({
+  browser,
+  page,
+}) => {
+  test.skip(
+    process.env.E2E_COHORT_ISOLATED !== '1',
+    'Run with E2E_COHORT_ISOLATED=1 and a fresh E2E database',
+  )
+
+  await createFirstAdmin(page)
+  await seedDatabase(page)
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const me = await meResponse.json()
+  expect(me.user?.id).toBeTruthy()
+  const [roleResponse, skillResponse] = await Promise.all([
+    page.request.get('/api/profileRoles?depth=0&limit=1'),
+    page.request.get('/api/profileSkills?depth=0&limit=1'),
+  ])
+  expect(roleResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+  const roleID = (await roleResponse.json()).docs?.[0]?.id
+  const skillID = (await skillResponse.json()).docs?.[0]?.id
+  expect(roleID, 'Seeded profile role is required for the cohort fixture').toBeTruthy()
+  expect(skillID, 'Seeded profile skill is required for the cohort fixture').toBeTruthy()
+  const profileResponse = await page.request.post('/api/profiles', {
+    data: {
+      bio: 'Cohort cards integration test profile.',
+      displayName: 'Playwright Admin',
+      handle: 'cohort-cards-admin',
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      user: me.user.id,
+      visibility: 'public',
+    },
+  })
+  const profileBody = await profileResponse.json()
+  expect(profileBody, 'Cohort fixture profile should be valid').toMatchObject({
+    doc: { id: expect.any(Number) },
+  })
+  expect(profileResponse.status()).toBe(201)
+
+  const cohortPath = '/cohorts/agentic-guild-operations'
+  const cohortResponse = await page.request.get('/api/cohorts', {
+    params: { depth: '0', limit: '1', 'where[slug][equals]': 'agentic-guild-operations' },
+  })
+  expect(cohortResponse.ok()).toBeTruthy()
+  const cohort = (await cohortResponse.json()).docs?.[0]
+  expect(cohort?.id, 'Seeded cohort is required for the cards fixture').toBeTruthy()
+  const commitmentResponse = await page.request.post('/api/cohortCommitments', {
+    data: { cohort: cohort.id, profile: profileBody.doc.id, status: 'committed' },
+  })
+  expect(commitmentResponse.status(), JSON.stringify(await commitmentResponse.json())).toBe(201)
+
+  const publicContext = await browser.newContext()
+  try {
+    await verifyCohortCards(page, await publicContext.newPage(), cohort, cohortPath)
+  } finally {
+    await publicContext.close()
+  }
+})
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)

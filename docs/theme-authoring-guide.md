@@ -32,7 +32,7 @@ canvas consumers use those tokens.
 
 ## Louchi Storybook alignment
 
-The Day and Night themes follow `raid-guild/brand` revision `0d80eb5`, specifically
+The Day and Night theme tokens and layout follow `raid-guild/brand` revision `0d80eb5`, specifically
 `src/brand/system.ts`, `src/app/globals.css`, and `docs/louchi-venture-sync.md`.
 That workshop records website baseline `a00dd80` and Louchi's original handoff
 branch (tip `a195359`). The canonical palette uses parchment, ink, navy, cyan,
@@ -42,8 +42,11 @@ and is not imported: this is a local semantic adapter with unchanged provider,
 Button, content and layout APIs. Marketing pill dimensions and workshop gallery
 interactions are not generic Portal component requirements.
 
-Grinder Regular/Italic/Retalic WOFF2 files are copied unchanged to
-`public/brand-fonts/louchi`; Ubuntu normal/italic variable and Ubuntu Mono
+The active Grinder Refined Regular/Italic/Retalic WOFF2 cuts instead follow the
+newer website `review/venture-beyond-redesign` at `a6418ea`, which includes the
+September 30 font update `877ba222aa060cce370668c8c05e64d74187a620`.
+These files are copied unchanged to `public/brand-fonts/louchi`; the older
+Grinder cuts remain there for provenance. Ubuntu normal/italic variable and Ubuntu Mono
 regular/bold assets and the upstream Ubuntu Font Licence are in
 `public/fonts/louchi`. Their adjacent README files record provenance. The project
 owner reports rights were obtained for Grinder; this is a reported-rights record,

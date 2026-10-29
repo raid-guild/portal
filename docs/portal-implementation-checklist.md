@@ -114,8 +114,8 @@
 - [x] Create the public, shareable `/cohorts/[slug]` hub while keeping commitment actions behind login and Profile creation.
 - [x] Support optional hero backgrounds, a validated exploration video, and curated external context links without arbitrary CMS HTML or CSS.
 - [x] Relate Events to Cohorts and render next, weekly, upcoming, and past session views from the canonical Event records.
-- [x] Highlight the highest-priority active, open, interest-gathering, or upcoming Cohort on the authenticated dashboard.
-- [x] Replace the unauthenticated home project block with Cohort status, signup or interest actions, and prior public session themes when available.
+- [x] Show separate current and next Cohort cards on the dashboard, with cohort-specific commitment state and a truthful no-upcoming fallback.
+- [x] Show separate current and next Cohort cards on the public home, with signup or interest actions and prior public session themes when available.
 - [x] Support a `gathering-interest` state and safely prefilled general inquiries without adding a separate interest model.
 - [x] Provide a truthful general-inquiry fallback when no Cohort is scheduled.
 - [x] Add deterministic Cohort seed content, a schema migration, generated Payload types, analytics, and end-to-end coverage.

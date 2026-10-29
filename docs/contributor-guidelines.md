@@ -6,6 +6,13 @@ Public module integrations must use the allowlisted [catalog API](public-module-
 
 This portal should make real cohort activity visible and help people find a useful next step.
 
+On the public home and member dashboard, show the published active cohort as
+current and the earliest published upcoming cohort as next. Enrollment state
+controls joining, not which upcoming cohort is shown. If no upcoming cohort
+exists, a published gathering-interest cohort may appear as a provisional
+future cohort; otherwise say no upcoming cohort has been announced. Keep
+commitment state specific to each cohort.
+
 Contributors should build toward a flexible system model, not a rigid project management app. The core constraint is:
 
 > Model observable community signals. Do not try to manage all collaboration.
