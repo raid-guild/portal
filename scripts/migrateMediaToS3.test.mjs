@@ -68,3 +68,97 @@ test('refuses a different existing object or missing referenced file before writ
     await assert.rejects(migrate({ ...opts, manifest: { docs: [{ id: 1, filename: '../outside' }] } }), /Unsafe filename/)
   } finally { await rm(dir, { recursive: true, force: true }) }
 })
+
+test('retries SlowDown with a fresh file stream after the first stream was consumed', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'portal-media-test-'))
+  try {
+    await writeFile(path.join(dir, 'retry.png'), 'complete-original')
+    const manifest = { docs: [{ id: 1, filename: 'retry.png', mimeType: 'image/png' }] }
+    const base = fakeS3()
+    let attempts = 0
+    const waits = []
+    const client = {
+      async send(command) {
+        if (command instanceof PutObjectCommand) {
+          attempts++
+          if (attempts === 1) {
+            for await (const _chunk of command.input.Body) { /* consume the stream */ }
+            throw { name: 'SlowDown', $metadata: { httpStatusCode: 503 } }
+          }
+        }
+        return base.send(command)
+      },
+    }
+    const report = await migrate({ apply: true, manifest, mediaDir: dir, client, bucket: 'shared', writeIntervalMs: 0, wait: async (ms) => waits.push(ms), random: () => 0 })
+    assert.equal(attempts, 2)
+    assert.equal(base.objects.get('portal/media/retry.png').body.toString(), 'complete-original')
+    assert.deepEqual(report.uploaded, ['retry.png'])
+    assert.deepEqual(waits, [500])
+  } finally { await rm(dir, { recursive: true, force: true }) }
+})
+
+test('a lost PUT response is verified byte-for-byte; a different object stops the copy', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'portal-media-test-'))
+  try {
+    await writeFile(path.join(dir, 'ambiguous.png'), 'expected-bytes')
+    const manifest = { docs: [{ id: 1, filename: 'ambiguous.png', mimeType: 'image/png' }] }
+    for (const storedBody of ['expected-bytes', 'different-bytes']) {
+      const base = fakeS3()
+      let attempts = 0
+      const client = {
+        async send(command) {
+          if (command instanceof PutObjectCommand) {
+            attempts++
+            for await (const _chunk of command.input.Body) { /* consume the stream */ }
+            base.objects.set(command.input.Key, { body: Buffer.from(storedBody), type: 'image/png' })
+            throw { name: 'SlowDown', $metadata: { httpStatusCode: 503 } }
+          }
+          return base.send(command)
+        },
+      }
+      const opts = { apply: true, manifest, mediaDir: dir, client, bucket: 'shared', maxAttempts: 1, writeIntervalMs: 0, wait: async () => {}, random: () => 0 }
+      if (storedBody === 'expected-bytes') {
+        const report = await migrate(opts)
+        assert.deepEqual(report.resumed, ['ambiguous.png'])
+      } else {
+        await assert.rejects(migrate(opts), /S3 key collision during copy/)
+      }
+      assert.equal(attempts, 1)
+      assert.equal(base.objects.get('portal/media/ambiguous.png').body.toString(), storedBody)
+    }
+  } finally { await rm(dir, { recursive: true, force: true }) }
+})
+
+test('persistent throttling stops after the configured attempt limit', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'portal-media-test-'))
+  try {
+    await writeFile(path.join(dir, 'limit.png'), 'bytes')
+    const base = fakeS3()
+    let attempts = 0
+    const waits = []
+    const client = {
+      async send(command) {
+        if (command instanceof PutObjectCommand) {
+          attempts++
+          for await (const _chunk of command.input.Body) { /* consume the stream */ }
+          throw { name: 'SlowDown', $metadata: { httpStatusCode: 503 } }
+        }
+        return base.send(command)
+      },
+    }
+    await assert.rejects(migrate({
+      apply: true,
+      manifest: { docs: [{ id: 1, filename: 'limit.png', mimeType: 'image/png' }] },
+      mediaDir: dir,
+      client,
+      bucket: 'shared',
+      maxAttempts: 3,
+      writeIntervalMs: 0,
+      wait: async (ms) => waits.push(ms),
+      random: () => 0,
+    }), (error) => error.name === 'SlowDown')
+    assert.equal(attempts, 3)
+    assert.deepEqual(waits, [500, 1000])
+    assert.equal(base.objects.size, 0)
+  } finally { await rm(dir, { recursive: true, force: true }) }
+})

@@ -161,6 +161,12 @@ collisions before applying. The copy includes each referenced original and
 image size, keeps content types, skips byte-identical existing objects, and
 never deletes or overwrites a different object. Re-run it after any interrupted
 copy; the result should have no missing files, collisions, or pending copies.
+The tool spaces PUT requests by 200 ms and retries Railway S3 `SlowDown`, 429,
+and 503 responses with bounded backoff, reopening each file for a retry. It
+reports progress every 50 files on stderr. If Railway continues throttling,
+re-run after a short pause; completed objects are checked by content before
+being skipped. `--write-interval-ms 500` (or `MEDIA_S3_WRITE_INTERVAL_MS=500`)
+slows writes further; accepted values are 100–5000 ms.
 Then enable `MEDIA_STORAGE=s3` on both services, verify several original and
 resized image URLs and an upload, and clear `MEDIA_UPLOADS_PAUSED`. Keep the old
 volume until the S3 deployment has been verified and any new S3 uploads are
