@@ -23,6 +23,11 @@ const nextConfig = {
     ]
   },
   images: {
+    localPatterns: [
+      { pathname: '**', search: '' },
+      // Payload's S3 adapter appends this exact namespace query to media URLs.
+      { pathname: '/api/media/file/**', search: '?prefix=portal%2Fmedia' },
+    ],
     remotePatterns: [
       ...[NEXT_PUBLIC_SERVER_URL /* 'https://example.com' */].map((item) => {
         const url = new URL(item)

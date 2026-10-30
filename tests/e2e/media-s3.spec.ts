@@ -73,6 +73,15 @@ test('S3 storage isolates Portal media, serves sizes and ranges, and permits aut
     const original = await request.get(originalURL)
     expect(original.status()).toBe(200)
     expect(await original.body()).toEqual(image)
+    const optimized = await request.get(`/_next/image?url=${encodeURIComponent(originalURL)}&w=640&q=75`)
+    expect(optimized.status()).toBe(200)
+    expect(optimized.headers()['content-type']).toMatch(/^image\//)
+    expect((await optimized.body()).length).toBeGreaterThan(0)
+    const plainMediaURL = `/api/media/file/${filename}`
+    expect((await request.get(`/_next/image?url=${encodeURIComponent(plainMediaURL)}&w=640&q=75`)).status()).toBe(200)
+    const unrelatedQuery = `${originalURL}&another=1`
+    expect((await request.get(`/_next/image?url=${encodeURIComponent(unrelatedQuery)}&w=640&q=75`)).status()).toBe(400)
+    expect((await request.get(`/_next/image?url=${encodeURIComponent('/api/media/file/' + filename + '?prefix=other-app')}&w=640&q=75`)).status()).toBe(400)
     const thumbnail = await request.get(thumbnailURL)
     expect(thumbnail.status()).toBe(200)
     expect(thumbnail.headers()['content-type']).toBe('image/png')
