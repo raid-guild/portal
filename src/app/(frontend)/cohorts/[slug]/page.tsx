@@ -7,7 +7,11 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { Cohort, Event, Media, Module, Post, Profile, Project, Thread } from '@/payload-types'
-import { getCohortLabel, isCohortEnrollmentOpen } from '@/cohorts/selectFeaturedCohort'
+import {
+  getCohortLabel,
+  getCohortPresentationStatus,
+  isCohortEnrollmentOpen,
+} from '@/cohorts/selectFeaturedCohort'
 import { Button } from '@/components/ui/button'
 import { PublicStructuredData } from '@/components/PublicStructuredData'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
@@ -39,6 +43,7 @@ export default async function CohortPage({ params }: Args) {
     : 'RaidGuild Cohort'
   const cohortLabel = getCohortLabel(cohort)
   const enrollmentOpen = isCohortEnrollmentOpen(cohort, now)
+  const presentationStatus = getCohortPresentationStatus(cohort, now)
   const posts = relationDocs<Post>(cohort.featuredPosts)
   const announcements = posts
     .filter((post) => post.contentType === 'announcement')
@@ -84,7 +89,7 @@ export default async function CohortPage({ params }: Args) {
           <div className="max-w-4xl">
             <div className="flex flex-wrap items-center gap-3">
               <p className="portal-kicker">{eyebrow}</p>
-              <span className="portal-pill">{formatStatus(cohort.programStatus)}</span>
+              <span className="portal-pill">{formatStatus(presentationStatus)}</span>
               {enrollmentOpen ? <span className="portal-pill">Enrollment open</span> : null}
             </div>
             <h1 className="portal-title-lg mt-6">{cohort.title}</h1>
@@ -284,7 +289,7 @@ export default async function CohortPage({ params }: Args) {
             enrollmentOpen={enrollmentOpen}
             hasProfile={Boolean(profile)}
             isAuthenticated={Boolean(user)}
-            programStatus={cohort.programStatus}
+            programStatus={presentationStatus}
           />
           {cohort.participationExpectation ? (
             <div className="portal-panel">

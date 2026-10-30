@@ -8,7 +8,7 @@ import { privateKeyToAccount } from 'viem/accounts'
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
 import { normalizePortalTitle } from '@/utilities/generateMeta'
 import { POSTS_META_DESCRIPTION } from '@/utilities/postsMetadata'
-import { selectCohortCards } from '@/cohorts/selectFeaturedCohort'
+import { getCohortPresentationStatus, selectCohortCards } from '@/cohorts/selectFeaturedCohort'
 import type { Cohort } from '@/payload-types'
 
 import {
@@ -24,24 +24,72 @@ import {
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
 
-test('cohort cards choose active and earliest upcoming independently', () => {
-  const cohort = (id: number, status: Cohort['programStatus'], startsAt?: string) =>
-    ({ id, slug: `cohort-${id}`, programStatus: status, startsAt }) as Cohort
-  const cards = selectCohortCards([
-    cohort(1, 'gathering-interest'),
-    cohort(2, 'upcoming', '2027-02-01T00:00:00.000Z'),
-    cohort(3, 'active', '2026-10-01T00:00:00.000Z'),
-    cohort(4, 'upcoming', '2026-11-01T00:00:00.000Z'),
-  ])
-  expect(cards.current?.id).toBe(3)
-  expect(cards.next?.id).toBe(4)
-  expect(selectCohortCards([cohort(3, 'active'), cohort(1, 'gathering-interest')]).next?.id).toBe(1)
-  expect(selectCohortCards([cohort(3, 'active')]).next).toBeNull()
+test('cohort cards use published dates to show the running and next cohorts', () => {
+  const now = Date.parse('2026-10-30T00:00:00.000Z')
+  const cohort = (
+    id: number,
+    status: Cohort['programStatus'],
+    startsAt?: string,
+    endsAt?: string,
+  ) => ({ id, slug: `cohort-${id}`, programStatus: status, startsAt, endsAt }) as Cohort
+  const running = cohort(16, 'upcoming', '2026-10-05T00:00:00.000Z', '2026-11-04T00:00:00.000Z')
+  const future = cohort(17, 'upcoming', '2026-11-02T00:00:00.000Z', '2026-12-02T00:00:00.000Z')
+  const cards = selectCohortCards([future, running], now)
+  expect(cards.current).toMatchObject({ id: 16, programStatus: 'active' })
+  expect(cards.current).not.toBe(running)
+  expect(running.programStatus).toBe('upcoming')
+  expect(cards.next?.id).toBe(17)
+  expect(getCohortPresentationStatus(running, Date.parse(running.startsAt!))).toBe('active')
+  expect(getCohortPresentationStatus(running, Date.parse(running.endsAt!))).toBe('complete')
+  expect(getCohortPresentationStatus(future, now)).toBe('upcoming')
+
+  const explicit = cohort(1, 'active', '2026-10-01T00:00:00.000Z')
+  expect(selectCohortCards([running, explicit, future], now).current?.id).toBe(1)
   expect(
-    selectCohortCards([cohort(5, 'upcoming'), cohort(4, 'upcoming', '2027-04-01T00:00:00.000Z')])
-      .next?.id,
-  ).toBe(4)
-  expect(selectCohortCards([cohort(5, 'upcoming'), cohort(4, 'upcoming')]).next?.id).toBe(4)
+    selectCohortCards([running, future], Date.parse('2026-11-03T00:00:00.000Z')).current?.id,
+  ).toBe(16)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-11-04T00:00:00.000Z')).current?.id,
+  ).toBe(17)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-12-02T00:00:00.000Z')).current,
+  ).toBeNull()
+
+  const past = cohort(2, 'upcoming', '2026-09-01T00:00:00.000Z', '2026-09-30T00:00:00.000Z')
+  const noEnd = cohort(3, 'upcoming', '2026-10-01T00:00:00.000Z')
+  const reversed = cohort(4, 'upcoming', '2026-11-10T00:00:00.000Z', '2026-11-01T00:00:00.000Z')
+  const undated = cohort(5, 'upcoming')
+  expect(selectCohortCards([past, noEnd, reversed, undated], now)).toMatchObject({
+    current: null,
+    next: { id: 5 },
+  })
+  expect(getCohortPresentationStatus(noEnd, now)).toBe('upcoming')
+  expect(getCohortPresentationStatus(reversed, now)).toBe('upcoming')
+  const futureWithoutEnd = cohort(10, 'upcoming', '2026-11-05T00:00:00.000Z')
+  expect(selectCohortCards([undated, futureWithoutEnd], now).next?.id).toBe(10)
+  expect(
+    getCohortPresentationStatus(
+      cohort(11, 'upcoming', 'invalid', running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('upcoming')
+  expect(
+    getCohortPresentationStatus(
+      cohort(6, 'gathering-interest', running.startsAt || undefined, running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('gathering-interest')
+  expect(selectCohortCards([cohort(8, 'upcoming'), cohort(7, 'upcoming')], now).next?.id).toBe(7)
+  expect(
+    selectCohortCards(
+      [
+        { ...cohort(13, 'upcoming'), slug: 'a' },
+        { ...cohort(12, 'upcoming'), slug: 'b' },
+      ],
+      now,
+    ).next?.id,
+  ).toBe(13)
+  expect(selectCohortCards([past, cohort(9, 'gathering-interest')], now).next?.id).toBe(9)
 })
 const daoWalletTestAccount = privateKeyToAccount(
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
@@ -296,7 +344,9 @@ async function verifyOrdinaryContentHeaderThemes(browser: Browser) {
   await context.close()
 }
 
-test('defaults to the system theme and persists explicit theme preferences', async ({ browser }) => {
+test('defaults to the system theme and persists explicit theme preferences', async ({
+  browser,
+}) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -768,9 +818,11 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
 async function verifyCohortCards(
   adminPage: Page,
   publicPage: Page,
-  cohort: { id: number },
+  cohort: { id: number; startsAt?: string | null; endsAt?: string | null },
   cohortPath: string,
 ) {
+  const now = Date.now()
+  const daysFromNow = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString()
   const nextCohortResponse = await adminPage.request.post('/api/cohorts', {
     data: {
       _status: 'published',
@@ -778,7 +830,8 @@ async function verifyCohortCards(
       enrollmentStatus: 'open',
       programStatus: 'upcoming',
       slug: 'e2e-next-cohort',
-      startsAt: '2027-01-01T00:00:00.000Z',
+      startsAt: daysFromNow(3),
+      endsAt: daysFromNow(33),
       summary: 'An upcoming cohort with its own commitment state.',
       theme: 'Future guild work',
       title: 'E2E Next Cohort',
@@ -789,19 +842,36 @@ async function verifyCohortCards(
   expect(nextCohortResponse.ok()).toBeTruthy()
   const nextCohort = (await nextCohortResponse.json()).doc
   try {
-    const activeResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
-      data: { _status: 'published', programStatus: 'active' },
+    const runningResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: {
+        _status: 'published',
+        endsAt: daysFromNow(5),
+        programStatus: 'upcoming',
+        startsAt: daysFromNow(-25),
+      },
     })
-    expect(activeResponse.ok()).toBeTruthy()
+    expect(runningResponse.ok()).toBeTruthy()
 
     await publicPage.goto('/')
-    await expect(publicPage.getByRole('region', { name: 'Current cohort: Cohort 8' })).toBeVisible()
+    const publicCurrentCard = publicPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    await expect(publicCurrentCard).toBeVisible()
+    await expect(
+      publicCurrentCard.getByRole('heading', { name: 'Cohort 8 is underway' }),
+    ).toBeVisible()
+    await expect(publicCurrentCard.locator(`a[href="${cohortPath}"]`)).toBeVisible()
     const publicNextCard = publicPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
     await expect(publicNextCard).toBeVisible()
+    await expect(publicNextCard.getByRole('heading', { name: 'Join Cohort 9' })).toBeVisible()
     await expect(publicNextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
       'href',
       '/cohorts/e2e-next-cohort',
     )
+    await publicPage.goto(cohortPath)
+    await expect(publicPage.getByText('Active', { exact: true })).toBeVisible()
+    const publicCohortAPI = await publicPage.request.get(`/api/cohorts/${cohort.id}`)
+    expect(publicCohortAPI.ok()).toBeTruthy()
+    expect((await publicCohortAPI.json()).programStatus).toBe('upcoming')
+    await publicPage.goto('/')
     const screenshotDir = process.env.E2E_COHORT_SCREENSHOTS_DIR
     if (screenshotDir) {
       mkdirSync(screenshotDir, { recursive: true })
@@ -818,6 +888,10 @@ async function verifyCohortCards(
       if (viewport) await publicPage.setViewportSize(viewport)
     }
 
+    const activeResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: { _status: 'published', programStatus: 'active' },
+    })
+    expect(activeResponse.ok()).toBeTruthy()
     await adminPage.goto('/dashboard')
     const currentCard = adminPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
     const nextCard = adminPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
@@ -846,7 +920,12 @@ async function verifyCohortCards(
     }
   } finally {
     await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
-      data: { _status: 'published', programStatus: 'upcoming' },
+      data: {
+        _status: 'published',
+        endsAt: cohort.endsAt || null,
+        programStatus: 'upcoming',
+        startsAt: cohort.startsAt || null,
+      },
     })
     await adminPage.request.delete(`/api/cohorts/${nextCohort.id}`)
   }

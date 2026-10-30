@@ -21,13 +21,52 @@ const byStartDate = (a: Cohort, b: Cohort) => {
   return (first === second ? 0 : first - second) || a.slug.localeCompare(b.slug) || a.id - b.id
 }
 
+const timestamp = (date?: string | null) => {
+  if (!date) return null
+  const value = new Date(date).getTime()
+  return Number.isFinite(value) ? value : null
+}
+
+/** Dates describe a published upcoming cohort's display status without editing its CMS status. */
+export const getCohortPresentationStatus = (
+  cohort: Cohort,
+  now = Date.now(),
+): Cohort['programStatus'] => {
+  if (cohort.programStatus !== 'upcoming') return cohort.programStatus
+  const start = timestamp(cohort.startsAt)
+  const end = timestamp(cohort.endsAt)
+  if (start === null || end === null || start >= end) return 'upcoming'
+  if (now >= end) return 'complete'
+  if (now >= start) return 'active'
+  return 'upcoming'
+}
+
 /** The dashboard and public home show the active and next programs independently. */
-export const selectCohortCards = (cohorts: Cohort[]) => {
+export const selectCohortCards = (cohorts: Cohort[], now = Date.now()) => {
   const current =
-    cohorts.filter((cohort) => cohort.programStatus === 'active').sort(byStartDate)[0] || null
+    cohorts.filter((cohort) => cohort.programStatus === 'active').sort(byStartDate)[0] ||
+    cohorts
+      .filter((cohort) => getCohortPresentationStatus(cohort, now) === 'active')
+      .sort(byStartDate)
+      .map((cohort) => ({ ...cohort, programStatus: 'active' as const }))[0] ||
+    null
   const next =
     cohorts
-      .filter((cohort) => cohort.programStatus === 'upcoming' && cohort.id !== current?.id)
+      .filter((cohort) => {
+        if (cohort.programStatus !== 'upcoming' || cohort.id === current?.id) return false
+        const start = timestamp(cohort.startsAt)
+        const end = timestamp(cohort.endsAt)
+        if (start === null || start <= now) return false
+        return end === null || (end > now && end > start)
+      })
+      .sort(byStartDate)[0] ||
+    cohorts
+      .filter((cohort) => {
+        if (cohort.programStatus !== 'upcoming' || cohort.id === current?.id) return false
+        if (cohort.startsAt) return false
+        const end = timestamp(cohort.endsAt)
+        return end === null || end > now
+      })
       .sort(byStartDate)[0] ||
     cohorts
       .filter(
