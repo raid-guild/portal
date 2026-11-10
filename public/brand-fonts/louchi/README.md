@@ -1,22 +1,14 @@
-# Grinder webfont provenance
+# Louchi display font provenance
 
-The active Grinder Refined Regular, Italic and Retalic WOFF2 files were copied
-unchanged from `raid-guild/website` revision `a6418ea` on
-`review/venture-beyond-redesign`. That revision contains the September 30 font
-update at commit `877ba222aa060cce370668c8c05e64d74187a620`:
+Active portal Louchi themes use six Last Duel WOFF2 cuts copied byte-for-byte from `raid-guild/brand` branch `feat/versioned-brand-reigns` (source checked out at `1d3f250`; font files are the same pinned website work on `raid-guild/website` `review/venture-beyond-redesign` at `7d0e878065a566207884a37b6281158d26c8ae88`). Louchi supplied the commercial originals for the RaidGuild guide; see the brand repository's `public/brand-fonts/louchi/README.md` for conversion provenance and rights record. These are site assets, not reusable package fonts or public downloads.
 
-| Cut | SHA-256 |
+| Active file | SHA-256 |
 | --- | --- |
-| `Grinder-Refined-Regular.woff2` | `f0a18f1898aa4f5feda44c223d4ad4fa0ef2944a36d4b1eecd72d552eabb5172` |
-| `Grinder-Refined-Italic.woff2` | `11168b3ba10ed4a8ee8de1bc8db4c8d1ee301e9cd5b491de5e710044bf30eef1` |
-| `Grinder-Refined-Retalic.woff2` | `0beeaeca1d03fef9ea54813ffb0fb7566c3315a042af5784b06d40150cb81a99` |
+| `LastDuel-BoldEx2.woff2` | `076237f54bf073c687ba6384a7264a86ce26fa38c2391a98aa1be6c1d975c91a` |
+| `LastDuel-BoldEx2Retalic.woff2` | `8a8fc472161804caf5d29f0818a861ceba8300aa911e4df39f699cd76f3bb9db` |
+| `LastDuel-BoldOblique.woff2` | `317d7bf939b170a029e88ccc33def53adff6e20834a28965c032a978437a5d08` |
+| `LastDuel-Ex2.woff2` | `9850106345cdbe26708d583634c61d7eac9be185750b80cafb3b43b74c1a25c5` |
+| `LastDuel-Ex2Retalic.woff2` | `b1d90f4cd7c0171c04aabdb2c463dfa71020419b5ab171171d84a70e81d0152b` |
+| `LastDuel-Oblique.woff2` | `b0c96669bbe7e1c782ce4b49c9f560b2e9cac7d1b46c7d114230fc05c7412bd3` |
 
-The original `Grinder-Regular`, `Grinder-Italic` and `Grinder-Retalic` files are
-retained as the earlier workshop copy from `raid-guild/brand` at `0d80eb5`,
-whose recorded website source is `a00dd80`. Louchi supplied the font package;
-the project owner reports rights were obtained. This records that report, not
-an independent legal verification or a licence grant.
-
-These assets support this site's Louchi theme. Keep them separate from reusable
-package font assets. Confirm redistribution terms before distributing a font
-package or offering font downloads. See `docs/theme-authoring-guide.md`.
+The older Grinder Refined and original Grinder cuts remain here for historical provenance, but are not active font faces. The original refined files were sourced from website `a6418ea` and the earlier files from brand `0d80eb5`. Their hashes and source records remain in Git history. Do not bundle these commercial fonts in a reusable package or offer font downloads without checking distribution rights.

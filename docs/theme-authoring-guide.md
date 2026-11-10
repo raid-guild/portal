@@ -42,26 +42,9 @@ and is not imported: this is a local semantic adapter with unchanged provider,
 Button, content and layout APIs. Marketing pill dimensions and workshop gallery
 interactions are not generic Portal component requirements.
 
-The active Grinder Refined Regular/Italic/Retalic WOFF2 cuts instead follow the
-newer website `review/venture-beyond-redesign` at `a6418ea`, which includes the
-September 30 font update `877ba222aa060cce370668c8c05e64d74187a620`.
-These files are copied unchanged to `public/brand-fonts/louchi`; the older
-Grinder cuts remain there for provenance. Ubuntu normal/italic variable and Ubuntu Mono
-regular/bold assets and the upstream Ubuntu Font Licence are in
-`public/fonts/louchi`. Their adjacent README files record provenance. The project
-owner reports rights were obtained for Grinder; this is a reported-rights record,
-not an independent legal verification or redistribution grant. These files are
-site assets, separate from a reusable package. Confirm font redistribution terms
-before offering downloads or distributing a package.
+The active Louchi display cuts are Last Duel Extended 2 Regular/Bold and native Oblique/Bold Oblique, plus Last Duel Retalic Extended 2 Regular/Bold. They are copied byte-for-byte from `raid-guild/brand` on `feat/versioned-brand-reigns` (source revision `1d3f250`) and follow the authoritative website `review/venture-beyond-redesign` at `7d0e878`. See `public/brand-fonts/louchi/README.md` for exact files and hashes. Historical Grinder files remain as archive assets. Ubuntu normal/italic variable and Ubuntu Mono regular/bold assets retain their previous mapping and provenance under `public/fonts/louchi`. Last Duel is a commercial, site-only asset: do not bundle it into a reusable package or advertise downloads.
 
-Display text uses native Grinder weight 400, uppercase and -0.015em tracking,
-without synthetic bold or italic. Ubuntu body copy and Ubuntu Mono utility labels
-remain unskewed. The `.font-retalic` utility exposes the separate native Retalic
-family for deliberate emphasis; it does not invent CMS copy splits. Existing
-responsive type sizes remain. Ordinary card/control radii use the canonical
-0.625rem base; pill radii use the dedicated pill token. Classic and AI retain their
-own radius tokens and typography. The pixel map subtree and all map token values
-remain unchanged.
+Display text now uses native Last Duel Bold Extended 2 at weight 700, uppercase and -0.015em tracking. `.font-retalic` uses the native Last Duel Retalic Bold cut (700). The opt-in `.portal-heading-top` role uses that Retalic Bold; `.portal-heading-bottom` uses the separate Extended 2 Bold face with CSS italic synthesis, matching the website's two-line heading treatment. These classes do not split CMS copy or alter ordinary heading text. The alias face for the lower line is deliberately registered only at normal weight 700 so italic synthesis can occur; the native Last Duel Bold Oblique remains available through the main display family for other italic uses. Ubuntu body copy and Ubuntu Mono utility labels stay unskewed. The pixel map subtree is excluded from these heading rules. Existing responsive sizes, palette, control styles, and Classic/AI typography remain unchanged.
 
 Filled coral controls use near-black `#060609` text, matching the workshop's
 accessibility correction. Coral remains the action/decorative signal; small links

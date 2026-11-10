@@ -374,9 +374,13 @@ test('defaults to the system theme and persists explicit theme preferences', asy
 
   const loadedFonts = await page.evaluate(async () => {
     const requests = [
-      '400 24px "Grinder"',
-      'italic 400 24px "Grinder"',
-      '400 24px "Grinder Retalic"',
+      '400 24px "Last Duel"',
+      '700 24px "Last Duel"',
+      'italic 400 24px "Last Duel"',
+      'italic 700 24px "Last Duel"',
+      '400 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Extended 2"',
       '400 16px "Ubuntu"',
       'italic 400 16px "Ubuntu"',
       '400 12px "Ubuntu Mono"',
@@ -389,13 +393,29 @@ test('defaults to the system theme and persists explicit theme preferences', asy
       }),
     )
   })
-  expect(loadedFonts).toEqual(Array(7).fill(true))
+  expect(loadedFonts).toEqual(Array(11).fill(true))
   await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
   const displayHeading = page.locator('h1').first()
-  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
-  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
   await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
   await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
+  await page.evaluate(() => {
+    const samples = document.createElement('div')
+    samples.id = 'portal-font-role-samples'
+    samples.innerHTML = '<span id="role-top" class="portal-heading-top">Venture</span><span id="role-bottom" class="portal-heading-bottom">Beyond</span><div class="map-dashboard-screen"><span id="role-map" class="portal-heading-top">Map</span></div>'
+    document.body.append(samples)
+  })
+  const top = page.locator('#role-top')
+  const bottom = page.locator('#role-bottom')
+  await expect(top).toHaveCSS('font-family', /Last Duel Retalic/)
+  await expect(top).toHaveCSS('font-weight', '700')
+  await expect(top).toHaveCSS('font-style', 'normal')
+  await expect(bottom).toHaveCSS('font-family', /Last Duel Extended 2/)
+  await expect(bottom).toHaveCSS('font-weight', '700')
+  await expect(bottom).toHaveCSS('font-style', 'italic')
+  await expect(bottom).toHaveCSS('font-synthesis', 'style')
+  await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Last Duel Retalic/)
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -408,8 +428,8 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
   await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
 
-  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
-  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
