@@ -4,6 +4,7 @@ import { readVisiblePortalContent } from '@/access/portalVisibility'
 import { contentContributors } from '@/access/roles'
 import { slugField } from '@/fields/slug'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 
 export const Threads: CollectionConfig = {
   slug: 'threads',
@@ -142,6 +143,9 @@ export const Threads: CollectionConfig = {
       },
     }),
   ],
+  hooks: {
+    afterDelete: [deleteReactionsForTarget('threads')],
+  },
   versions: {
     drafts: true,
     maxPerDoc: 25,

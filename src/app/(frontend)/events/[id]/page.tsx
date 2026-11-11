@@ -9,6 +9,7 @@ import { canContributeContent, canEditContent, hasRole, hasVerifiedAccount } fro
 import { Card } from '@/components/Card'
 import { Comments } from '@/components/Comments'
 import { PublicStructuredData } from '@/components/PublicStructuredData'
+import { ReactionBar } from '@/components/ReactionBar'
 import { ContributionRequestCard } from '../../_components/ContributionRequestCard'
 import type {
   ContributionRequest,
@@ -122,16 +123,18 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
     ...relatedProfiles,
     ...(fallbackSpeaker ? [fallbackSpeaker] : []),
   ])
-  const sourceLinks = [
+  const sourceLinks = (canViewFullDetails ? [
     { href: event.recordingURL, label: 'Recording' },
     { href: event.summaryArtifactURL, label: 'Summary artifact' },
-    { href: event.transcriptArtifactURL, label: 'Transcript artifact' },
     { href: event.sourceArtifactURL, label: 'Source artifact' },
-  ].flatMap((link) => {
+  ] : []).flatMap((link) => {
     const safeURL = toSafeURL(link.href)
 
     return safeURL ? [{ href: safeURL, label: link.label }] : []
   })
+  if (event.transcript?.markdown) {
+    sourceLinks.push({ href: `/api/events/${event.id}/transcript`, label: 'Download transcript' })
+  }
   const hasSourceLinks = sourceLinks.length > 0
   const resources = (event.resources || []).flatMap((resource) => {
     const safeURL = toSafeURL(resource.url)
@@ -214,6 +217,14 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
               </Link>
             ) : null}
           </div>
+          <div className="mt-4">
+            <ReactionBar
+              collection="events"
+              id={event.id}
+              path={`/events/${event.id}`}
+              user={user}
+            />
+          </div>
         </aside>
       </section>
 
@@ -253,7 +264,7 @@ export default async function SessionDetailPage({ params: paramsPromise }: Args)
         </Section>
       ) : null}
 
-      {canViewFullDetails && isPast ? (
+      {(canViewFullDetails || Boolean(event.transcript?.markdown)) && isPast ? (
         <Section title="Source Material">
           {hasSourceLinks ? (
             <>
@@ -574,7 +585,7 @@ const ProfileLink: React.FC<{ profile: Profile }> = ({ profile }) => {
   if (!href) return <span className="portal-pill">{profile.displayName}</span>
 
   return (
-    <Link className="portal-pill transition-colors hover:text-primary" href={href}>
+    <Link className="portal-pill transition-colors hover:text-link-hover" href={href}>
       {profile.displayName}
     </Link>
   )
@@ -603,7 +614,7 @@ const RelationList: React.FC<{
       {items.map((item) =>
         item.href ? (
           <Link
-            className="portal-pill transition-colors hover:text-primary"
+            className="portal-pill transition-colors hover:text-link-hover"
             href={item.href}
             key={item.label}
           >

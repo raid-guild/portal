@@ -8,7 +8,6 @@ import { Pagination } from '@/components/Pagination'
 import { PostVisibilityBadge } from '@/components/PostVisibilityBadge'
 import type { Category, Post, User } from '@/payload-types'
 
-import PageClient from './page.client'
 import { getPostVisibilityQuery, PostVisibilityFilterNav } from './postVisibilityFilters'
 import type { PostVisibilityFilter } from '@/utilities/postVisibility'
 
@@ -73,8 +72,6 @@ type PostsListProps = {
 
 export const PostsList: React.FC<PostsListProps> = ({ posts, user, visibility }) => (
   <main className="container pb-24 pt-12">
-    <PageClient />
-
     <section className="flex flex-wrap items-end justify-between gap-6">
       <div>
         <p className="mb-4 portal-kicker">Posts</p>
@@ -154,7 +151,7 @@ const PostRow: React.FC<{ post: PostListItem }> = ({ post }) => {
               </time>
             </div>
             <h2 className="mt-3 portal-heading-sm">
-              <Link className="transition-colors hover:text-primary" href={href}>
+              <Link className="transition-colors hover:text-link-hover" href={href}>
                 {post.title}
               </Link>
             </h2>

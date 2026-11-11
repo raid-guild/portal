@@ -28,7 +28,7 @@ export const AdminBar: React.FC<{
         <div className="flex items-center justify-between py-2 text-sm font-medium">
           <span>Preview mode</span>
           <button
-            className="text-card-foreground hover:text-primary"
+            className="text-card-foreground hover:text-link-hover"
             onClick={exitPreview}
             type="button"
           >

@@ -238,7 +238,7 @@ const SelectField: React.FC<{
   <div>
     <Label htmlFor={name}>{label}</Label>
     <select
-      className="flex h-10 w-full rounded-sm border border-border bg-background/70 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+      className="flex h-10 w-full rounded-[var(--radius-ui-control)] border border-border bg-background/70 px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
       id={name}
       name={name}
     >

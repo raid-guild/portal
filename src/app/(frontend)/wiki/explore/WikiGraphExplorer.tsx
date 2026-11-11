@@ -1114,7 +1114,7 @@ const DiscoveryLinkGroups = ({ links }: { links: ArticleDiscoveryLinks }) => {
               >
                 {item.url ? (
                   <a
-                    className="inline-flex items-start gap-2 text-sm font-medium text-foreground transition-colors hover:text-primary"
+                    className="inline-flex items-start gap-2 text-sm font-medium text-foreground transition-colors hover:text-link-hover"
                     href={item.url}
                     rel="noreferrer"
                     target="_blank"

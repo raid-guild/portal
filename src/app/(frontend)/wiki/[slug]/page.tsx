@@ -7,6 +7,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import { hasRole } from '@/access/roles'
+import { ReactionBar } from '@/components/ReactionBar'
 import RichText from '@/components/RichText'
 import type {
   ActivityItem,
@@ -84,10 +85,16 @@ export default async function WikiDetailPage({ params: paramsPromise }: Args) {
           <p className="mt-5 max-w-3xl whitespace-pre-line text-base leading-7 text-muted-foreground">
             {page.summary}
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="mt-6 flex flex-wrap items-center gap-2">
             <span className="portal-pill">{reviewStatusLabels[page.reviewStatus]}</span>
             <span className="portal-pill">Confidence: {page.confidence}</span>
             <span className="portal-pill">{page.visibility}</span>
+            <ReactionBar
+              collection="wikiPages"
+              id={page.id}
+              path={`/wiki/${page.slug}`}
+              user={user}
+            />
           </div>
         </div>
         <aside className="portal-panel text-sm">

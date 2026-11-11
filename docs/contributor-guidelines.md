@@ -6,6 +6,13 @@ Public module integrations must use the allowlisted [catalog API](public-module-
 
 This portal should make real cohort activity visible and help people find a useful next step.
 
+On the public home and member dashboard, show the published active cohort as
+current and the earliest published upcoming cohort as next. Enrollment state
+controls joining, not which upcoming cohort is shown. If no upcoming cohort
+exists, a published gathering-interest cohort may appear as a provisional
+future cohort; otherwise say no upcoming cohort has been announced. Keep
+commitment state specific to each cohort.
+
 Contributors should build toward a flexible system model, not a rigid project management app. The core constraint is:
 
 > Model observable community signals. Do not try to manage all collaboration.
@@ -564,3 +571,53 @@ accessible module records across Tools, Artifacts, and games. Arcade remains
 reachable through its desktop entrance or mobile shortcut. Favorites are not
 account-synced, public likes, or usage tracking; unavailable storage falls back
 to the current visit with a visible notice.
+
+### Content reactions: likes and bookmarks
+
+The `contentReactions` collection records likes and bookmarks on posts,
+events, projects, threads, and wiki pages as one row per (actor, kind,
+target), written only through `POST /api/reactions`. Likes are public: any
+visitor, signed in or not, can like content, and the like count is public.
+Bookmarks are private and require a verified member — there is no anonymous
+bookmark state, and unverified members are pointed at account verification
+instead of a working bookmark control.
+
+Anonymous visitors are deduped by a `portal_anon_id` cookie the reactions
+route mints on first use, not by IP or fingerprinting; this is best-effort,
+so clearing cookies or switching browsers creates a new anonymous actor.
+Only a salted SHA-256 hash of the request IP is stored (`ipHash`), never the
+raw IP, and it exists for abuse review only. When an anonymous visitor with
+existing likes signs in, `adoptAnonymousReactions` reassigns that cookie's
+rows to their account on their next write through the reactions route, so
+the same human is not counted twice.
+
+Module favorites (`raidguild:module-favorites:v1`, browser-local IDs for the
+Guild Cabinet, described above) are unrelated to content reactions: they are
+not public likes, not account-synced, and never stored in `contentReactions`.
+
+Query trending content directly against Postgres:
+
+```sql
+SELECT target_collection, target_id,
+       count(*) FILTER (WHERE kind='like') AS likes,
+       count(*) FILTER (WHERE kind='like' AND actor_type='anonymous') AS anon_likes,
+       count(*) FILTER (WHERE kind='bookmark') AS bookmarks
+FROM content_reactions GROUP BY 1,2 ORDER BY likes DESC;
+```
+# Recorded session transcripts
+
+An Event owns its full Markdown transcript. A published Event's transcript follows
+the Event visibility: public, authenticated, or member. Draft and admin Events
+remain restricted to editors and admins. The download route
+`GET /api/events/:id/transcript` checks Event access on every request and returns
+`Cache-Control: private, no-store`.
+
+The recording publisher must fetch `transcript.md` from the communication
+adapter with `X-Adapter-Token`, then send the text to the authenticated
+`POST /api/events/artifacts/ingest` route as
+`{ "eventID": 142, "transcript": { "markdown": "...", "sourceSessionID": "..." } }`.
+The route limits requests to 2 MiB, computes SHA-256, and atomically claims an
+empty transcript slot in the same database transaction as Payload's versioned
+Event update. It accepts identical retries and rejects conflicting transcript
+replacements even when publishers race. Do not attach a raw transcript
+to public Prism Memory or use `transcriptArtifactURL` for new recordings.

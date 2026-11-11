@@ -203,7 +203,7 @@ const DirectorySelect: React.FC<{
   <label className="block">
     <span className="sr-only">{label}</span>
     <select
-      className="h-10 w-full rounded-sm border border-border bg-background/70 px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      className="h-10 w-full rounded-[var(--radius-ui-control)] border border-border bg-background/70 px-3 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
       onChange={(event) => onChange(event.target.value)}
       value={value}
     >

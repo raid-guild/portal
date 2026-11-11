@@ -89,6 +89,7 @@ export interface Config {
     notifications: Notification;
     notificationPreferences: NotificationPreference;
     feedbackSubmissions: FeedbackSubmission;
+    contentReactions: ContentReaction;
     signupAttempts: SignupAttempt;
     pageCopy: PageCopy;
     profiles: Profile;
@@ -133,6 +134,7 @@ export interface Config {
     notifications: NotificationsSelect<false> | NotificationsSelect<true>;
     notificationPreferences: NotificationPreferencesSelect<false> | NotificationPreferencesSelect<true>;
     feedbackSubmissions: FeedbackSubmissionsSelect<false> | FeedbackSubmissionsSelect<true>;
+    contentReactions: ContentReactionsSelect<false> | ContentReactionsSelect<true>;
     signupAttempts: SignupAttemptsSelect<false> | SignupAttemptsSelect<true>;
     pageCopy: PageCopySelect<false> | PageCopySelect<true>;
     profiles: ProfilesSelect<false> | ProfilesSelect<true>;
@@ -276,6 +278,7 @@ export interface Media {
     };
     [k: string]: unknown;
   } | null;
+  prefix?: string | null;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -590,6 +593,15 @@ export interface Event {
   discordSyncError?: string | null;
   recordingURL?: string | null;
   transcriptArtifactURL?: string | null;
+  /**
+   * Portal-owned transcript. Access follows this Event visibility.
+   */
+  transcript?: {
+    markdown?: string | null;
+    sourceSessionID?: string | null;
+    sha256?: string | null;
+    ingestedAt?: string | null;
+  };
   summaryArtifactURL?: string | null;
   sourceArtifactURL?: string | null;
   /**
@@ -2032,6 +2044,40 @@ export interface FeedbackSubmission {
   createdAt: string;
 }
 /**
+ * Likes and bookmarks on posts, events, projects, threads, and wiki pages. Written only through the reactions API route.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contentReactions".
+ */
+export interface ContentReaction {
+  id: number;
+  kind: 'like' | 'bookmark';
+  /**
+   * Denormalised for simple analytics grouping.
+   */
+  actorType: 'member' | 'anonymous';
+  /**
+   * Null for anonymous likes.
+   */
+  user?: (number | null) | User;
+  /**
+   * Snapshot of the member's profile, for profile-level joins.
+   */
+  profile?: (number | null) | Profile;
+  /**
+   * The visitor's portal_anon_id cookie value. Set only for anonymous likes.
+   */
+  anonymousId?: string | null;
+  targetCollection: 'events' | 'posts' | 'projects' | 'threads' | 'wikiPages';
+  targetId: number;
+  /**
+   * Salted SHA-256 hash of the request IP, for abuse analysis only.
+   */
+  ipHash?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Signup spam/rate-limit audit trail. Emails and IPs are stored as hashes.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2411,6 +2457,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'feedbackSubmissions';
         value: number | FeedbackSubmission;
+      } | null)
+    | ({
+        relationTo: 'contentReactions';
+        value: number | ContentReaction;
       } | null)
     | ({
         relationTo: 'signupAttempts';
@@ -2883,6 +2933,14 @@ export interface EventsSelect<T extends boolean = true> {
   discordSyncError?: T;
   recordingURL?: T;
   transcriptArtifactURL?: T;
+  transcript?:
+    | T
+    | {
+        markdown?: T;
+        sourceSessionID?: T;
+        sha256?: T;
+        ingestedAt?: T;
+      };
   summaryArtifactURL?: T;
   sourceArtifactURL?: T;
   sourceArtifactID?: T;
@@ -3491,6 +3549,22 @@ export interface FeedbackSubmissionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "contentReactions_select".
+ */
+export interface ContentReactionsSelect<T extends boolean = true> {
+  kind?: T;
+  actorType?: T;
+  user?: T;
+  profile?: T;
+  anonymousId?: T;
+  targetCollection?: T;
+  targetId?: T;
+  ipHash?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "signupAttempts_select".
  */
 export interface SignupAttemptsSelect<T extends boolean = true> {
@@ -3688,6 +3762,7 @@ export interface SponsorInquiriesSelect<T extends boolean = true> {
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
   caption?: T;
+  prefix?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;

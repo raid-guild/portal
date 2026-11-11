@@ -78,7 +78,7 @@ export const PostVisibilityFilterNav: React.FC<{
           <Link
             aria-current={isActive ? 'page' : undefined}
             className={
-              isActive ? 'portal-admin-link' : 'portal-pill transition-colors hover:text-primary'
+              isActive ? 'portal-admin-link' : 'portal-pill transition-colors hover:text-link-hover'
             }
             href={href}
             key={visibility}

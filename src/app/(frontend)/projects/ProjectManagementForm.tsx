@@ -355,7 +355,7 @@ const LinkRows: React.FC<{
               </select>
             ) : null}
             <button
-              className="border border-border px-3 text-sm text-muted-foreground hover:border-primary hover:text-primary"
+              className="border border-border px-3 text-sm text-muted-foreground hover:border-primary hover:text-link-hover"
               onClick={() => onChange(rows.filter((_, rowIndex) => rowIndex !== index))}
               type="button"
             >

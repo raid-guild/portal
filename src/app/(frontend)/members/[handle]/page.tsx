@@ -200,7 +200,7 @@ const RecordLink: React.FC<{ item: Event | Post | Project }> = ({ item }) => {
   if (!href) return <p className="text-sm font-medium">{item.title}</p>
 
   return (
-    <Link className="block text-sm font-medium hover:text-primary" href={href}>
+    <Link className="block text-sm font-medium hover:text-link-hover" href={href}>
       {item.title}
     </Link>
   )

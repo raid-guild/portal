@@ -27,11 +27,6 @@ import type {
   WikiPage,
 } from '@/payload-types'
 import { Button } from '@/components/ui/button'
-import {
-  getCohortInquiryHref,
-  getCohortLabel,
-  isCohortEnrollmentOpen,
-} from '@/cohorts/selectFeaturedCohort'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
@@ -41,12 +36,11 @@ import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
 import { SessionDateTime } from './SessionDateTime'
 import { VibeCheckButton } from './VibeCheckButton'
 import { TrackedInquiryLink } from './TrackedInquiryLink'
-import { TrackedCohortLink } from './TrackedCohortLink'
 
 type PortalHomeProps = {
   cohortSessionThemes?: Event[]
+  cohortCards: { current: Cohort | null; next: Cohort | null }
   copy: ProductPageCopy
-  featuredCohort?: Cohort | null
   posts?: Post[]
   spotlights?: Spotlight[]
   upcomingEvents?: Event[]
@@ -54,7 +48,9 @@ type PortalHomeProps = {
 }
 
 type DashboardProps = {
-  cohortCommitment?: CohortCommitment | null
+  cohortCards: { current: Cohort | null; next: Cohort | null }
+  currentCommitment?: CohortCommitment | null
+  nextCommitment?: CohortCommitment | null
   dailyBrief?: DailyBrief | null
   dailyEngagementSummary?: {
     currentStreak: number
@@ -68,7 +64,6 @@ type DashboardProps = {
     wikiPages: number
   }
   featuredModules?: Module[]
-  featuredCohort?: Cohort | null
   upcomingEvents?: Event[]
   weekEvents?: Event[]
   pointEvents?: PointEvent[]
@@ -166,7 +161,7 @@ const getDashboardQuote = (brief?: DailyBrief | null): DashboardQuote | null => 
 export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   cohortSessionThemes = [],
   copy,
-  featuredCohort,
+  cohortCards,
   posts = [],
   spotlights = [],
   upcomingEvents = [],
@@ -333,7 +328,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
         </div>
       </section>
 
-      <PublicCohortSection cohort={featuredCohort} sessionThemes={cohortSessionThemes} />
+      <PublicCohortSection cohortCards={cohortCards} sessionThemes={cohortSessionThemes} />
 
       <section className="portal-band">
         <div className="container grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -372,18 +367,13 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
 }
 
 const PublicCohortSection: React.FC<{
-  cohort?: Cohort | null
+  cohortCards: { current: Cohort | null; next: Cohort | null }
   sessionThemes: Event[]
-}> = ({ cohort, sessionThemes }) => {
-  const isGatheringInterest = cohort?.programStatus === 'gathering-interest'
-  const enrollmentOpen = cohort ? isCohortEnrollmentOpen(cohort) : false
-  const cohortLabel = cohort ? getCohortLabel(cohort) : 'the next RaidGuild cohort'
-  const interestHref = cohort
-    ? getCohortInquiryHref(cohort, 'interested')
-    : '/inquire/general?context=cohort-interest&intent=interested'
-  const topicHref = cohort
-    ? getCohortInquiryHref(cohort, 'suggest-topic')
-    : '/inquire/general?context=cohort-interest&intent=suggest-topic'
+}> = ({ cohortCards, sessionThemes }) => {
+  const cards = [
+    ...(cohortCards.current ? [{ cohort: cohortCards.current, role: 'current' as const }] : []),
+    { cohort: cohortCards.next, role: 'next' as const },
+  ]
 
   return (
     <section className="container py-12">
@@ -396,86 +386,17 @@ const PublicCohortSection: React.FC<{
             community work.
           </p>
         </div>
-
-        {cohort ? (
-          <article className="portal-panel border-primary/40 bg-primary/10">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="portal-kicker">
-                {isGatheringInterest ? 'Potential future cohort' : 'Current or next cohort'}
-              </p>
-              <span className="portal-pill">{cohort.programStatus.replaceAll('-', ' ')}</span>
-            </div>
-            <h3 className="mt-3 portal-heading-sm">{cohortLabel}</h3>
-            <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
-            <p className="mt-4 max-w-3xl text-sm leading-6 text-muted-foreground">
-              {cohort.summary}
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              {isGatheringInterest ? (
-                <TrackedInquiryLink
-                  className="portal-admin-link"
-                  cohortInterestIntent="interested"
-                  cohortSlug={cohort.slug}
-                  href={interestHref}
-                  inquiryType="general"
-                  placement="portal_home_cohort"
-                >
-                  Signal interest
-                </TrackedInquiryLink>
-              ) : (
-                <TrackedCohortLink
-                  className="portal-admin-link"
-                  cohortSlug={cohort.slug}
-                  href={`/cohorts/${cohort.slug}`}
-                  placement="portal_home"
-                >
-                  {enrollmentOpen ? `Join ${cohortLabel}` : 'Explore the cohort'}
-                </TrackedCohortLink>
-              )}
-              <TrackedInquiryLink
-                className="portal-admin-link"
-                cohortInterestIntent="suggest-topic"
-                cohortSlug={cohort.slug}
-                href={topicHref}
-                inquiryType="general"
-                placement="portal_home_cohort_topic"
-              >
-                Suggest a future topic
-              </TrackedInquiryLink>
-            </div>
-          </article>
-        ) : (
-          <article className="portal-panel border-primary/40 bg-primary/10">
-            <p className="portal-kicker">What should we explore next?</p>
-            <h3 className="mt-3 portal-heading-sm">Help shape the next cohort</h3>
-            <p className="mt-4 text-sm leading-6 text-muted-foreground">
-              No cohort is scheduled yet. Signal that you would participate or suggest a theme the
-              guild should explore together.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <TrackedInquiryLink
-                className="portal-admin-link"
-                cohortInterestIntent="interested"
-                cohortSlug="unscheduled"
-                href={interestHref}
-                inquiryType="general"
-                placement="portal_home_cohort"
-              >
-                Signal interest
-              </TrackedInquiryLink>
-              <TrackedInquiryLink
-                className="portal-admin-link"
-                cohortInterestIntent="suggest-topic"
-                cohortSlug="unscheduled"
-                href={topicHref}
-                inquiryType="general"
-                placement="portal_home_cohort_topic"
-              >
-                Suggest a future topic
-              </TrackedInquiryLink>
-            </div>
-          </article>
-        )}
+        <div className="grid gap-4 md:grid-cols-2">
+          {cards.map(({ cohort, role }) => (
+            <CohortCalloutCard
+              cohort={cohort}
+              key={role}
+              placement={`portal_home_${role}_cohort`}
+              role={role}
+              showTopicAction={role === 'next'}
+            />
+          ))}
+        </div>
       </div>
 
       {sessionThemes.length ? (
@@ -503,12 +424,13 @@ const PublicCohortSection: React.FC<{
 }
 
 export const PortalDashboard: React.FC<DashboardProps> = ({
-  cohortCommitment,
+  cohortCards,
+  currentCommitment,
+  nextCommitment,
   dailyBrief,
   dailyEngagementSummary,
   dashboardStats,
   featuredModules = [],
-  featuredCohort,
   upcomingEvents = [],
   weekEvents = [],
   pointEvents = [],
@@ -788,13 +710,26 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
           </Button>
         </section>
 
-        <CohortCalloutCard
-          cohort={featuredCohort}
-          commitment={cohortCommitment}
-          hasProfile={hasProfile}
-          interestPlacement="dashboard_cohort"
-          placement="dashboard_brief"
-        />
+        <div className="grid content-start gap-4">
+          {cohortCards.current ? (
+            <CohortCalloutCard
+              cohort={cohortCards.current}
+              commitment={currentCommitment}
+              hasProfile={hasProfile}
+              interestPlacement="dashboard_current_cohort"
+              placement="dashboard_current_cohort"
+              role="current"
+            />
+          ) : null}
+          <CohortCalloutCard
+            cohort={cohortCards.next}
+            commitment={nextCommitment}
+            hasProfile={hasProfile}
+            interestPlacement="dashboard_next_cohort"
+            placement="dashboard_next_cohort"
+            role="next"
+          />
+        </div>
       </div>
     </main>
   )
@@ -811,7 +746,7 @@ const DashboardNavItem: React.FC<{
       className="group flex min-h-24 items-center gap-4 px-4 py-4 transition-colors hover:bg-card/50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary sm:px-5"
       href={href}
     >
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-primary">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center border border-border bg-background text-muted-foreground transition-colors group-hover:border-primary group-hover:text-link-hover">
         {icon}
       </span>
       <span className="min-w-0 flex-1">
@@ -820,7 +755,7 @@ const DashboardNavItem: React.FC<{
       </span>
       <ArrowRight
         aria-hidden="true"
-        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary"
+        className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-link-hover"
       />
     </Link>
   </li>
@@ -916,7 +851,7 @@ const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
         />
       ) : null}
       <div className="flex flex-wrap items-center gap-3">
-        <p className="portal-kicker text-primary">{spotlight.kind}</p>
+        <p className="portal-kicker text-link">{spotlight.kind}</p>
         {spotlight.expiresAt ? (
           <span className="text-xs text-muted-foreground">
             Until {formatDate(spotlight.expiresAt)}
@@ -936,7 +871,7 @@ const SpotlightCard: React.FC<{ compact?: boolean; spotlight: Spotlight }> = ({
         </p>
       ) : null}
       {target.label ? (
-        <p className="mt-5 inline-flex border border-primary/70 px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary">
+        <p className="mt-5 inline-flex border border-primary/70 px-4 py-2 font-mono text-xs font-bold uppercase tracking-[0.08em] text-link">
           {target.label}
         </p>
       ) : null}
@@ -1085,7 +1020,7 @@ const RecentContributorsList: React.FC<{ contributors: RecentContributor[] }> = 
               src={avatarURL}
             />
           ) : (
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-xs font-bold uppercase text-primary">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-xs font-bold uppercase text-link">
               {getInitials(label)}
             </span>
           )}

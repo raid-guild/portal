@@ -25,12 +25,13 @@ export default async function DashboardPage() {
 
   return (
     <PortalDashboard
-      cohortCommitment={dashboardData.cohortCommitment}
+      currentCommitment={dashboardData.currentCommitment}
+      nextCommitment={dashboardData.nextCommitment}
       dashboardStats={dashboardData.dashboardStats}
       dailyBrief={dashboardData.dailyBrief}
       dailyEngagementSummary={dashboardData.dailyEngagementSummary}
       featuredModules={dashboardData.featuredModules}
-      featuredCohort={dashboardData.featuredCohort}
+      cohortCards={dashboardData.cohortCards}
       pointEvents={dashboardData.pointSummary.events}
       pointsTotal={dashboardData.pointSummary.total}
       profile={dashboardData.profile}

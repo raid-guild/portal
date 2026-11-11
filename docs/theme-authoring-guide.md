@@ -8,8 +8,8 @@ seeded content, or Payload workflows.
 
 The registry in `src/providers/Theme/themeRegistry.ts` is the source of truth:
 
-- `raidguild-dark` is the default and preserves the established Portal look.
-- `raidguild-light` is the complete light counterpart.
+- `raidguild-dark` adapts the current Louchi Night appearance.
+- `raidguild-light` adapts the current Louchi Day appearance.
 - `raidguild-classic` is a modernized interpretation of the earlier RaidGuild
   design system, with ruby and purple accents and legacy typography.
 - `raidguild-ai` is a dark, systems-oriented theme with restrained near-black
@@ -20,14 +20,53 @@ Stored `dark` and `light` preferences are legacy aliases. Theme initialization
 normalizes them to the current keys. Do not remove those aliases without a
 separate migration plan.
 
-An absent preference uses `raidguild-dark`. Automatic OS color-scheme behavior
-is opt-in: selecting `Auto` stores the explicit `auto` preference. This keeps a
-first visit deterministic while preserving OS-aware switching for people who
-choose it.
+An absent or invalid preference follows the OS color scheme: Louchi Day for
+light and Louchi Night for dark. Selecting `System` stores the explicit `auto`
+preference and continues tracking OS changes. An explicit theme choice persists
+until the visitor selects System again. `raidguild-dark` remains the fallback
+when the OS preference cannot be determined.
 
 The root `data-theme` attribute selects tokens from
 `src/app/(frontend)/theme.css`. `globals.css`, Tailwind, shared components, and
 canvas consumers use those tokens.
+
+## Louchi Storybook alignment
+
+The Day and Night theme tokens and layout follow `raid-guild/brand` revision `0d80eb5`, specifically
+`src/brand/system.ts`, `src/app/globals.css`, and `docs/louchi-venture-sync.md`.
+That workshop records website baseline `a00dd80` and Louchi's original handoff
+branch (tip `a195359`). The canonical palette uses parchment, ink, navy, cyan,
+coral and acid lime; the Portal converts those hex values to HSL channels for
+its existing Tailwind 3 contract. The upstream reusable package uses Tailwind 4
+and is not imported: this is a local semantic adapter with unchanged provider,
+Button, content and layout APIs. Marketing pill dimensions and workshop gallery
+interactions are not generic Portal component requirements.
+
+The active Louchi display cuts are Last Duel Extended 2 Regular/Bold and native Oblique/Bold Oblique, plus Last Duel Retalic Extended 2 Regular/Bold. They are copied byte-for-byte from `raid-guild/brand` on `feat/versioned-brand-reigns` (source revision `1d3f250`) and follow the authoritative website `review/venture-beyond-redesign` at `7d0e878`. See `public/brand-fonts/louchi/README.md` for exact files and hashes. Historical Grinder files remain as archive assets. Ubuntu normal/italic variable and Ubuntu Mono regular/bold assets retain their previous mapping and provenance under `public/fonts/louchi`. Last Duel is a commercial, site-only asset: do not bundle it into a reusable package or advertise downloads.
+
+Display text now uses native Last Duel Bold Extended 2 at weight 700, uppercase and -0.015em tracking. `.font-retalic` uses the native Last Duel Retalic Bold cut (700). The opt-in `.portal-heading-top` role uses that Retalic Bold; `.portal-heading-bottom` uses the separate Extended 2 Bold face with CSS italic synthesis, matching the website's two-line heading treatment. These classes do not split CMS copy or alter ordinary heading text. The alias face for the lower line is deliberately registered only at normal weight 700 so italic synthesis can occur; the native Last Duel Bold Oblique remains available through the main display family for other italic uses. Ubuntu body copy and Ubuntu Mono utility labels stay unskewed. The pixel map subtree is excluded from these heading rules. Existing responsive sizes, palette, control styles, and Classic/AI typography remain unchanged.
+
+Filled coral controls use near-black `#060609` text, matching the workshop's
+accessibility correction. Coral remains the action/decorative signal; small links
+use readable teal in Day and cyan in Night, with semantic hover colors. Error,
+warning, success and code/graph colors adapt the palette for their distinct roles.
+These adaptations avoid blindly applying cream-on-coral or coral-on-parchment
+small text. Review contrast over the actual surfaces, including translucent
+feature surfaces. Static art, map pixel styles and Payload admin remain separate review boundaries.
+
+The light appearance uses `public/assets/raidguild-cohort-logo-ink.svg`, a color
+variant of the existing `raidguild-cohort-logo.svg`. Its SVG geometry is identical;
+only the cream fill is replaced with canonical ink `#102d2c`. The shared Logo
+component preserves dimensions and accessible text, and CSS selects the ink
+asset only for Light/legacy light. Dark, Classic and AI retain the original mark.
+No new logo design or artwork is introduced.
+
+Ordinary text uses the semantic `text-link`/`text-link-hover` Tailwind mappings
+when it needs an action or status accent. Filled controls retain `bg-primary` and
+`text-primary-foreground`; coral stays available for borders and decoration.
+Shared control/card geometry has compatibility tokens to preserve the alternate
+themes' previous square controls, with the original 0.25rem menu radius. Manual
+form controls consume the same control token as shared inputs.
 
 ## Adding a theme
 

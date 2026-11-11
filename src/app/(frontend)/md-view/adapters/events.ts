@@ -38,7 +38,7 @@ const sourceMaterialSection = (event: Event): MarkdownSection => {
   const lines: string[] = []
   if (event.recordingURL) lines.push(`[Recording](${event.recordingURL})`)
   if (event.summaryArtifactURL) lines.push(`[Summary](${event.summaryArtifactURL})`)
-  if (event.transcriptArtifactURL) lines.push(`[Transcript](${event.transcriptArtifactURL})`)
+  if (event.transcript?.markdown) lines.push(`[Transcript](/api/events/${event.id}/transcript)`)
   if (event.sourceArtifactURL) lines.push(`[Source artifact](${event.sourceArtifactURL})`)
   if (event.sourceArtifactID) lines.push(`Artifact ID: \`${event.sourceArtifactID}\``)
 

@@ -114,8 +114,8 @@
 - [x] Create the public, shareable `/cohorts/[slug]` hub while keeping commitment actions behind login and Profile creation.
 - [x] Support optional hero backgrounds, a validated exploration video, and curated external context links without arbitrary CMS HTML or CSS.
 - [x] Relate Events to Cohorts and render next, weekly, upcoming, and past session views from the canonical Event records.
-- [x] Highlight the highest-priority active, open, interest-gathering, or upcoming Cohort on the authenticated dashboard.
-- [x] Replace the unauthenticated home project block with Cohort status, signup or interest actions, and prior public session themes when available.
+- [x] Show separate current and next Cohort cards on the dashboard, with cohort-specific commitment state and a truthful no-upcoming fallback.
+- [x] Show separate current and next Cohort cards on the public home, with signup or interest actions and prior public session themes when available.
 - [x] Support a `gathering-interest` state and safely prefilled general inquiries without adding a separate interest model.
 - [x] Provide a truthful general-inquiry fallback when no Cohort is scheduled.
 - [x] Add deterministic Cohort seed content, a schema migration, generated Payload types, analytics, and end-to-end coverage.
@@ -297,6 +297,32 @@
 - [ ] Add focused tests for renderer, permissions, and API behavior.
 - [ ] Add e2e coverage for the `/newsletter` editor flow.
 
+## Phase 12: Content Reactions (Likes And Bookmarks)
+
+- [x] Add `contentReactions` collection (`kind`, `actorType`, `user`,
+      `profile`, `anonymousId`, `targetCollection`, `targetId`, `ipHash`)
+      covering posts, events, projects, threads, and wiki pages.
+- [x] Add two partial unique indexes (member rows keyed by `user_id`,
+      anonymous rows keyed by `anonymous_id`) declared directly in the
+      migration, since Payload's config `indexes` cannot express a partial
+      index.
+- [x] Add `POST /api/reactions` as an idempotent set (`active: boolean`)
+      open to anonymous visitors for likes, requiring a verified member for
+      bookmarks, and treating a `23505` duplicate write as success.
+- [x] Add anonymous actor identity via a best-effort `portal_anon_id`
+      cookie; store only a salted IP hash (`ipHash`), never a raw IP.
+- [x] Adopt an anonymous visitor's likes/bookmarks onto their account on
+      sign-in (`adoptAnonymousReactions`) so one human is not counted twice.
+- [x] Add a `ReactionBar` heart/bookmark control on post, event, project,
+      thread, and wiki page detail pages, with anonymous likes and a
+      sign-in/verify prompt in place of the bookmark control.
+- [x] Add `/me/saved` with `?kind=` and `?type=` filters over a member's
+      own likes and bookmarks.
+- [x] Keep module favorites (`raidguild:module-favorites:v1`) browser-local
+      and unrelated to `contentReactions`.
+- [x] Add e2e coverage for anonymous/member/admin access isolation,
+      adoption on sign-in, and `/me/saved` filters.
+
 ## Deferred
 
 - [ ] Points and daily engagement check-ins. First slice includes daily check-in
@@ -328,3 +354,10 @@ accessible module records across Tools, Artifacts, and games. Arcade remains
 reachable through its desktop entrance or mobile shortcut. Favorites are not
 account-synced, public likes, or usage tracking; unavailable storage falls back
 to the current visit with a visible notice.
+# Recorded Event transcripts
+
+- [x] Store transcript Markdown and provenance on the Event with a migration.
+- [x] Read and download transcript through Event visibility, with no-store responses.
+- [x] Limit authenticated ingest size and reject conflicting replacements.
+- [ ] Configure the live recording publisher to fetch from the adapter's token-protected transcript endpoint and ingest the matched Portal Event.
+- [ ] Backfill Event 142 after the Portal change is deployed; keep it member-only.

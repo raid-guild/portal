@@ -1,4 +1,4 @@
-// storage-adapter-import-placeholder
+import { s3Storage } from '@payloadcms/storage-s3'
 import { postgresAdapter } from '@payloadcms/db-postgres'
 import { nodemailerAdapter } from '@payloadcms/email-nodemailer'
 
@@ -14,6 +14,7 @@ import { Categories } from './collections/Categories'
 import { Comments } from './collections/Comments'
 import { CohortCommitments } from './collections/CohortCommitments'
 import { Cohorts } from './collections/Cohorts'
+import { ContentReactions } from './collections/ContentReactions'
 import { ContributionRequests } from './collections/ContributionRequests'
 import { DailyBriefs } from './collections/DailyBriefs'
 import { DailyEngagements } from './collections/DailyEngagements'
@@ -44,12 +45,14 @@ import { WikiTopics } from './collections/WikiTopics'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
+import { isS3MediaStorage, mediaS3Config, PORTAL_MEDIA_PREFIX } from './media/storage'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
 const rootDir = path.resolve(dirname, '..')
+const mediaS3 = mediaS3Config()
 const portalOpsSkillDir = path.resolve(rootDir, '.agents/skills/portal-ops-skill')
 const portalOpsSkill = {
   aliases: ['portal-memory-publisher'],
@@ -166,6 +169,7 @@ export default buildConfig({
     Notifications,
     NotificationPreferences,
     FeedbackSubmissions,
+    ContentReactions,
     SignupAttempts,
     PageCopy,
     Profiles,
@@ -182,7 +186,18 @@ export default buildConfig({
   globals: [Header, Footer],
   plugins: [
     ...plugins,
-    // storage-adapter-placeholder
+    s3Storage({
+      alwaysInsertFields: true,
+      enabled: isS3MediaStorage(),
+      collections: { media: { prefix: PORTAL_MEDIA_PREFIX } },
+      bucket: mediaS3?.bucket || '',
+      config: mediaS3 ? {
+        endpoint: mediaS3.endpoint,
+        region: mediaS3.region,
+        credentials: mediaS3.credentials,
+        forcePathStyle: process.env.MEDIA_S3_FORCE_PATH_STYLE === 'true',
+      } : {},
+    }),
   ],
   endpoints: [
     {

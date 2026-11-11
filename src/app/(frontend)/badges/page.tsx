@@ -180,7 +180,7 @@ const BadgeArtwork: React.FC<{
         // eslint-disable-next-line @next/next/no-img-element
         <img alt="" className="h-full w-full object-cover" src={url} />
       ) : (
-        <div aria-label={`${title} badge placeholder`} className="text-primary">
+        <div aria-label={`${title} badge placeholder`} className="text-link">
           <Icon className="h-9 w-9" />
         </div>
       )}

@@ -264,7 +264,7 @@ export const SessionCreateForm: React.FC<SessionCreateFormProps> = ({
         />
       </Field>
       <details className="border border-border bg-card/20">
-        <summary className="cursor-pointer px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-primary">
+        <summary className="cursor-pointer px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.08em] text-muted-foreground transition-colors hover:text-link-hover">
           Advanced
         </summary>
         <div className="grid gap-5 border-t border-border p-4 sm:grid-cols-2">
@@ -455,7 +455,7 @@ const RelationTypeahead: React.FC<{
       {selectedOptions.length ? (
         selectedOptions.map((option) => (
           <button
-            className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            className="border border-primary/60 bg-primary/20 px-3 py-2 text-left font-mono text-xs font-bold uppercase tracking-[0.08em] text-link transition-colors hover:bg-primary hover:text-primary-foreground"
             key={option.id}
             onClick={() => onRemove(option)}
             type="button"
@@ -496,7 +496,7 @@ const RelationTypeahead: React.FC<{
         </button>
         {filteredOptions.map((option) => (
           <button
-            className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-primary"
+            className="block w-full border-b border-border px-3 py-3 text-left text-sm text-foreground transition-colors last:border-b-0 hover:bg-card/70 hover:text-link-hover"
             key={option.id}
             onMouseDown={(event) => event.preventDefault()}
             onClick={() => {
@@ -533,7 +533,7 @@ const SquareOption: React.FC<{
       'flex h-12 items-center justify-center border px-3 text-center font-mono text-xs font-bold uppercase tracking-[0.08em] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
       isSelected
         ? 'border-primary bg-primary text-primary-foreground'
-        : 'border-border bg-card/35 text-muted-foreground hover:border-primary hover:text-primary',
+        : 'border-border bg-card/35 text-muted-foreground hover:border-primary hover:text-link-hover',
     )}
     onClick={onClick}
     type="button"

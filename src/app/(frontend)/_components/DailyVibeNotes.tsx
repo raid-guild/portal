@@ -160,7 +160,7 @@ const VibeNoteAvatar: React.FC<{ entry: VibeNote }> = ({ entry }) => {
   }
 
   return (
-    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-[0.7rem] font-bold uppercase text-primary">
+    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-primary/15 font-mono text-[0.7rem] font-bold uppercase text-link">
       {getInitials(label)}
     </span>
   )

@@ -241,7 +241,7 @@ const RelationList: React.FC<{
       {items.map((item) =>
         item.href ? (
           <Link
-            className="portal-pill transition-colors hover:text-primary"
+            className="portal-pill transition-colors hover:text-link-hover"
             href={item.href}
             key={item.label}
           >

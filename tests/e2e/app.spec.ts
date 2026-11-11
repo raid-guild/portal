@@ -1,11 +1,15 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import jwt from 'jsonwebtoken'
 import { privateKeyToAccount } from 'viem/accounts'
 
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
 import { normalizePortalTitle } from '@/utilities/generateMeta'
 import { POSTS_META_DESCRIPTION } from '@/utilities/postsMetadata'
+import { getCohortPresentationStatus, selectCohortCards } from '@/cohorts/selectFeaturedCohort'
+import type { Cohort } from '@/payload-types'
 
 import {
   adminEmail,
@@ -19,6 +23,74 @@ import {
 } from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
+
+test('cohort cards use published dates to show the running and next cohorts', () => {
+  const now = Date.parse('2026-10-30T00:00:00.000Z')
+  const cohort = (
+    id: number,
+    status: Cohort['programStatus'],
+    startsAt?: string,
+    endsAt?: string,
+  ) => ({ id, slug: `cohort-${id}`, programStatus: status, startsAt, endsAt }) as Cohort
+  const running = cohort(16, 'upcoming', '2026-10-05T00:00:00.000Z', '2026-11-04T00:00:00.000Z')
+  const future = cohort(17, 'upcoming', '2026-11-02T00:00:00.000Z', '2026-12-02T00:00:00.000Z')
+  const cards = selectCohortCards([future, running], now)
+  expect(cards.current).toMatchObject({ id: 16, programStatus: 'active' })
+  expect(cards.current).not.toBe(running)
+  expect(running.programStatus).toBe('upcoming')
+  expect(cards.next?.id).toBe(17)
+  expect(getCohortPresentationStatus(running, Date.parse(running.startsAt!))).toBe('active')
+  expect(getCohortPresentationStatus(running, Date.parse(running.endsAt!))).toBe('complete')
+  expect(getCohortPresentationStatus(future, now)).toBe('upcoming')
+
+  const explicit = cohort(1, 'active', '2026-10-01T00:00:00.000Z')
+  expect(selectCohortCards([running, explicit, future], now).current?.id).toBe(1)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-11-03T00:00:00.000Z')).current?.id,
+  ).toBe(16)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-11-04T00:00:00.000Z')).current?.id,
+  ).toBe(17)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-12-02T00:00:00.000Z')).current,
+  ).toBeNull()
+
+  const past = cohort(2, 'upcoming', '2026-09-01T00:00:00.000Z', '2026-09-30T00:00:00.000Z')
+  const noEnd = cohort(3, 'upcoming', '2026-10-01T00:00:00.000Z')
+  const reversed = cohort(4, 'upcoming', '2026-11-10T00:00:00.000Z', '2026-11-01T00:00:00.000Z')
+  const undated = cohort(5, 'upcoming')
+  expect(selectCohortCards([past, noEnd, reversed, undated], now)).toMatchObject({
+    current: null,
+    next: { id: 5 },
+  })
+  expect(getCohortPresentationStatus(noEnd, now)).toBe('upcoming')
+  expect(getCohortPresentationStatus(reversed, now)).toBe('upcoming')
+  const futureWithoutEnd = cohort(10, 'upcoming', '2026-11-05T00:00:00.000Z')
+  expect(selectCohortCards([undated, futureWithoutEnd], now).next?.id).toBe(10)
+  expect(
+    getCohortPresentationStatus(
+      cohort(11, 'upcoming', 'invalid', running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('upcoming')
+  expect(
+    getCohortPresentationStatus(
+      cohort(6, 'gathering-interest', running.startsAt || undefined, running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('gathering-interest')
+  expect(selectCohortCards([cohort(8, 'upcoming'), cohort(7, 'upcoming')], now).next?.id).toBe(7)
+  expect(
+    selectCohortCards(
+      [
+        { ...cohort(13, 'upcoming'), slug: 'a' },
+        { ...cohort(12, 'upcoming'), slug: 'b' },
+      ],
+      now,
+    ).next?.id,
+  ).toBe(13)
+  expect(selectCohortCards([past, cohort(9, 'gathering-interest')], now).next?.id).toBe(9)
+})
 const daoWalletTestAccount = privateKeyToAccount(
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
 )
@@ -256,7 +328,25 @@ function lexicalListContent(items: string[]) {
   }
 }
 
-test('defaults to RaidGuild Dark and persists explicit theme preferences', async ({ browser }) => {
+async function verifyOrdinaryContentHeaderThemes(browser: Browser) {
+  const context = await browser.newContext()
+  const page = await context.newPage()
+  for (const theme of ['raidguild-dark', 'raidguild-light']) {
+    await page.goto('/login')
+    await page.evaluate((value) => window.localStorage.setItem('payload-theme', value), theme)
+    for (const route of ['/posts', '/search', `/posts/${seededPosts[0].slug}`]) {
+      const response = await page.goto(route)
+      expect(response?.ok(), `Expected content route ${route} to load successfully`).toBeTruthy()
+      await expect(page.locator('html')).toHaveAttribute('data-theme', theme)
+      await expect(page.locator('[data-portal-header]')).toHaveAttribute('data-theme', theme)
+    }
+  }
+  await context.close()
+}
+
+test('defaults to the system theme and persists explicit theme preferences', async ({
+  browser,
+}) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -268,12 +358,64 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await page.goto('/login')
   const header = page.locator('[data-portal-header]')
 
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBeNull()
+
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await page.emulateMedia({ colorScheme: 'light' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
+  const loadedFonts = await page.evaluate(async () => {
+    const requests = [
+      '400 24px "Last Duel"',
+      '700 24px "Last Duel"',
+      'italic 400 24px "Last Duel"',
+      'italic 700 24px "Last Duel"',
+      '400 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Extended 2"',
+      '400 16px "Ubuntu"',
+      'italic 400 16px "Ubuntu"',
+      '400 12px "Ubuntu Mono"',
+      '700 12px "Ubuntu Mono"',
+    ]
+    return Promise.all(
+      requests.map(async (request) => {
+        const faces = await document.fonts.load(request, 'RaidGuild')
+        return faces.length > 0 && faces.every((face) => face.status === 'loaded')
+      }),
+    )
+  })
+  expect(loadedFonts).toEqual(Array(11).fill(true))
+  await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
+  const displayHeading = page.locator('h1').first()
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
+  await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
+  await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
+  await page.evaluate(() => {
+    const samples = document.createElement('div')
+    samples.id = 'portal-font-role-samples'
+    samples.innerHTML = '<span id="role-top" class="portal-heading-top">Venture</span><span id="role-bottom" class="portal-heading-bottom">Beyond</span><div class="map-dashboard-screen"><span id="role-map" class="portal-heading-top">Map</span></div>'
+    document.body.append(samples)
+  })
+  const top = page.locator('#role-top')
+  const bottom = page.locator('#role-bottom')
+  await expect(top).toHaveCSS('font-family', /Last Duel Retalic/)
+  await expect(top).toHaveCSS('font-weight', '700')
+  await expect(top).toHaveCSS('font-style', 'normal')
+  await expect(bottom).toHaveCSS('font-family', /Last Duel Extended 2/)
+  await expect(bottom).toHaveCSS('font-weight', '700')
+  await expect(bottom).toHaveCSS('font-style', 'italic')
+  await expect(bottom).toHaveCSS('font-synthesis', 'style')
+  await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Last Duel Retalic/)
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -283,10 +425,20 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-light')
 
+  await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
+  await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
+
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
+
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
+  await page.getByRole('combobox', { name: 'Select a theme' }).click()
+  await expect(page.getByRole('option', { name: 'System' })).toBeVisible()
+  await page.keyboard.press('Escape')
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'auto'))
   await page.reload()
@@ -308,6 +460,9 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBe('raidguild-classic')
+
+  await expect(displayHeading).toHaveCSS('font-family', /RaidGuild Classic Uncial/)
+  await expect(displayHeading).toHaveCSS('text-transform', 'none')
 
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-classic')
@@ -480,6 +635,20 @@ async function verifySeededPosts(adminPage: Page, page: Page) {
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', canonicalURL)
     await expect(page.locator('meta[property="og:type"]')).toHaveAttribute('content', 'article')
     await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonicalURL)
+    // A post-hydration router.refresh() used to append a second copy of the head
+    // metadata, so wait for the page to settle before counting the tags.
+    await page.waitForLoadState('networkidle')
+    for (const selector of [
+      'title',
+      'link[rel="canonical"]',
+      'meta[property="og:type"]',
+      'meta[property="og:url"]',
+    ]) {
+      await expect(
+        page.locator(selector),
+        `Expected a single ${selector} in the document`,
+      ).toHaveCount(1)
+    }
     const structuredData = await page.locator('script[type="application/ld+json"]').textContent()
     const schemas = JSON.parse(structuredData || '[]') as Array<Record<string, unknown>>
     expect(schemas.map((schema) => schema['@type'])).toEqual(
@@ -665,7 +834,7 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   )
 
   await publicPage.goto('/')
-  await expect(publicPage.getByText('Potential future cohort')).toBeVisible()
+  await expect(publicPage.getByText('Future cohort · Gathering interest')).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Signal interest' })).toBeVisible()
 
   const restoreCohortResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
@@ -676,6 +845,124 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
     },
   })
   expect(restoreCohortResponse.ok()).toBeTruthy()
+
+  await verifyCohortCards(adminPage, publicPage, cohort, cohortPath)
+}
+
+async function verifyCohortCards(
+  adminPage: Page,
+  publicPage: Page,
+  cohort: { id: number; startsAt?: string | null; endsAt?: string | null },
+  cohortPath: string,
+) {
+  const now = Date.now()
+  const daysFromNow = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString()
+  const nextCohortResponse = await adminPage.request.post('/api/cohorts', {
+    data: {
+      _status: 'published',
+      cohortNumber: 9,
+      enrollmentStatus: 'open',
+      programStatus: 'upcoming',
+      slug: 'e2e-next-cohort',
+      startsAt: daysFromNow(3),
+      endsAt: daysFromNow(33),
+      summary: 'An upcoming cohort with its own commitment state.',
+      theme: 'Future guild work',
+      title: 'E2E Next Cohort',
+      visibility: 'public',
+      visualVariant: 'guild',
+    },
+  })
+  expect(nextCohortResponse.ok()).toBeTruthy()
+  const nextCohort = (await nextCohortResponse.json()).doc
+  try {
+    const runningResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: {
+        _status: 'published',
+        endsAt: daysFromNow(5),
+        programStatus: 'upcoming',
+        startsAt: daysFromNow(-25),
+      },
+    })
+    expect(runningResponse.ok()).toBeTruthy()
+
+    await publicPage.goto('/')
+    const publicCurrentCard = publicPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    await expect(publicCurrentCard).toBeVisible()
+    await expect(
+      publicCurrentCard.getByRole('heading', { name: 'Cohort 8 is underway' }),
+    ).toBeVisible()
+    await expect(publicCurrentCard.locator(`a[href="${cohortPath}"]`)).toBeVisible()
+    const publicNextCard = publicPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(publicNextCard).toBeVisible()
+    await expect(publicNextCard.getByRole('heading', { name: 'Join Cohort 9' })).toBeVisible()
+    await expect(publicNextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    await publicPage.goto(cohortPath)
+    await expect(publicPage.getByText('Active', { exact: true })).toBeVisible()
+    const publicCohortAPI = await publicPage.request.get(`/api/cohorts/${cohort.id}`)
+    expect(publicCohortAPI.ok()).toBeTruthy()
+    expect((await publicCohortAPI.json()).programStatus).toBe('upcoming')
+    await publicPage.goto('/')
+    const screenshotDir = process.env.E2E_COHORT_SCREENSHOTS_DIR
+    if (screenshotDir) {
+      mkdirSync(screenshotDir, { recursive: true })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = publicPage.viewportSize()
+      await publicPage.setViewportSize({ width: 390, height: 844 })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await publicPage.setViewportSize(viewport)
+    }
+
+    const activeResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: { _status: 'published', programStatus: 'active' },
+    })
+    expect(activeResponse.ok()).toBeTruthy()
+    await adminPage.goto('/dashboard')
+    const currentCard = adminPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    const nextCard = adminPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(currentCard.getByText('Committed')).toBeVisible()
+    await expect(currentCard.getByRole('link', { name: 'Open your cohort' })).toHaveAttribute(
+      'href',
+      cohortPath,
+    )
+    await expect(nextCard.getByText('Enrollment open')).toBeVisible()
+    await expect(nextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    if (screenshotDir) {
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = adminPage.viewportSize()
+      await adminPage.setViewportSize({ width: 390, height: 844 })
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await adminPage.setViewportSize(viewport)
+    }
+  } finally {
+    await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: {
+        _status: 'published',
+        endsAt: cohort.endsAt || null,
+        programStatus: 'upcoming',
+        startsAt: cohort.startsAt || null,
+      },
+    })
+    await adminPage.request.delete(`/api/cohorts/${nextCohort.id}`)
+  }
 }
 
 async function verifyPostJoinCTAAnalytics(adminPage: Page, publicPage: Page) {
@@ -1340,7 +1627,11 @@ async function verifyPublicHome(page: Page) {
   await expect(page.getByRole('heading', { name: 'RaidGuild Cohorts' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Find a Team' })).toHaveCount(0)
   await expect(page.getByText('Agents that strengthen real community work')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Join Cohort 8' })).toBeVisible()
+  const nextCohortCard = page.getByRole('region', { name: 'Next cohort: Cohort 8' })
+  await expect(nextCohortCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+    'href',
+    '/cohorts/agentic-guild-operations',
+  )
   await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
 }
@@ -1725,6 +2016,17 @@ async function verifyMemberOnlyProjectVisibility(
   const eventBody = await eventResponse.json()
   const memberOnlyEventID = eventBody.doc?.id || eventBody.id
   expect(memberOnlyEventID).toBeTruthy()
+  const memberTranscript = '# Member planning transcript'
+  const memberTranscriptSave = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: {
+      eventID: memberOnlyEventID,
+      transcript: {
+        markdown: memberTranscript,
+        sourceSessionID: '64702ca2-a6ba-448d-b9c4-b924cbeae222',
+      },
+    },
+  })
+  expect(memberTranscriptSave.ok()).toBeTruthy()
 
   const postResponse = await adminPage.request.post('/api/posts', {
     data: {
@@ -1804,6 +2106,7 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(publicPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const publicEventDetailResponse = await publicPage.goto(`/events/${memberOnlyEventID}`)
   expect(publicEventDetailResponse?.status()).toBe(404)
+  expect((await publicPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)).status()).toBe(404)
   await publicPage.goto('/posts')
   await expect(publicPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const publicPostDetailResponse = await publicPage.goto(`/posts/${memberOnlyPostSlug}`)
@@ -1830,6 +2133,7 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(contributorPage.getByText(memberOnlyEventTitle)).toHaveCount(0)
   const contributorEventDetailResponse = await contributorPage.goto(`/events/${memberOnlyEventID}`)
   expect(contributorEventDetailResponse?.status()).toBe(404)
+  expect((await contributorPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)).status()).toBe(404)
   await contributorPage.goto('/posts')
   await expect(contributorPage.getByRole('link', { name: memberOnlyPostTitle })).toHaveCount(0)
   const contributorPostDetailResponse = await contributorPage.goto(`/posts/${memberOnlyPostSlug}`)
@@ -1861,6 +2165,9 @@ async function verifyMemberOnlyProjectVisibility(
   await expect(memberPage.getByText(memberOnlyEventTitle)).toBeVisible()
   await memberPage.goto(`/events/${memberOnlyEventID}`)
   await expect(memberPage.getByRole('heading', { name: memberOnlyEventTitle })).toBeVisible()
+  const memberTranscriptResponse = await memberPage.request.get(`/api/events/${memberOnlyEventID}/transcript`)
+  expect(memberTranscriptResponse.status()).toBe(200)
+  expect(await memberTranscriptResponse.text()).toBe(memberTranscript)
   await memberPage.goto('/posts')
   await expect(memberPage.getByRole('link', { name: memberOnlyPostTitle })).toBeVisible()
   await expect(memberPage.getByRole('link', { name: 'Members' })).toBeVisible()
@@ -2824,7 +3131,11 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
   expect(ingestResponse.ok()).toBeTruthy()
   const ingestBody = await ingestResponse.json()
   expect(ingestBody.matchedBy).toBe('discordScheduledEventID')
-  expect(ingestBody.event).toMatchObject({
+  expect(ingestBody.eventID).toBeTruthy()
+  const ingestedEventResponse = await adminPage.request.get(`/api/events/${ingestBody.eventID}`)
+  expect(ingestedEventResponse.ok()).toBeTruthy()
+  const ingestedEvent = await ingestedEventResponse.json()
+  expect(ingestedEvent).toMatchObject({
     recordingURL: 'https://example.com/recording',
     sourceArtifactID: `artifact-${suffix}`,
     sourceArtifactURL: 'https://example.com/summary',
@@ -2837,21 +3148,77 @@ async function verifyEventArtifactIngest(adminPage: Page, publicPage: Page) {
     params: {
       depth: '0',
       limit: '1',
-      'where[sourceKey][equals]': `event:${ingestBody.event.id}:artifact-ingested`,
+      'where[sourceKey][equals]': `event:${ingestBody.eventID}:artifact-ingested`,
     },
   })
   expect(activityResponse.ok()).toBeTruthy()
   const activityBody = await activityResponse.json()
   expect(activityBody.docs?.[0]).toMatchObject({
     activityType: 'event',
-    relatedEvent: ingestBody.event.id,
-    sourceKey: `event:${ingestBody.event.id}:artifact-ingested`,
+    relatedEvent: ingestBody.eventID,
+    sourceKey: `event:${ingestBody.eventID}:artifact-ingested`,
     sourceLabel: 'Session summary',
     sourceURL: 'https://example.com/summary',
     title: `Added session artifacts: ${title}`,
     visibility: 'public',
     _status: 'published',
   })
+
+  const transcript = '# Recorded session\n\nPrivate transcript fixture.'
+  const sourceSessionID = '64702ca2-a6ba-448d-b9c4-b924cbeae222'
+  const transcriptRequest = {
+    eventID: ingestBody.eventID,
+    transcript: { markdown: transcript, sourceSessionID },
+  }
+  const saved = await adminPage.request.post('/api/events/artifacts/ingest', { data: transcriptRequest })
+  expect(saved.status()).toBe(200)
+  expect((await saved.json()).transcript).toBe('stored')
+  const publicTranscript = await publicPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(publicTranscript.status()).toBe(200)
+  expect(await publicTranscript.text()).toBe(transcript)
+  expect(publicTranscript.headers()['cache-control']).toContain('no-store')
+
+  const duplicate = await adminPage.request.post('/api/events/artifacts/ingest', { data: transcriptRequest })
+  expect((await duplicate.json()).transcript).toBe('unchanged')
+  const conflicting = await adminPage.request.post('/api/events/artifacts/ingest', {
+    data: { eventID: ingestBody.eventID, transcript: { markdown: 'Different body', sourceSessionID } },
+  })
+  expect(conflicting.status()).toBe(409)
+
+  const memberOnly = await adminPage.request.patch(`/api/events/${ingestBody.eventID}`, {
+    data: { visibility: 'member' },
+  })
+  expect(memberOnly.ok()).toBeTruthy()
+  const denied = await publicPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(denied.status()).toBe(404)
+  const adminTranscript = await adminPage.request.get(`/api/events/${ingestBody.eventID}/transcript`)
+  expect(adminTranscript.status()).toBe(200)
+
+  const racingEvent = await adminPage.request.post('/api/events', {
+    data: {
+      _status: 'published',
+      publishedAt: new Date().toISOString(),
+      sessionType: 'workshop',
+      startsAt: startsAt.toISOString(),
+      title: `Playwright transcript race ${suffix}`,
+      visibility: 'member',
+    },
+  })
+  expect(racingEvent.status()).toBe(201)
+  const racingEventBody = await racingEvent.json()
+  const racingEventID = racingEventBody.doc?.id || racingEventBody.id
+  const candidates = Array.from({ length: 8 }, (_, index) => `# Concurrent transcript ${index}`)
+  const attempts = await Promise.all(candidates.map((markdown) =>
+    adminPage.request.post('/api/events/artifacts/ingest', {
+      data: { eventID: racingEventID, transcript: { markdown, sourceSessionID } },
+    }),
+  ))
+  expect(attempts.filter((attempt) => attempt.status() === 200)).toHaveLength(1)
+  expect(attempts.filter((attempt) => attempt.status() === 409)).toHaveLength(candidates.length - 1)
+  const winner = attempts.findIndex((attempt) => attempt.status() === 200)
+  const persisted = await adminPage.request.get(`/api/events/${racingEventID}/transcript`)
+  expect(persisted.status()).toBe(200)
+  expect(await persisted.text()).toBe(candidates[winner])
 }
 
 async function verifyPortalSkillEndpoint(page: Page) {
@@ -5437,9 +5804,397 @@ async function verifyFeedbackWidget(page: Page) {
   })
 }
 
+/**
+ * Clicks a reaction control and waits for the POST /api/reactions round trip to
+ * finish before returning. The button updates optimistically, so asserting on the
+ * button alone passes while the request is still in flight -- a following reload
+ * would abort it, and the browser would never store the portal_anon_id cookie the
+ * server sets for anonymous visitors.
+ */
+async function clickReaction(page: Page, control: Locator) {
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (res) => res.url().includes('/api/reactions') && res.request().method() === 'POST',
+    ),
+    control.click(),
+  ])
+
+  expect(
+    response.ok(),
+    `Expected POST /api/reactions to succeed, got ${response.status()}`,
+  ).toBeTruthy()
+
+  return response
+}
+
+async function verifyLikesAndBookmarks(adminPage: Page, browser: Browser) {
+  const suffix = Date.now()
+  const password = `Reactions-${suffix}!`
+
+  const postResponse = await adminPage.request.get('/api/posts', {
+    params: {
+      depth: '0',
+      limit: '1',
+      'where[slug][equals]': targetPost.slug,
+    },
+  })
+  expect(postResponse.ok()).toBeTruthy()
+  const postID = (await postResponse.json()).docs?.[0]?.id
+  expect(postID).toBeTruthy()
+
+  const createEvent = async (title: string) => {
+    const response = await adminPage.request.post('/api/events', {
+      data: {
+        _status: 'published',
+        endsAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+        publishedAt: new Date().toISOString(),
+        sessionType: 'demo',
+        startsAt: new Date().toISOString(),
+        summary: 'Fixture event for content reactions e2e coverage.',
+        title,
+        visibility: 'public',
+      },
+    })
+    expect(response.status()).toBe(201)
+    const body = await response.json()
+    return (body.doc?.id ?? body.id) as number
+  }
+
+  const bookmarkEventTitle = `Reactions Bookmark Event ${suffix}`
+  const bookmarkEventID = await createEvent(bookmarkEventTitle)
+  const adoptionEventID = await createEvent(`Reactions Adoption Event ${suffix}`)
+
+  const createVerifiedMember = async (email: string, name: string) => {
+    const response = await adminPage.request.post('/api/users', {
+      data: {
+        email,
+        emailVerifiedAt: new Date().toISOString(),
+        name,
+        password,
+        roles: ['member'],
+      },
+    })
+    expect(response.status()).toBe(201)
+    const body = await response.json()
+    return (body.doc?.id ?? body.id) as number
+  }
+
+  const memberAEmail = `reactions-member-a-${suffix}@example.com`
+  const memberBEmail = `reactions-member-b-${suffix}@example.com`
+  const memberCEmail = `reactions-member-c-${suffix}@example.com`
+  await createVerifiedMember(memberAEmail, 'Reactions Member A')
+  const memberBUserID = await createVerifiedMember(memberBEmail, 'Reactions Member B')
+  const memberCUserID = await createVerifiedMember(memberCEmail, 'Reactions Member C')
+
+  // --- Anonymous: the heart works without an account, the count goes 0 -> 1,
+  // it survives a reload via the portal_anon_id cookie, clicking again
+  // un-likes it, and the bookmark control is a sign-in link instead of a
+  // working toggle. Uses a dedicated browser context rather than a shared
+  // "public" page, since a page reused across many earlier checks in the
+  // full suite is not guaranteed to still be anonymous by the time it gets
+  // here. ---
+  const anonContext = await browser.newContext()
+  const anonPage = await anonContext.newPage()
+  await anonPage.goto(`/posts/${targetPost.slug}`)
+
+  const anonLikeButton = anonPage.getByRole('button', { exact: true, name: 'Like' })
+  await expect(anonLikeButton).toBeVisible()
+  await expect(anonLikeButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(anonLikeButton.locator('span')).toHaveText('0')
+
+  await expect(
+    anonPage.getByRole('link', { exact: true, name: 'Sign in to save this' }),
+  ).toBeVisible()
+  await expect(anonPage.getByRole('button', { exact: true, name: 'Bookmark' })).toHaveCount(0)
+
+  await clickReaction(anonPage, anonLikeButton)
+  const anonLikedButton = anonPage.getByRole('button', { exact: true, name: 'Remove like' })
+  await expect(anonLikedButton).toBeVisible()
+  await expect(anonLikedButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(anonLikedButton.locator('span')).toHaveText('1')
+
+  await anonPage.reload()
+  const anonLikedAfterReload = anonPage.getByRole('button', {
+    exact: true,
+    name: 'Remove like',
+  })
+  await expect(anonLikedAfterReload).toBeVisible()
+  await expect(anonLikedAfterReload.locator('span')).toHaveText('1')
+
+  await clickReaction(anonPage, anonLikedAfterReload)
+  const anonUnlikedButton = anonPage.getByRole('button', { exact: true, name: 'Like' })
+  await expect(anonUnlikedButton).toBeVisible()
+  await expect(anonUnlikedButton).toHaveAttribute('aria-pressed', 'false')
+  await expect(anonUnlikedButton.locator('span')).toHaveText('0')
+
+  // --- Member: a user created via POST /api/users likes the post and
+  // bookmarks a fresh event; aria-pressed flips and the count is right. ---
+  const memberAContext = await browser.newContext()
+  const memberAPage = await memberAContext.newPage()
+  const memberALoginResponse = await memberAPage.request.post('/api/users/login', {
+    data: { email: memberAEmail, password },
+  })
+  expect(memberALoginResponse.ok()).toBeTruthy()
+
+  await memberAPage.goto(`/posts/${targetPost.slug}`)
+  const memberALikeButton = memberAPage.getByRole('button', { exact: true, name: 'Like' })
+  await expect(memberALikeButton).toBeVisible()
+  await clickReaction(memberAPage, memberALikeButton)
+  const memberALikedButton = memberAPage.getByRole('button', {
+    exact: true,
+    name: 'Remove like',
+  })
+  await expect(memberALikedButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(memberALikedButton.locator('span')).toHaveText('1')
+
+  await memberAPage.goto(`/events/${bookmarkEventID}`)
+  const memberABookmarkButton = memberAPage.getByRole('button', {
+    exact: true,
+    name: 'Bookmark',
+  })
+  await expect(memberABookmarkButton).toBeVisible()
+  await clickReaction(memberAPage, memberABookmarkButton)
+  const memberABookmarkedButton = memberAPage.getByRole('button', {
+    exact: true,
+    name: 'Remove bookmark',
+  })
+  await expect(memberABookmarkedButton).toBeVisible()
+  await expect(memberABookmarkedButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(memberABookmarkedButton.locator('span')).toHaveText('Saved')
+
+  // --- Adoption: an anonymous like followed by signing in reassigns the
+  // anonymous row to the member instead of creating a second one, so the
+  // same human is never counted twice. Adoption runs inside the reactions
+  // route (src/app/(frontend)/api/reactions/route.ts), triggered by the
+  // next authenticated write -- not by the page read that follows sign-in --
+  // so a plain reload right after login still reads the pre-adoption row.
+  const adoptionContext = await browser.newContext()
+  try {
+    const adoptionPage = await adoptionContext.newPage()
+    await adoptionPage.goto(`/events/${adoptionEventID}`)
+
+    const adoptionAnonLikeButton = adoptionPage.getByRole('button', {
+      exact: true,
+      name: 'Like',
+    })
+    await expect(adoptionAnonLikeButton).toBeVisible()
+    await clickReaction(adoptionPage, adoptionAnonLikeButton)
+    const adoptionAnonLikedButton = adoptionPage.getByRole('button', {
+      exact: true,
+      name: 'Remove like',
+    })
+    await expect(adoptionAnonLikedButton).toHaveAttribute('aria-pressed', 'true')
+    await expect(adoptionAnonLikedButton.locator('span')).toHaveText('1')
+
+    const adoptionLoginResponse = await adoptionPage.request.post('/api/users/login', {
+      data: { email: memberCEmail, password },
+    })
+    expect(adoptionLoginResponse.ok()).toBeTruthy()
+
+    await adoptionPage.reload()
+    // Not yet adopted: the row is still anonymous, so the now-signed-in
+    // member reads as not having liked it, even though the public count
+    // (still 1) has not changed either.
+    const preAdoptionButton = adoptionPage.getByRole('button', { exact: true, name: 'Like' })
+    await expect(preAdoptionButton).toBeVisible()
+    await expect(preAdoptionButton.locator('span')).toHaveText('1')
+
+    // The member's next reactions write adopts the anonymous row instead of
+    // creating a duplicate (the route treats the resulting 23505 collision
+    // as success), so the count stays at 1, not 2.
+    await clickReaction(adoptionPage, preAdoptionButton)
+    const adoptedButton = adoptionPage.getByRole('button', { exact: true, name: 'Remove like' })
+    await expect(adoptedButton).toHaveAttribute('aria-pressed', 'true')
+    await expect(adoptedButton.locator('span')).toHaveText('1')
+
+    const adoptedRowsResponse = await adminPage.request.get('/api/contentReactions', {
+      params: {
+        depth: '0',
+        limit: '10',
+        'where[kind][equals]': 'like',
+        'where[targetCollection][equals]': 'events',
+        'where[targetId][equals]': String(adoptionEventID),
+      },
+    })
+    expect(adoptedRowsResponse.ok()).toBeTruthy()
+    const adoptedRows = (await adoptedRowsResponse.json()).docs
+    expect(adoptedRows).toHaveLength(1)
+    expect(adoptedRows[0]).toMatchObject({
+      actorType: 'member',
+      anonymousId: null,
+      user: memberCUserID,
+    })
+  } finally {
+    await adoptionContext.close()
+  }
+
+  // --- A second member likes the post and the count reaches 2; repeating
+  // the same idempotent write does not add a third row. ---
+  const memberBContext = await browser.newContext()
+  const memberBPage = await memberBContext.newPage()
+  const memberBLoginResponse = await memberBPage.request.post('/api/users/login', {
+    data: { email: memberBEmail, password },
+  })
+  expect(memberBLoginResponse.ok()).toBeTruthy()
+
+  await memberBPage.goto(`/posts/${targetPost.slug}`)
+  const memberBLikeButton = memberBPage.getByRole('button', { exact: true, name: 'Like' })
+  await expect(memberBLikeButton).toBeVisible()
+  await expect(memberBLikeButton.locator('span')).toHaveText('1')
+  await clickReaction(memberBPage, memberBLikeButton)
+  const memberBLikedButton = memberBPage.getByRole('button', {
+    exact: true,
+    name: 'Remove like',
+  })
+  await expect(memberBLikedButton).toHaveAttribute('aria-pressed', 'true')
+  await expect(memberBLikedButton.locator('span')).toHaveText('2')
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const repeatResponse = await memberBPage.request.post('/api/reactions', {
+      data: { active: true, kind: 'like', targetCollection: 'posts', targetId: postID },
+    })
+    expect(repeatResponse.ok()).toBeTruthy()
+    const repeatBody = await repeatResponse.json()
+    expect(repeatBody).toMatchObject({ liked: true, likeCount: 2 })
+  }
+
+  // --- /me/saved lists the member's own likes and bookmarks, filterable by
+  // ?kind= and ?type=; un-liking removes the post from the like filter. ---
+  await memberAPage.goto('/me/saved')
+  await expect(memberAPage.getByRole('heading', { exact: true, name: 'Saved' })).toBeVisible()
+  await expect(memberAPage.getByText(targetPost.title)).toBeVisible()
+  await expect(memberAPage.getByText(bookmarkEventTitle)).toBeVisible()
+
+  await memberAPage.goto('/me/saved?type=events')
+  await expect(memberAPage.getByText(bookmarkEventTitle)).toBeVisible()
+  await expect(memberAPage.getByText(targetPost.title)).toHaveCount(0)
+
+  await memberAPage.goto('/me/saved?kind=like')
+  await expect(memberAPage.getByText(targetPost.title)).toBeVisible()
+  await expect(memberAPage.getByText(bookmarkEventTitle)).toHaveCount(0)
+
+  await memberAPage.goto(`/posts/${targetPost.slug}`)
+  const memberAUnlikeButton = memberAPage.getByRole('button', {
+    exact: true,
+    name: 'Remove like',
+  })
+  await expect(memberAUnlikeButton).toBeVisible()
+  await clickReaction(memberAPage, memberAUnlikeButton)
+  await expect(memberAPage.getByRole('button', { exact: true, name: 'Like' })).toBeVisible()
+
+  await memberAPage.goto('/me/saved?kind=like')
+  await expect(memberAPage.getByText(targetPost.title)).toHaveCount(0)
+  await expect(memberAPage.getByText('No likes yet.')).toBeVisible()
+
+  // --- Access isolation on GET /api/contentReactions: anonymous gets
+  // nothing, a member sees only their own rows, the admin sees everything. ---
+  // Anonymous read access is `false`, so Payload refuses the request outright
+  // rather than returning an empty list -- no reaction rows leak to the public API.
+  const anonReadResponse = await anonPage.request.get('/api/contentReactions', {
+    params: { depth: '0', limit: '10' },
+  })
+  expect(anonReadResponse.status()).toBe(403)
+  expect((await anonReadResponse.json()).docs).toBeUndefined()
+
+  const memberReadResponse = await memberBPage.request.get('/api/contentReactions', {
+    params: { depth: '0', limit: '50' },
+  })
+  expect(memberReadResponse.ok()).toBeTruthy()
+  const memberReadBody = await memberReadResponse.json()
+  expect(memberReadBody.docs).toHaveLength(1)
+  expect(memberReadBody.docs[0]).toMatchObject({
+    kind: 'like',
+    targetCollection: 'posts',
+    targetId: postID,
+    user: memberBUserID,
+  })
+
+  const adminReadResponse = await adminPage.request.get('/api/contentReactions', {
+    params: { depth: '0', limit: '50' },
+  })
+  expect(adminReadResponse.ok()).toBeTruthy()
+  const adminReadBody = await adminReadResponse.json()
+  // memberA's post-like was removed above; the admin still sees memberA's
+  // event bookmark, memberB's post like, and memberC's adopted event like --
+  // three rows across three different actors, unlike the member-scoped read.
+  expect(adminReadBody.docs).toHaveLength(3)
+  const adminReadUserIDs = new Set(
+    adminReadBody.docs.map((doc: { user: null | number }) => doc.user),
+  )
+  expect(adminReadUserIDs.size).toBe(3)
+
+  await anonContext.close()
+  await memberAContext.close()
+  await memberBContext.close()
+}
+
+test('isolated cohort cards show current and next with separate commitments', async ({
+  browser,
+  page,
+}) => {
+  test.skip(
+    process.env.E2E_COHORT_ISOLATED !== '1',
+    'Run with E2E_COHORT_ISOLATED=1 and a fresh E2E database',
+  )
+
+  await createFirstAdmin(page)
+  await seedDatabase(page)
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const me = await meResponse.json()
+  expect(me.user?.id).toBeTruthy()
+  const [roleResponse, skillResponse] = await Promise.all([
+    page.request.get('/api/profileRoles?depth=0&limit=1'),
+    page.request.get('/api/profileSkills?depth=0&limit=1'),
+  ])
+  expect(roleResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+  const roleID = (await roleResponse.json()).docs?.[0]?.id
+  const skillID = (await skillResponse.json()).docs?.[0]?.id
+  expect(roleID, 'Seeded profile role is required for the cohort fixture').toBeTruthy()
+  expect(skillID, 'Seeded profile skill is required for the cohort fixture').toBeTruthy()
+  const profileResponse = await page.request.post('/api/profiles', {
+    data: {
+      bio: 'Cohort cards integration test profile.',
+      displayName: 'Playwright Admin',
+      handle: 'cohort-cards-admin',
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      user: me.user.id,
+      visibility: 'public',
+    },
+  })
+  const profileBody = await profileResponse.json()
+  expect(profileBody, 'Cohort fixture profile should be valid').toMatchObject({
+    doc: { id: expect.any(Number) },
+  })
+  expect(profileResponse.status()).toBe(201)
+
+  const cohortPath = '/cohorts/agentic-guild-operations'
+  const cohortResponse = await page.request.get('/api/cohorts', {
+    params: { depth: '0', limit: '1', 'where[slug][equals]': 'agentic-guild-operations' },
+  })
+  expect(cohortResponse.ok()).toBeTruthy()
+  const cohort = (await cohortResponse.json()).docs?.[0]
+  expect(cohort?.id, 'Seeded cohort is required for the cards fixture').toBeTruthy()
+  const commitmentResponse = await page.request.post('/api/cohortCommitments', {
+    data: { cohort: cohort.id, profile: profileBody.doc.id, status: 'committed' },
+  })
+  expect(commitmentResponse.status(), JSON.stringify(await commitmentResponse.json())).toBe(201)
+
+  const publicContext = await browser.newContext()
+  try {
+    await verifyCohortCards(page, await publicContext.newPage(), cohort, cohortPath)
+  } finally {
+    await publicContext.close()
+  }
+})
+
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)
   await seedDatabase(page)
+  await verifyOrdinaryContentHeaderThemes(browser)
   await verifyDashboardBrief(page)
   await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)
@@ -5491,6 +6246,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await verifyAgentRegistrationFlow(publicPage)
   await verifyPasswordResetPages(browser)
   await verifyJoinFormEmailErrors(publicPage)
+  await verifyLikesAndBookmarks(page, browser)
 
   const inquiryContext = await browser.newContext()
   const inquiryPage = await inquiryContext.newPage()

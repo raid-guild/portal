@@ -105,6 +105,9 @@ export default async function MePage({ searchParams: searchParamsPromise }: Args
         <a className="portal-admin-link" href="#activity">
           Activity
         </a>
+        <Link className="portal-admin-link" href="/me/saved">
+          Saved
+        </Link>
       </nav>
 
       <section className="mt-12" id="profile">
@@ -239,6 +242,10 @@ const PortalLinks: React.FC<{
         <span>Inbox</span>
         {unreadNotifications ? <span>{unreadNotifications} unread</span> : <span>Open</span>}
       </Link>
+      <Link className="portal-admin-link justify-between" href="/me/saved">
+        <span>Saved</span>
+        <span>Open</span>
+      </Link>
       <Link className="portal-admin-link justify-between" href="/dashboard">
         <span>Daily check-in</span>
         <span>{checkedInToday ? 'Done today' : 'Check in'}</span>
@@ -271,7 +278,7 @@ const CreatedList: React.FC<{
       {items.length ? (
         items.map((item) => (
           <article className="text-sm" key={item.id}>
-            <Link className="font-medium hover:text-primary" href={recordHref(item)}>
+            <Link className="font-medium hover:text-link-hover" href={recordHref(item)}>
               {item.title}
             </Link>
             {'_status' in item ? <p className="portal-kicker">{item._status || 'draft'}</p> : null}

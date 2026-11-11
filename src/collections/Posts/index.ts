@@ -25,6 +25,7 @@ import { populateAuthors } from './hooks/populateAuthors'
 import { recordPostPublishedActivity } from './hooks/recordPostPublishedActivity'
 import { revalidatePost } from './hooks/revalidatePost'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 
 import {
   MetaDescriptionField,
@@ -385,6 +386,7 @@ export const Posts: CollectionConfig<'posts'> = {
   ],
   hooks: {
     afterChange: [revalidatePost, recordPostPublishedActivity],
+    afterDelete: [deleteReactionsForTarget('posts')],
     afterRead: [populateAuthors],
     beforeChange: [enforcePostWorkflow],
   },

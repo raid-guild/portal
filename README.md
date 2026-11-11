@@ -67,7 +67,7 @@ lives in `docs/`.
 
 - **Payload CMS**: `3.82.1`
 - **Next.js**: `16.2.5`
-- **Node.js**: `^18.20.2 || >=20.9.0`
+- **Node.js**: `>=22.23.4 <23`
 
 ## Preconfigured Features & Integrations
 
@@ -123,10 +123,55 @@ later with another reviewed forward migration. Only use additive or otherwise
 backward-compatible migrations while production and preview code coexist.
 
 If the preview does not mount the production media volume, set
-`MEDIA_FALLBACK_ORIGIN=https://portal.raidguild.org`. Missing `/media/*` reads
-will be proxied to that public origin. Treat that preview as read-only for media:
+`MEDIA_FALLBACK_ORIGIN` to the old Portal service's stable Railway HTTPS hostname.
+Do not use `portal.raidguild.org`: after the DNS move, that domain will point at
+the new service. Missing `/media/*` and `/api/media/file/*` reads then stream
+from the old service. The Payload file endpoint still applies its media access
+check and serves local uploads first. Treat that preview as read-only for media:
 uploads written to its ephemeral filesystem will not survive deployment and are
 not copied to the production Portal volume.
+
+To make both Portal services use durable media, configure the existing shared
+Railway S3 bucket for each service. Map that bucket's `BUCKET`, `ENDPOINT`,
+`REGION`, `ACCESS_KEY_ID`, and `SECRET_ACCESS_KEY` variables to Portal's
+`MEDIA_S3_BUCKET`, `MEDIA_S3_ENDPOINT`, `MEDIA_S3_REGION`,
+`MEDIA_S3_ACCESS_KEY_ID`, and `MEDIA_S3_SECRET_ACCESS_KEY`. Set
+`MEDIA_STORAGE=s3` only after the old files are copied and checked. The adapter
+stores all Portal objects under the fixed `portal/media/` prefix; other apps'
+keys in the bucket are outside that namespace. The Payload file route enforces
+that namespace while normal media metadata remains publicly readable. The
+default `MEDIA_STORAGE=local` keeps development and the old volume working.
+`MEDIA_S3_FORCE_PATH_STYLE=true` is available for endpoints that require it.
+
+For the volume-to-bucket cutover, deploy the additive media-prefix migration
+and storage-capable code to both services with `MEDIA_STORAGE=local`. Set
+`MEDIA_UPLOADS_PAUSED=true` on both services for the final copy window; this
+blocks media create, update, and delete while other content and reads continue.
+Export every media document (including all pages of `/api/media?limit=100`) as
+`{"docs":[...]}` and make that JSON available on the old service. On that
+service, run the tool against its mounted `/app/public/media` directory:
+
+```bash
+node scripts/migrateMediaToS3.mjs --manifest /tmp/portal-media-manifest.json --media-dir /app/public/media
+node scripts/migrateMediaToS3.mjs --manifest /tmp/portal-media-manifest.json --media-dir /app/public/media --apply
+```
+
+The first command is a dry run. Review missing files, orphan files, and
+collisions before applying. The copy includes each referenced original and
+image size, keeps content types, skips byte-identical existing objects, and
+never deletes or overwrites a different object. Re-run it after any interrupted
+copy; the result should have no missing files, collisions, or pending copies.
+The tool spaces PUT requests by 200 ms and retries Railway S3 `SlowDown`, 429,
+and 503 responses with bounded backoff, reopening each file for a retry. It
+reports progress every 50 files on stderr. If Railway continues throttling,
+re-run after a short pause; completed objects are checked by content before
+being skipped. `--write-interval-ms 500` (or `MEDIA_S3_WRITE_INTERVAL_MS=500`)
+slows writes further; accepted values are 100–5000 ms.
+Then enable `MEDIA_STORAGE=s3` on both services, verify several original and
+resized image URLs and an upload, and clear `MEDIA_UPLOADS_PAUSED`. Keep the old
+volume until the S3 deployment has been verified and any new S3 uploads are
+accounted for in a rollback plan. A local-mode rollback after new S3 uploads
+needs those new objects copied back to the volume first.
 
 Post `interactiveEmbed` blocks accept only exact HTTPS origins listed in
 `INTERACTIVE_ARTIFACT_ORIGINS`. Keep executable artifacts on a separate origin

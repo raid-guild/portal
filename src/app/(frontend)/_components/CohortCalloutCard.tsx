@@ -2,6 +2,7 @@ import React from 'react'
 
 import {
   getCohortInquiryHref,
+  getCohortEnrollmentLabel,
   getCohortLabel,
   isCohortEnrollmentOpen,
 } from '@/cohorts/selectFeaturedCohort'
@@ -17,6 +18,8 @@ type Props = {
   interestPlacement?: string
   placement: string
   postSlug?: string
+  role?: 'current' | 'next' | 'featured'
+  showTopicAction?: boolean
 }
 
 export const CohortCalloutCard: React.FC<Props> = ({
@@ -26,18 +29,19 @@ export const CohortCalloutCard: React.FC<Props> = ({
   interestPlacement,
   placement,
   postSlug,
+  role = 'featured',
+  showTopicAction = false,
 }) => {
   if (!cohort) {
     return (
       <section
-        aria-label="RaidGuild cohort"
+        aria-label="Next RaidGuild cohort"
         className="portal-panel border-primary/40 bg-primary/10"
       >
-        <p className="portal-kicker">Next RaidGuild cohort</p>
-        <h2 className="portal-heading-sm mt-3">Interested in the next cohort?</h2>
+        <p className="portal-kicker">Next cohort</p>
+        <h2 className="portal-heading-sm mt-3">No upcoming cohort has been announced yet</h2>
         <p className="mt-4 text-sm leading-6 text-muted-foreground">
-          No cohort is scheduled yet. Tell the guild what you would like to explore when the next
-          program takes shape.
+          Tell the guild what you would like to explore when the next program takes shape.
         </p>
         <TrackedInquiryLink
           className="portal-admin-link mt-5 inline-flex"
@@ -50,42 +54,69 @@ export const CohortCalloutCard: React.FC<Props> = ({
         >
           Signal interest
         </TrackedInquiryLink>
+        {showTopicAction ? (
+          <TrackedInquiryLink
+            className="portal-admin-link ml-3 mt-5 inline-flex"
+            cohortInterestIntent="suggest-topic"
+            cohortSlug="unscheduled"
+            href="/inquire/general?context=cohort-interest&intent=suggest-topic"
+            inquiryType="general"
+            placement="portal_home_cohort_topic"
+          >
+            Suggest a future topic
+          </TrackedInquiryLink>
+        ) : null}
       </section>
     )
   }
 
   const cohortHref = `/cohorts/${cohort.slug}`
   const isGatheringInterest = cohort.programStatus === 'gathering-interest'
-  const isCommitted = commitment?.status === 'committed' || commitment?.status === 'waitlisted'
+  const isCommitted = commitment?.status === 'committed'
+  const isWaitlisted = commitment?.status === 'waitlisted'
   const enrollmentOpen = isCohortEnrollmentOpen(cohort)
   const countdown = getCohortCountdown(cohort)
-  const heading = isGatheringInterest
-    ? `${getCohortLabel(cohort)} is gathering interest`
-    : enrollmentOpen
-      ? `Join ${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'the cohort'}`
-      : cohort.programStatus === 'active'
-        ? `${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'The cohort'} is underway`
-        : `Next cohort${cohort.cohortNumber ? `: Cohort ${cohort.cohortNumber}` : ''}`
+  const heading =
+    cohort.programStatus === 'active'
+      ? `${getCohortLabel(cohort)} is underway`
+      : isGatheringInterest
+        ? `${getCohortLabel(cohort)} is gathering interest`
+        : enrollmentOpen
+          ? `Join ${cohort.cohortNumber ? `Cohort ${cohort.cohortNumber}` : 'the cohort'}`
+          : `Next cohort: ${getCohortLabel(cohort)}`
   const cta = isGatheringInterest
     ? 'Signal interest'
     : isCommitted
       ? 'Open your cohort'
-      : hasProfile === false && enrollmentOpen
-        ? 'Complete profile to join'
-        : enrollmentOpen
-          ? 'Join the cohort'
-          : 'Explore the cohort'
+      : isWaitlisted
+        ? 'View your waitlist status'
+        : hasProfile === false && enrollmentOpen
+          ? 'Complete profile to join'
+          : enrollmentOpen
+            ? 'Join the cohort'
+            : 'Explore the cohort'
+
+  const label =
+    role === 'current' ? 'Current cohort' : role === 'next' ? 'Next cohort' : 'RaidGuild cohort'
+  const status = isCommitted
+    ? 'Committed'
+    : isWaitlisted
+      ? 'Waitlisted'
+      : getCohortEnrollmentLabel(cohort)
 
   return (
-    <section aria-label="RaidGuild cohort" className="portal-panel border-primary/40 bg-primary/10">
+    <section
+      aria-label={`${label}: ${getCohortLabel(cohort)}`}
+      className="portal-panel border-primary/40 bg-primary/10"
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="portal-kicker">Current program</p>
-        <span className="portal-pill">
-          {isCommitted ? 'Committed' : cohort.enrollmentStatus.replace('-', ' ')}
-        </span>
+        <p className="portal-kicker">
+          {isGatheringInterest && role === 'next' ? 'Future cohort · Gathering interest' : label}
+        </p>
+        <span className="portal-pill">{status}</span>
       </div>
       <h2 className="portal-heading-sm mt-3">{heading}</h2>
-      <p className="mt-2 font-serif text-xl font-bold text-primary">{cohort.theme}</p>
+      <p className="mt-2 font-serif text-xl font-bold text-link">{cohort.theme}</p>
       {countdown ? (
         <div className="mt-4 border-l-2 border-primary bg-background/30 px-4 py-3">
           <p className="font-serif text-lg font-bold text-foreground">{countdown.label}</p>
@@ -98,6 +129,11 @@ export const CohortCalloutCard: React.FC<Props> = ({
         </div>
       ) : null}
       <p className="mt-4 text-sm leading-6 text-muted-foreground">{cohort.summary}</p>
+      {isGatheringInterest ? (
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          This theme is being explored; dates and enrollment are not confirmed yet.
+        </p>
+      ) : null}
       {isGatheringInterest ? (
         <TrackedInquiryLink
           className="portal-admin-link mt-5 inline-flex"
@@ -121,6 +157,18 @@ export const CohortCalloutCard: React.FC<Props> = ({
           {cta}
         </TrackedCohortLink>
       )}
+      {showTopicAction ? (
+        <TrackedInquiryLink
+          className="portal-admin-link ml-3 mt-5 inline-flex"
+          cohortInterestIntent="suggest-topic"
+          cohortSlug={cohort.slug}
+          href={getCohortInquiryHref(cohort, 'suggest-topic')}
+          inquiryType="general"
+          placement="portal_home_cohort_topic"
+        >
+          Suggest a future topic
+        </TrackedInquiryLink>
+      ) : null}
     </section>
   )
 }

@@ -2,8 +2,10 @@ import type { CollectionConfig } from 'payload'
 
 import { getProfileIDsForUser } from '@/access/projectStewards'
 import { readVisiblePortalContent } from '@/access/portalVisibility'
-import { canContributeContent, contentContributors } from '@/access/roles'
+import { canReadEventTranscript } from '@/access/eventTranscript'
+import { canContributeContent, canPublishContent, contentContributors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import { deleteReactionsForTarget } from '@/utilities/contentReactions'
 import { createEventPublishedNotifications } from './Events/hooks/createEventPublishedNotifications'
 import { recordEventPublishedActivity } from './Events/hooks/recordEventPublishedActivity'
 
@@ -208,8 +210,31 @@ export const Events: CollectionConfig = {
     {
       name: 'transcriptArtifactURL',
       type: 'text',
+      access: {
+        create: ({ req }) => canPublishContent(req.user),
+        read: ({ doc, req }) => canReadEventTranscript(doc, req.user),
+        update: ({ req }) => canPublishContent(req.user),
+      },
       validate: (value) =>
         validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
+    },
+    {
+      name: 'transcript',
+      type: 'group',
+      admin: {
+        description: 'Portal-owned transcript. Access follows this Event visibility.',
+      },
+      access: {
+        create: ({ req }) => canPublishContent(req.user),
+        read: ({ doc, req }) => canReadEventTranscript(doc, req.user),
+        update: ({ req }) => canPublishContent(req.user),
+      },
+      fields: [
+        { name: 'markdown', type: 'textarea' },
+        { name: 'sourceSessionID', type: 'text' },
+        { name: 'sha256', type: 'text' },
+        { name: 'ingestedAt', type: 'date' },
+      ],
     },
     {
       name: 'summaryArtifactURL',
@@ -570,6 +595,7 @@ export const Events: CollectionConfig = {
   ],
   hooks: {
     afterChange: [createEventPublishedNotifications, recordEventPublishedActivity],
+    afterDelete: [deleteReactionsForTarget('events')],
   },
   versions: {
     drafts: true,

@@ -81,6 +81,8 @@ export default {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
         },
+        link: 'var(--link)',
+        'link-hover': 'var(--link-hover)',
         ring: 'hsl(var(--ring))',
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
