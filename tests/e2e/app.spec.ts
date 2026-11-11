@@ -1,11 +1,15 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import { mkdirSync } from 'node:fs'
+import { join } from 'node:path'
 import jwt from 'jsonwebtoken'
 import { privateKeyToAccount } from 'viem/accounts'
 
 import { renderPortalPostEmail } from '@/modules/newsletter/renderPortalPostEmail'
 import { normalizePortalTitle } from '@/utilities/generateMeta'
 import { POSTS_META_DESCRIPTION } from '@/utilities/postsMetadata'
+import { getCohortPresentationStatus, selectCohortCards } from '@/cohorts/selectFeaturedCohort'
+import type { Cohort } from '@/payload-types'
 
 import {
   adminEmail,
@@ -19,6 +23,74 @@ import {
 } from './env'
 
 const manualReviewMode = process.env.E2E_MANUAL_REVIEW === 'true'
+
+test('cohort cards use published dates to show the running and next cohorts', () => {
+  const now = Date.parse('2026-10-30T00:00:00.000Z')
+  const cohort = (
+    id: number,
+    status: Cohort['programStatus'],
+    startsAt?: string,
+    endsAt?: string,
+  ) => ({ id, slug: `cohort-${id}`, programStatus: status, startsAt, endsAt }) as Cohort
+  const running = cohort(16, 'upcoming', '2026-10-05T00:00:00.000Z', '2026-11-04T00:00:00.000Z')
+  const future = cohort(17, 'upcoming', '2026-11-02T00:00:00.000Z', '2026-12-02T00:00:00.000Z')
+  const cards = selectCohortCards([future, running], now)
+  expect(cards.current).toMatchObject({ id: 16, programStatus: 'active' })
+  expect(cards.current).not.toBe(running)
+  expect(running.programStatus).toBe('upcoming')
+  expect(cards.next?.id).toBe(17)
+  expect(getCohortPresentationStatus(running, Date.parse(running.startsAt!))).toBe('active')
+  expect(getCohortPresentationStatus(running, Date.parse(running.endsAt!))).toBe('complete')
+  expect(getCohortPresentationStatus(future, now)).toBe('upcoming')
+
+  const explicit = cohort(1, 'active', '2026-10-01T00:00:00.000Z')
+  expect(selectCohortCards([running, explicit, future], now).current?.id).toBe(1)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-11-03T00:00:00.000Z')).current?.id,
+  ).toBe(16)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-11-04T00:00:00.000Z')).current?.id,
+  ).toBe(17)
+  expect(
+    selectCohortCards([running, future], Date.parse('2026-12-02T00:00:00.000Z')).current,
+  ).toBeNull()
+
+  const past = cohort(2, 'upcoming', '2026-09-01T00:00:00.000Z', '2026-09-30T00:00:00.000Z')
+  const noEnd = cohort(3, 'upcoming', '2026-10-01T00:00:00.000Z')
+  const reversed = cohort(4, 'upcoming', '2026-11-10T00:00:00.000Z', '2026-11-01T00:00:00.000Z')
+  const undated = cohort(5, 'upcoming')
+  expect(selectCohortCards([past, noEnd, reversed, undated], now)).toMatchObject({
+    current: null,
+    next: { id: 5 },
+  })
+  expect(getCohortPresentationStatus(noEnd, now)).toBe('upcoming')
+  expect(getCohortPresentationStatus(reversed, now)).toBe('upcoming')
+  const futureWithoutEnd = cohort(10, 'upcoming', '2026-11-05T00:00:00.000Z')
+  expect(selectCohortCards([undated, futureWithoutEnd], now).next?.id).toBe(10)
+  expect(
+    getCohortPresentationStatus(
+      cohort(11, 'upcoming', 'invalid', running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('upcoming')
+  expect(
+    getCohortPresentationStatus(
+      cohort(6, 'gathering-interest', running.startsAt || undefined, running.endsAt || undefined),
+      now,
+    ),
+  ).toBe('gathering-interest')
+  expect(selectCohortCards([cohort(8, 'upcoming'), cohort(7, 'upcoming')], now).next?.id).toBe(7)
+  expect(
+    selectCohortCards(
+      [
+        { ...cohort(13, 'upcoming'), slug: 'a' },
+        { ...cohort(12, 'upcoming'), slug: 'b' },
+      ],
+      now,
+    ).next?.id,
+  ).toBe(13)
+  expect(selectCohortCards([past, cohort(9, 'gathering-interest')], now).next?.id).toBe(9)
+})
 const daoWalletTestAccount = privateKeyToAccount(
   '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80',
 )
@@ -272,7 +344,9 @@ async function verifyOrdinaryContentHeaderThemes(browser: Browser) {
   await context.close()
 }
 
-test('defaults to RaidGuild Dark and persists explicit theme preferences', async ({ browser }) => {
+test('defaults to the system theme and persists explicit theme preferences', async ({
+  browser,
+}) => {
   const context = await browser.newContext({ colorScheme: 'light' })
   const page = await context.newPage()
 
@@ -284,18 +358,29 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await page.goto('/login')
   const header = page.locator('[data-portal-header]')
 
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
   await expect(page.locator('html')).toHaveCSS('opacity', '1')
   await expect
     .poll(() => page.evaluate(() => window.localStorage.getItem('payload-theme')))
     .toBeNull()
 
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await page.emulateMedia({ colorScheme: 'light' })
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
   const loadedFonts = await page.evaluate(async () => {
     const requests = [
-      '400 24px "Grinder"',
-      'italic 400 24px "Grinder"',
-      '400 24px "Grinder Retalic"',
+      '400 24px "Last Duel"',
+      '700 24px "Last Duel"',
+      'italic 400 24px "Last Duel"',
+      'italic 700 24px "Last Duel"',
+      '400 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Retalic"',
+      '700 24px "Last Duel Extended 2"',
       '400 16px "Ubuntu"',
       'italic 400 16px "Ubuntu"',
       '400 12px "Ubuntu Mono"',
@@ -308,13 +393,29 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
       }),
     )
   })
-  expect(loadedFonts).toEqual(Array(7).fill(true))
+  expect(loadedFonts).toEqual(Array(11).fill(true))
   await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
   const displayHeading = page.locator('h1').first()
-  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
-  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
   await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
   await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
+  await page.evaluate(() => {
+    const samples = document.createElement('div')
+    samples.id = 'portal-font-role-samples'
+    samples.innerHTML = '<span id="role-top" class="portal-heading-top">Venture</span><span id="role-bottom" class="portal-heading-bottom">Beyond</span><div class="map-dashboard-screen"><span id="role-map" class="portal-heading-top">Map</span></div>'
+    document.body.append(samples)
+  })
+  const top = page.locator('#role-top')
+  const bottom = page.locator('#role-bottom')
+  await expect(top).toHaveCSS('font-family', /Last Duel Retalic/)
+  await expect(top).toHaveCSS('font-weight', '700')
+  await expect(top).toHaveCSS('font-style', 'normal')
+  await expect(bottom).toHaveCSS('font-family', /Last Duel Extended 2/)
+  await expect(bottom).toHaveCSS('font-weight', '700')
+  await expect(bottom).toHaveCSS('font-style', 'italic')
+  await expect(bottom).toHaveCSS('font-synthesis', 'style')
+  await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Last Duel Retalic/)
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -327,13 +428,17 @@ test('defaults to RaidGuild Dark and persists explicit theme preferences', async
   await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
   await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
 
-  await expect(displayHeading).toHaveCSS('font-family', /Grinder/)
-  await expect(displayHeading).toHaveCSS('font-weight', '400')
+  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-weight', '700')
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
   await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-dark')
-  await expect(header).toHaveAttribute('data-theme', 'raidguild-dark')
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'raidguild-light')
+  await expect(header).toHaveAttribute('data-theme', 'raidguild-light')
+
+  await page.getByRole('combobox', { name: 'Select a theme' }).click()
+  await expect(page.getByRole('option', { name: 'System' })).toBeVisible()
+  await page.keyboard.press('Escape')
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'auto'))
   await page.reload()
@@ -729,7 +834,7 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
   )
 
   await publicPage.goto('/')
-  await expect(publicPage.getByText('Potential future cohort')).toBeVisible()
+  await expect(publicPage.getByText('Future cohort · Gathering interest')).toBeVisible()
   await expect(publicPage.getByRole('link', { name: 'Signal interest' })).toBeVisible()
 
   const restoreCohortResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
@@ -740,6 +845,124 @@ async function verifyCohortHub(adminPage: Page, publicPage: Page) {
     },
   })
   expect(restoreCohortResponse.ok()).toBeTruthy()
+
+  await verifyCohortCards(adminPage, publicPage, cohort, cohortPath)
+}
+
+async function verifyCohortCards(
+  adminPage: Page,
+  publicPage: Page,
+  cohort: { id: number; startsAt?: string | null; endsAt?: string | null },
+  cohortPath: string,
+) {
+  const now = Date.now()
+  const daysFromNow = (days: number) => new Date(now + days * 24 * 60 * 60 * 1000).toISOString()
+  const nextCohortResponse = await adminPage.request.post('/api/cohorts', {
+    data: {
+      _status: 'published',
+      cohortNumber: 9,
+      enrollmentStatus: 'open',
+      programStatus: 'upcoming',
+      slug: 'e2e-next-cohort',
+      startsAt: daysFromNow(3),
+      endsAt: daysFromNow(33),
+      summary: 'An upcoming cohort with its own commitment state.',
+      theme: 'Future guild work',
+      title: 'E2E Next Cohort',
+      visibility: 'public',
+      visualVariant: 'guild',
+    },
+  })
+  expect(nextCohortResponse.ok()).toBeTruthy()
+  const nextCohort = (await nextCohortResponse.json()).doc
+  try {
+    const runningResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: {
+        _status: 'published',
+        endsAt: daysFromNow(5),
+        programStatus: 'upcoming',
+        startsAt: daysFromNow(-25),
+      },
+    })
+    expect(runningResponse.ok()).toBeTruthy()
+
+    await publicPage.goto('/')
+    const publicCurrentCard = publicPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    await expect(publicCurrentCard).toBeVisible()
+    await expect(
+      publicCurrentCard.getByRole('heading', { name: 'Cohort 8 is underway' }),
+    ).toBeVisible()
+    await expect(publicCurrentCard.locator(`a[href="${cohortPath}"]`)).toBeVisible()
+    const publicNextCard = publicPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(publicNextCard).toBeVisible()
+    await expect(publicNextCard.getByRole('heading', { name: 'Join Cohort 9' })).toBeVisible()
+    await expect(publicNextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    await publicPage.goto(cohortPath)
+    await expect(publicPage.getByText('Active', { exact: true })).toBeVisible()
+    const publicCohortAPI = await publicPage.request.get(`/api/cohorts/${cohort.id}`)
+    expect(publicCohortAPI.ok()).toBeTruthy()
+    expect((await publicCohortAPI.json()).programStatus).toBe('upcoming')
+    await publicPage.goto('/')
+    const screenshotDir = process.env.E2E_COHORT_SCREENSHOTS_DIR
+    if (screenshotDir) {
+      mkdirSync(screenshotDir, { recursive: true })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = publicPage.viewportSize()
+      await publicPage.setViewportSize({ width: 390, height: 844 })
+      await publicPage.screenshot({
+        path: join(screenshotDir, 'public-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await publicPage.setViewportSize(viewport)
+    }
+
+    const activeResponse = await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: { _status: 'published', programStatus: 'active' },
+    })
+    expect(activeResponse.ok()).toBeTruthy()
+    await adminPage.goto('/dashboard')
+    const currentCard = adminPage.getByRole('region', { name: 'Current cohort: Cohort 8' })
+    const nextCard = adminPage.getByRole('region', { name: 'Next cohort: Cohort 9' })
+    await expect(currentCard.getByText('Committed')).toBeVisible()
+    await expect(currentCard.getByRole('link', { name: 'Open your cohort' })).toHaveAttribute(
+      'href',
+      cohortPath,
+    )
+    await expect(nextCard.getByText('Enrollment open')).toBeVisible()
+    await expect(nextCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+      'href',
+      '/cohorts/e2e-next-cohort',
+    )
+    if (screenshotDir) {
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts.png'),
+        fullPage: true,
+      })
+      const viewport = adminPage.viewportSize()
+      await adminPage.setViewportSize({ width: 390, height: 844 })
+      await adminPage.screenshot({
+        path: join(screenshotDir, 'dashboard-cohorts-mobile.png'),
+        fullPage: true,
+      })
+      if (viewport) await adminPage.setViewportSize(viewport)
+    }
+  } finally {
+    await adminPage.request.patch(`/api/cohorts/${cohort.id}`, {
+      data: {
+        _status: 'published',
+        endsAt: cohort.endsAt || null,
+        programStatus: 'upcoming',
+        startsAt: cohort.startsAt || null,
+      },
+    })
+    await adminPage.request.delete(`/api/cohorts/${nextCohort.id}`)
+  }
 }
 
 async function verifyPostJoinCTAAnalytics(adminPage: Page, publicPage: Page) {
@@ -1404,7 +1627,11 @@ async function verifyPublicHome(page: Page) {
   await expect(page.getByRole('heading', { name: 'RaidGuild Cohorts' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Find a Team' })).toHaveCount(0)
   await expect(page.getByText('Agents that strengthen real community work')).toBeVisible()
-  await expect(page.getByRole('link', { name: 'Join Cohort 8' })).toBeVisible()
+  const nextCohortCard = page.getByRole('region', { name: 'Next cohort: Cohort 8' })
+  await expect(nextCohortCard.getByRole('link', { name: 'Join the cohort' })).toHaveAttribute(
+    'href',
+    '/cohorts/agentic-guild-operations',
+  )
   await expect(page.getByRole('heading', { name: 'Ready to participate?' })).toBeVisible()
   await expect(page.getByRole('link', { name: 'Join the portal' })).toBeVisible()
 }
@@ -5873,6 +6100,69 @@ async function verifyLikesAndBookmarks(adminPage: Page, browser: Browser) {
   await memberAContext.close()
   await memberBContext.close()
 }
+
+test('isolated cohort cards show current and next with separate commitments', async ({
+  browser,
+  page,
+}) => {
+  test.skip(
+    process.env.E2E_COHORT_ISOLATED !== '1',
+    'Run with E2E_COHORT_ISOLATED=1 and a fresh E2E database',
+  )
+
+  await createFirstAdmin(page)
+  await seedDatabase(page)
+  const meResponse = await page.request.get('/api/users/me')
+  expect(meResponse.ok()).toBeTruthy()
+  const me = await meResponse.json()
+  expect(me.user?.id).toBeTruthy()
+  const [roleResponse, skillResponse] = await Promise.all([
+    page.request.get('/api/profileRoles?depth=0&limit=1'),
+    page.request.get('/api/profileSkills?depth=0&limit=1'),
+  ])
+  expect(roleResponse.ok()).toBeTruthy()
+  expect(skillResponse.ok()).toBeTruthy()
+  const roleID = (await roleResponse.json()).docs?.[0]?.id
+  const skillID = (await skillResponse.json()).docs?.[0]?.id
+  expect(roleID, 'Seeded profile role is required for the cohort fixture').toBeTruthy()
+  expect(skillID, 'Seeded profile skill is required for the cohort fixture').toBeTruthy()
+  const profileResponse = await page.request.post('/api/profiles', {
+    data: {
+      bio: 'Cohort cards integration test profile.',
+      displayName: 'Playwright Admin',
+      handle: 'cohort-cards-admin',
+      profileRoles: [roleID],
+      profileSkills: [skillID],
+      status: 'active',
+      user: me.user.id,
+      visibility: 'public',
+    },
+  })
+  const profileBody = await profileResponse.json()
+  expect(profileBody, 'Cohort fixture profile should be valid').toMatchObject({
+    doc: { id: expect.any(Number) },
+  })
+  expect(profileResponse.status()).toBe(201)
+
+  const cohortPath = '/cohorts/agentic-guild-operations'
+  const cohortResponse = await page.request.get('/api/cohorts', {
+    params: { depth: '0', limit: '1', 'where[slug][equals]': 'agentic-guild-operations' },
+  })
+  expect(cohortResponse.ok()).toBeTruthy()
+  const cohort = (await cohortResponse.json()).docs?.[0]
+  expect(cohort?.id, 'Seeded cohort is required for the cards fixture').toBeTruthy()
+  const commitmentResponse = await page.request.post('/api/cohortCommitments', {
+    data: { cohort: cohort.id, profile: profileBody.doc.id, status: 'committed' },
+  })
+  expect(commitmentResponse.status(), JSON.stringify(await commitmentResponse.json())).toBe(201)
+
+  const publicContext = await browser.newContext()
+  try {
+    await verifyCohortCards(page, await publicContext.newPage(), cohort, cohortPath)
+  } finally {
+    await publicContext.close()
+  }
+})
 
 test('supports onboarding, seeding, and comment moderation', async ({ browser, page }) => {
   await createFirstAdmin(page)

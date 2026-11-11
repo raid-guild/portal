@@ -305,27 +305,27 @@ The cohort card should use the current Portal visual language with a stronger
 accent border, controlled themed background, status pill, and concise theme
 copy.
 
-Resolve the featured cohort in this order:
+For the public home and authenticated dashboard, resolve two independent cards:
 
-1. published active cohort
-2. published upcoming cohort with open enrollment
-3. published cohort gathering interest
-4. next published upcoming cohort
-5. no scheduled cohort fallback
+1. Current cohort: the published active cohort, when present.
+2. Next cohort: the earliest published upcoming cohort, regardless of enrollment state.
+3. If no upcoming cohort exists, use the earliest published gathering-interest cohort as a provisional future cohort.
+4. If neither exists, show a clear no-upcoming announcement and an interest action, even while a current cohort is active.
 
-The current cohort remains the primary context while it is active. A later
-iteration may add an explicit editorial priority if automatic selection proves
-insufficient.
+Only cohorts visible to the viewer qualify. Sort valid start dates ascending,
+then missing dates, with stable slug and ID ties. The same cohort cannot fill
+both cards. Dashboard commitment state is scoped to each card's cohort. The
+post callout retains its single featured-cohort behavior.
 
 Recommended states:
 
 | State | Example heading | Primary action |
 | --- | --- | --- |
-| Enrollment open | `Join Cohort 8` | View and commit |
+| Enrollment open for upcoming | `Join Cohort 8` | View and commit |
 | Upcoming | `Next cohort: Cohort 8` | Explore the cohort |
 | Active | `Cohort 7 is underway` | Follow the cohort |
 | Gathering interest | `Cohort 9 is gathering interest` | Signal interest |
-| No cohort scheduled | `Interested in the next cohort?` | Signal interest |
+| No upcoming cohort announced | `No upcoming cohort has been announced yet` | Signal interest |
 
 Profile-aware CTA behavior:
 

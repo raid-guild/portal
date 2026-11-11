@@ -27,6 +27,7 @@ export default function DashboardPreviewPage() {
 
   return (
     <PortalDashboard
+      cohortCards={{ current: null, next: null }}
       dailyBrief={createPreviewBrief(now, upcomingEvents[0])}
       dailyEngagementSummary={{
         currentStreak: 4,

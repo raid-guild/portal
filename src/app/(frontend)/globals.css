@@ -178,7 +178,7 @@ html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-ink {
   display: block;
 }
 
-/* Louchi display cuts have native weight 400. Keep map pixel typography intact. */
+/* Louchi uses native Last Duel weights. Keep map pixel typography intact. */
 html:is(
     [data-theme='raidguild-dark'],
     [data-theme='raidguild-light'],
@@ -197,7 +197,7 @@ html:is(
     .font-display
   ):not(.map-dashboard-screen, .map-dashboard-screen *) {
   font-family: var(--font-display-theme);
-  font-weight: 400;
+  font-weight: 700;
   font-synthesis: none;
   text-transform: uppercase;
   letter-spacing: -0.015em;
@@ -213,30 +213,25 @@ html:is(
   .font-retalic:not(.map-dashboard-screen, .map-dashboard-screen *) {
   font-family: var(--font-retalic-theme);
   font-style: normal;
-  font-weight: 400;
+  font-weight: 700;
   font-synthesis: none;
 }
 
-html:is(
-    [data-theme='raidguild-dark'],
-    [data-theme='raidguild-light'],
-    [data-theme='dark'],
-    [data-theme='light']
-  )
-  :is(
-    h1,
-    h2,
-    h3,
-    h4,
-    h5,
-    h6,
-    [class*='portal-title'],
-    [class*='portal-heading'],
-    .font-display
-  ):not(.map-dashboard-screen, .map-dashboard-screen *)
-  .font-bold {
-  font-weight: 400;
+
+/* Opt-in two-line website heading roles; ordinary CMS headings stay intact. */
+html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme='dark'],[data-theme='light'])
+  .portal-heading-top:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-retalic-theme);
+  font-weight: 700;
+  font-style: normal;
   font-synthesis: none;
+}
+html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme='dark'],[data-theme='light'])
+  .portal-heading-bottom:not(.map-dashboard-screen, .map-dashboard-screen *) {
+  font-family: var(--font-extended-theme);
+  font-weight: 700;
+  font-style: italic;
+  font-synthesis: style;
 }
 
 /* Route transition feedback. Portal routes are dynamic, so a click can wait on

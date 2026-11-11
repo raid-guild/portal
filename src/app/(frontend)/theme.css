@@ -1,25 +1,57 @@
 @font-face {
   font-display: swap;
-  font-family: 'Grinder';
+  font-family: 'Last Duel';
   font-style: normal;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Regular.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/LastDuel-Ex2.woff2') format('woff2');
 }
 
 @font-face {
   font-display: swap;
-  font-family: 'Grinder';
+  font-family: 'Last Duel';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/brand-fonts/louchi/LastDuel-BoldEx2.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Last Duel';
   font-style: italic;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Italic.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/LastDuel-Oblique.woff2') format('woff2');
 }
 
 @font-face {
   font-display: swap;
-  font-family: 'Grinder Retalic';
+  font-family: 'Last Duel';
+  font-style: italic;
+  font-weight: 700;
+  src: url('/brand-fonts/louchi/LastDuel-BoldOblique.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Last Duel Retalic';
   font-style: normal;
   font-weight: 400;
-  src: url('/brand-fonts/louchi/Grinder-Retalic.woff2') format('woff2');
+  src: url('/brand-fonts/louchi/LastDuel-Ex2Retalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Last Duel Retalic';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/brand-fonts/louchi/LastDuel-BoldEx2Retalic.woff2') format('woff2');
+}
+
+@font-face {
+  font-display: swap;
+  font-family: 'Last Duel Extended 2';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/brand-fonts/louchi/LastDuel-BoldEx2.woff2') format('woff2');
 }
 
 @font-face {
@@ -156,8 +188,9 @@
   --radius-ui-card: var(--radius-card);
   --radius-ui-menu: var(--radius-card);
   --radius-pill: 9999px;
-  --font-display-theme: 'Grinder', Arial, sans-serif;
-  --font-retalic-theme: 'Grinder Retalic', Arial, sans-serif;
+  --font-display-theme: 'Last Duel', Arial, sans-serif;
+  --font-extended-theme: 'Last Duel Extended 2', Arial, sans-serif;
+  --font-retalic-theme: 'Last Duel Retalic', Arial, sans-serif;
   --font-body-theme: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
   --font-mono-theme: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
@@ -264,8 +297,9 @@
   --radius-ui-card: var(--radius-card);
   --radius-ui-menu: var(--radius-card);
   --radius-pill: 9999px;
-  --font-display-theme: 'Grinder', Arial, sans-serif;
-  --font-retalic-theme: 'Grinder Retalic', Arial, sans-serif;
+  --font-display-theme: 'Last Duel', Arial, sans-serif;
+  --font-extended-theme: 'Last Duel Extended 2', Arial, sans-serif;
+  --font-retalic-theme: 'Last Duel Retalic', Arial, sans-serif;
   --font-body-theme: 'Ubuntu', ui-sans-serif, system-ui, sans-serif;
   --font-mono-theme: 'Ubuntu Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 

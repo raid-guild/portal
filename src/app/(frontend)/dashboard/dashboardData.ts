@@ -2,7 +2,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 
 import type { ActivityItem, Profile, User } from '@/payload-types'
-import { getFeaturedCohort } from '@/cohorts/getFeaturedCohort'
+import { getCohortCards } from '@/cohorts/getFeaturedCohort'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
 import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
@@ -24,7 +24,7 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     recentWikiPages,
     weekEvents,
     recentContributorResult,
-    featuredCohort,
+    cohortCards,
   ] = await Promise.all([
     getLatestDashboardBrief(user),
     getDailyEngagementSummary(user),
@@ -38,13 +38,15 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     getRecentWikiPages(user),
     getWeekEvents(user),
     getRecentContributors(user),
-    getFeaturedCohort({ user, visibility: 'visible-to-user' }),
+    getCohortCards({ user, visibility: 'visible-to-user' }),
   ])
 
-  const cohortCommitment =
-    featuredCohort && profile
-      ? await getCohortCommitment(user, featuredCohort.id, profile.id)
-      : null
+  const [currentCommitment, nextCommitment] = await Promise.all([
+    cohortCards.current && profile
+      ? getCohortCommitment(user, cohortCards.current.id, profile.id)
+      : null,
+    cohortCards.next && profile ? getCohortCommitment(user, cohortCards.next.id, profile.id) : null,
+  ])
 
   return {
     recentContributorMode: recentContributorResult.mode,
@@ -53,8 +55,9 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     dailyEngagementSummary,
     dashboardStats,
     featuredModules,
-    featuredCohort,
-    cohortCommitment,
+    cohortCards,
+    currentCommitment,
+    nextCommitment,
     pointSummary,
     profile,
     recentPosts,
