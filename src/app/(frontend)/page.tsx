@@ -9,7 +9,7 @@ import React from 'react'
 import { PortalDashboard, PortalPublicHome } from './_components/PortalShell'
 import { getAuthenticatedDashboardData } from './dashboard/dashboardData'
 import { getCurrentUser } from '@/utilities/getCurrentUser'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { defaultPortalImage, mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
 
@@ -81,7 +81,7 @@ export async function generateMetadata(): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       description: copy.seoDescription,
-      images: ['/assets/image.png'],
+      images: [defaultPortalImage.url],
       title: copy.seoTitle,
     },
   }
