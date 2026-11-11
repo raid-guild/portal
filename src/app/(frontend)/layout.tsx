@@ -11,7 +11,7 @@ import { InitTheme } from '@/providers/Theme/InitTheme'
 import { TopLoader } from './_components/TopLoader'
 import { WidgetBubble } from './_components/WidgetBubble'
 import { JoinCTAAnalytics } from './_components/JoinCTAAnalytics'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
+import { defaultPortalImage, mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 import { isWidgetBubbleEnabled } from '@/utilities/widgetBubble'
 
@@ -92,5 +92,6 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     creator: '@RaidGuild',
+    images: [defaultPortalImage.url],
   },
 }

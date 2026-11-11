@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { mergeOpenGraph } from './mergeOpenGraph'
+import { defaultPortalImage, mergeOpenGraph } from './mergeOpenGraph'
 import { getAbsoluteURL } from './getURL'
 
 const SITE_TITLE = 'RaidGuild Portal'
@@ -57,7 +57,7 @@ export const generateMeta = async (args: {
   const ogImage =
     typeof sourceImage === 'object' && sourceImage !== null && typeof sourceImage.url === 'string'
       ? getAbsoluteURL(sourceImage.url)
-      : undefined
+      : defaultPortalImage.url
 
   const sourceTitle = doc?.meta?.title || doc.title || doc.name
   const title = normalizePortalTitle(sourceTitle)
