@@ -37,6 +37,7 @@ export type NodeTypes =
     >
 
 type Props = {
+  videoControls?: boolean
   nodes: NodeTypes[]
 }
 
@@ -45,7 +46,7 @@ type UploadNode = {
   value?: unknown
 }
 
-export function serializeLexical({ nodes }: Props): JSX.Element {
+export function serializeLexical({ nodes, videoControls }: Props): JSX.Element {
   return (
     <Fragment>
       {nodes?.map((node, index): JSX.Element | null => {
@@ -109,7 +110,7 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
                 }
               }
             }
-            return serializeLexical({ nodes: currentNode.children as NodeTypes[] })
+            return serializeLexical({ nodes: currentNode.children as NodeTypes[], videoControls })
           }
         }
 
@@ -131,6 +132,7 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
             case 'mediaBlock':
               return (
                 <MediaBlock
+                  videoControls={videoControls}
                   className="col-start-1 col-span-3"
                   imgClassName="m-0"
                   key={index}
@@ -221,6 +223,7 @@ export function serializeLexical({ nodes }: Props): JSX.Element {
 
               return (
                 <Media
+                  videoControls={videoControls}
                   className="col-start-1 col-span-3"
                   imgClassName="m-0 border border-border rounded-sm"
                   key={index}

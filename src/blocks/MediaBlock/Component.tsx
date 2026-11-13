@@ -9,6 +9,7 @@ import type { MediaBlock as MediaBlockProps } from '@/payload-types'
 import { Media } from '../../components/Media'
 
 type Props = MediaBlockProps & {
+  videoControls?: boolean
   breakout?: boolean
   captionClassName?: string
   className?: string
@@ -26,6 +27,7 @@ export const MediaBlock: React.FC<Props> = (props) => {
     imgClassName,
     media,
     staticImage,
+    videoControls,
     disableInnerContainer,
   } = props
 
@@ -46,6 +48,7 @@ export const MediaBlock: React.FC<Props> = (props) => {
         imgClassName={cn('border border-border rounded-sm', imgClassName)}
         resource={media}
         src={staticImage}
+        videoControls={videoControls}
       />
       {caption && (
         <div
