@@ -18,4 +18,5 @@ export interface Props {
   size?: string // for NextImage only
   src?: StaticImageData // for static media
   videoClassName?: string
+  videoControls?: boolean
 }
