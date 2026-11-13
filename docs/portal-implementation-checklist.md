@@ -325,6 +325,15 @@
 
 ## Deferred
 
+Inquiry intake protection is an implemented slice of the broader onboarding
+funnel below. Typed inquiries and legacy sponsor intake enforce public input
+bounds and server protection at the collection boundary, share PostgreSQL
+limits, and place new public submissions in private review. Existing rows,
+signup linking, and production seed behavior must remain intact. Use the
+[inquiry protection rollout and verification checklist](./inquiry-protection.md)
+before activation; configuration and a successful verification run are release
+requirements, not implied by this checklist.
+
 - [ ] Points and daily engagement check-ins. First slice includes daily check-in
       points and Today's Vibe Notes gated by viewer check-in plus explicit author
       member-sharing consent. See `docs/points-and-daily-engagement-feature-spec.md`.

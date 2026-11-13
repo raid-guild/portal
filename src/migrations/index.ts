@@ -59,6 +59,8 @@ import * as migration_20260922_120000_content_reactions from './20260922_120000_
 import * as migration_20261008_120000_event_transcripts from './20261008_120000_event_transcripts'
 import * as migration_20261030_120000_media_storage_prefix from './20261030_120000_media_storage_prefix'
 
+import * as migration_20261113_120000_inquiry_protection from './20261113_120000_inquiry_protection'
+
 export const migrations = [
   {
     up: migration_20241125_222020_initial.up,
@@ -359,5 +361,10 @@ export const migrations = [
     up: migration_20261030_120000_media_storage_prefix.up,
     down: migration_20261030_120000_media_storage_prefix.down,
     name: '20261030_120000_media_storage_prefix',
+  },
+  {
+    up: migration_20261113_120000_inquiry_protection.up,
+    down: migration_20261113_120000_inquiry_protection.down,
+    name: '20261113_120000_inquiry_protection',
   },
 ]

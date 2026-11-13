@@ -289,6 +289,18 @@ Potential programs use the Cohort `gathering-interest` state and the existing
 general inquiry flow; they do not create commitments before dates and
 enrollment are official.
 
+Typed and legacy sponsor inquiries remain private intake records. Enforce
+strict input bounds, session-derived identity, shared atomic rate limits, and
+server-verified Turnstile at the collection boundary, including REST, GraphQL,
+and local API creates. `overrideAccess` does not authorize an anti-abuse bypass.
+New public submissions enter `reviewing` with a protected review reason;
+editor review and existing signup account linking remain separate operations.
+Do not infer participation or create projects from an inquiry. Follow the
+[inquiry protection contract](./inquiry-protection.md) for trusted automation,
+proxy configuration, retention, verification, and safe rollout. Preserve all
+existing records and keep raw submissions, email/IP addresses, and challenge
+tokens out of public artifacts and protection logs.
+
 Interactive diagrams remain executable artifacts hosted on the separate
 RaidGuild artifact origin. Embed them inside a Post with the
 `interactiveEmbed` rich-text block. Do not paste arbitrary HTML or JavaScript
