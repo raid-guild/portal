@@ -143,6 +143,15 @@ that namespace while normal media metadata remains publicly readable. The
 default `MEDIA_STORAGE=local` keeps development and the old volume working.
 `MEDIA_S3_FORCE_PATH_STYLE=true` is available for endpoints that require it.
 
+For browser uploads to S3, allow the Portal admin origin in the bucket's CORS
+configuration with the `PUT` method and `Content-Type` request header. Preserve
+the bucket's other CORS rules because the bucket is shared. After CORS is in
+place, set `MEDIA_DIRECT_UPLOADS=true` on that Portal service. The admin upload
+form then sends file bytes to S3 using a short-lived signed URL and saves the
+Media record through Payload. Failed authorization or S3 transfers display an
+error in the admin form so the upload can be retried. Payload still reads the
+uploaded object when it creates the Media record and image sizes.
+
 For the volume-to-bucket cutover, deploy the additive media-prefix migration
 and storage-capable code to both services with `MEDIA_STORAGE=local`. Set
 `MEDIA_UPLOADS_PAUSED=true` on both services for the final copy window; this

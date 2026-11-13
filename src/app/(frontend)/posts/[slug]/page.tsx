@@ -73,6 +73,7 @@ export default async function Post({ params: paramsPromise }: Args) {
             analyticsContext={{ placement: 'post-body', postSlug: post.slug || slug }}
             className="max-w-[48rem] mx-auto"
             content={post.content}
+            videoControls
             enableGutter={false}
           />
           {post.relatedPosts && post.relatedPosts.length > 0 && (

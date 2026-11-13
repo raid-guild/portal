@@ -12,6 +12,7 @@ type Props = {
   content: Record<string, any>
   enableGutter?: boolean
   enableProse?: boolean
+  videoControls?: boolean
 }
 
 const RichText: React.FC<Props> = ({
@@ -20,6 +21,7 @@ const RichText: React.FC<Props> = ({
   content,
   enableGutter = true,
   enableProse = true,
+  videoControls,
 }) => {
   if (!content) {
     return null
@@ -42,7 +44,7 @@ const RichText: React.FC<Props> = ({
         !Array.isArray(content) &&
         typeof content === 'object' &&
         'root' in content &&
-        serializeLexical({ nodes: content?.root?.children })}
+        serializeLexical({ nodes: content?.root?.children, videoControls })}
     </div>
   )
 }
