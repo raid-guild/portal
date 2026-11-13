@@ -36,7 +36,7 @@ test('direct browser upload saves distinct media files and reports denied author
     !isolated || process.env.MEDIA_DIRECT_UPLOADS !== 'true',
     'Requires isolated direct S3 uploads',
   )
-  const anonymous = await request.post('/api/media/direct-upload', {
+  const anonymous = await request.post('/api/portal-media-direct-upload', {
     data: { collectionSlug: 'media', filename: 'sample.txt', filesize: 4, mimeType: 'text/plain' },
   })
   expect(anonymous.status()).toBe(403)
@@ -50,7 +50,7 @@ test('direct browser upload saves distinct media files and reports denied author
   const filenames: string[] = []
   try {
     for (const content of ['first', 'second']) {
-      const authorization = await request.post('/api/media/direct-upload', {
+      const authorization = await request.post('/api/portal-media-direct-upload', {
         data: {
           collectionSlug: 'media',
           filename: 'same-name.txt',

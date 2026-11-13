@@ -78,7 +78,7 @@ export const directMediaUploads: Plugin = (config) => {
   config.endpoints = [
     ...(config.endpoints || []),
     {
-      path: '/media/direct-upload',
+      path: '/portal-media-direct-upload',
       method: 'post',
       handler: async (req) => {
         if (!uploadsAllowed(req))

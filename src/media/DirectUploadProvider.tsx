@@ -24,7 +24,7 @@ export function DirectUploadProvider({
         const authorizationTimeout = setTimeout(() => authorizationController.abort(), 20_000)
         let authorization: Response
         try {
-          authorization = await fetch('/api/media/direct-upload', {
+          authorization = await fetch('/api/portal-media-direct-upload', {
             method: 'POST',
             credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
