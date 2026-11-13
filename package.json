@@ -29,7 +29,8 @@
     "start": "cross-env NODE_OPTIONS=--no-deprecation next start",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",
-    "test:e2e:manual": "cross-env PLAYWRIGHT_SLOW_MO=750 E2E_MANUAL_REVIEW=true playwright test --headed --workers=1"
+    "test:e2e:manual": "cross-env PLAYWRIGHT_SLOW_MO=750 E2E_MANUAL_REVIEW=true playwright test --headed --workers=1",
+    "test:inquiries": "node scripts/testInquiries.mjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "3.1160.0",
@@ -58,6 +59,7 @@
     "next": "16.2.5",
     "payload": "3.82.1",
     "payload-admin-bar": "^1.0.7",
+    "pg": "8.16.3",
     "prism-react-renderer": "^2.4.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -75,6 +77,7 @@
     "@types/escape-html": "^1.0.4",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "22.5.4",
+    "@types/pg": "8.15.6",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
     "autoprefixer": "^10.4.20",

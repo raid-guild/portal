@@ -13,6 +13,7 @@ import {
 import { anyone } from '@/access/anyone'
 import { getServerSideURL } from '@/utilities/getURL'
 import { enforceSignupProtection } from '@/utilities/signupProtection'
+import { inquiryAccountLinkContext } from '@/utilities/inquiryIntake'
 
 export const Users: CollectionConfig = {
   slug: 'users',
@@ -164,7 +165,9 @@ const linkMatchingInquiries = async ({ req, user }: { req: PayloadRequest; user:
               submitterUser: user.id,
             },
             overrideAccess: true,
-            req,
+            // A fresh local request prevents trusted context leaking to the signup request.
+            req: { transactionID: req.transactionID },
+            context: inquiryAccountLinkContext(user.id),
           }),
         ),
       )

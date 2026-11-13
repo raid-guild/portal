@@ -142,6 +142,8 @@ export default buildConfig({
       })
     : undefined,
   db: postgresAdapter({
+    // These internal tables are owned by the inquiry migration, not Payload schema push.
+    tablesFilter: ['!inquiry_rate_limits', '!inquiry_challenge_tokens'],
     pool: {
       connectionString: process.env.DATABASE_URI || '',
     },

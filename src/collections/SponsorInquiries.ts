@@ -2,6 +2,11 @@ import type { CollectionConfig } from 'payload'
 
 import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import {
+  finalizeInquiryIntake,
+  inquiryProtectionFields,
+  protectInquiryOperation,
+} from '@/utilities/inquiryIntake'
 
 export const SponsorInquiries: CollectionConfig = {
   slug: 'sponsorInquiries',
@@ -19,9 +24,11 @@ export const SponsorInquiries: CollectionConfig = {
     useAsTitle: 'organization',
   },
   fields: [
+    ...inquiryProtectionFields,
     {
       name: 'name',
       type: 'text',
+      maxLength: 120,
       required: true,
     },
     {
@@ -32,6 +39,7 @@ export const SponsorInquiries: CollectionConfig = {
     {
       name: 'organization',
       type: 'text',
+      maxLength: 200,
       required: true,
     },
     {
@@ -140,15 +148,18 @@ export const SponsorInquiries: CollectionConfig = {
     {
       name: 'links',
       type: 'array',
+      maxRows: 5,
       fields: [
         {
           name: 'label',
           type: 'text',
+          maxLength: 120,
           required: true,
         },
         {
           name: 'url',
           type: 'text',
+          maxLength: 2048,
           required: true,
           validate: (value) =>
             validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
@@ -215,7 +226,12 @@ export const SponsorInquiries: CollectionConfig = {
           value: 'converted',
         },
       ],
-      required: true,
+      // Optional GraphQL input: this protected value is supplied by the server.
+      validate: (value) =>
+        typeof value === 'string' &&
+        ['new', 'reviewing', 'accepted', 'declined', 'converted'].includes(value)
+          ? true
+          : 'Select a valid status.',
     },
     {
       name: 'reviewNotes',
@@ -230,5 +246,9 @@ export const SponsorInquiries: CollectionConfig = {
       },
     },
   ],
+  hooks: {
+    beforeOperation: [protectInquiryOperation],
+    beforeValidate: [finalizeInquiryIntake],
+  },
   timestamps: true,
 }

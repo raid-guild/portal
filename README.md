@@ -256,6 +256,21 @@ Set these variables to enable the integration:
 - `LISTMONK_FROM_EMAIL`
 - `NEWSLETTER_DEFAULT_TEST_EMAIL`
 
+### Inquiry Intake Protection
+
+Public typed inquiries and the legacy sponsor form require server-verified
+Turnstile and share atomic PostgreSQL limits by IP and normalized email. New
+submissions enter private `reviewing` status; existing inquiry rows and seed
+behavior are preserved. Missing protection configuration or unavailable
+verification/storage fails closed with a retryable error.
+
+Configure the keys, allowed hostnames, limits, and optional trusted proxy header
+in `.env.example` before enabling intake. Public Turnstile configuration must be
+set at build time. Read [Inquiry protection](./docs/inquiry-protection.md) for
+the full configuration contract, development setup, privacy/retention policy,
+verification, rollout, and rollback. A proxy header is safe only when the
+ingress overwrites it and direct origin access is blocked.
+
 ### Feedback Widget
 
 The frontend includes a small widget bubble that links to `/feedback` for

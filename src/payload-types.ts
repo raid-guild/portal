@@ -2162,9 +2162,15 @@ export interface PageCopy {
  */
 export interface Inquiry {
   id: number;
+  turnstileToken?: string | null;
+  website?: string | null;
+  /**
+   * New public intake is held for manual review. Consent does not publish an inquiry.
+   */
+  intakeReviewReason?: string | null;
   type: 'client' | 'sponsor' | 'grant' | 'opportunity' | 'general';
-  status: 'new' | 'reviewing' | 'contacted' | 'converted' | 'closed' | 'spam';
-  accountLinkStatus: 'unlinked' | 'linked' | 'skipped';
+  status?: ('new' | 'reviewing' | 'contacted' | 'converted' | 'closed' | 'spam') | null;
+  accountLinkStatus?: ('unlinked' | 'linked' | 'skipped') | null;
   name: string;
   email: string;
   organization?: string | null;
@@ -2198,6 +2204,12 @@ export interface Inquiry {
  */
 export interface SponsorInquiry {
   id: number;
+  turnstileToken?: string | null;
+  website?: string | null;
+  /**
+   * New public intake is held for manual review. Consent does not publish an inquiry.
+   */
+  intakeReviewReason?: string | null;
   name: string;
   email: string;
   organization: string;
@@ -2230,7 +2242,7 @@ export interface SponsorInquiry {
    * Whether this opportunity can be mentioned publicly after review.
    */
   canShowPublicly?: boolean | null;
-  status: 'new' | 'reviewing' | 'accepted' | 'declined' | 'converted';
+  status?: ('new' | 'reviewing' | 'accepted' | 'declined' | 'converted') | null;
   reviewNotes?: string | null;
   updatedAt: string;
   createdAt: string;
@@ -3700,6 +3712,9 @@ export interface ProfileRolesSelect<T extends boolean = true> {
  * via the `definition` "inquiries_select".
  */
 export interface InquiriesSelect<T extends boolean = true> {
+  turnstileToken?: T;
+  website?: T;
+  intakeReviewReason?: T;
   type?: T;
   status?: T;
   accountLinkStatus?: T;
@@ -3733,6 +3748,9 @@ export interface InquiriesSelect<T extends boolean = true> {
  * via the `definition` "sponsorInquiries_select".
  */
 export interface SponsorInquiriesSelect<T extends boolean = true> {
+  turnstileToken?: T;
+  website?: T;
+  intakeReviewReason?: T;
   name?: T;
   email?: T;
   organization?: T;
