@@ -1,6 +1,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { randomUUID } from 'node:crypto'
 import { installInquiryChallenge } from './inquiry-challenge'
+import { adminEmail, adminPassword } from './env'
 
 const headers = () => ({
   'x-e2e-client-ip': `2001:db8:${randomUUID().replaceAll('-', '').slice(0, 24).match(/.{4}/g)!.join(':')}`,
@@ -44,6 +45,7 @@ test('public REST validates raw shapes and protected fields before storing', asy
     { organization: { nested: true } },
     { message: 'x'.repeat(4001) },
     { links: [{ label: 'x', url: 'javascript:alert(1)' }] },
+    { links: [{ id: '507f1f77bcf86cd799439011', label: 'x', url: 'https://example.com/' }] },
     { links: Array.from({ length: 6 }, () => ({ label: 'x', url: 'https://example.com' })) },
     { relatedProject: 2147483647 },
     { context: { skipInquiryProtection: true } },
@@ -54,6 +56,17 @@ test('public REST validates raw shapes and protected fields before storing', asy
   ).toBe(400)
   expect(
     (await post(request, sponsor({ canShowPublicly: 'true' }), 'sponsorInquiries')).status(),
+  ).toBe(400)
+  expect(
+    (
+      await post(
+        request,
+        sponsor({
+          links: [{ id: '507f1f77bcf86cd799439011', label: 'x', url: 'https://example.com/' }],
+        }),
+        'sponsorInquiries',
+      )
+    ).status(),
   ).toBe(400)
   const result = await post(request, inquiry())
   expect(result.status()).toBe(201)
@@ -176,4 +189,50 @@ test('legacy sponsor form accepts verified anonymous intake', async ({ page }) =
   await page.getByLabel(/What are you bringing/).fill('A real local test submission.')
   await page.getByRole('button', { name: 'Submit sponsor inquiry' }).click()
   await expect(page.getByRole('heading', { name: 'Sponsor inquiry received' })).toBeVisible()
+})
+
+test('admin create forms save links with generated row IDs in both collections', async ({
+  page,
+}) => {
+  const login = await page.request.post('/api/users/login', {
+    data: { email: adminEmail, password: adminPassword },
+  })
+  expect(login.status()).toBe(200)
+
+  for (const collection of ['inquiries', 'sponsorInquiries']) {
+    await page.goto(`/admin/collections/${collection}/create`)
+    await page.locator('input[name="name"]').fill('Admin link regression fixture')
+    await page.locator('input[name="email"]').fill(`${randomUUID()}@example.com`)
+    if (collection === 'inquiries') {
+      await page.locator('#field-type').getByRole('combobox').click()
+      await page.getByRole('option', { name: 'General guild inquiry', exact: true }).click()
+      await page.locator('textarea[name="message"]').fill('Admin inquiry with a link.')
+    } else {
+      await page.locator('input[name="organization"]').fill('Local fixture')
+      await page.locator('textarea[name="opportunity"]').fill('Admin sponsor inquiry with a link.')
+    }
+    await page.getByRole('button', { name: 'Add Link', exact: true }).click()
+    await page.locator('input[name="links.0.label"]').fill('Fixture')
+    await page.locator('input[name="links.0.url"]').fill('https://example.com/')
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().includes(`/api/${collection}`) && response.request().method() === 'POST',
+    )
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    const response = await saved
+    expect(response.status()).toBe(201)
+    // Assert the actual admin link row ID was sent and replaced on create.
+    const form = await new Response(response.request().postData(), {
+      headers: { 'content-type': response.request().headers()['content-type'] },
+    }).formData()
+    const submitted = JSON.parse(String(form.get('_payload')))
+    expect(submitted.links[0].id).toEqual(expect.any(String))
+    const { doc } = await response.json()
+    expect(doc.links).toHaveLength(1)
+    expect(doc.links[0]).toMatchObject({ label: 'Fixture', url: 'https://example.com/' })
+    expect(doc.links[0].id).not.toBe(submitted.links[0].id)
+    await expect(page).toHaveURL(new RegExp(`/admin/collections/${collection}/${doc.id}$`))
+    await page.reload()
+    await expect(page.locator('input[name="links.0.url"]')).toHaveValue('https://example.com/')
+  }
 })

@@ -144,7 +144,11 @@ export function normalizeInquiryInput(
     data.links = (data.links as unknown[]).map((link) => {
       if (!link || typeof link !== 'object' || Array.isArray(link)) invalid('links')
       const row = link as Record<string, unknown>
-      if (Object.keys(row).some((key) => !['label', 'url'].includes(key))) invalid('links')
+      // Admin array controls attach row IDs, including when duplicating records.
+      // Accept that metadata only from editors and discard it on create so Payload
+      // allocates fresh IDs. Public intake still accepts only label and URL.
+      const allowedLinkFields = editor ? ['label', 'url', 'id'] : ['label', 'url']
+      if (Object.keys(row).some((key) => !allowedLinkFields.includes(key))) invalid('links')
       if (
         typeof row.label !== 'string' ||
         !row.label.trim() ||

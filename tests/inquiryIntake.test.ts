@@ -58,6 +58,54 @@ test('attack-shaped text remains ordinary text, with no keyword rejection', () =
   assert.equal(normalizeInquiryInput({ ...valid, message }, 'inquiries').message, message)
 })
 
+test('only editors can create links with discarded admin row metadata in either collection', async () => {
+  const link = { id: '507f1f77bcf86cd799439011', label: ' Fixture ', url: 'https://example.com/' }
+  for (const collection of ['inquiries', 'sponsorInquiries'] as const) {
+    const input =
+      collection === 'inquiries'
+        ? valid
+        : {
+            name: 'Visitor',
+            email: 'visitor@example.com',
+            organization: 'Org',
+            opportunity: 'Hello',
+          }
+    for (const user of [null, { id: 12, roles: ['member'] }]) {
+      await assert.rejects(
+        async () =>
+          protectInquiryOperation({
+            operation: 'create',
+            collection: { slug: collection },
+            args: { data: { ...input, links: [link] } },
+            req: { user },
+          } as unknown as Parameters<CollectionBeforeOperationHook>[0]),
+        /Invalid inquiry field: links/,
+      )
+    }
+    for (const role of ['admin', 'editor']) {
+      const args = { data: { ...input, links: [link] } }
+      await protectInquiryOperation({
+        operation: 'create',
+        collection: { slug: collection },
+        args,
+        req: { user: { id: 12, roles: [role] } },
+      } as unknown as Parameters<CollectionBeforeOperationHook>[0])
+      assert.deepEqual(args.data.links, [{ label: 'Fixture', url: 'https://example.com/' }])
+    }
+    assert.equal(link.id, '507f1f77bcf86cd799439011')
+    for (const row of [
+      { ...link, unknown: 'metadata' },
+      { ...link, label: 'x'.repeat(121) },
+      { ...link, url: 'javascript:alert(1)' },
+    ]) {
+      assert.throws(
+        () => normalizeInquiryInput({ ...input, links: [row] }, collection, true),
+        /Invalid inquiry field/,
+      )
+    }
+  }
+})
+
 test('finalization derives identity and quarantine only on create', async () => {
   const run = (data: Record<string, unknown>, operation: string, user: unknown = null) =>
     finalizeInquiryIntake({
