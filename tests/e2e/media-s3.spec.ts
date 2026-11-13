@@ -29,6 +29,16 @@ const isolated =
   isLoopbackURL(baseURL) &&
   isLoopbackURL(process.env.MEDIA_S3_ENDPOINT)
 
+test.beforeAll(async ({ request }) => {
+  if (!isolated) return
+  const users = await request.get('/api/users/init')
+  if ((await users.json()).initialized) return
+  const registration = await request.post('/api/users/first-register', {
+    data: { email: adminEmail, password: adminPassword, name: 'Portal S3 Test Admin' },
+  })
+  expect(registration.ok()).toBe(true)
+})
+
 test('direct browser upload saves distinct media files and reports denied authorization', async ({
   request,
 }) => {
