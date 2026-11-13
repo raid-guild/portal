@@ -11,6 +11,9 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1160.0
         version: 3.1160.0
+      '@aws-sdk/s3-request-presigner':
+        specifier: 3.1160.0
+        version: 3.1160.0
       '@payloadcms/db-postgres':
         specifier: 3.82.1
         version: 3.82.1(payload@3.82.1(graphql@16.9.0)(typescript@5.7.2))

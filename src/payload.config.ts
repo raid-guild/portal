@@ -46,6 +46,7 @@ import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { plugins } from './plugins'
 import { isS3MediaStorage, mediaS3Config, PORTAL_MEDIA_PREFIX } from './media/storage'
+import { directMediaUploads } from './media/directUpload'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
 
@@ -191,13 +192,16 @@ export default buildConfig({
       enabled: isS3MediaStorage(),
       collections: { media: { prefix: PORTAL_MEDIA_PREFIX } },
       bucket: mediaS3?.bucket || '',
-      config: mediaS3 ? {
-        endpoint: mediaS3.endpoint,
-        region: mediaS3.region,
-        credentials: mediaS3.credentials,
-        forcePathStyle: process.env.MEDIA_S3_FORCE_PATH_STYLE === 'true',
-      } : {},
+      config: mediaS3
+        ? {
+            endpoint: mediaS3.endpoint,
+            region: mediaS3.region,
+            credentials: mediaS3.credentials,
+            forcePathStyle: process.env.MEDIA_S3_FORCE_PATH_STYLE === 'true',
+          }
+        : {},
     }),
+    directMediaUploads,
   ],
   endpoints: [
     {
