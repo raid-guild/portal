@@ -25,7 +25,12 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    launchOptions: slowMo > 0 ? { slowMo } : undefined,
+    launchOptions: {
+      ...(slowMo > 0 ? { slowMo } : {}),
+      ...(process.env.PRISM_CHROMIUM_EXECUTABLE
+        ? { executablePath: process.env.PRISM_CHROMIUM_EXECUTABLE, args: ['--no-sandbox'] }
+        : {}),
+    },
   },
   webServer: {
     command: 'node ./tests/e2e/web-server.mjs',
@@ -36,6 +41,17 @@ export default defineConfig({
     env: {
       ...process.env,
       PORT: String(port),
+      // Local E2E must not use runtime service credentials to send mail or hooks.
+      SENDGRID_API_KEY: '',
+      PRISM_AGENT_API_BASE_URL: '',
+      PRISM_AGENT_SERVICE_TOKEN: '',
+      LISTMONK_URL: '',
+      NEXT_PUBLIC_INQUIRY_TURNSTILE_SITE_KEY: 'e2e-widget-key',
+      INQUIRY_PROTECTION_MODE: 'enforce',
+      INQUIRY_RATE_LIMIT_SECRET: 'e2e-inquiry-secret-at-least-32-characters',
+      INQUIRY_TRUSTED_IP_HEADER: 'x-e2e-client-ip',
+      TURNSTILE_SECRET_KEY: 'e2e-server-key',
+      TURNSTILE_ALLOWED_HOSTNAMES: 'localhost',
       DATABASE_URI: databaseURL,
       DISABLE_SEARCH_SYNC: 'true',
       USE_LOCAL_SEED_MEDIA: 'true',

@@ -8,6 +8,11 @@ import {
 } from '@/access/inquiries'
 import { canEditContent, hideFromNonEditors } from '@/access/roles'
 import { validateSafeURL } from '@/utilities/safeURL'
+import {
+  finalizeInquiryIntake,
+  inquiryProtectionFields,
+  protectInquiryOperation,
+} from '@/utilities/inquiryIntake'
 
 export const inquiryTypeOptions = [
   {
@@ -49,6 +54,7 @@ export const Inquiries: CollectionConfig = {
     useAsTitle: 'name',
   },
   fields: [
+    ...inquiryProtectionFields,
     {
       name: 'type',
       type: 'select',
@@ -94,7 +100,12 @@ export const Inquiries: CollectionConfig = {
           value: 'spam',
         },
       ],
-      required: true,
+      // Optional GraphQL input: this protected value is supplied by the server.
+      validate: (value) =>
+        typeof value === 'string' &&
+        ['new', 'reviewing', 'contacted', 'converted', 'closed', 'spam'].includes(value)
+          ? true
+          : 'Select a valid status.',
     },
     {
       name: 'accountLinkStatus',
@@ -122,11 +133,16 @@ export const Inquiries: CollectionConfig = {
           value: 'skipped',
         },
       ],
-      required: true,
+      // Optional GraphQL input: this protected value is supplied by the server.
+      validate: (value) =>
+        typeof value === 'string' && ['unlinked', 'linked', 'skipped'].includes(value)
+          ? true
+          : 'Select a valid accountLinkStatus.',
     },
     {
       name: 'name',
       type: 'text',
+      maxLength: 120,
       required: true,
     },
     {
@@ -138,10 +154,12 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'organization',
       type: 'text',
+      maxLength: 200,
     },
     {
       name: 'roleOrTitle',
       type: 'text',
+      maxLength: 200,
     },
     {
       name: 'message',
@@ -204,15 +222,18 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'links',
       type: 'array',
+      maxRows: 5,
       fields: [
         {
           name: 'label',
           type: 'text',
+          maxLength: 120,
           required: true,
         },
         {
           name: 'url',
           type: 'text',
+          maxLength: 2048,
           required: true,
           validate: (value) =>
             validateSafeURL(value, { allowRelative: false, protocols: ['http:', 'https:'] }),
@@ -222,6 +243,7 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'sourceRoute',
       type: 'text',
+      maxLength: 256,
       admin: {
         position: 'sidebar',
       },
@@ -229,6 +251,7 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'utmSource',
       type: 'text',
+      maxLength: 200,
       admin: {
         position: 'sidebar',
       },
@@ -236,6 +259,7 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'utmMedium',
       type: 'text',
+      maxLength: 200,
       admin: {
         position: 'sidebar',
       },
@@ -243,6 +267,7 @@ export const Inquiries: CollectionConfig = {
     {
       name: 'utmCampaign',
       type: 'text',
+      maxLength: 200,
       admin: {
         position: 'sidebar',
       },
@@ -290,28 +315,8 @@ export const Inquiries: CollectionConfig = {
     },
   ],
   hooks: {
-    beforeValidate: [
-      ({ data, req }) => {
-        const user = req.user
-        const normalizedData =
-          typeof data?.email === 'string'
-            ? {
-                ...data,
-                email: data.email.trim().toLowerCase(),
-              }
-            : data
-
-        if (user?.id && !normalizedData?.submitterUser) {
-          return {
-            ...normalizedData,
-            accountLinkStatus: 'linked',
-            submitterUser: user.id,
-          }
-        }
-
-        return normalizedData
-      },
-    ],
+    beforeOperation: [protectInquiryOperation],
+    beforeValidate: [finalizeInquiryIntake],
   },
   timestamps: true,
 }

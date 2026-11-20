@@ -1,5 +1,6 @@
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test'
 import crypto from 'crypto'
+import { installInquiryChallenge } from './inquiry-challenge'
 import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import jwt from 'jsonwebtoken'
@@ -3322,6 +3323,7 @@ async function verifyAgentRegistrationFlow(page: Page) {
 
 async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
   await installPlausibleCapture(publicPage)
+  await installInquiryChallenge(publicPage)
   await publicPage.goto('/sponsor')
   await expect(
     publicPage.getByRole('heading', { name: 'Bring an opportunity to the cohort.' }),
@@ -3379,6 +3381,7 @@ async function submitSponsorInquiry(publicPage: Page, adminPage: Page) {
 }
 
 async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
+  await installInquiryChallenge(publicPage)
   const suffix = Date.now()
   const email = `inquiry-${suffix}@example.com`
 
@@ -3417,7 +3420,7 @@ async function submitGeneralInquiry(publicPage: Page, adminPage: Page) {
   })
 
   await publicPage.getByRole('button', { name: /start inquiry/i }).click()
-  await expect(publicPage.getByText('Temporary test failure.')).toBeVisible()
+  await expect(publicPage.getByText(/Inquiry submission is temporarily unavailable/)).toBeVisible()
   await publicPage.getByRole('button', { name: /start inquiry/i }).click()
 
   await expect(

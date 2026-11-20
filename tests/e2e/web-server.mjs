@@ -101,17 +101,11 @@ async function main() {
     `DO $$ BEGIN IF to_regclass('public.payload_migrations') IS NULL THEN RAISE EXCEPTION 'Payload migrations did not initialize the E2E database'; END IF; END $$;`,
   ])
 
-  const app = isWindows
-    ? spawn('cmd.exe', ['/c', 'corepack', 'pnpm', 'start'], {
-        cwd: repoRoot,
-        env,
-        stdio: 'inherit',
-      })
-    : spawn('corepack', ['pnpm', 'start'], {
-        cwd: repoRoot,
-        env,
-        stdio: 'inherit',
-      })
+  const app = spawn(
+    process.execPath,
+    ['--import', './tests/e2e/inquiry-provider.mjs', './node_modules/next/dist/bin/next', 'start'],
+    { cwd: repoRoot, env, stdio: 'inherit' },
+  )
 
   const shutdown = (signal) => {
     app.kill(signal)
