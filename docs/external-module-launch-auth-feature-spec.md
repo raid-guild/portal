@@ -54,6 +54,16 @@ Portal /modules
 This is not full OAuth. It is a narrowly scoped launch handoff for trusted
 external modules.
 
+For Dune Relay, `GET /leaderboard-api/dune-relay/login` first creates a five
+minute intent and redirects to Portal login with
+`next=/api/modules/dune-relay/launch?state=<64 hex characters>`. The launch
+route accepts that optional state only when it is exactly 64 hexadecimal
+characters and signs it as `launchState` in the module JWT. The Dune callback
+checks the claim against its host-only, HttpOnly, Secure, SameSite=Lax intent
+cookie, then consumes the intent and launch JTI before issuing a session. A
+direct Portal launch without state remains valid for other modules; Dune sends
+it through its login intent flow before creating a session.
+
 ## Non-Goals
 
 - No arbitrary third-party app marketplace.

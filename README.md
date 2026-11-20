@@ -1,5 +1,9 @@
 Public module integrations: see [the catalog API contract](docs/public-module-catalog.md).
 
+Dune Relay's Portal launch accepts an optional 64-character hexadecimal `state`
+query parameter. The signed launch token carries it as `launchState` so the
+game can verify a browser login intent before creating a cloud-save session.
+
 <p align="center">
   <a href="https://funkyton.com/payload-cms/">
     <picture>

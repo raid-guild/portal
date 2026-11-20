@@ -4859,6 +4859,28 @@ async function verifyModulesFeature(adminPage: Page, browser: Browser, publicPag
   ])
   expect(launchClaims.sub).toMatch(/^user:/)
   expect(launchClaims.userID).toBeTruthy()
+  expect(launchClaims.launchState).toBeUndefined()
+
+  const requestedState = 'a3'.repeat(32)
+  const stateLaunch = await adminPage.request.get(
+    `/api/modules/${externalModuleSlug}/launch?state=${requestedState}`,
+    { maxRedirects: 0 },
+  )
+  expect(stateLaunch.status()).toBe(302)
+  const stateToken = new URL(stateLaunch.headers().location!).searchParams.get('token')
+  expect(stateToken).toBeTruthy()
+  const stateClaims = jwt.verify(stateToken!, externalModuleLaunchSecret, {
+    algorithms: ['HS256'],
+    audience: externalModuleAudience,
+  }) as jwt.JwtPayload
+  expect(stateClaims.launchState).toBe(requestedState)
+  for (const invalidState of ['short', 'g'.repeat(64), `${requestedState}&state=${requestedState}`]) {
+    const invalidLaunch = await adminPage.request.get(
+      `/api/modules/${externalModuleSlug}/launch?state=${invalidState}`,
+      { maxRedirects: 0 },
+    )
+    expect(invalidLaunch.status()).toBe(400)
+  }
 
   const credentiallessContext = await browser.newContext()
   try {
