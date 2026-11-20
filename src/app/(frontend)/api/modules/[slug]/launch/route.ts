@@ -21,6 +21,7 @@ type LaunchTokenPayload = {
   email?: string
   handle?: string
   iss: string
+  launchState?: string
   moduleSlug: string
   name?: string
   picture?: string
@@ -48,7 +49,12 @@ const COHORT_GRAD_BADGE_SLUG = 'cohort-grad'
 
 const getLaunchIssuer = (): string => getServerSideURL().replace(/\/+$/, '')
 
-export async function GET(_request: Request, { params: paramsPromise }: Args) {
+export async function GET(request: Request, { params: paramsPromise }: Args) {
+  const states = new URL(request.url).searchParams.getAll('state')
+  if (states.length > 1 || (states.length === 1 && !/^[a-f0-9]{64}$/i.test(states[0]))) {
+    return Response.json({ message: 'Invalid launch state.' }, { status: 400 })
+  }
+  const launchState = states[0]
   const { slug = '' } = await paramsPromise
   const payload = await getPayload({ config: configPromise })
   const requestHeaders = await headers()
@@ -121,6 +127,7 @@ export async function GET(_request: Request, { params: paramsPromise }: Args) {
     profile,
     secret,
     user,
+    launchState,
   })
   const redirectURL = new URL(callbackURL)
   redirectURL.searchParams.set('token', token)
@@ -198,12 +205,14 @@ const signLaunchToken = ({
   profile,
   secret,
   user,
+  launchState,
 }: {
   credentials: LaunchCredential[]
   portalModule: Module
   profile: Profile | null
   secret: string
   user: User
+  launchState?: string
 }): string => {
   const issuer = getLaunchIssuer()
   const audience =
@@ -218,6 +227,7 @@ const signLaunchToken = ({
     typ: 'portal_module_launch',
     userID: user.id,
   }
+  if (launchState) claims.launchState = launchState
 
   if (portalModule.includeEmailInLaunch && user.emailVerifiedAt && user.email) {
     claims.email = user.email
