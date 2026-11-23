@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { trackPortalEvent } from '@/utilities/analytics'
 
+import { InquiryChallenge, inquiryResponseError, useInquiryChallenge } from './InquiryChallenge'
+
 const sponsorTypes = [
   ['project-opportunity', 'Project opportunity'],
   ['bounty-paid-work', 'Bounty / paid work'],
@@ -45,10 +47,16 @@ export const SponsorInquiryForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
   const hasTrackedStart = useRef(false)
+  const challenge = useInquiryChallenge()
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (isLoading) return
     setError(null)
+    if (!challenge.ready) {
+      setError('Please complete verification before submitting.')
+      return
+    }
     setIsLoading(true)
 
     const form = event.currentTarget
@@ -57,6 +65,8 @@ export const SponsorInquiryForm: React.FC = () => {
     const linkLabel = String(formData.get('linkLabel') || '').trim()
 
     const payload = {
+      turnstileToken: challenge.token || undefined,
+      website: String(formData.get('website') || ''),
       budgetRange: String(formData.get('budgetRange') || 'unknown'),
       canShowPublicly: formData.get('canShowPublicly') === 'on',
       contributorNeeds: String(formData.get('contributorNeeds') || '').trim(),
@@ -99,6 +109,7 @@ export const SponsorInquiryForm: React.FC = () => {
           'Content-Type': 'application/json',
         },
         method: 'POST',
+        signal: AbortSignal.timeout(20000),
       })
 
       if (!response.ok) {
@@ -109,8 +120,7 @@ export const SponsorInquiryForm: React.FC = () => {
           inquiry_type: 'sponsor',
           status_code: String(response.status),
         })
-        const json = await response.json().catch(() => null)
-        throw new Error(json?.errors?.[0]?.message || json?.message || 'Unable to submit inquiry.')
+        throw new Error(await inquiryResponseError(response))
       }
 
       trackPortalEvent('Inquiry Submitted', {
@@ -131,8 +141,13 @@ export const SponsorInquiryForm: React.FC = () => {
           status_code: 'not_applicable',
         })
       }
-      setError(err instanceof Error ? err.message : 'Unable to submit inquiry.')
+      setError(
+        err instanceof Error && err.name !== 'TimeoutError' && err.name !== 'AbortError'
+          ? err.message
+          : 'The request timed out. Please verify again and retry. Your entries are still here.',
+      )
     } finally {
+      challenge.reset()
       setIsLoading(false)
     }
   }
@@ -170,17 +185,24 @@ export const SponsorInquiryForm: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Label htmlFor="name">Name</Label>
-            <Input autoComplete="name" id="name" name="name" required />
+            <Input autoComplete="name" id="name" maxLength={120} name="name" required />
           </div>
           <div>
             <Label htmlFor="email">Email</Label>
-            <Input autoComplete="email" id="email" name="email" required type="email" />
+            <Input
+              autoComplete="email"
+              id="email"
+              maxLength={254}
+              name="email"
+              required
+              type="email"
+            />
           </div>
         </div>
 
         <div>
           <Label htmlFor="organization">Organization / project</Label>
-          <Input id="organization" name="organization" required />
+          <Input id="organization" maxLength={200} name="organization" required />
         </div>
 
         <div className="grid gap-4 md:grid-cols-2">
@@ -206,11 +228,22 @@ export const SponsorInquiryForm: React.FC = () => {
         <div className="grid gap-4 md:grid-cols-2">
           <div>
             <Label htmlFor="linkLabel">Link label</Label>
-            <Input id="linkLabel" name="linkLabel" placeholder="Deck, repo, brief, website" />
+            <Input
+              id="linkLabel"
+              maxLength={120}
+              name="linkLabel"
+              placeholder="Deck, repo, brief, website"
+            />
           </div>
           <div>
             <Label htmlFor="linkURL">Relevant link</Label>
-            <Input id="linkURL" name="linkURL" placeholder="https://..." type="url" />
+            <Input
+              id="linkURL"
+              maxLength={2048}
+              name="linkURL"
+              placeholder="https://..."
+              type="url"
+            />
           </div>
         </div>
 
@@ -220,9 +253,19 @@ export const SponsorInquiryForm: React.FC = () => {
         </label>
       </div>
 
-      {error ? <p className="mt-4 text-sm text-destructive">{error}</p> : null}
+      <InquiryChallenge
+        key={challenge.generation}
+        generation={challenge.generation}
+        onToken={challenge.setToken}
+      />
 
-      <Button className="mt-6 w-full" disabled={isLoading} type="submit">
+      {error ? (
+        <p className="mt-4 text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
+
+      <Button className="mt-6 w-full" disabled={isLoading || !challenge.ready} type="submit">
         {isLoading ? 'Submitting...' : 'Submit sponsor inquiry'}
         {!isLoading ? <ArrowRight className="ml-2 h-4 w-4" /> : null}
       </Button>

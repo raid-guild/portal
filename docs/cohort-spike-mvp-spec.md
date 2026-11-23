@@ -26,6 +26,15 @@ The public home may feature that module's active, upcoming, or
 interest reuses the general inquiry flow rather than becoming a project task or
 commitment.
 
+Public inquiry intake, including the legacy sponsor form, stays available
+before signup with collection-level validation, Turnstile verification, and
+shared PostgreSQL abuse limits. New public submissions remain private in
+`reviewing`, with a protected `pending-review` or `honeypot` reason; these are
+review signals, not findings about a person. No existing inquiry is
+reclassified, deleted, or converted into a project by this protection. The
+internal limiter is infrastructure, not a new Portal primitive or task board.
+See [Inquiry protection](./inquiry-protection.md) for the operational contract.
+
 The exposed `portal-ops-skill` includes a review-first Cohort setup workflow.
 Agents can prepare sourced Cohort proposals and related Posts or Events, while
 editor/admin review remains required to create, update, or publish the Cohort
