@@ -374,13 +374,12 @@ test('defaults to the system theme and persists explicit theme preferences', asy
 
   const loadedFonts = await page.evaluate(async () => {
     const requests = [
-      '400 24px "Last Duel"',
-      '700 24px "Last Duel"',
-      'italic 400 24px "Last Duel"',
-      'italic 700 24px "Last Duel"',
-      '400 24px "Last Duel Retalic"',
-      '700 24px "Last Duel Retalic"',
-      '700 24px "Last Duel Extended 2"',
+      '400 24px "Venture Beyond Extended"',
+      '900 24px "Venture Beyond Extended"',
+      'italic 400 24px "Venture Beyond Extended"',
+      'italic 900 24px "Venture Beyond Extended"',
+      '400 24px "Venture Beyond Retalic Extended"',
+      '900 24px "Venture Beyond Retalic Extended"',
       '400 16px "Ubuntu"',
       'italic 400 16px "Ubuntu"',
       '400 12px "Ubuntu Mono"',
@@ -393,10 +392,10 @@ test('defaults to the system theme and persists explicit theme preferences', asy
       }),
     )
   })
-  expect(loadedFonts).toEqual(Array(11).fill(true))
+  expect(loadedFonts).toEqual(Array(10).fill(true))
   await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
   const displayHeading = page.locator('h1').first()
-  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-family', /Venture Beyond Extended/)
   await expect(displayHeading).toHaveCSS('font-weight', '700')
   await expect(displayHeading).toHaveCSS('text-transform', 'uppercase')
   await expect(displayHeading).toHaveCSS('font-synthesis', 'none')
@@ -408,14 +407,16 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   })
   const top = page.locator('#role-top')
   const bottom = page.locator('#role-bottom')
-  await expect(top).toHaveCSS('font-family', /Last Duel Retalic/)
-  await expect(top).toHaveCSS('font-weight', '700')
+  await expect(top).toHaveCSS('font-family', /Venture Beyond Retalic Extended/)
+  await expect(top).toHaveCSS('font-weight', '900')
+  await expect(top).toHaveCSS('font-stretch', '125%')
   await expect(top).toHaveCSS('font-style', 'normal')
-  await expect(bottom).toHaveCSS('font-family', /Last Duel Extended 2/)
-  await expect(bottom).toHaveCSS('font-weight', '700')
+  await expect(bottom).toHaveCSS('font-family', /Venture Beyond Extended/)
+  await expect(bottom).toHaveCSS('font-weight', '900')
+  await expect(bottom).toHaveCSS('font-stretch', '125%')
   await expect(bottom).toHaveCSS('font-style', 'italic')
-  await expect(bottom).toHaveCSS('font-synthesis', 'style')
-  await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Last Duel Retalic/)
+  await expect(bottom).toHaveCSS('font-synthesis', 'none')
+  await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Venture Beyond Retalic Extended/)
 
   await page.evaluate(() => window.localStorage.setItem('payload-theme', 'light'))
   await page.reload()
@@ -428,7 +429,7 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect(page.locator('[data-portal-header] .portal-logo-ink')).toBeVisible()
   await expect(page.locator('[data-portal-header] .portal-logo-default')).toBeHidden()
 
-  await expect(displayHeading).toHaveCSS('font-family', /Last Duel/)
+  await expect(displayHeading).toHaveCSS('font-family', /Venture Beyond Extended/)
   await expect(displayHeading).toHaveCSS('font-weight', '700')
 
   await page.evaluate(() => window.localStorage.removeItem('payload-theme'))
@@ -703,6 +704,25 @@ async function verifySeededPosts(adminPage: Page, page: Page) {
     },
   })
 }
+
+test('keeps the homepage headline intact on narrow screens', async ({ page }) => {
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto('/')
+    const headline = page.locator('h1.portal-home-title')
+    await expect(headline).toBeVisible()
+    await expect(headline).toHaveCSS('overflow-wrap', 'normal')
+    await expect(headline).toHaveCSS('word-break', 'normal')
+    const sizes = await headline.evaluate((element) => ({
+      client: element.clientWidth,
+      scroll: element.scrollWidth,
+      fontSize: parseFloat(getComputedStyle(element).fontSize),
+    }))
+    expect(sizes.scroll).toBeLessThanOrEqual(sizes.client + 1)
+    expect(sizes.fontSize).toBeLessThanOrEqual(40)
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width)
+  }
+})
 
 test('normalizes legacy article title suffixes', () => {
   expect(normalizePortalTitle('Article | RaidGuild | RaidGuild Portal')).toBe(

@@ -2,7 +2,7 @@
 
 Portal now uses the current Storybook alignment documented in
 [the theme authoring guide](theme-authoring-guide.md#louchi-storybook-alignment).
-Last Duel Extended 2 and Retalic display faces, Ubuntu body faces, and Ubuntu Mono are bundled as site assets. The older Grinder files remain historical.
+Venture Beyond Extended upright, native italic, and Retalic variable display faces, Ubuntu body faces, and Ubuntu Mono are bundled as site assets. Last Duel was removed after the brand Eurostile metadata audit; older Grinder files remain inactive historical assets.
 Louchi Day and Night use semantic colors, readable links and logos, and shared
 control and card radius tokens. Classic and AI themes retain their own styling.
 

@@ -178,7 +178,7 @@ html:is([data-theme='raidguild-light'], [data-theme='light']) .portal-logo-ink {
   display: block;
 }
 
-/* Louchi uses native Last Duel weights. Keep map pixel typography intact. */
+/* Louchi uses native Venture Beyond variable faces. Keep map pixel typography intact. */
 html:is(
     [data-theme='raidguild-dark'],
     [data-theme='raidguild-light'],
@@ -204,6 +204,30 @@ html:is(
   overflow-wrap: anywhere;
 }
 
+/* The homepage headline has room to wrap at spaces; keep long words intact. */
+html:is(
+    [data-theme='raidguild-dark'],
+    [data-theme='raidguild-light'],
+    [data-theme='dark'],
+    [data-theme='light']
+  )
+  h1.portal-home-title:not(.map-dashboard-screen) {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+@media (max-width: 639px) {
+  html:is(
+      [data-theme='raidguild-dark'],
+      [data-theme='raidguild-light'],
+      [data-theme='dark'],
+      [data-theme='light']
+    )
+    h1.portal-home-title:not(.map-dashboard-screen) {
+    font-size: clamp(2rem, 10vw, 2.5rem);
+  }
+}
+
 html:is(
     [data-theme='raidguild-dark'],
     [data-theme='raidguild-light'],
@@ -222,16 +246,20 @@ html:is(
 html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme='dark'],[data-theme='light'])
   .portal-heading-top:not(.map-dashboard-screen, .map-dashboard-screen *) {
   font-family: var(--font-retalic-theme);
-  font-weight: 700;
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.005em;
   font-style: normal;
   font-synthesis: none;
 }
 html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme='dark'],[data-theme='light'])
   .portal-heading-bottom:not(.map-dashboard-screen, .map-dashboard-screen *) {
   font-family: var(--font-extended-theme);
-  font-weight: 700;
+  font-weight: 900;
+  font-stretch: 125%;
+  letter-spacing: -0.005em;
   font-style: italic;
-  font-synthesis: style;
+  font-synthesis: none;
 }
 
 /* Route transition feedback. Portal routes are dynamic, so a click can wait on
