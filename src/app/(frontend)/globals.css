@@ -248,7 +248,7 @@ html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme
   font-family: var(--font-retalic-theme);
   font-weight: 900;
   font-stretch: 125%;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   font-style: normal;
   font-synthesis: none;
 }
@@ -257,7 +257,7 @@ html:is([data-theme='raidguild-dark'],[data-theme='raidguild-light'],[data-theme
   font-family: var(--font-extended-theme);
   font-weight: 900;
   font-stretch: 125%;
-  letter-spacing: -0.005em;
+  letter-spacing: 0;
   font-style: italic;
   font-synthesis: none;
 }
