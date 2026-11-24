@@ -393,6 +393,46 @@ test('defaults to the system theme and persists explicit theme preferences', asy
     )
   })
   expect(loadedFonts).toEqual(Array(10).fill(true))
+  const extendedFaces = await page.evaluate(() =>
+    Array.from(document.styleSheets).flatMap((sheet) => {
+      try {
+        return Array.from(sheet.cssRules)
+          .filter((rule): rule is CSSFontFaceRule => rule instanceof CSSFontFaceRule)
+          .filter((rule) => /Venture Beyond (?:Retalic )?Extended/.test(rule.style.fontFamily))
+          .map((rule) => ({
+            family: rule.style.fontFamily,
+            style: rule.style.fontStyle,
+            stretch: rule.style.fontStretch,
+            sizeAdjust: rule.style.getPropertyValue('size-adjust'),
+          }))
+      } catch {
+        return []
+      }
+    }),
+  )
+  expect(extendedFaces).toHaveLength(3)
+  expect(extendedFaces).toEqual(
+    expect.arrayContaining([
+      {
+        family: '"Venture Beyond Extended"',
+        style: 'normal',
+        stretch: '125%',
+        sizeAdjust: '105.4%',
+      },
+      {
+        family: '"Venture Beyond Extended"',
+        style: 'italic',
+        stretch: '125%',
+        sizeAdjust: '105.4%',
+      },
+      {
+        family: '"Venture Beyond Retalic Extended"',
+        style: 'normal',
+        stretch: '125%',
+        sizeAdjust: '105.4%',
+      },
+    ]),
+  )
   await expect(page.locator('body')).toHaveCSS('font-family', /Ubuntu/)
   const displayHeading = page.locator('h1').first()
   await expect(displayHeading).toHaveCSS('font-family', /Venture Beyond Extended/)
@@ -411,10 +451,12 @@ test('defaults to the system theme and persists explicit theme preferences', asy
   await expect(top).toHaveCSS('font-weight', '900')
   await expect(top).toHaveCSS('font-stretch', '125%')
   await expect(top).toHaveCSS('font-style', 'normal')
+  await expect(top).toHaveCSS('letter-spacing', /^(normal|0px)$/)
   await expect(bottom).toHaveCSS('font-family', /Venture Beyond Extended/)
   await expect(bottom).toHaveCSS('font-weight', '900')
   await expect(bottom).toHaveCSS('font-stretch', '125%')
   await expect(bottom).toHaveCSS('font-style', 'italic')
+  await expect(bottom).toHaveCSS('letter-spacing', /^(normal|0px)$/)
   await expect(bottom).toHaveCSS('font-synthesis', 'none')
   await expect(page.locator('#role-map')).not.toHaveCSS('font-family', /Venture Beyond Retalic Extended/)
 

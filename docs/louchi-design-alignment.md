@@ -3,6 +3,7 @@
 Portal now uses the current Storybook alignment documented in
 [the theme authoring guide](theme-authoring-guide.md#louchi-storybook-alignment).
 Venture Beyond Extended upright, native italic, and Retalic variable display faces, Ubuntu body faces, and Ubuntu Mono are bundled as site assets. Last Duel was removed after the brand Eurostile metadata audit; older Grinder files remain inactive historical assets.
+The active typography treatment follows the merged [website PR #111](https://github.com/raid-guild/website/pull/111): Extended faces pin width 125% with size-adjust 105.4%, and paired major headings use Retalic above native Italic at weight 900 and zero tracking. Base Venture Beyond faces retain the full variable width range for experiments.
 Louchi Day and Night use semantic colors, readable links and logos, and shared
 control and card radius tokens. Classic and AI themes retain their own styling.
 
