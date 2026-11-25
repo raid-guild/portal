@@ -4,7 +4,7 @@ import { getPayload } from 'payload'
 import type { ActivityItem, Profile, User } from '@/payload-types'
 import { getCohortCards } from '@/cohorts/getFeaturedCohort'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
-import { engagementDateKey, normalizeEngagementDate } from '@/utilities/dailyEngagement'
+import { getHomeFeaturedModules } from '@/modules/getHomeFeaturedModules'
 import type { RecentContributor, RecentContributorMode } from './dashboardTypes'
 
 const recentContributorWindowDays = 90
@@ -13,9 +13,7 @@ const memberDiscoveryPoolLimit = 1000
 export const getAuthenticatedDashboardData = async (user: User) => {
   const [
     dailyBrief,
-    dailyEngagementSummary,
     profile,
-    pointSummary,
     recentPosts,
     upcomingEvents,
     spotlights,
@@ -27,14 +25,12 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     cohortCards,
   ] = await Promise.all([
     getLatestDashboardBrief(user),
-    getDailyEngagementSummary(user),
     getProfileForUser(user.id),
-    getPointSummary(user),
     getRecentPosts(),
     getUpcomingEvents(user),
     getActiveSpotlights({ user }),
     getDashboardStats(user),
-    getFeaturedModules(user),
+    getHomeFeaturedModules(user),
     getRecentWikiPages(user),
     getWeekEvents(user),
     getRecentContributors(user),
@@ -52,13 +48,11 @@ export const getAuthenticatedDashboardData = async (user: User) => {
     recentContributorMode: recentContributorResult.mode,
     recentContributors: recentContributorResult.contributors,
     dailyBrief,
-    dailyEngagementSummary,
     dashboardStats,
     featuredModules,
     cohortCards,
     currentCommitment,
     nextCommitment,
-    pointSummary,
     profile,
     recentPosts,
     recentWikiPages,
@@ -430,35 +424,6 @@ const hashString = (value: string) => {
   return hash >>> 0
 }
 
-const getFeaturedModules = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'modules',
-    depth: 1,
-    limit: 3,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-featured,sortOrder,name',
-    user,
-    where: {
-      and: [
-        {
-          enabled: {
-            equals: true,
-          },
-        },
-        {
-          status: {
-            not_equals: 'archived',
-          },
-        },
-      ],
-    },
-  })
-
-  return result.docs
-}
-
 const getRecentWikiPages = async (user: User) => {
   const payload = await getPayload({ config: configPromise })
   const result = await payload.find({
@@ -540,101 +505,4 @@ const getWeekEvents = async (user: User) => {
   })
 
   return result.docs
-}
-
-const getPointSummary = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'pointEvents',
-    depth: 1,
-    limit: 1000,
-    overrideAccess: false,
-    pagination: false,
-    sort: '-issuedAt',
-    user,
-    where: {
-      and: [
-        {
-          recipient: {
-            equals: user.id,
-          },
-        },
-        {
-          status: {
-            equals: 'valid',
-          },
-        },
-      ],
-    },
-  })
-
-  return {
-    events: result.docs.slice(0, 5),
-    total: result.docs.reduce((sum, event) => sum + (event.amount || 0), 0),
-  }
-}
-
-const getDailyEngagementSummary = async (user: User) => {
-  const payload = await getPayload({ config: configPromise })
-  const today = engagementDateKey(normalizeEngagementDate())
-  try {
-    const result = await payload.find({
-      collection: 'dailyEngagements',
-      depth: 0,
-      limit: 1000,
-      overrideAccess: false,
-      pagination: false,
-      sort: '-engagementDate',
-      user,
-      where: {
-        and: [
-          {
-            user: {
-              equals: user.id,
-            },
-          },
-          {
-            status: {
-              equals: 'valid',
-            },
-          },
-        ],
-      },
-    })
-
-    const checkedDates = new Set(
-      result.docs
-        .map((engagement) => engagementDateKey(engagement.engagementDate))
-        .filter((date): date is string => Boolean(date)),
-    )
-    const todayEngagement = result.docs.find(
-      (engagement) => engagementDateKey(engagement.engagementDate) === today,
-    )
-
-    return {
-      currentStreak: getCurrentStreak(checkedDates),
-      hasCheckedInToday: Boolean(today && checkedDates.has(today)),
-      todayVibe: todayEngagement?.vibe || null,
-    }
-  } catch (err) {
-    console.warn('Unable to load daily engagement summary.', err)
-  }
-
-  return {
-    currentStreak: 0,
-    hasCheckedInToday: false,
-    todayVibe: null,
-  }
-}
-
-const getCurrentStreak = (checkedDates: Set<string>) => {
-  let streak = 0
-  const cursor = new Date(normalizeEngagementDate())
-
-  while (checkedDates.has(cursor.toISOString().slice(0, 10))) {
-    streak += 1
-    cursor.setUTCDate(cursor.getUTCDate() - 1)
-  }
-
-  return streak
 }

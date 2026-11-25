@@ -2,7 +2,6 @@ import Link from 'next/link'
 import React from 'react'
 import {
   ArrowRight,
-  Award,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -17,8 +16,6 @@ import type {
   CohortCommitment,
   DailyBrief,
   Event,
-  Module,
-  PointEvent,
   Post,
   Profile,
   Project,
@@ -30,17 +27,18 @@ import { Button } from '@/components/ui/button'
 import type { ProductPageCopy } from '@/utilities/pageCopy'
 import { toSafeURL } from '@/utilities/safeURL'
 import type { RecentContributor, RecentContributorMode } from '../dashboard/dashboardTypes'
-import { DailyVibeNotes } from './DailyVibeNotes'
+import type { HomeFeaturedModule } from '@/modules/getHomeFeaturedModules'
 import { CohortCalloutCard } from './CohortCalloutCard'
 import { DashboardWeeklySessionStrip } from './DashboardWeeklySessionStrip'
+import { FeaturedModules } from './FeaturedModules'
 import { SessionDateTime } from './SessionDateTime'
-import { VibeCheckButton } from './VibeCheckButton'
 import { TrackedInquiryLink } from './TrackedInquiryLink'
 
 type PortalHomeProps = {
   cohortSessionThemes?: Event[]
   cohortCards: { current: Cohort | null; next: Cohort | null }
   copy: ProductPageCopy
+  featuredModules?: HomeFeaturedModule[]
   posts?: Post[]
   spotlights?: Spotlight[]
   upcomingEvents?: Event[]
@@ -52,22 +50,15 @@ type DashboardProps = {
   currentCommitment?: CohortCommitment | null
   nextCommitment?: CohortCommitment | null
   dailyBrief?: DailyBrief | null
-  dailyEngagementSummary?: {
-    currentStreak: number
-    hasCheckedInToday: boolean
-    todayVibe?: string | null
-  }
   dashboardStats?: {
     modules: number
     posts: number
     sessions: number
     wikiPages: number
   }
-  featuredModules?: Module[]
+  featuredModules?: HomeFeaturedModule[]
   upcomingEvents?: Event[]
   weekEvents?: Event[]
-  pointEvents?: PointEvent[]
-  pointsTotal?: number
   profile?: Profile | null
   recentPosts?: Post[]
   recentContributorMode?: RecentContributorMode
@@ -162,6 +153,7 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
   cohortSessionThemes = [],
   copy,
   cohortCards,
+  featuredModules = [],
   posts = [],
   spotlights = [],
   upcomingEvents = [],
@@ -222,6 +214,8 @@ export const PortalPublicHome: React.FC<PortalHomeProps> = ({
       </section>
 
       <SpotlightSection spotlights={spotlights} />
+
+      <FeaturedModules className="container py-12" modules={featuredModules} />
 
       {weeklyBrief ? (
         <section className="container py-12">
@@ -428,13 +422,10 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
   currentCommitment,
   nextCommitment,
   dailyBrief,
-  dailyEngagementSummary,
   dashboardStats,
   featuredModules = [],
   upcomingEvents = [],
   weekEvents = [],
-  pointEvents = [],
-  pointsTotal = 0,
   profile,
   recentPosts = [],
   recentContributorMode = 'recent-contributors',
@@ -445,15 +436,9 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
 }) => {
   const hasProfile = Boolean(profile)
   const displayName = profile?.displayName || user.name || user.email?.split('@')[0] || 'there'
-  const vibeSummary = dailyEngagementSummary || {
-    currentStreak: 0,
-    hasCheckedInToday: false,
-    todayVibe: null,
-  }
   const nextEvent =
     dailyBrief?.nextEvent && typeof dailyBrief.nextEvent === 'object' ? dailyBrief.nextEvent : null
   const primaryEvent = nextEvent || upcomingEvents[0]
-  const latestPointEvent = pointEvents[0]
   const stats = dashboardStats || {
     modules: featuredModules.length,
     posts: recentPosts.length,
@@ -513,48 +498,7 @@ export const PortalDashboard: React.FC<DashboardProps> = ({
         events={weekEvents.length ? weekEvents : upcomingEvents}
       />
 
-      <section className="mt-10 border border-border bg-card/25">
-        <div className="grid gap-6 p-5 lg:grid-cols-[1fr_auto_16rem] lg:items-center">
-          <div>
-            <div className="flex items-center gap-2">
-              <Award className="h-5 w-5" />
-              <h2 className="portal-heading-sm">RaidGuild Status</h2>
-            </div>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Check in for points and see today&apos;s status updates.
-            </p>
-          </div>
-
-          <div className="lg:justify-self-center">
-            <VibeCheckButton
-              currentStreak={vibeSummary.currentStreak}
-              hasCheckedInToday={vibeSummary.hasCheckedInToday}
-              todayVibe={vibeSummary.todayVibe}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 text-sm lg:grid-cols-1 lg:text-right">
-            <div>
-              <p className="portal-kicker">Guild Points</p>
-              <p className="mt-1 font-serif text-3xl font-bold leading-none text-foreground">
-                {pointsTotal}
-              </p>
-            </div>
-            {latestPointEvent ? (
-              <div>
-                <p className="portal-kicker">Latest Ledger</p>
-                <p className="mt-1 font-medium text-foreground">{latestPointEvent.reason}</p>
-                <p className="mt-1 font-mono text-xs font-bold text-muted-foreground">
-                  +{latestPointEvent.amount} / {latestPointEvent.source}
-                </p>
-              </div>
-            ) : null}
-          </div>
-        </div>
-        <div className="px-5 pb-5">
-          <DailyVibeNotes hasCheckedInToday={vibeSummary.hasCheckedInToday} />
-        </div>
-      </section>
+      <FeaturedModules className="mt-10" modules={featuredModules} />
 
       <div className="mt-10">
         <BriefPanel title="Highlighted Thread">

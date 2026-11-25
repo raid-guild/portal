@@ -12,6 +12,7 @@ import { getCurrentUser } from '@/utilities/getCurrentUser'
 import { defaultPortalImage, mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { getBriefPublicPageCopy } from '@/utilities/pageCopy'
 import { getActiveSpotlights } from '@/spotlights/getActiveSpotlights'
+import { getHomeFeaturedModules } from '@/modules/getHomeFeaturedModules'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,11 +28,8 @@ export default async function HomePage() {
         nextCommitment={dashboardData.nextCommitment}
         dashboardStats={dashboardData.dashboardStats}
         dailyBrief={dashboardData.dailyBrief}
-        dailyEngagementSummary={dashboardData.dailyEngagementSummary}
         featuredModules={dashboardData.featuredModules}
         cohortCards={dashboardData.cohortCards}
-        pointEvents={dashboardData.pointSummary.events}
-        pointsTotal={dashboardData.pointSummary.total}
         profile={dashboardData.profile}
         recentPosts={dashboardData.recentPosts}
         recentContributorMode={dashboardData.recentContributorMode}
@@ -45,20 +43,23 @@ export default async function HomePage() {
     )
   }
 
-  const [copy, posts, cohortSnapshot, upcomingEvents, weeklyBrief, spotlights] = await Promise.all([
-    getBriefPublicPageCopy(),
-    getRecentPosts(),
-    getPublicCohortSnapshot(),
-    getPublicUpcomingEvents(),
-    getLatestWeeklyBrief(),
-    getActiveSpotlights(),
-  ])
+  const [copy, posts, cohortSnapshot, upcomingEvents, weeklyBrief, spotlights, featuredModules] =
+    await Promise.all([
+      getBriefPublicPageCopy(),
+      getRecentPosts(),
+      getPublicCohortSnapshot(),
+      getPublicUpcomingEvents(),
+      getLatestWeeklyBrief(),
+      getActiveSpotlights(),
+      getHomeFeaturedModules(),
+    ])
 
   return (
     <PortalPublicHome
       cohortSessionThemes={cohortSnapshot.sessionThemes}
       copy={copy}
       cohortCards={cohortSnapshot.cohortCards}
+      featuredModules={featuredModules}
       posts={posts}
       spotlights={spotlights}
       upcomingEvents={upcomingEvents}
