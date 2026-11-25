@@ -29,11 +29,8 @@ export default async function DashboardPage() {
       nextCommitment={dashboardData.nextCommitment}
       dashboardStats={dashboardData.dashboardStats}
       dailyBrief={dashboardData.dailyBrief}
-      dailyEngagementSummary={dashboardData.dailyEngagementSummary}
       featuredModules={dashboardData.featuredModules}
       cohortCards={dashboardData.cohortCards}
-      pointEvents={dashboardData.pointSummary.events}
-      pointsTotal={dashboardData.pointSummary.total}
       profile={dashboardData.profile}
       recentPosts={dashboardData.recentPosts}
       recentContributorMode={dashboardData.recentContributorMode}

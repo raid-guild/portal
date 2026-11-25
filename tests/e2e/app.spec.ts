@@ -1665,8 +1665,126 @@ async function verifyInteractivePostEmbed(adminPage: Page, publicPage: Page) {
   )
 }
 
-async function verifyPublicHome(page: Page) {
+async function verifyPublicHome(adminPage: Page, page: Page) {
+  const commerceResponse = await adminPage.request.post('/api/modules', {
+    data: {
+      name: 'RaidGuild Store and Commerce',
+      slug: 'commerce',
+      summary: 'Browse the RaidGuild store and member workspace.',
+      category: 'tools',
+      visibility: 'public',
+      status: 'active',
+      enabled: true,
+      moduleKind: 'external',
+      authMode: 'signed_launch',
+      externalCallbackURL:
+        'https://raidguild-commerce-production.up.railway.app/api/auth/portal/callback',
+      launchAudience: 'raidguild-commerce',
+      launchSecretEnvKey: 'E2E_EXTERNAL_MODULE_LAUNCH_SECRET',
+    },
+  })
+  expect(commerceResponse.status(), JSON.stringify(await commerceResponse.json())).toBe(201)
+
+  const fixtures = [
+    {
+      name: 'Handbook',
+      slug: 'handbook',
+      category: 'knowledge',
+      visibility: 'public',
+      entryRoute: 'https://handbook.raidguild.org/',
+    },
+    {
+      name: 'Featured Game One',
+      slug: 'featured-game-one',
+      category: 'games',
+      visibility: 'public',
+      entryRoute: 'https://example.com/game-one',
+    },
+    {
+      name: 'Featured Game Two',
+      slug: 'featured-game-two',
+      category: 'games',
+      visibility: 'public',
+      entryRoute: 'https://example.com/game-two',
+    },
+    {
+      name: 'Private Featured Game',
+      slug: 'private-featured-game',
+      category: 'games',
+      visibility: 'member',
+      entryRoute: 'https://example.com/private-game',
+    },
+    {
+      name: 'Disabled Featured Game',
+      slug: 'disabled-featured-game',
+      category: 'games',
+      visibility: 'public',
+      entryRoute: 'https://example.com/disabled-game',
+      enabled: false,
+    },
+    {
+      name: 'Archived Featured Game',
+      slug: 'archived-featured-game',
+      category: 'games',
+      visibility: 'public',
+      entryRoute: 'https://example.com/archived-game',
+      status: 'archived',
+    },
+  ] as const
+  for (const fixture of fixtures) {
+    const response = await adminPage.request.post('/api/modules', {
+      data: {
+        status: 'active',
+        enabled: true,
+        ...fixture,
+        summary: `E2E fixture for ${fixture.name}.`,
+        moduleKind: 'external',
+        authMode: 'none',
+      },
+    })
+    expect(response.status(), JSON.stringify(await response.json())).toBe(201)
+  }
+
   await page.goto('/')
+  const featured = page.getByRole('region', { name: 'Featured Modules' })
+  await expect(featured.getByRole('heading', { name: 'RaidGuild Store' })).toBeVisible()
+  await expect(featured.getByRole('link', { name: 'Visit store RaidGuild Store' })).toHaveAttribute(
+    'href',
+    'https://raidguild-commerce-production.up.railway.app/',
+  )
+  await expect(featured.getByRole('heading', { name: 'Handbook' })).toBeVisible()
+  await expect(featured.getByRole('link', { name: 'Open module Handbook' })).toHaveAttribute(
+    'href',
+    'https://handbook.raidguild.org/',
+  )
+  const publicGameNames = ['Featured Game One', 'Featured Game Two']
+  const publicGamesShown = await Promise.all(
+    publicGameNames.map((name) => featured.getByRole('heading', { name }).count()),
+  )
+  expect(publicGamesShown.reduce((sum, count) => sum + count, 0)).toBe(1)
+  await expect(featured.locator('article')).toHaveCount(3)
+  await expect(featured.getByText('Private Featured Game')).toHaveCount(0)
+  await expect(featured.getByText('Disabled Featured Game')).toHaveCount(0)
+  await expect(featured.getByText('Archived Featured Game')).toHaveCount(0)
+  await adminPage.goto('/dashboard')
+  const memberFeatured = adminPage.getByRole('region', { name: 'Featured Modules' })
+  await expect(memberFeatured.getByRole('heading', { name: 'RaidGuild Store' })).toBeVisible()
+  await expect(
+    memberFeatured.getByRole('link', { name: 'Launch app RaidGuild Store' }),
+  ).toHaveAttribute('href', '/api/modules/commerce/launch')
+  await expect(memberFeatured.getByRole('heading', { name: 'Handbook' })).toBeVisible()
+  await expect(memberFeatured.locator('article')).toHaveCount(3)
+  await expect(adminPage.getByRole('heading', { name: 'RaidGuild Status' })).toHaveCount(0)
+  if (process.env.E2E_CAPTURE_FEATURED === '1') {
+    await featured.screenshot({ path: 'test-results/featured-public-desktop.png' })
+    await memberFeatured.screenshot({ path: 'test-results/featured-member-desktop.png' })
+    await page.setViewportSize({ width: 390, height: 844 })
+    await adminPage.setViewportSize({ width: 390, height: 844 })
+    await featured.screenshot({ path: 'test-results/featured-public-mobile.png' })
+    await memberFeatured.screenshot({ path: 'test-results/featured-member-mobile.png' })
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await adminPage.setViewportSize({ width: 1280, height: 720 })
+  }
   const header = page.locator('header').first()
 
   await expect(header.getByRole('link', { name: 'Posts' })).toHaveCount(0)
@@ -4375,9 +4493,8 @@ async function verifyDashboardBrief(page: Page) {
   await expect(page.getByRole('heading', { name: 'Ways to Engage' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Join RaidGuild' })).toBeVisible()
   await expect(page.getByRole('heading', { name: 'View sessions' })).toBeVisible()
-  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
-  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
-  await expect(page.getByRole('button', { name: /vibe check/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Featured Modules' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toHaveCount(0)
   await expect(page.getByRole('heading', { name: 'Next Profile Step' })).toBeVisible()
 
   const portalNavigation = page.getByRole('navigation', { name: 'Portal sections' })
@@ -5088,23 +5205,75 @@ async function verifyDailyVibeCheck(page: Page, browser: Browser) {
   }
 
   await page.goto('/dashboard')
-  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toBeVisible()
-  await expect(page.getByText("Check in for points and see today's status updates.")).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Vibe check' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Featured Modules' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'RaidGuild Status' })).toHaveCount(0)
 
-  await page.getByRole('button', { name: 'Vibe check' }).click()
-  await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page.getByRole('button', { name: /Poopin/i })).toBeVisible()
-  await page.getByRole('button', { name: /Learning/i }).click()
-  await page.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
-  await page.getByLabel(/Show my note to other checked-in members today/i).check()
-  await page.getByRole('button', { name: /Check in \+5/i }).click()
-
-  await expect(page.getByRole('button', { name: 'Vibe checked' })).toBeVisible()
-  await expect(page.getByText('E2E vibe note for point award.')).toBeVisible()
-  await expect(page.getByText('Current streak: 1 day')).toBeVisible()
-  await expect(page.getByText('+5')).toBeVisible()
-  await expect(page.getByText('Daily vibe check')).toBeVisible()
+  await page.goto('/dashboard/map')
+  await expect(page.getByRole('dialog', { name: /choose your guild form/i })).toBeVisible()
+  await page.getByRole('button', { name: /warrior/i }).click()
+  const sprite = page.getByLabel(/warrior form/i)
+  await expect(sprite).toBeVisible()
+  // Walk the safe path around the grove and the lake to the points check-in.
+  const waypoints: Array<[number, number]> = [
+    [760, 640], [760, 620], [740, 600], [740, 580], [640, 480], [640, 460],
+    [600, 420], [460, 420], [440, 400], [400, 400], [340, 340], [320, 340],
+    [280, 300], [160, 300],
+  ]
+  for (const [targetX, targetY] of waypoints) {
+    const deadline = Date.now() + 5000
+    while (Date.now() < deadline) {
+      const position = await sprite.evaluate((element) => ({
+        x: parseFloat((element as HTMLElement).style.left) * 19.2,
+        y: parseFloat((element as HTMLElement).style.top) * 10.8,
+      }))
+      const dx = targetX - position.x
+      const dy = targetY - position.y
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) break
+      const keys = [
+        ...(Math.abs(dx) >= 10 ? [dx < 0 ? 'ArrowLeft' : 'ArrowRight'] : []),
+        ...(Math.abs(dy) >= 10 ? [dy < 0 ? 'ArrowUp' : 'ArrowDown'] : []),
+      ]
+      const remaining = Math.min(
+        ...(Math.abs(dx) >= 10 ? [Math.abs(dx)] : []),
+        ...(Math.abs(dy) >= 10 ? [Math.abs(dy)] : []),
+      )
+      const speedPerAxis = keys.length === 2 ? 230 / Math.SQRT2 : 230
+      const pulseMs = Math.max(18, Math.min(45, Math.floor(((remaining - 4) / speedPerAxis) * 1000)))
+      for (const key of keys) await page.keyboard.down(key)
+      await page.waitForTimeout(pulseMs)
+      for (const key of keys) await page.keyboard.up(key)
+    }
+    const reached = await sprite.evaluate((element) => ({
+      x: parseFloat((element as HTMLElement).style.left) * 19.2,
+      y: parseFloat((element as HTMLElement).style.top) * 10.8,
+    }))
+    expect(Math.abs(reached.x - targetX), `Map x waypoint ${targetX}`).toBeLessThan(10)
+    expect(Math.abs(reached.y - targetY), `Map y waypoint ${targetY}`).toBeLessThan(10)
+  }
+  const nearbyPond = page.getByRole('region', { name: /nearby map location/i })
+  await expect(nearbyPond).toContainText('The Pond of Points')
+  await nearbyPond.getByRole('button', { name: 'Check in' }).click()
+  const pond = page.getByRole('dialog', { name: /the pond of points/i })
+  await expect(pond.getByRole('button', { name: 'Vibe check' })).toBeVisible()
+  await pond.getByRole('button', { name: 'Vibe check' }).click()
+  const vibeDialog = page.getByRole('dialog', { name: /what are you on today/i })
+  await vibeDialog.getByRole('button', { name: /learning/i }).click()
+  await vibeDialog.getByPlaceholder('What did you notice today?').fill('E2E vibe note for point award.')
+  await vibeDialog.getByLabel(/Show my note to other checked-in members today/i).check()
+  const initialCheckInResponsePromise = page.waitForResponse((response) =>
+    response.url().includes('/api/daily-engagements/check-in') && response.request().method() === 'POST',
+  )
+  await vibeDialog.getByRole('button', { name: /Check in \+5/i }).click()
+  const initialCheckInResponse = await initialCheckInResponsePromise
+  expect(initialCheckInResponse.ok()).toBeTruthy()
+  const initialCheckInBody = await initialCheckInResponse.json()
+  expect(initialCheckInBody).toMatchObject({ pointsAwarded: 5 })
+  expect(initialCheckInBody.dailyEngagement).toMatchObject({
+    comment: 'E2E vibe note for point award.',
+    commentShareWithMembers: true,
+    vibe: 'learning',
+  })
+  await expect(pond.getByRole('button', { name: 'Vibe checked' })).toBeVisible()
 
   const duplicateResponse = await page.request.post('/api/daily-engagements/check-in', {
     data: {
@@ -6280,10 +6449,10 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   await seedDatabase(page)
   await verifyOrdinaryContentHeaderThemes(browser)
   await verifyDashboardBrief(page)
-  await verifyDailyVibeCheck(page, browser)
   await verifyInboxAndNotificationPreferences(page)
   await verifyFeedbackWidget(page)
   const adminProfileHandle = await createProfileAndVerifyContributorCreateLinks(page)
+  await verifyDailyVibeCheck(page, browser)
   await verifyDAOWalletOwnership(page, adminProfileHandle)
   await verifyRecentContributors(page, adminProfileHandle)
   await verifyProfileClaimFlow(page, browser)
@@ -6303,7 +6472,7 @@ test('supports onboarding, seeding, and comment moderation', async ({ browser, p
   const publicPage = await publicContext.newPage()
 
   await verifyModulesFeature(page, browser, publicPage)
-  await verifyPublicHome(publicPage)
+  await verifyPublicHome(page, publicPage)
   await verifyAnonymousPublicMemberProfile(page, publicPage)
   await verifyMemberOnlyProjectVisibility(page, browser, publicPage)
   await verifyBadgesFeature(page, browser, publicPage)

@@ -7,13 +7,13 @@ import type {
   DailyBrief,
   Event,
   Module,
-  PointEvent,
   Post,
   Profile,
   Spotlight,
   User,
   WikiPage,
 } from '@/payload-types'
+import { selectHomeFeaturedModules } from '@/modules/getHomeFeaturedModules'
 
 export const dynamic = 'force-dynamic'
 
@@ -29,20 +29,13 @@ export default function DashboardPreviewPage() {
     <PortalDashboard
       cohortCards={{ current: null, next: null }}
       dailyBrief={createPreviewBrief(now, upcomingEvents[0])}
-      dailyEngagementSummary={{
-        currentStreak: 4,
-        hasCheckedInToday: false,
-        todayVibe: null,
-      }}
       dashboardStats={{
         modules: 6,
         posts: 18,
         sessions: 42,
         wikiPages: 9,
       }}
-      featuredModules={createPreviewModules(now)}
-      pointEvents={createPreviewPointEvents(now)}
-      pointsTotal={85}
+      featuredModules={selectHomeFeaturedModules(createPreviewModules(now), true, () => 0)}
       recentPosts={createPreviewPosts(now)}
       recentContributorMode="recent-contributors"
       recentContributors={createPreviewContributors(now)}
@@ -255,20 +248,6 @@ const createPreviewSpotlights = (date: Date): Spotlight[] => [
     updatedAt: date.toISOString(),
     visibility: 'authenticated',
   } satisfies Spotlight,
-]
-
-const createPreviewPointEvents = (date: Date): PointEvent[] => [
-  {
-    amount: 10,
-    createdAt: date.toISOString(),
-    id: 1,
-    issuedAt: date.toISOString(),
-    reason: 'Hosted a session',
-    recipient: 0,
-    source: 'system',
-    status: 'valid',
-    updatedAt: date.toISOString(),
-  } satisfies PointEvent,
 ]
 
 const emptyLexical = () => ({
